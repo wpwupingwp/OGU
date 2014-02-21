@@ -16,7 +16,7 @@ def main():
                 End=int(i.location.end)
                 Sequence=str(Record.seq[Start:End])
                 Name=str(i.qualifiers["gene"][0])
-                Strand=int(i.location.strand)
+                Strand=str(i.location.strand)
                 rec=[Taxon,Organism,Accession,Name,Type,Start,End,Strand,Sequence]
                 Gene.append(rec)
             elif i.location_operator=="join":
@@ -24,7 +24,7 @@ def main():
                 Start=int(i.sub_features[0].location.start)
                 End=int(i.sub_features[0].location.end)
                 Name=str(i.qualifiers["gene"][0])
-                Strand=int(i.location.strand)
+                Strand=str(i.location.strand)
                 Sequence=""
                 rec=[Taxon,Organism,Accession,Name,Type,Start,End,Strand,Sequence]
                 Gene.append(rec)
@@ -39,24 +39,27 @@ def main():
             End=int(i.location.end)
             Sequence=str(Record.seq[Start:End])
             Name=str(i.qualifiers["product"][0]).replace(" ","_")
-            Strand=int(i.location.strand)
+            Strand=str(i.location.strand)
             rec=[Taxon,Organism,Accession,Name,Type,Start,End,Strand,Sequence]
             All.append(rec)
-        elif i.type=="exon":
+        elif i.type=="exon" and "gene" in i.qualifiers :
             Type="exon"
             Start=int(i.location.start)
             End=int(i.location.end)
             Sequence=str(Record.seq[Start:End])
-            Name="_".join([str(i.qualifiers["gene"][0]),"exon",str(i.qualifiers["number"][0])])
+            if "number" in i.qualifiers:
+                Name="_".join([str(i.qualifiers["gene"][0]),"exon",str(i.qualifiers["number"][0])])
+            else:
+                Name="_".join([str(i.qualifiers["gene"][0]),"exon"])
             Strand=int(i.location.strand)
             rec=[Taxon,Organism,Accession,Name,Type,Start,End,Strand,Sequence]
             All.append(rec)
-        elif i.type=="intron":
+        elif i.type=="intron" and "gene" in i.qualifiers:
             Type="intron"
             Start=int(i.location.start)
             End=int(i.location.end)
             Sequence=str(Record.seq[Start:End])
-            Strand=int(i.location.strand)
+            Strand=str(i.location.strand)
             if "number" in i.qualifiers:
                 Name="_".join([str(i.qualifiers["gene"][0]),"intron",str(i.qualifiers["number"][0])])
             else:
@@ -76,14 +79,14 @@ def main():
         rec=[Taxon,Organism,Accession,Name,Type,Start,End,Strand,Sequence]
         All.append(rec)
     All.extend(Gene)
-    All.sort(key=lambda x:x[5])
+#    All.sort(key=lambda x:x[5])
     Database.extend(All)
-    FileOut=open(".".join([Accession,"fasta"]),"w")
-    for i in All:
-        if i[8]!="":
-            FileOut.write(">%s|%s|%s|\n"%(Organism,i[3],Accession,))
-            FileOut.write("%s\n"%(i[8]))
-    FileOut.write(">%s|Complete Sequence\n%s"%(Organism,str(Record.seq)))
+#    FileOut=open(".".join([Accession,"fasta"]),"w")
+#    for i in All:
+#        if i[8]!="":
+#            FileOut.write(">%s|%s|%s|\n"%(Organism,i[3],Accession,))
+#            FileOut.write("%s\n"%(i[8]))
+#    FileOut.write(">%s|Complete Sequence\n%s"%(Organism,str(Record.seq)))
     return 
 
 
