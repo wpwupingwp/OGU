@@ -6,6 +6,7 @@ Organism=Record.annotations["organism"].replace(" ","_")
 Accession=Record.annotations["accessions"][0]
 Gene=[]
 Spacer=[]
+rRNA=[]
 for i in Record.features:
     if i.type=="gene" and "gene" in i.qualifiers:
         #Ignore genes without name
@@ -30,6 +31,15 @@ for i in Record.features:
             Sequence="".join([str(Record.seq[Start:End]),str(Record.seq[Start:End])])
             rec=[GeneName,Start,End,Strand,Sequence]
             Gene.append(rec)
+    elif i.type=="rRNA":
+        Start=int(i.location.start)
+        End=int(i.location.end)
+        Sequence=str(Record.seq[Start:End])
+        rRNAName=str(i.qualifiers["product"][0]).replace(" ","_")
+#        Strand=int(i.location.strand)
+        rec=[rRNAName,Start,End,Sequence]
+        rRNA.append(rec)
+        print(rec)
 Gene.sort(key=lambda x:x[1])
 for i in range(len(Gene)-1):
     This=Gene[i]
@@ -49,4 +59,7 @@ for i in Spacer:
     if i[3]!="":
         FileOut.write(">%s|%s_Spacer|%s\n"%(Organism,i[0],Accession))
         FileOut.write("%s\n"%(i[3]))
+for i in rRNA:
+    FileOut.write(">%s|%s|%s"%(Organism,i[0],Accession))
+    FileOut.write("%s\n"%(i[3]))
 FileOut.write(">%s|Complete Sequence\n%s"%(Organism,str(Record.seq)))
