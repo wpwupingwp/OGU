@@ -75,7 +75,7 @@ def main():
         Head=Next[5]-1
         Sequence=str(Record.seq[Tail:Head])
         Name="_".join(["-".join([This[3],Next[3]]),"Spacer"])
-        Strand=This[7]
+        Strand=0
         rec=[Taxon,Organism,Accession,Name,Type,Start,End,Strand,Sequence]
         All.append(rec)
     All.extend(Gene)
