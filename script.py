@@ -1,9 +1,8 @@
 from Bio import SeqIO
 import csv
+import datetime
 def main():
-#    FileIn="gb"
-#    Record=SeqIO.read(FileIn,"genbank")
-    Taxon=Record.features[0].qualifiers["db_xref"][0].replace("taxon:","")
+    Taxon=int(Record.features[0].qualifiers["db_xref"][0].replace("taxon:",""))
     Organism=Record.annotations["organism"]
     Accession=Record.annotations["accessions"][0]
     Gene=[]
@@ -17,7 +16,7 @@ def main():
                 Sequence=str(Record.seq[Start:End])
                 Name=str(i.qualifiers["gene"][0])
                 Strand=str(i.location.strand)
-                rec=[Taxon,Organism,Accession,Name,Type,Start,End,Strand,Sequence]
+                rec=[Taxon,Organism,Accession,Name,Type,Start,End,Strand,Sequence,Date]
                 Gene.append(rec)
             elif i.location_operator=="join":
                 Type="gene"
@@ -26,12 +25,12 @@ def main():
                 Name=str(i.qualifiers["gene"][0])
                 Strand=str(i.location.strand)
                 Sequence=""
-                rec=[Taxon,Organism,Accession,Name,Type,Start,End,Strand,Sequence]
+                rec=[Taxon,Organism,Accession,Name,Type,Start,End,Strand,Sequence,Date]
                 Gene.append(rec)
                 Start=int(i.sub_features[1].location.start)
                 End=int(i.sub_features[1].location.end)
                 Sequence="".join([str(Record.seq[Start:End]),str(Record.seq[Start:End])])
-                rec=[Taxon,Organism,Accession,Name,Type,Start,End,Strand,Sequence]
+                rec=[Taxon,Organism,Accession,Name,Type,Start,End,Strand,Sequence,Date]
                 Gene.append(rec)
         elif i.type=="rRNA":
             Type="rRNA"
@@ -40,7 +39,7 @@ def main():
             Sequence=str(Record.seq[Start:End])
             Name=str(i.qualifiers["product"][0]).replace(" ","_")
             Strand=str(i.location.strand)
-            rec=[Taxon,Organism,Accession,Name,Type,Start,End,Strand,Sequence]
+            rec=[Taxon,Organism,Accession,Name,Type,Start,End,Strand,Sequence,Date]
             All.append(rec)
         elif i.type=="exon" and "gene" in i.qualifiers :
             Type="exon"
@@ -52,7 +51,7 @@ def main():
             else:
                 Name="_".join([str(i.qualifiers["gene"][0]),"exon"])
             Strand=int(i.location.strand)
-            rec=[Taxon,Organism,Accession,Name,Type,Start,End,Strand,Sequence]
+            rec=[Taxon,Organism,Accession,Name,Type,Start,End,Strand,Sequence,Date]
             All.append(rec)
         elif i.type=="intron" and "gene" in i.qualifiers:
             Type="intron"
@@ -64,7 +63,7 @@ def main():
                 Name="_".join([str(i.qualifiers["gene"][0]),"intron",str(i.qualifiers["number"][0])])
             else:
                 Name="_".join([str(i.qualifiers["gene"][0]),"intron"])
-            rec=[Taxon,Organism,Accession,Name,Type,Start,End,Strand,Sequence]
+            rec=[Taxon,Organism,Accession,Name,Type,Start,End,Strand,Sequence,Date]
             All.append(rec)
     Gene.sort(key=lambda x:x[5])
     for i in range(len(Gene)-1):
@@ -76,7 +75,7 @@ def main():
         Sequence=str(Record.seq[Tail:Head])
         Name="_".join(["-".join([This[3],Next[3]]),"Spacer"])
         Strand=0
-        rec=[Taxon,Organism,Accession,Name,Type,Start,End,Strand,Sequence]
+        rec=[Taxon,Organism,Accession,Name,Type,Start,End,Strand,Sequence,Date]
         All.append(rec)
     All.extend(Gene)
 #    All.sort(key=lambda x:x[5])
@@ -91,6 +90,8 @@ def main():
 
 
 Database=[]
+today=datetime.date.today()
+Date=today.strftime("%Y%m%d")
 FileIn=input("File name:\n")
 Records=list(SeqIO.parse(FileIn,"genbank"))
 for Record in Records:
@@ -98,7 +99,7 @@ for Record in Records:
 
 csvfile=open("Data.csv","w")
 writer=csv.writer(csvfile)
-writer.writerow(["Taxon","Organism","Accession","Name","Type","Start","End","Strand","Sequence"])
+writer.writerow(["Taxon","Organism","Accession","Name","Type","Start","End","Strand","Sequence","Date"])
 for item in Database:
     if item[8]!="":
         writer.writerow(item)
