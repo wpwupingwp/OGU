@@ -78,16 +78,8 @@ def main():
         rec=[Taxon,Organism,Accession,Name,Type,Start,End,Strand,Sequence,Date]
         All.append(rec)
     All.extend(Gene)
-#    All.sort(key=lambda x:x[5])
     Database.extend(All)
-#    FileOut=open(".".join([Accession,"fasta"]),"w")
-#    for i in All:
-#        if i[8]!="":
-#            FileOut.write(">%s|%s|%s|\n"%(Organism,i[3],Accession,))
-#            FileOut.write("%s\n"%(i[8]))
-#    FileOut.write(">%s|Complete Sequence\n%s"%(Organism,str(Record.seq)))
     return 
-
 
 Database=[]
 today=datetime.date.today()

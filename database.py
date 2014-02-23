@@ -1,6 +1,4 @@
-from Bio.Seq import Seq
-from Bio.SeqRecord import SeqRecord
-from Bio import SeqIO
+from Bio.Seq import MutableSeq
 import psycopg2
 Name=input("Name:\n")
 Type=input("Type:\n")
@@ -10,17 +8,18 @@ Sql="select Taxon,Organism,Name,Type,Strand,Sequence from main where Name=%s and
 cur.execute(Sql,(Name,Type))
 Result=cur.fetchall()
 
-Fileout=(".".join(["_".join([Name,Type]),"fasta"]))
 All=[]
 for i in Result:
-    Title="|".join([i[1],i[2],i[3]])
-    Id=str(i[0])
-    Sequence=Seq(i[5])
-    Record=SeqRecord(Sequence,id=Id,description=Title)
+    Title="|".join([str(i[0]),i[1],i[2],i[3]])
+    Sequence=MutableSeq(i[5])
     if i[4]=="-1":
-        Record.Seq=Record.reverse_complement
+        Sequence.seq=Sequence.reverse_complement()
+    Record=[Title,Sequence]
     All.append(Record)
-SeqIO.write(All,Fileout,"fasta")
+
+Fileout=open((".".join(["_".join([Name,Type]),"fasta"])),"w")
+for i in All:
+    Fileout.write(">%s\n%s\n"%(i[0],i[1]))
 
 cur.close()
 conn.close()
