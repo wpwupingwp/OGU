@@ -1,0 +1,15 @@
+Taxon,Organism,Accession,Name,Type,Start,End,Strand,Sequence,Date
+3350,Pinus thunbergii,NC_001631,trnK_exon_2,exon,1505,1540,-1,CGGGTTGCCCGGGACTCGAACCCGGAGCTCGTCGG,20140223
+create table main (
+Taxon int,
+Organism varchar(50),
+Accession varchar(15),
+Name varchar(50),
+Type varchar(10),
+Head int,
+Tail int,
+Strand varchar(5),
+Sequence text,
+Date date,
+);
+copy main from '/home/wp/db/Data.csv' delimiter ',' csv;
