@@ -1,4 +1,5 @@
 from Bio import SeqIO
+from Bio.Seq import MutableSeq
 import datetime
 import sqlite3
 def main():
@@ -81,6 +82,20 @@ def main():
     Database.extend(All)
     return 
 
+
+def database():
+    con=sqlite3.connect("./db")
+    cur=con.cursor()
+    cur.execute("drop table if exists main;")
+    cur.execute("create table main (Taxon int,Organism text,Accession text,Name text,Type text,Head int,Tail int, Strand text,Sequence text,Date text);")
+    for row in Database:
+        if row[9]!="":
+            cur.execute("insert into main (Taxon,Organism,Accession,Name,Type,Head,Tail,Strand,Sequence,Date) values (?,?,?,?,?,?,?,?,?,?);",(row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7],row[8],row[9]))
+    con.commit()
+    cur.close()
+    con.close()
+    return
+    
 Database=[]
 today=datetime.date.today()
 Date=today.strftime("%Y%m%d")
@@ -88,13 +103,4 @@ FileIn=input("File name:\n")
 Records=list(SeqIO.parse(FileIn,"genbank"))
 for Record in Records:
     main()
-
-con=sqlite3.connect("./db")
-cur=con.cursor()
-cur.execute("drop table if exists main;")
-cur.execute("create table main (Taxon int,Organism text,Accession text,Name text,Type text,Head int,Tail int, Strand text,Sequence text,Date text);")
-for row in Database:
-    if row[9]!="":
-        cur.execute("insert into main (Taxon,Organism,Accession,Name,Type,Head,Tail,Strand,Sequence,Date) values (?,?,?,?,?,?,?,?,?,?);",(row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7],row[8],row[9]))
-con.commit()
-
+database()
