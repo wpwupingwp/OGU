@@ -1,6 +1,10 @@
 from Bio import SeqIO
+from Bio import BiopythonDeprecationWarning
 from Bio.Seq import MutableSeq
 import sqlite3
+import warnings
+warnings.simplefilter("ignore",BiopythonDeprecationWarning)
+
 def parser():
     Taxon=int(Record.features[0].qualifiers["db_xref"][0].replace("taxon:",""))
     Organism=Record.annotations["organism"]
@@ -85,13 +89,14 @@ def parser():
 def database():
     con=sqlite3.connect("./db")
     cur=con.cursor()
-    cur.execute("create table main (Taxon int,Organism text,Accession text,Name text,Type text,Head int,Tail int, Strand text,Sequence text,Date text);")
+    cur.execute("create table if not exists main (Taxon int,Organism text,Accession text,Name text,Type text,Head int,Tail int, Strand text,Sequence text,Date text);")
     for row in Database:
         if row[9]!="":
             cur.execute("insert into main (Taxon,Organism,Accession,Name,Type,Head,Tail,Strand,Sequence,Date) values (?,?,?,?,?,?,?,?,?,?);",(row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7],row[8],row[9]))
     con.commit()
     cur.close()
     con.close()
+    print("Done.\n")
     return
     
 def query():
@@ -115,6 +120,7 @@ def query():
         Fileout.write(">%s\n%s\n"%(i[0],i[1]))
     cur.close()
     con.close()
+    print("Done.\n")
     return 
 #Main program 
 Option=input("Select:\n1.add data\n2.query\n")
