@@ -1,8 +1,7 @@
 from Bio import SeqIO
 from Bio.Seq import MutableSeq
-import datetime
 import sqlite3
-def main():
+def parser():
     Taxon=int(Record.features[0].qualifiers["db_xref"][0].replace("taxon:",""))
     Organism=Record.annotations["organism"]
     Accession=Record.annotations["accessions"][0]
@@ -86,7 +85,6 @@ def main():
 def database():
     con=sqlite3.connect("./db")
     cur=con.cursor()
-    cur.execute("drop table if exists main;")
     cur.execute("create table main (Taxon int,Organism text,Accession text,Name text,Type text,Head int,Tail int, Strand text,Sequence text,Date text);")
     for row in Database:
         if row[9]!="":
@@ -96,11 +94,40 @@ def database():
     con.close()
     return
     
-Database=[]
-today=datetime.date.today()
-Date=today.strftime("%Y%m%d")
-FileIn=input("File name:\n")
-Records=list(SeqIO.parse(FileIn,"genbank"))
-for Record in Records:
-    main()
-database()
+def query():
+    con=sqlite3.connect("./db")
+    cur=con.cursor()
+    Name=input("Name:\n")
+    Type=input("Type:\n")
+    cur.execute("select Taxon,Organism,Name,Type,Strand,Sequence from main where Name like ? and Type=?",('%'+Name+'%',Type))
+    Result=cur.fetchall()
+    All=[]
+    for i in Result:
+        Title="|".join([str(i[0]),i[1],i[2],i[3]])
+        Sequence=MutableSeq(i[5])
+        if i[4]=="-1":
+            Sequence.seq=Sequence.reverse_complement()
+        Record=[Title,Sequence]
+        All.append(Record)
+    
+    Fileout=open((".".join(["_".join([Name,Type]),"fasta"])),"w")
+    for i in All:
+        Fileout.write(">%s\n%s\n"%(i[0],i[1]))
+    cur.close()
+    con.close()
+    return 
+#Main program 
+Option=input("Select:\n1.add data\n2.query\n")
+if Option=="1":
+   Database=[]
+   Date=input("Enter date:\n")
+   FileIn=input("File name:\n")
+   Records=list(SeqIO.parse(FileIn,"genbank"))
+   for Record in Records:
+        parser()
+   database()
+elif Option=="2":
+    query()
+else:
+    print("Input error!\n")
+
