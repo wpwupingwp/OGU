@@ -120,8 +120,8 @@ def query():
 Option=input("Select:\n1.add data\n2.query\n")
 if Option=="1":
    Database=[]
-   Date=input("Enter date:\n")
-   FileIn=input("File name:\n")
+   Date=input("Enter date(like 20140228):\n")
+   FileIn=input("Genbank format filename:\n")
    Records=list(SeqIO.parse(FileIn,"genbank"))
    for Record in Records:
         parser()
