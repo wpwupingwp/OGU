@@ -4,7 +4,7 @@ import sqlite3,warnings,datetime
 warnings.simplefilter("ignore",BiopythonDeprecationWarning)
 
 def parser():
-    Taxon=int(Record.features[0].qualifiers["db_xref"][0].replace("taxon:",""))
+    Taxon=int(Record.features[0].qualifiers["db_xref"][0][6:])
     Organism=Record.annotations["organism"]
     Accession=Record.annotations["accessions"][0]
     Gene=[]
@@ -126,7 +126,7 @@ if Option=="1":
    Database=[]
    Date=str(datetime.datetime.now())[:10]
    FileIn=input("Genbank format filename:\n")
-   Records=list(SeqIO.parse(FileIn,"genbank"))
+   Records=SeqIO.parse(FileIn,"genbank")
    for Record in Records:
         parser()
    database()
