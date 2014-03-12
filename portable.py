@@ -1,8 +1,6 @@
-from Bio import SeqIO
-from Bio import BiopythonDeprecationWarning
+from Bio import SeqIO,BiopythonDeprecationWarning
 from Bio.Seq import MutableSeq
-import sqlite3
-import warnings
+import sqlite3,warnings,datetime
 warnings.simplefilter("ignore",BiopythonDeprecationWarning)
 
 def parser():
@@ -126,7 +124,7 @@ def query():
 Option=input("Select:\n1.add data\n2.query\n")
 if Option=="1":
    Database=[]
-   Date=input("Enter date(like 20140228):\n")
+   Date=str(datetime.datetime.now())[:10]
    FileIn=input("Genbank format filename:\n")
    Records=list(SeqIO.parse(FileIn,"genbank"))
    for Record in Records:
