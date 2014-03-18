@@ -1,5 +1,5 @@
 """
-Django settings for bio project.
+Django settings for mysite project.
 
 For more information on this file, see
 https://docs.djangoproject.com/en/1.6/topics/settings/
@@ -17,7 +17,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 # See https://docs.djangoproject.com/en/1.6/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '$6h#_7)1yieb_@c8uo*+a&3i4m5)a_h+7wc*xdod#3wd=1(xml'
+SECRET_KEY = '$$bcw&(kqys!26@d4192=&ii-wllzrw-x!@ec)1!m-i&q81_4&'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -34,22 +34,23 @@ INSTALLED_APPS = (
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
+#    'django.contrib.messages',
+#    'django.contrib.staticfiles',
+    'query',
 )
 
 MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
+#    'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+#    'django.contrib.messages.middleware.MessageMiddleware',
+#    'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
 
-ROOT_URLCONF = 'bio.urls'
+ROOT_URLCONF = 'mysite.urls'
 
-WSGI_APPLICATION = 'bio.wsgi.application'
+WSGI_APPLICATION = 'mysite.wsgi.application'
 
 
 # Database
@@ -58,7 +59,7 @@ WSGI_APPLICATION = 'bio.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'NAME': '/home/wp/git/python/db',
     }
 }
 
