@@ -120,6 +120,7 @@ def query():
     con.close()
     print("Done.\n")
     return 
+
 #Main program 
 Option=input("Select:\n1.add data\n2.query\n")
 if Option=="1":
