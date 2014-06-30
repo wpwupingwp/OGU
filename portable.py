@@ -148,7 +148,7 @@ def RunQuery(Querytype):
 #Main program 
 Option=input("Select:\n1.Add data\n2.Query\n")
 Database=[]
-Date=str(datetime.datetime.now())[:10]
+Date=str(datetime.datetime.now())[:19].replace(" ","-")
 if Option=="1":
    FileIn=input("Genbank format filename:\n")
    Records=SeqIO.parse(FileIn,"genbank")
