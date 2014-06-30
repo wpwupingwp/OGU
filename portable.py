@@ -97,7 +97,7 @@ def database():
     print("Done.\n")
     return
     
-def query():
+def Query():
     con=sqlite3.connect("./db")
     cur=con.cursor()
     Name=input("Name:\n")
@@ -122,7 +122,7 @@ def query():
     return 
 
 #Main program 
-Option=input("Select:\n1.add data\n2.query\n")
+Option=input("Select:\n1.Add data\n2.Query\n3.Print")
 if Option=="1":
    Database=[]
    Date=str(datetime.datetime.now())[:10]
@@ -132,7 +132,9 @@ if Option=="1":
         parser()
    database()
 elif Option=="2":
-    query()
+    Query()
+elif Option=="3":
+    Print()
 else:
     print("Input error!\n")
 
