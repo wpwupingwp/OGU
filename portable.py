@@ -98,12 +98,35 @@ def database():
     return
     
 def Query():
+    Querytype=input("1.Specific fragment\n2.Specific Organism\n3.Specific gene\n4.All\n")
+    if Querytype in ["1","2","3","4"]:
+        RunQuery(Querytype)
+    else:
+        print("Input error!\n")
+    return
+
+def RunQuery(Querytype):
     con=sqlite3.connect("./db")
     cur=con.cursor()
-    Name=input("Name:\n")
-    Type=input("Type:\n")
-    cur.execute("select Taxon,Organism,Name,Type,Strand,Sequence from main where Name like ? and Type=?",('%'+Name+'%',Type))
-    Result=cur.fetchall()
+    if Querytype=="1":
+        Organism=input("Organism:\n")
+        Gene=input("Gene:\n")
+        Type=input("Fragment type(gene,rRNA,exon,intron,spacer):\n")
+        cur.execute("select Taxon,Organism,Name,Type,Strand,Sequence from main where Name like ? and Type=? and Organism like ?",('%'+Gene+'%',Type,Organism))
+        Result=cur.fetchall()
+    elif Querytype=="2":
+        Organism=input("Organism:\n")
+        cur.execute("select Taxon,Organism,Name,Type,Strand,Sequence from main where Organism=?",(Organism,))
+        Result=cur.fetchall()
+    elif Querytype=="3":
+        Gene=input("Gene:\n")
+        Type=input("Fragment type(gene,rRNA,exon,intron,spacer):\n")
+        cur.execute("select Taxon,Organism,Name,Type,Strand,Sequence from main where Name like ? and Type=?",('%'+Gene+'%',Type))
+        Result=cur.fetchall()
+    elif Querytype=="4":
+        cur.execute("select Taxon,Organism,Name,Type,Strand,Sequence from main")
+        Result=cur.fetchall()
+
     All=[]
     for i in Result:
         Title="|".join([str(i[0]),i[1],i[2],i[3]])
@@ -113,7 +136,8 @@ def Query():
         Record=[Title,Sequence]
         All.append(Record)
     
-    Fileout=open((".".join(["_".join([Name,Type]),"fasta"])),"w")
+   # Fileout=open((".".join(["_".join([Gene,Type]),"fasta"])),"w")
+    Fileout=open(".".join([Date,"fasta"]),"w")
     for i in All:
         Fileout.write(">%s\n%s\n"%(i[0],i[1]))
     cur.close()
@@ -122,19 +146,17 @@ def Query():
     return 
 
 #Main program 
-Option=input("Select:\n1.Add data\n2.Query\n3.Print")
+Option=input("Select:\n1.Add data\n2.Query\n")
+Database=[]
+Date=str(datetime.datetime.now())[:10]
 if Option=="1":
-   Database=[]
-   Date=str(datetime.datetime.now())[:10]
    FileIn=input("Genbank format filename:\n")
    Records=SeqIO.parse(FileIn,"genbank")
    for Record in Records:
-        parser()
+       parser()
    database()
 elif Option=="2":
     Query()
-elif Option=="3":
-    Print()
 else:
     print("Input error!\n")
 
