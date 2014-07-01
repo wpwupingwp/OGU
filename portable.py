@@ -89,7 +89,7 @@ def database():
     cur=con.cursor()
     cur.execute("create table if not exists main (Taxon int,Organism text,Accession text,Name text,Type text,Head int,Tail int, Strand text,Sequence text,Date text,ID integer PRIMARY KEY);")
     for row in Database:
-        if row[9]!="":
+        if row[8]!="":
             cur.execute("insert into main (Taxon,Organism,Accession,Name,Type,Head,Tail,Strand,Sequence,Date) values (?,?,?,?,?,?,?,?,?,?);",(row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7],row[8],row[9]))
     con.commit()
     cur.close()
