@@ -116,15 +116,15 @@ def RunQuery(Querytype):
         Result=cur.fetchall()
     elif Querytype=="2":
         Organism=input("Organism:\n")
-        cur.execute("select Taxon,Organism,Name,Type,Strand,Sequence from main where Organism=?",(Organism,))
+        cur.execute("select Taxon,Organism,Name,Type,Strand,Sequence,Head from main where Organism=? order by Head",(Organism,))
         Result=cur.fetchall()
     elif Querytype=="3":
         Gene=input("Gene:\n")
         Type=input("Fragment type(gene,rRNA,exon,intron,spacer):\n")
-        cur.execute("select Taxon,Organism,Name,Type,Strand,Sequence from main where Name like ? and Type=?",('%'+Gene+'%',Type))
+        cur.execute("select Taxon,Organism,Name,Type,Strand,Sequence from main where Name like ? and Type=? order by Taxon",('%'+Gene+'%',Type))
         Result=cur.fetchall()
     elif Querytype=="4":
-        cur.execute("select Taxon,Organism,Name,Type,Strand,Sequence from main")
+        cur.execute("select Taxon,Organism,Name,Type,Strand,Sequence,Head from main order by Taxon")
         Result=cur.fetchall()
 
     All=[]
@@ -135,7 +135,7 @@ def RunQuery(Querytype):
             Sequence.seq=Sequence.reverse_complement()
         Record=[Title,Sequence]
         All.append(Record)
-    
+
     Output=input("Enter output filename:\n")
     Fileout=open(".".join([Output,"fasta"]),"w")
     for i in All:
