@@ -136,7 +136,6 @@ def RunQuery(Querytype):
         Record=[Title,Sequence]
         All.append(Record)
     
-   # Fileout=open((".".join(["_".join([Gene,Type]),"fasta"])),"w")
     Fileout=open(".".join([Date,"fasta"]),"w")
     for i in All:
         Fileout.write(">%s\n%s\n"%(i[0],i[1]))
