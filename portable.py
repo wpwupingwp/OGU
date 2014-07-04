@@ -9,6 +9,15 @@ def parser():
     Accession=Record.annotations["accessions"][0]
     Gene=[]
     All=[]
+    Type="full"
+    Start=1
+    End=len(Record)
+    Sequence=str(Record.seq)
+    Name=Organism
+    Strand=1
+    rec=[Taxon,Organism,Accession,Name,Type,Start,End,Strand,Sequence,Date]
+    All.append(rec)
+    print(rec)
     for i in Record.features:
         if i.type=="gene" and "gene" in i.qualifiers:
             if i.location_operator!="join":
