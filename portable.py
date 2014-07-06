@@ -1,6 +1,6 @@
-from Bio import SeqIO,BiopythonDeprecationWarning
+from Bio import Entrez,SeqIO,BiopythonDeprecationWarning
 from Bio.Seq import MutableSeq
-import sqlite3,warnings,datetime
+import sqlite3,warnings,datetime,urllib.request
 warnings.simplefilter("ignore",BiopythonDeprecationWarning)
 
 def parser():
@@ -165,17 +165,26 @@ def RunQuery(Querytype):
     print("Done.\n")
     return 
 
+def UpdateFromGenbank():
+    #Down=urllib.request.urlopen("http://www.ncbi.nlm.nih.gov/genomes/GenomesGroup.cgi?taxid=2759&cmd=download1").read().decode("utf-8").split(sep="\r\n")
+    GenomeList=urllib.request.urlopen("http://studysutra.org/list").read().decode("utf-8").split(sep="\r\n")
+    GenomeList.pop()
+    print(GenomeList)
+    return
+    
 #Main program 
-Option=input("Select:\n1.Add data\n2.Query\n")
+Option=input("Select:\n1.Update database from GenBank\n2.Add pvirate data\n3.Query\n")
 Database=[]
 Date=str(datetime.datetime.now())[:19].replace(" ","-")
 if Option=="1":
+    UpdateFromGenbank()
+elif Option=="2":
    FileIn=input("Genbank format filename:\n")
    Records=SeqIO.parse(FileIn,"genbank")
    for Record in Records:
        parser()
    database()
-elif Option=="2":
+elif Option=="3":
     Query()
 else:
     print("Input error!\n")
