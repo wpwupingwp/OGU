@@ -169,7 +169,13 @@ def UpdateFromGenbank():
     #Down=urllib.request.urlopen("http://www.ncbi.nlm.nih.gov/genomes/GenomesGroup.cgi?taxid=2759&cmd=download1").read().decode("utf-8").split(sep="\r\n")
     GenomeList=urllib.request.urlopen("http://studysutra.org/list").read().decode("utf-8").split(sep="\r\n")
     GenomeList.pop()
-    print(GenomeList)
+    Entrez.email="wpwupingwp@outlook.com"
+    handle=(Entrez.epost("nucleotide",id=",".join(GenomeList)))
+    print(handle.read())
+   # W=handle["WebEnv"]
+   # K=handle["QueryKey"]
+   # Genome=Entrez.read(Entrez.efetch(db="nucleotide",WebEnv=W,query_key=K,retmode="xml"))
+   # SeqIO.write(Genome,"genbank","gb")
     return
     
 #Main program 
