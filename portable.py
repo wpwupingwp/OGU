@@ -1,6 +1,6 @@
 from Bio import Entrez,SeqIO,BiopythonDeprecationWarning
 from Bio.Seq import MutableSeq
-import sqlite3,warnings,datetime,urllib.request
+import sqlite3,warnings,datetime,urllib.request,re
 warnings.simplefilter("ignore",BiopythonDeprecationWarning)
 
 def parser():
@@ -162,22 +162,32 @@ def RunQuery(Querytype):
         Fileout.write(">%s\n%s\n"%(i[0],i[1]))
     cur.close()
     con.close()
+    Fileout.close()
     print("Done.\n")
     return 
 
 def UpdateFromGenbank():
-    #Down=urllib.request.urlopen("http://www.ncbi.nlm.nih.gov/genomes/GenomesGroup.cgi?taxid=2759&cmd=download1").read().decode("utf-8").split(sep="\r\n")
-    GenomeList=urllib.request.urlopen("http://studysutra.org/list").read().decode("utf-8").split(sep="\r\n")
-    GenomeList.pop()
+    Down=urllib.request.urlopen("http://www.ncbi.nlm.nih.gov/genomes/GenomesGroup.cgi?taxid=2759&opt=plastid").read().decode("utf-8")
+    GenomeList=re.findall("((?<=nuccore/)[0-9]{9})",Down)
     Entrez.email="wpwupingwp@outlook.com"
-    handle=(Entrez.epost("nucleotide",id=",".join(GenomeList)))
-    print(handle.read())
-   # W=handle["WebEnv"]
-   # K=handle["QueryKey"]
-   # Genome=Entrez.read(Entrez.efetch(db="nucleotide",WebEnv=W,query_key=K,retmode="xml"))
-   # SeqIO.write(Genome,"genbank","gb")
-    return
+    handle=Entrez.read(Entrez.epost(db="nuccore",id=",".join(GenomeList)))
+    W=handle["WebEnv"]
+    K=handle["QueryKey"]
+    GenomeContent=Entrez.efetch(db="nuccore",webenv=W,query_key=K,rettype="gb",retmode="text")
+    Output=open("GenBank","w")
+    Output.write(GenomeContent.read())
+    Output.close()
+    UpdateFromFile("GenBank")
     
+def UpdateFromFile(FileIn):
+    handle=open(FileIn,"r")
+    Records=SeqIO.parse(FileIn,"gb")
+    for Record in Records:
+        parser()
+    database()
+    FileIn.close()
+    return
+
 #Main program 
 Option=input("Select:\n1.Update database from GenBank\n2.Add pvirate data\n3.Query\n")
 Database=[]
@@ -185,11 +195,8 @@ Date=str(datetime.datetime.now())[:19].replace(" ","-")
 if Option=="1":
     UpdateFromGenbank()
 elif Option=="2":
-   FileIn=input("Genbank format filename:\n")
-   Records=SeqIO.parse(FileIn,"genbank")
-   for Record in Records:
-       parser()
-   database()
+    FileIn=input("Genbank format filename:\n")
+    UpdateFromFile(FileIn)
 elif Option=="3":
     Query()
 else:
