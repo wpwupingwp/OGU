@@ -2,7 +2,8 @@ from Bio import SeqIO
 print("This little program will remove the sequence which have too many N(one percent).\n")
 In=input("Filename:\n")
 handle2=open("output","w")
-Input=SeqIO.parse(In,"fasta")
+Input=list(SeqIO.parse(In,"fasta"))
+print(len(Input))
 n=0
 for record in Input:
     N=0
@@ -13,7 +14,8 @@ for record in Input:
     if N/float(Len)>=0.01:
         print(record,N,Len)
         n+=1
-    else:
-        SeqIO.write(record,"output","fasta")
+        Input.pop(record)
+SeqIO.write(Input,"output","fasta")
+print(len(Input))
 print("\n",n)
 
