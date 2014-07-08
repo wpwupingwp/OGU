@@ -3,8 +3,7 @@ print("This little program will remove the sequence which have too many N(one pe
 In=input("Filename:\n")
 handle2=open("output","w")
 Input=list(SeqIO.parse(In,"fasta"))
-print(len(Input))
-n=0
+Output=[]
 for record in Input:
     N=0
     Len=len(record.seq)
@@ -13,9 +12,8 @@ for record in Input:
             N+=1
     if N/float(Len)>=0.01:
         print(record,N,Len)
-        n+=1
-        Input.pop(record)
-SeqIO.write(Input,"output","fasta")
-print(len(Input))
-print("\n",n)
+    else:
+        Output.append(record)
+SeqIO.write(Output,"output","fasta")
+print(len(Input)-len(Output),"sequences removed.\n")
 
