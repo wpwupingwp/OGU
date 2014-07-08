@@ -174,18 +174,19 @@ def UpdateFromGenbank():
     W=handle["WebEnv"]
     K=handle["QueryKey"]
     GenomeContent=Entrez.efetch(db="nuccore",webenv=W,query_key=K,rettype="gb",retmode="text")
-    Output=open("GenBank","w")
+    Output=open("genbank","w")
     Output.write(GenomeContent.read())
     Output.close()
-    UpdateFromFile("GenBank")
+    UpdateFromFile("genbank")
     
 def UpdateFromFile(FileIn):
+    global Record
     handle=open(FileIn,"r")
-    Records=SeqIO.parse(FileIn,"gb")
+    Records=SeqIO.parse(FileIn,"genbank")
     for Record in Records:
         parser()
     database()
-    FileIn.close()
+    handle.close()
     return
 
 #Main program 
