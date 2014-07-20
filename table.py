@@ -38,7 +38,7 @@ for item in Value:
         x=Line.index(item[1])
         y=Rows.index(item[0])
         Out[y][x]=1
-handle=open('output.csv','w')
+handle1=open(''.join([Fna.replace('.fna',''),'-1.csv']),'w')
 writer=csv.writer(handle)
 for line in Out:
     writer.writerow(line)
@@ -60,7 +60,7 @@ for item in Value2:
     elif Out[y][x]=='0' and Out[z][x]=='0':
         Out2[y][x]=0.5
         Out2[z][x]=0.5
-handle2=open('output2.csv','w')
+handle2=open(''.join([Fna.replace('.fna',''),'-2.csv']),'w')
 writer2=csv.writer(handle2)
 for line in Out2:
     writer2.writerow(line)
