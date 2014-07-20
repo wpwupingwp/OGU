@@ -1,10 +1,11 @@
 #!/usr/bin/python3
 import re
 import csv
+from copy import deepcopy
 Value=[]
+Value2=[]
 Line=[]
 Row=[]
-Writeline=[]
 Out=[]
 Fna=input('fna file:\n')
 List=input('list file:\n')
@@ -24,17 +25,42 @@ for n in range(len(Rows)):
         Add=[Rows[n],]
         Add.extend(fill)
         Out.append(Add)
+Out2=deepcopy(Out)
+#one species
 Id=re.findall('(?<=\>)[A-Z][a-z]+-cp\d{3}',Raw)
 for record in Id:
-    Value.append((str(record)).split(sep='-'))
+    toadd=(str(record)).split(sep='-')
+    if not toadd in Value:
+        Value.append(toadd)
 Value.sort()
 for item in Value:
     if item[0] in Rows:
-        y=Rows.index(item[0])+0
         x=Line.index(item[1])
+        y=Rows.index(item[0])
         Out[y][x]=1
 handle=open('output.csv','w')
 writer=csv.writer(handle)
 for line in Out:
     writer.writerow(line)
-
+#two species
+Id2=re.findall('(?<=\>)[A-Z][a-z]+-[A-Z][a-z]+-cp\d{3}',Raw.replace('_','-'))
+for record in Id2:
+    toadd=(str(record)).split(sep='-')
+    if not toadd in Value2:
+        Value2.append(toadd)
+Value2.sort()
+for item in Value2:
+    x=Line.index(item[2])
+    y=Rows.index(item[0])
+    z=Rows.index(item[1])
+    if Out[y][x]==1:
+        Out2[z][x]=1
+    elif Out[z][x]==1:
+        Out2[y][x]=1
+    elif Out[y][x]=='0' and Out[z][x]=='0':
+        Out2[y][x]=0.5
+        Out2[z][x]=0.5
+handle2=open('output2.csv','w')
+writer2=csv.writer(handle2)
+for line in Out2:
+    writer2.writerow(line)
