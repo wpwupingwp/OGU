@@ -39,7 +39,7 @@ for item in Value:
         y=Rows.index(item[0])
         Out[y][x]=1
 handle1=open(''.join([Fna.replace('.fna',''),'-1.csv']),'w')
-writer=csv.writer(handle)
+writer=csv.writer(handle1)
 for line in Out:
     writer.writerow(line)
 #two species
