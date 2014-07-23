@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 from Bio import Entrez,SeqIO,BiopythonDeprecationWarning
 from Bio.Seq import MutableSeq
 import sqlite3,warnings,datetime,urllib.request,re
@@ -9,7 +11,7 @@ def parser():
     Accession=Record.annotations["accessions"][0]
     Gene=[]
     All=[]
-    Type="full"
+    Type="whole"
     Start=1
     End=len(Record)
     Sequence=str(Record.seq)
@@ -20,7 +22,6 @@ def parser():
     for i in Record.features:
         if i.type=="gene" and "gene" in i.qualifiers:
             if i.location_operator!="join":
-                Gene.append(rec)
                 Type="gene"
                 Start=int(i.location.start)
                 End=int(i.location.end)
@@ -139,17 +140,20 @@ def RunQuery(Querytype):
     if Querytype=="1":
         Organism=input("Organism:\n")
         Gene=input("Gene:\n")
-        Type=input("Fragment type(gene,rRNA,tRNA,exon,intron,spacer):\n")
-        cur.execute("select Taxon,Organism,Name,Type,Strand,Sequence from main where Name like ? and Type=? and Organism like ?",('%'+Gene+'%',Type,Organism))
+        Type=input("Fragment type(gene,cds,rRNA,tRNA,exon,intron,spacer):\n")
+        cur.execute("select Taxon,Organism,Name,Type,Strand,Sequence from main where Name like ? and Type=? and Organism=?",('%'+Gene+'%',Type,Organism))
         Result=cur.fetchall()
     elif Querytype=="2":
         Organism=input("Organism:\n")
-        Type=input("Fragment type(gene,rRNA,tRNA,exon,intron,spacer):\n")
-        cur.execute("select Taxon,Organism,Name,Type,Strand,Sequence,Head from main where Organism=? and Type=? order by Head",(Organism,Type))
+        Type=input("Fragment type(gene,cds,rRNA,tRNA,exon,intron,spacer,whole,fragments):\n")
+        if Type=="fragments":
+            cur.execute("select Taxon,Organism,Name,Type,Strand,Sequence,Head from main where Organism=?  order by Head",(Organism,))
+        else:
+            cur.execute("select Taxon,Organism,Name,Type,Strand,Sequence,Head from main where Organism=? and Type=? order by Head",(Organism,Type))
         Result=cur.fetchall()
     elif Querytype=="3":
         Gene=input("Gene:\n")
-        Type=input("Fragment type(gene,rRNA,tRNA,exon,intron,spacer):\n")
+        Type=input("Fragment type(gene,cds,rRNA,tRNA,exon,intron,spacer):\n")
         cur.execute("select Taxon,Organism,Name,Type,Strand,Sequence from main where Name like ? and Type=? order by Taxon",('%'+Gene+'%',Type))
         Result=cur.fetchall()
     elif Querytype=="4":
