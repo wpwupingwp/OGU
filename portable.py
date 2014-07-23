@@ -42,6 +42,15 @@ def parser():
                 End=int(i.sub_features[1].location.end)
                 Sequence="".join([str(Record.seq[Start:End]),str(Record.seq[Start:End])])
                 rec=[Taxon,Organism,Accession,Name,Type,Start,End,Strand,Sequence,Date]
+        elif i.type=="CDS" and "gene" in i.qualifiers:
+            Type="cds"
+            Start=int(i.location.start)
+            End=int(i.location.end)
+            Sequence=str(Record.seq[Start:End])
+            Name=str(i.qualifiers["gene"][0]).replace(" ","_")
+            Strand=str(i.location.strand)
+            rec=[Taxon,Organism,Accession,Name,Type,Start,End,Strand,Sequence,Date]
+            All.append(rec)
         elif i.type=="tRNA" and "gene" in i.qualifiers:
             Type="tRNA"
             Start=int(i.location.start)
