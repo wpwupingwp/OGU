@@ -5,12 +5,12 @@ Id=dict()
 Rank=dict()
 List=[]
 Data=[]
-with open('id','r') as In:
+with open('./test/id','r') as In:
     Raw=list(In.readlines())
     for record in Raw:
         add=record.replace('\n','').split(sep=' ')
         Id[add[0]]=add[1]
-with open('rank','r') as In:
+with open('./test/rank','r') as In:
     Raw=list(In.readlines())
     for record in Raw:
         add=record.replace('\n','').split(sep=' ')
