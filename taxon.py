@@ -19,12 +19,17 @@ with open('./test/rank','r') as In:
             List.append(add[0])
 for species in List:
     record=[species,]
-    while Id[species]!='1':
+    while Id[species]!='1' :
+#        if Rank[Id[species]] in ['species','genus','family','order','class','phylum','kingdom'] :
         record.append(Id[species])
         species=Id[species]
-    Data.append(record)
+    if '33090' in record:
+        record.pop()
+        record.pop()
+        Data.append(record[::-1])
 
 writer=csv.writer(open('out.csv','w',newline=''))
 for item in Data:
-    if '33090' in item:
+    #if '33090' in item:
+    if True:
         writer.writerow(item)
