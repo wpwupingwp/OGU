@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 import re
 In=input("filename:\n")
 Adapter=input("adapter:\n")

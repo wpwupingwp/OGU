@@ -1,4 +1,4 @@
-#!/bin/python3
+#!/usr/bin/python3
 import sys
 from Bio import SeqIO
 print("python3",sys.argv[0],"sff_file","fasta_file")

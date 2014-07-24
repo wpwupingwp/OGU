@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 from Bio import SeqIO
 print("This little program will remove the sequence which have too many N(one percent).\n")
 In=input("Filename:\n")
