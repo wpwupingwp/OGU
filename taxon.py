@@ -8,22 +8,25 @@ def Create():
     Species=[]
     NotSpecies=[]
     Data=[]
-    with open('./test/nodes','r') as In:
-        Raw=list(In.readlines())
-        for record in Raw:
-            add=record.replace('\n','').split(sep=' ')
-            Id[add[0]]=add[1]
-            Rank[add[0]]=add[2]
-            if add[2]=='species':
-                Species.append(add[0])
-            else:
-                NotSpecies.append(add[0])
+    ToDB=[]
+    Info=[]
     with open('./test/name','r') as In:
         Raw=list(In.readlines())
         for record in Raw:
             add=record.replace('\n','').split(sep='|')
             if add[0] not in Name or add[3]=='scientific name':
                 Name[add[0]]=add[1]
+    with open('./test/nodes','r') as In:
+        Raw=list(In.readlines())
+        for record in Raw:
+            add=record.replace('\n','').split(sep=' ')
+            Id[add[0]]=add[1]
+            Rank[add[0]]=add[2]
+            Info.append([add[0],add[2],Name[add[0]]])
+            if add[2]=='species':
+                Species.append(add[0])
+            else:
+                NotSpecies.append(add[0])
     for species in Species:
         record=[species,]
         while Id[species]!='1' :
@@ -34,15 +37,21 @@ def Create():
             record.pop()
             record.pop()
             Data.append(record[::-1])
+        for notspecies in NotSpecies:
+            record=[species,]
+            for data in Data:
+                if notspecies in data:
+                    record.append(data[-1])
+            ToDB.append(record)
     return
 
 
 def database():
     con=sqlite3.connect("./test/DB")
     cur=con.cursor()
-    cur.execute("create table if not exists name_taxonid (ID integer PRIMARY KEY,Name text);")
-    for row in Name:
-        cur.execute("insert into name_taxonid (ID,Name) values (?,?);",(row[0],row[1]))
+    cur.execute("create table if not exists name_taxonid (ID integer PRIMARY KEY,Rank text,Name text);")
+    for line in Info:
+        cur.execute("insert into name_taxonid (ID,Name) values (?,?);",(line[0],line[1],line[2]))
     con.commit()
     cur.close()
     con.close()
