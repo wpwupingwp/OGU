@@ -92,11 +92,11 @@ def Query():
         Son=i[3].split(sep=' ')
         Parent=i[4].split(sep=' ')
 
-    print(['id    : ',Id])
-    print(['rank  : ',Rank])
-    print(['name  : ',Name])
-    print(['parent: ','->'.join(Parent)])
-    print(['son   : ',','.join(Son)])
+    print('id    : ',Id)
+    print('rank  : ',Rank)
+    print('name  : ',Name)
+    print('parent: ','->'.join(Parent))
+    print('son   : ',','.join(Son))
     cur.close()
     con.close()
     return 
