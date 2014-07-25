@@ -58,11 +58,11 @@ def Create():
 def Database():
     con=sqlite3.connect('./test/DB')
     cur=con.cursor()
-    cur.execute('create table if not exists taxon (ID integer PRIMARY KEY,Rank text,Name text,Son text,Parent text);')
+    cur.execute('create table if not exists taxon (Id text,Rank text,Name text,Son text,Parent text);')
     for line in ToDB:
         Son=' '.join(line[3])
         Parent=' '.join(line[4])
-        cur.execute('insert into taxon (ID,Rank,Name,Son,Parent) values (?,?,?,?,?);',(int(line[0]),line[1],line[2],Son,Parent))
+        cur.execute('insert into taxon (Id,Rank,Name,Son,Parent) values (?,?,?,?,?);',(line[0],line[1],line[2],Son,Parent))
     con.commit()
     cur.close()
     con.close()
@@ -78,7 +78,7 @@ def Query():
     cur=con.cursor()
     if Querytype=='1':
         Id=input('taxon id:\n')
-        cur.execute('select * from taxon where id=?;',(Id,))
+        cur.execute('select * from taxon where Id=?;',(Id,))
         Result=cur.fetchall()
     elif Querytype=='2':
         Name=input('scientific name:\n')
