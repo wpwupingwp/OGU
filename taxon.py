@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 import sqlite3
+from copy import deepcopy
 
 def Create():
     Id=dict()
@@ -29,23 +30,28 @@ def Create():
         while Id[specie]!='1' :
     #        if Rank[Id[species]] in ['species','genus','family','order','class','phylum','kingdom'] :
             record.append(Id[specie])
-            species=Id[specie]
+            specie=Id[specie]
         if '33090' in record:
             record.pop()
             record.pop()
             Data.append(record)
-
-        for id in Info:
-            son=[]
-            parent=[]
-            for data in Data:
-                if id[0] in data:
-                    son.append(data[0])
-                    parent.append(data[data.index(id[0]):])
-            id.append(son)
-            id.append(parent)
-            ToDB.append(id)
-            #id,rank,name,[son],[parent]
+    n=0
+    for item in Info:
+        n+=1
+        add=deepcopy(item)
+        son=[]
+        parent=[]
+        for data in Data:
+            if item[0] in data:
+                son.append(data[0])
+                parent.append(data[data.index(item[0]):])
+        add.append(son)
+        add.append(parent)
+        if n==10:
+            print(ToDB)
+            return
+        ToDB.append(add)
+        #id,rank,name,[son],[parent]
     return
 
 
@@ -56,7 +62,7 @@ def Database():
     for line in ToDB:
         Son=' '.join(line[3])
         Parent=' '.join(line[4])
-        cur.execute('insert into taxon (ID,Rank,Name,Son,Parent) values (?,?,?,?,?);',(line[0],line[1],line[2],Son,Parent))
+        cur.execute('insert into taxon (ID,Rank,Name,Son,Parent) values (?,?,?,?,?);',(int(line[0]),line[1],line[2],Son,Parent))
     con.commit()
     cur.close()
     con.close()
