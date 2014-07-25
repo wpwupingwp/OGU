@@ -35,21 +35,18 @@ def Create():
             record.pop()
             record.pop()
             Data.append(record)
-    n=0
+#Bug
     for item in Info:
-        n+=1
         add=deepcopy(item)
         son=[]
         parent=[]
         for data in Data:
+            continue
             if item[0] in data:
                 son.append(data[0])
                 parent.append(data[data.index(item[0]):])
         add.append(son)
         add.append(parent)
-        if n==10:
-            print(ToDB)
-            return
         ToDB.append(add)
         #id,rank,name,[son],[parent]
     return
