@@ -3,13 +3,12 @@ import sqlite3
 
 def Create():
     Id=dict()
-    Rank=dict()
     Name=dict()
-    Species=[]
-    NotSpecies=[]
+    Specie=[]
     Data=[]
-    ToDB=[]
     Info=[]
+    global ToDB
+    ToDB=[]
     with open('./test/name','r') as In:
         Raw=list(In.readlines())
         for record in Raw:
@@ -21,93 +20,86 @@ def Create():
         for record in Raw:
             add=record.replace('\n','').split(sep=' ')
             Id[add[0]]=add[1]
-            Rank[add[0]]=add[2]
-            Info.append([add[0],add[2],Name[add[0]]])
+            Info.append([add[0],add[2],Name[add[0]]])      
+            #id,rank,name
             if add[2]=='species':
-                Species.append(add[0])
-            else:
-                NotSpecies.append(add[0])
-    for species in Species:
-        record=[species,]
-        while Id[species]!='1' :
+                Specie.append(add[0])
+    for specie in Specie:
+        record=[specie,]
+        while Id[specie]!='1' :
     #        if Rank[Id[species]] in ['species','genus','family','order','class','phylum','kingdom'] :
-            record.append(Id[species])
-            species=Id[species]
+            record.append(Id[specie])
+            species=Id[specie]
         if '33090' in record:
             record.pop()
             record.pop()
-            Data.append(record[::-1])
-        for notspecies in NotSpecies:
-            record=[species,]
+            Data.append(record)
+
+        for id in Info:
+            son=[]
+            parent=[]
             for data in Data:
-                if notspecies in data:
-                    record.append(data[-1])
-            ToDB.append(record)
+                if id[0] in data:
+                    son.append(data[0])
+                    parent.append(data[data.index(id[0]):])
+            id.append(son)
+            id.append(parent)
+            ToDB.append(id)
+            #id,rank,name,[son],[parent]
     return
 
 
-def database():
-    con=sqlite3.connect("./test/DB")
+def Database():
+    con=sqlite3.connect('./test/DB')
     cur=con.cursor()
-    cur.execute("create table if not exists name_taxonid (ID integer PRIMARY KEY,Rank text,Name text);")
-    for line in Info:
-        cur.execute("insert into name_taxonid (ID,Name) values (?,?);",(line[0],line[1],line[2]))
+    cur.execute('create table if not exists taxon (ID integer PRIMARY KEY,Rank text,Name text,Son text,Parent text);')
+    for line in ToDB:
+        Son=' '.join(line[3])
+        Parent=' '.join(line[4])
+        cur.execute('insert into taxon (ID,Rank,Name,Son,Parent) values (?,?,?,?,?);',(line[0],line[1],line[2],Son,Parent))
     con.commit()
     cur.close()
     con.close()
-    print("Done.\n")
+    print('Done.\n')
     return
     
 def Query():
-    Querytype=input("1.Specific fragment\n2.Specific Organism\n3.Specific gene\n4.All\n")
-    if Querytype in ["1","2","3","4"]:
-        RunQuery(Querytype)
-    else:
-        print("Input error!\n")
-    return
-
-def RunQuery(Querytype):
-    con=sqlite3.connect("./db")
+    Querytype=input('1.by id\n2.by name\n')
+    if Querytype not in ['1','2']:
+        print('wrong input!\n')
+        return 
+    con=sqlite3.connect('./test/DB')
     cur=con.cursor()
-    if Querytype=="1":
-        Organism=input("Organism:\n")
-        Gene=input("Gene:\n")
-        Type=input("Fragment type(gene,cds,rRNA,tRNA,exon,intron,spacer):\n")
-        cur.execute("select Taxon,Organism,Name,Type,Strand,Sequence from main where Name like ? and Type=? and Organism=?",('%'+Gene+'%',Type,Organism))
+    if Querytype=='1':
+        Id=input('taxon id:\n')
+        cur.execute('select * from taxon where id=?;',(Id,))
         Result=cur.fetchall()
-    elif Querytype=="2":
-        Organism=input("Organism:\n")
-        Type=input("Fragment type(gene,cds,rRNA,tRNA,exon,intron,spacer,whole,fragments):\n")
-        if Type=="fragments":
-            cur.execute("select Taxon,Organism,Name,Type,Strand,Sequence,Head from main where Organism=?  order by Head",(Organism,))
-        else:
-            cur.execute("select Taxon,Organism,Name,Type,Strand,Sequence,Head from main where Organism=? and Type=? order by Head",(Organism,Type))
-        Result=cur.fetchall()
-    elif Querytype=="3":
-        Gene=input("Gene:\n")
-        Type=input("Fragment type(gene,cds,rRNA,tRNA,exon,intron,spacer):\n")
-        cur.execute("select Taxon,Organism,Name,Type,Strand,Sequence from main where Name like ? and Type=? order by Taxon",('%'+Gene+'%',Type))
-        Result=cur.fetchall()
-    elif Querytype=="4":
-        cur.execute("select Taxon,Organism,Name,Type,Strand,Sequence,Head from main order by Taxon")
+    elif Querytype=='2':
+        Name=input('scientific name:\n')
+        cur.execute('select * from taxon where Name like ?;',('%'+Name+'%',))
         Result=cur.fetchall()
 
-    All=[]
     for i in Result:
-        Title="|".join([str(i[0]),i[1],i[2],i[3]])
-        Sequence=MutableSeq(i[5])
-        if i[4]=="-1":
-            Sequence.seq=Sequence.reverse_complement()
-        Record=[Title,Sequence]
-        All.append(Record)
+        Id=i[0]
+        Rank=i[1]
+        Name=i[2]
+        Son=i[3].split(sep=' ')
+        Parent=i[4].split(sep=' ')
 
-    Output=input("Enter output filename:\n")
-    Fileout=open(".".join([Output,"fasta"]),"w")
-    for i in All:
-        Fileout.write(">%s\n%s\n"%(i[0],i[1]))
+    print(['id    : ',Id])
+    print(['rank  : ',Rank])
+    print(['name  : ',Name])
+    print(['parent: ','->'.join(Parent)])
+    print(['son   : ',','.join(Son)])
     cur.close()
     con.close()
-    Fileout.close()
-    print("Done.\n")
     return 
 
+work=input('1.Init database\n2.query\n')
+if work=='1':
+    Create()
+    Database()
+elif work=='2':
+    Query()
+else:
+    print('wrong input!\n')
