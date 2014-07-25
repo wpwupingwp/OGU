@@ -5,7 +5,7 @@ from Bio.Seq import MutableSeq
 import sqlite3,warnings,datetime,urllib.request,re
 warnings.simplefilter("ignore",BiopythonDeprecationWarning)
 
-def parser():
+def Parser():
     Taxon=int(Record.features[0].qualifiers["db_xref"][0][6:])
     Organism=Record.annotations["organism"]
     Accession=Record.annotations["accessions"][0]
@@ -113,8 +113,8 @@ def parser():
     return 
 
 
-def database():
-    con=sqlite3.connect("./db")
+def Database():
+    con=sqlite3.connect("./test/DB")
     cur=con.cursor()
     cur.execute("create table if not exists main (Taxon int,Organism text,Accession text,Name text,Type text,Head int,Tail int, Strand text,Sequence text,Date text,ID integer PRIMARY KEY);")
     for row in Database:
@@ -135,7 +135,7 @@ def Query():
     return
 
 def RunQuery(Querytype):
-    con=sqlite3.connect("./db")
+    con=sqlite3.connect("./test/DB")
     cur=con.cursor()
     if Querytype=="1":
         Organism=input("Organism:\n")
@@ -197,8 +197,8 @@ def UpdateFromFile(FileIn):
     handle=open(FileIn,"r")
     Records=SeqIO.parse(FileIn,"genbank")
     for Record in Records:
-        parser()
-    database()
+        Parser()
+    Database()
     handle.close()
     return
 
