@@ -5,11 +5,11 @@ from copy import deepcopy
 def Create():
     Id=dict()
     Name=dict()
-    Specie=[]
-    Data=[]
-    Info=[]
+    Specie=list()
+    Data=list()
+    Info=list()
     global ToDB
-    ToDB=[]
+    ToDB=list()
     with open('./test/name','r') as In:
         Raw=list(In.readlines())
         for record in Raw:
@@ -38,13 +38,12 @@ def Create():
 #Bug
     for item in Info:
         add=deepcopy(item)
-        son=[]
-        parent=[]
+        son=set()
+        parent=list()
         for data in Data:
-            continue
             if item[0] in data:
-                son.append(data[0])
-                parent.append(data[data.index(item[0]):])
+                son.add(data[data.index(item[0])+1])
+                parent=data[data.index(item[0]):]
         add.append(son)
         add.append(parent)
         ToDB.append(add)
