@@ -1,13 +1,14 @@
 #!/usr/bin/python3
 import sqlite3
-from copy import deepcopy
+import pickle
 
 def Create():
     Id=dict()
     Name=dict()
     Specie=list()
     Data=list()
-    Info=list()
+    Son=dict()
+    Parent=dict()
     global ToDB
     ToDB=list()
     with open('./test/name','r') as In:
@@ -21,33 +22,28 @@ def Create():
         for record in Raw:
             add=record.replace('\n','').split(sep=' ')
             Id[add[0]]=add[1]
-            Info.append([add[0],add[2],Name[add[0]]])      
             #id,rank,name
             if add[2]=='species':
                 Specie.append(add[0])
     for specie in Specie:
         record=[specie,]
         while Id[specie]!='1' :
-    #        if Rank[Id[species]] in ['species','genus','family','order','class','phylum','kingdom'] :
             record.append(Id[specie])
             specie=Id[specie]
         if '33090' in record:
             record.pop()
             record.pop()
             Data.append(record)
-#Bug
-    for item in Info:
-        add=deepcopy(item)
-        son=set()
-        parent=list()
-        for data in Data:
-            if item[0] in data:
-                son.add(data[data.index(item[0])+1])
-                parent=data[data.index(item[0]):]
-        add.append(son)
-        add.append(parent)
-        ToDB.append(add)
-        #id,rank,name,[son],[parent]
+    for data in Data:
+        Parent[data[0]]=set(data[1:])
+        for n in range(len(data)):
+            if n==0:
+                pass
+            if data[n] not in Son:
+                Son[data[n]]=set()
+            else:
+                Son[data[n]].add(data[n-1])
+        record=[data[0],
     return
 
 
