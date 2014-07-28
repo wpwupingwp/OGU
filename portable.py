@@ -113,7 +113,7 @@ def Parser():
     return 
 
 
-def Database():
+def InitSeq():
     con=sqlite3.connect("./test/DB")
     cur=con.cursor()
     cur.execute("create table if not exists main (Taxon int,Organism text,Accession text,Name text,Type text,Head int,Tail int, Strand text,Sequence text,Date text,ID integer PRIMARY KEY);")
@@ -126,15 +126,15 @@ def Database():
     print("Done.\n")
     return
     
-def Query():
+def SeqQuery():
     Querytype=input("1.Specific fragment\n2.Specific Organism\n3.Specific gene\n4.All\n")
     if Querytype in ["1","2","3","4"]:
-        RunQuery(Querytype)
+        RunSeqQuery(Querytype)
     else:
         print("Input error!\n")
     return
 
-def RunQuery(Querytype):
+def RunSeqQuery(Querytype):
     con=sqlite3.connect("./test/DB")
     cur=con.cursor()
     if Querytype=="1":
@@ -198,7 +198,7 @@ def UpdateFromFile(FileIn):
     Records=SeqIO.parse(FileIn,"genbank")
     for Record in Records:
         Parser()
-    Database()
+    InitSeq()
     handle.close()
     return
 
@@ -212,7 +212,7 @@ elif Option=="2":
     FileIn=input("Genbank format filename:\n")
     UpdateFromFile(FileIn)
 elif Option=="3":
-    Query()
+    SeqQuery()
 else:
     print("Input error!\n")
 
