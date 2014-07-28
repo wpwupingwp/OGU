@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 import sqlite3
 
-def Create():
+def InitTaxon():
     Id=dict()
     Data=list()
     Name=dict()
@@ -58,16 +58,12 @@ def Create():
             GreatSon[specie[0]]=set()
         record=[specie[0],Name[specie[0]],Rank[specie[0]],Son[specie[0]],Parent[specie[0]],GreatSon[specie[0]]]
         Taxon.append(record)
-    return
 
-
-def Database():
     con=sqlite3.connect('./test/DB')
     cur=con.cursor()
     cur.execute('create table if not exists taxon (Id text,Name text,Rank text,Son text,Parent text,GreatSon text);')
     for line in Taxon:
         Son=' '.join(line[3])
-#        Parent=str(line[4])
         Parent=' '.join(line[4])
         GreatSon=' '.join(line[5])
         cur.execute('insert into taxon (Id,Name,Rank,Son,Parent,GreatSon) values (?,?,?,?,?,?);',(line[0],line[1],line[2],Son,Parent,GreatSon))
@@ -77,7 +73,14 @@ def Database():
     print('Done.\n')
     return
     
-def Query():
+def TaxonQueryAuto(Id,Rank):
+    con=sqlite3.connect('./test/DB')
+    cur=con.cursor()
+    cur.execute('select Parent from taxon where Id=? or Name=?;',(Id,'%'+Name+'%'))
+    Result=cur.fetchall()
+    '''to be contiuned'''
+
+def TaxonQueryNoAuto():
     while True:
         Querytype=input('1.by id\n2.by name\n')
         if Querytype not in ['1','2']:
@@ -116,12 +119,6 @@ def Query():
             for item3 in GreatSon:
                 GreatSonname.append(Namedict[item3])
             handle=open('out.txt','a',encoding='utf-8')
-            #print('id      : ',Id,'\n')
-            #print('name    : ',Name,'\n')
-            #print('rank    : ',Rank,'\n')
-            #print('parent  : ','->'.join(Parentname),'\n')
-            #print('son     : ',','.join(Sonname),'\n')
-            #print('greatson: ',','.join(GreatSonname),'\n\n')
             handle.write(''.join(['id      : ',Id,'\n']))
             handle.write(''.join(['name    : ',Name,'\n']))
             handle.write(''.join(['rank    : ',Rank,'\n']))
@@ -129,11 +126,3 @@ def Query():
             handle.write(''.join(['son     : ',','.join(Sonname),'\n']))
             handle.write(''.join(['greatson: ',','.join(GreatSonname),'\n\n']))
 
-work=input('1.Init database\n2.query\n')
-if work not in ['1','2']:
-    raise ValueError('wrong input!\n')
-if work=='1':
-    Create()
-    Database()
-elif work=='2':
-    Query()
