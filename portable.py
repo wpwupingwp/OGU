@@ -1,16 +1,22 @@
 #!/usr/bin/python3
 
-from Bio import Entrez,SeqIO,BiopythonDeprecationWarning
-from Bio.Seq import MutableSeq
 import datetime
 import re
 import sqlite3
 import urllib.request
 import warnings
 
+from Bio import BiopythonDeprecationWarning
+from Bio import Entrez
+from Bio import SeqIO
+from Bio.Seq import MutableSeq
+
 warnings.simplefilter("ignore",BiopythonDeprecationWarning)
 
 def Parser():
+
+    '''Base on annotations in genbank files to extract fragments from Chloroplast Genome Sequence.'''
+
     Taxon=int(Record.features[0].qualifiers["db_xref"][0][6:])
     Organism=Record.annotations["organism"]
     Accession=Record.annotations["accessions"][0]
@@ -122,6 +128,9 @@ def Parser():
     return 
 
 def InitSeq():
+
+    '''Init Sequence Database'''
+
     con=sqlite3.connect("./test/DB")
     cur=con.cursor()
     cur.execute("create table if not exists main (Taxon int,Organism text,Accession text,Name text,Type text,Head int,Tail int, Strand text,Sequence text,Date text,ID integer PRIMARY KEY);")
@@ -135,14 +144,12 @@ def InitSeq():
     return
     
 def SeqQuery():
-    Querytype=input("1.Specific fragment\n2.Specific Organism\n3.Specific gene\n4.All\n")
-    if Querytype in ["1","2","3","4"]:
-        RunSeqQuery(Querytype)
-    else:
-        print("Input error!\n")
-    return
 
-def RunSeqQuery(Querytype):
+    '''Sequence query function, to be continued.'''
+
+    Querytype=input("1.Specific fragment\n2.Specific Organism\n3.Specific gene\n4.All\n")
+    if Querytype not in ["1","2","3","4"]:
+        raise ValueError('wrong input!\n')
     con=sqlite3.connect("./test/DB")
     cur=con.cursor()
     if Querytype=="1":
@@ -188,6 +195,8 @@ def RunSeqQuery(Querytype):
     return 
 
 def UpdateSeqDBFromGenbank():
+    '''Update Sequence database from Genbank, need time to download.'''
+
     Down=urllib.request.urlopen("http://www.ncbi.nlm.nih.gov/genomes/GenomesGroup.cgi?taxid=2759&opt=plastid").read().decode("utf-8")
     GenomeList=re.findall("((?<=nuccore/)[0-9]{9})",Down)
     Entrez.email="wpwupingwp@outlook.com"
@@ -201,6 +210,7 @@ def UpdateSeqDBFromGenbank():
     UpdateSeqFromFile("genbank")
     
 def UpdateSeqFromFile(FileIn):
+    '''Update Sequence database from private file.'''
     global Record
     handle=open(FileIn,"r")
     Records=SeqIO.parse(FileIn,"genbank")
@@ -211,6 +221,9 @@ def UpdateSeqFromFile(FileIn):
     return
 
 def InitTaxon():
+    
+    '''Init Taxon database from file. to be continued(add download function'''
+
     Id=dict()
     Data=list()
     Name=dict()
@@ -283,6 +296,9 @@ def InitTaxon():
     return
     
 def TaxonQueryAuto(Id,Rank):
+
+    '''Taxon query for seqquery, may be remove'''
+
     con=sqlite3.connect('./test/DB')
     cur=con.cursor()
     cur.execute('select Parent from taxon where Id=? or Name=?;',(Id,'%'+Name+'%'))
@@ -290,6 +306,9 @@ def TaxonQueryAuto(Id,Rank):
     '''to be contiuned'''
 
 def TaxonQueryNoAuto():
+
+    '''Interactive query taxon database.'''
+
     while True:
         Querytype=input('1.by id\n2.by name\n')
         if Querytype not in ['1','2']:
@@ -335,7 +354,10 @@ def TaxonQueryNoAuto():
             handle.write(''.join(['son     : ',','.join(Sonname),'\n']))
             handle.write(''.join(['greatson: ',','.join(GreatSonname),'\n\n']))
 
-#Main program 
+#__main()__
+
+'''main function, entrance of the program.'''
+
 Option=input("Select:\n1.Update database from GenBank\n2.Add pvirate data\n3.Query\n")
 Date=str(datetime.datetime.now())[:19].replace(" ","-")
 if Option=="1":
