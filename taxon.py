@@ -54,6 +54,8 @@ def Create():
             Son[specie[0]]=set()
         if specie[0] not in Parent:
             Parent[specie[0]]=list()
+        if specie[0] not in GreatSon:
+            GreatSon[specie[0]]=set()
         record=[specie[0],Name[specie[0]],Rank[specie[0]],Son[specie[0]],Parent[specie[0]],GreatSon[specie[0]]]
         Taxon.append(record)
     return
