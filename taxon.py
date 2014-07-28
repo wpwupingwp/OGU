@@ -16,7 +16,7 @@ def Create():
         Raw=list(In.readlines())
         for record in Raw:
             add=record.replace('\n','').split(sep='|')
-            if add[0] not in Name or add[3]=='scientific name':
+            if add[0] not in Name or add[2]=='scientific name':
                 Name[add[0]]=add[1]
     with open('./test/nodes','r') as In:
         Raw=list(In.readlines())
@@ -92,21 +92,42 @@ def Query():
             Name=input('scientific name:\n')
             cur.execute('select * from taxon where Name like ?;',('%'+Name+'%',))
             Result=cur.fetchall()
+        cur.execute('select Id,Name from taxon;')
+        Result2=cur.fetchall()
         cur.close()
         con.close()
+        Namedict={'':''}
+        for item in Result2:
+            Namedict[item[0]]=item[1]
         for i in Result:
             Id=i[0]
             Name=i[1]
             Rank=i[2]
             Son=i[3].split(sep=' ')
+            Sonname=list()
+            for item in Son:
+                Sonname.append(Namedict[item])
             Parent=i[4].split(sep=' ')
+            Parentname=list()
+            for item2 in Parent:
+                Parentname.append(Namedict[item2])
             GreatSon=i[5].split(sep=' ')
-            print('id      : ',Id,'\n')
-            print('name    : ',Name,'\n')
-            print('rank    : ',Rank,'\n')
-            print('parent  : ','->'.join(Parent),'\n')
-            print('son     : ',','.join(Son),'\n')
-            print('greatson: ',','.join(GreatSon),'\n\n')
+            GreatSonname=list()
+            for item3 in GreatSon:
+                GreatSonname.append(Namedict[item3])
+            handle=open('out.txt','a',encoding='utf-8')
+            #print('id      : ',Id,'\n')
+            #print('name    : ',Name,'\n')
+            #print('rank    : ',Rank,'\n')
+            #print('parent  : ','->'.join(Parentname),'\n')
+            #print('son     : ',','.join(Sonname),'\n')
+            #print('greatson: ',','.join(GreatSonname),'\n\n')
+            handle.write(''.join(['id      : ',Id,'\n']))
+            handle.write(''.join(['name    : ',Name,'\n']))
+            handle.write(''.join(['rank    : ',Rank,'\n']))
+            handle.write(''.join(['parent  : ','->'.join(Parentname),'\n']))
+            handle.write(''.join(['son     : ',','.join(Sonname),'\n']))
+            handle.write(''.join(['greatson: ',','.join(GreatSonname),'\n\n']))
 
 work=input('1.Init database\n2.query\n')
 if work not in ['1','2']:
