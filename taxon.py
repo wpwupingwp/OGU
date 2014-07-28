@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 import sqlite3
-import pickle
 
 def Create():
     Id=dict()
@@ -31,17 +30,18 @@ def Create():
         while Id[specie]!='1' :
             record.append(Id[specie])
             specie=Id[specie]
-        if '33090' in record:
-            record.pop()
-            record.pop()
+#        if '33090' in record:
+#            record.pop()
+#            record.pop()
             Data.append(record)
     for data in Data:
-        Parent[data[0]]=data[1:]
         for n in range(len(data)):
+            if data[n] not in Parent:
+                Parent[data[n]]=data[(n+1):]
             if n==0:
-                pass
+                continue
             if data[n] not in Son:
-                Son[data[n]]=set(data[n-1])
+                Son[data[n]]={data[n-1],}
             else:
                 Son[data[n]].add(data[n-1])
     for specie in Name.items():
@@ -60,6 +60,7 @@ def Database():
     cur.execute('create table if not exists taxon (Id text,Name text,Rank text,Son text,Parent text);')
     for line in Taxon:
         Son=' '.join(line[3])
+#        Parent=str(line[4])
         Parent=' '.join(line[4])
         cur.execute('insert into taxon (Id,Name,Rank,Son,Parent) values (?,?,?,?,?);',(line[0],line[1],line[2],Son,Parent))
     con.commit()
@@ -69,34 +70,33 @@ def Database():
     return
     
 def Query():
-    Querytype=input('1.by id\n2.by name\n')
-    if Querytype not in ['1','2']:
-        raise ValueError('wrong input!\n')
-    con=sqlite3.connect('./test/DB')
-    cur=con.cursor()
-    if Querytype=='1':
-        Id=input('taxon id:\n')
-        cur.execute('select * from taxon where Id=?;',(Id,))
-        Result=cur.fetchall()
-    elif Querytype=='2':
-        Name=input('scientific name:\n')
-        cur.execute('select * from taxon where Name like ?;',('%'+Name+'%',))
-        Result=cur.fetchall()
-
-    print(Result)
-    Id=Result[0]
-    Name=Result[1]
-    Rank=Result[2]
-    Son=Result[3].split(sep=' ')
-    Parent=Result[4].split(sep=' ')
-    print('id    : ',Id)
-    print('name  : ',Name)
-    print('rank  : ',Rank)
-    print('parent: ','->'.join(Parent))
-    print('son   : ',','.join(Son))
-    cur.close()
-    con.close()
-    return 
+    while True:
+        Querytype=input('1.by id\n2.by name\n')
+        if Querytype not in ['1','2']:
+            return
+        con=sqlite3.connect('./test/DB')
+        cur=con.cursor()
+        if Querytype=='1':
+            Id=input('taxon id:\n')
+            cur.execute('select * from taxon where Id=?;',(Id,))
+            Result=cur.fetchall()
+        elif Querytype=='2':
+            Name=input('scientific name:\n')
+            cur.execute('select * from taxon where Name like ?;',('%'+Name+'%',))
+            Result=cur.fetchall()
+        cur.close()
+        con.close()
+        for i in Result:
+            Id=i[0]
+            Name=i[1]
+            Rank=i[2]
+            Son=i[3].split(sep=' ')
+            Parent=i[4].split(sep=' ')
+            print('id    : ',Id,'\n')
+            print('name  : ',Name,'\n')
+            print('rank  : ',Rank,'\n')
+            print('parent: ','->'.join(Parent),'\n')
+            print('son   : ',','.join(Son),'\n\n')
 
 work=input('1.Init database\n2.query\n')
 if work not in ['1','2']:
