@@ -7,6 +7,7 @@ def Create():
     Name=dict()
     Specie=list()
     Son=dict()
+    GreatSon=dict()
     Parent=dict()
     Rank=dict()
     global Taxon
@@ -44,12 +45,16 @@ def Create():
                 Son[data[n]]={data[n-1],}
             else:
                 Son[data[n]].add(data[n-1])
+            if data[n] not in GreatSon:
+                GreatSon[data[n]]={data[0],}
+            else:
+                GreatSon[data[n]].add(data[0])
     for specie in Name.items():
         if specie[0] not in Son:
             Son[specie[0]]=set()
         if specie[0] not in Parent:
             Parent[specie[0]]=list()
-        record=[specie[0],Name[specie[0]],Rank[specie[0]],Son[specie[0]],Parent[specie[0]]]
+        record=[specie[0],Name[specie[0]],Rank[specie[0]],Son[specie[0]],Parent[specie[0]],GreatSon[specie[0]]]
         Taxon.append(record)
     return
 
@@ -57,12 +62,13 @@ def Create():
 def Database():
     con=sqlite3.connect('./test/DB')
     cur=con.cursor()
-    cur.execute('create table if not exists taxon (Id text,Name text,Rank text,Son text,Parent text);')
+    cur.execute('create table if not exists taxon (Id text,Name text,Rank text,Son text,Parent text,GreatSon text);')
     for line in Taxon:
         Son=' '.join(line[3])
 #        Parent=str(line[4])
         Parent=' '.join(line[4])
-        cur.execute('insert into taxon (Id,Name,Rank,Son,Parent) values (?,?,?,?,?);',(line[0],line[1],line[2],Son,Parent))
+        GreatSon=' '.join(line[5])
+        cur.execute('insert into taxon (Id,Name,Rank,Son,Parent,GreatSon) values (?,?,?,?,?,?);',(line[0],line[1],line[2],Son,Parent,GreatSon))
     con.commit()
     cur.close()
     con.close()
@@ -92,11 +98,13 @@ def Query():
             Rank=i[2]
             Son=i[3].split(sep=' ')
             Parent=i[4].split(sep=' ')
-            print('id    : ',Id,'\n')
-            print('name  : ',Name,'\n')
-            print('rank  : ',Rank,'\n')
-            print('parent: ','->'.join(Parent),'\n')
-            print('son   : ',','.join(Son),'\n\n')
+            GreatSon=i[5].split(sep=' ')
+            print('id      : ',Id,'\n')
+            print('name    : ',Name,'\n')
+            print('rank    : ',Rank,'\n')
+            print('parent  : ','->'.join(Parent),'\n')
+            print('son     : ',','.join(Son),'\n')
+            print('greatson: ',','.join(GreatSon),'\n\n')
 
 work=input('1.Init database\n2.query\n')
 if work not in ['1','2']:
