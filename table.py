@@ -1,15 +1,17 @@
 #!/usr/bin/python3
 
-import re
 import csv
+import re
+import sys
+
 from copy import deepcopy
 Value=[]
 Value2=[]
 Line=[]
 Row=[]
 Out=[]
-Fna=input('fna file:\n')
-List=input('list file:\n')
+Fna=sys.argv[1]
+List=sys.argv[2]
 with open(Fna,'rb') as In:
     Raw=str(In.read())
 with open(List,'r') as List:
