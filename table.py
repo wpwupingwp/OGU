@@ -28,6 +28,7 @@ for n in range(len(Rows)):
         Add=[Rows[n],]
         Add.extend(fill)
         Out.append(Add)
+#Out1=deepcopy(Out)
 Out2=deepcopy(Out)
 #one species
 Id=re.findall('(?<=\>)[A-Z][a-z]+-cp\d{3}',Raw)
@@ -39,7 +40,7 @@ Value.sort()
 for item in Value:
     if item[0] in Rows:
         x=Line.index(item[1])
-        y=Rows.index(item[0])
+        y=Rows.index(item[0])+1
         Out[y][x]=1
 handle1=open(''.join([Fna.replace('.fna',''),'-1.csv']),'w')
 writer=csv.writer(handle1)
@@ -54,7 +55,7 @@ for record in Id2:
 Value2.sort()
 for item in Value2:
     x=Line.index(item[2])
-    y=Rows.index(item[0])
+    y=Rows.index(item[0])+1
     z=Rows.index(item[1])
     if Out[y][x]==1:
         Out2[z][x]=1
