@@ -303,6 +303,9 @@ def TaxonQueryAuto(Id,Rank):
     cur=con.cursor()
     cur.execute('select Parent from taxon where Id=? or Name=?;',(Id,'%'+Name+'%'))
     Result=cur.fetchall()
+    Rank=dict()
+    for record in Record:
+        Rank[result[0]]=result[1]
     '''to be contiuned'''
 
 def TaxonQueryNoAuto():
