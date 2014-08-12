@@ -3,7 +3,6 @@ from Bio import SeqIO
 from Bio import pairwise2 as p2
 from Bio.pairwise2 import format_alignment as fa
 import sys
-import re
 
 def Unknown():
         #1,same -1,different -0.5,gap open -0.1,gap extend
@@ -38,7 +37,7 @@ for index,record in enumerate(Unknown):
     head=str((record.seq)[0:15])
     for p in Primer:
         score=0
-        if re.search(head,p[1])!=None or re.search(head,p[2])!=None:
+        if head in p[1] or head in p[2]:
             add=[p[0],record]
             Out.append(add)
             Unknown.pop(index)
