@@ -36,12 +36,10 @@ for index,record in enumerate(Unknown):
                 break
 for cp in Out:
     handle=open(''.join([cp[0],'.fastq']),'a')
-    add=Sum[0].index(cp[0])
-    print(add)
-    Sum[1][add]+=1
+    Sum[cp[0]]+=1
     SeqIO.write(cp[1],handle,'fastq')
-Sum.append(['unknown',len(Unknown)])
-Sum.append(['all',all])
+Sum['unknown']=len(Unknown)
+Sum['all']=all
 SeqIO.write(Unknown,'unknown.fastq','fastq')
 with open('sum.csv','w') as Out:
     for line in Sum:
