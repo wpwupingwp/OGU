@@ -26,10 +26,8 @@ for index,record in enumerate(Unknown):
             Unknown.pop(index)
             break
         else:
-            for a in p2.align.localms(head,p[0],1,-1,-0.5,-0.1):
                 #1,same -1,different -0.5,gap open -0.1,gap extend
-                score=a[2]
-            if score>=15:
+            if p2.align.localms(head,p[1],1,-1,-0.5,-0.1)[0][2]>=15 or p2.align.localms(head,p[2],1,-1,-0.5,-0.1)[0][2]>=15:
                 add=[p[0],record]
                 Out.append(add)
                 Unknown.pop(index)
