@@ -37,10 +37,11 @@ for index,record in enumerate(Unknown):
 for cp in Out:
     handle=open(''.join([cp[0],'.fastq']),'a')
     Sum[cp[0]]+=1
+    print(Sum[cp[0]])
     SeqIO.write(cp[1],handle,'fastq')
 Sum['unknown']=len(Unknown)
 Sum['all']=all
 SeqIO.write(Unknown,'unknown.fastq','fastq')
 with open('sum.csv','w') as Out:
-    for line in Sum:
-        Out.write(','.join([line[0],str(line[1]),'\n']))
+    for key,value in Sum.items():
+        Out.write(' '.join([key,str(value),'\n']))
