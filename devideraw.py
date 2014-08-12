@@ -5,6 +5,23 @@ from Bio.pairwise2 import format_alignment as fa
 import sys
 import re
 
+def Unknown():
+        #1,same -1,different -0.5,gap open -0.1,gap extend
+    for index,record in enumerate(Unknown):
+        head=str((record.seq)[0:15])
+        for p in Primer:
+            score=0
+            a1=p2.align.localms(head,p[1],1,-1,-0.5,-0.1)
+            a2=p2.align.localms(head,p[2],1,-1,-0.5,-0.1)
+            score1=a1[0][2]
+            score2=a2[0][2]
+            print(fa(*a1[0]))
+            if score1>=15 or score2>=15:
+                add=[p[0],record]
+                Out.append(add)
+                Unknown.pop(index)
+                break
+#main
 Primer=list()
 Out=list()
 Unknown=list()
@@ -26,18 +43,6 @@ for index,record in enumerate(Unknown):
             Out.append(add)
             Unknown.pop(index)
             break
-        else:
-                #1,same -1,different -0.5,gap open -0.1,gap extend
-            a1=p2.align.localms(head,p[1],1,-1,-0.5,-0.1)
-            a2=p2.align.localms(head,p[2],1,-1,-0.5,-0.1)
-            score1=a1[0][2]
-            score2=a2[0][2]
-            print(fa(*a1[0]))
-            if score1>=15 or score2>=15:
-                add=[p[0],record]
-                Out.append(add)
-                Unknown.pop(index)
-                break
 for cp in Out:
     handle=open(''.join([cp[0],'.fastq']),'a')
     Sum[cp[0]]+=1
