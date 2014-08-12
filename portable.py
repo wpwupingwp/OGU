@@ -30,8 +30,6 @@ def Parser():
     Strand=1
     rec=[Taxon,Organism,Accession,Name,Type,Start,End,Strand,Sequence,Date]
     All.append(rec)
-    global SeqDB
-    SeqDB=[]
     for i in Record.features:
         if i.type=="gene" and "gene" in i.qualifiers:
             if i.location_operator!="join":
@@ -164,7 +162,7 @@ def SeqQuery():
         if Type=="fragments":
             cur.execute("select Taxon,Organism,Name,Type,Strand,Sequence,Head from main where Organism=?  order by Head",(Organism,))
         else:
-            cur.execute("select Taxon,Organism,Name,Type,Strand,Sequence,Head from main where Organism=? and Type=? order by Head",(Organism,Type))
+            cur.execute("select Taxon,Organism,Name,Type,Strand,Sequence,Head from main where Organism like ? and Type=? order by Head",('%'+Organism+'%',Type))
         Result=cur.fetchall()
     elif Querytype=="3":
         Gene=input("Gene:\n")
@@ -212,6 +210,8 @@ def UpdateSeqDBFromGenbank():
 def UpdateSeqFromFile(FileIn):
     '''Update Sequence database from private file.'''
     global Record
+    global SeqDB
+    SeqDB=[]
     handle=open(FileIn,"r")
     Records=SeqIO.parse(FileIn,"genbank")
     for Record in Records:
