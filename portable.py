@@ -123,7 +123,6 @@ def Parser():
     All.extend(Gene)
 
     SeqDB.extend(All)
-    return 
 
 def InitSeq():
 
@@ -139,7 +138,6 @@ def InitSeq():
     cur.close()
     con.close()
     print("Done.\n")
-    return
     
 def SeqQuery():
 
@@ -190,7 +188,6 @@ def SeqQuery():
     con.close()
     Fileout.close()
     print("Done.\n")
-    return 
 
 def UpdateSeqDBFromGenbank():
     '''Update Sequence database from Genbank, need time to download.'''
@@ -218,7 +215,6 @@ def UpdateSeqFromFile(FileIn):
         Parser()
     InitSeq()
     handle.close()
-    return
 
 def InitTaxon():
     
@@ -293,7 +289,6 @@ def InitTaxon():
     cur.close()
     con.close()
     print('Done.\n')
-    return
     
 def TaxonQueryAuto(Id,Rank):
 
