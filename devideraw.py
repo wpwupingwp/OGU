@@ -2,47 +2,47 @@
 from Bio import SeqIO
 from Bio import pairwise2 as p2
 import sys
+import re
 
 Primer=list()
 Out=list()
 Unknown=list()
-Sum=list()
-Sum.append(['all':0])
+Sum={'cp{:03d}'.format(n+1):0 for n in range(140)}
 with open(sys.argv[2],'r') as In:
     Raw=In.read().split(sep='\n')
 for line in Raw:
     Primer.append(line.split(sep='\t'))
 Primer.pop(-1)
 Primer.pop(0)
-Sequence=SeqIO.parse(sys.argv[1],'fastq')
-for s in Sequence:
-    Sum[0][1]+=1
-    head=str((s.seq)[0:15])
-    Unknown.append(s)
+Unknown=list(SeqIO.parse(sys.argv[1],'fastq'))
+all=len(Unknown)
+for index,record in enumerate(Unknown):
+    head=str((record.seq)[0:15])
     for p in Primer:
-        if head in p[1] or head in p[2]:
-                add=[p[0],s]
-                Out.append(add)
-                Unknown.pop(Unknown.index(s))
-                break
-for p in Unknown:
-    for p in Primer:
-        for a in p2.align.localms(head,p[0],1,-1,-0.5,-0.1):
-            #1,same -1,different -0.5,gap open -0.1,gap extend
-            score=a[2]
-        if score>=15:
-            add=[p[0],s]
+        score=0
+        if re.search(head,p[1])!=None or re.search(head,p[2])!=None:
+            add=[p[0],record]
             Out.append(add)
-            Unknown.pop(Unknown.index(s))
+            Unknown.pop(index)
             break
+        else:
+            for a in p2.align.localms(head,p[0],1,-1,-0.5,-0.1):
+                #1,same -1,different -0.5,gap open -0.1,gap extend
+                score=a[2]
+            if score>=15:
+                add=[p[0],record]
+                Out.append(add)
+                Unknown.pop(index)
+                break
 for cp in Out:
-    handle=open(cp[0],'a')
-    if cp[0] not in Sum:
-        Sum.append([cp[0],1)
-    else:
-        Sum[Sum.index(cp[0])][1]+=1
+    handle=open(''.join([cp[0],'.fastq']),'a')
+    add=Sum[0].index(cp[0])
+    print(add)
+    Sum[1][add]+=1
     SeqIO.write(cp[1],handle,'fastq')
+Sum.append(['unknown',len(Unknown)])
+Sum.append(['all',all])
 SeqIO.write(Unknown,'unknown.fastq','fastq')
 with open('sum.csv','w') as Out:
     for line in Sum:
-        Out.write(line)
+        Out.write(','.join([line[0],str(line[1]),'\n']))
