@@ -7,11 +7,12 @@ import sys
 def pairwise():
     #1,same -1,different -0.5,gap open -0.1,gap extend
     for index,record in enumerate(Unknown):
+        if len(record.seq)<100:
+            continue
         head=str((record.seq)[2:17])
         for p in Primer:
             aln=p2.align.localms(head,str(p.seq),1,-1,-0.5,-0.1)   #bug 
             score=aln[0][2]
-            print(fa(*aln[0]))
             if score>=15:
                 add=[p.id,record]
                 Out.append(add)
@@ -34,8 +35,8 @@ for index,record in enumerate(Unknown):
             Out.append(add)
             Unknown.pop(index)
             break
-        else:
-            pairwise()
+#        else:
+#            pairwise()
 for cp in Out:
     handle=open(''.join([cp[0],'.fastq']),'a')
     Sum[cp[0]]+=1
