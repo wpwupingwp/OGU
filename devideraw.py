@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 from Bio import SeqIO
+from Bio.SeqRecord import SeqRecord
 from Bio import pairwise2 as p2
 from Bio.pairwise2 import format_alignment as fa
 import sys
@@ -43,7 +44,11 @@ for cp in Out:
     SeqIO.write(cp[1],handle,'fastq')
 Sum['unknown']=len(Unknown)
 Sum['all']=all
-SeqIO.write(Unknown,'unknown.fastq','fastq')
+Toblast=list()
+for item in Unknown:
+    add=SeqRecord(id=item.id,description='',seq=item.seq[:30])
+    Toblast.append(add)
+SeqIO.write(Toblast,'unknown.fasta','fasta')
 with open('sum.csv','w') as Out:
     for key,value in Sum.items():
         Out.write(' '.join([key,str(value),'\n']))
