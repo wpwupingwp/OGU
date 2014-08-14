@@ -6,14 +6,14 @@ from Bio.Blast.Applications import NcbiblastnCommandline as nb
 import sys
 
 def RunBlast():
-    cmd=nb(query='unknown.fasta',db='primer',task='blastn-short',evalue=0.001,outfmt=5,out='PrimerBlast.result')
+    cmd=nb(query='unknown.fasta',db='primer',task='blastn-short',evalue=0.001,outfmt=5,out=''.join([area,'-PB']))
     stdout,stderr=cmd()
     return 
 
 def Parse():
-    Out=open('blast.log','a')
+    Out=open(''.join([area,'-PB.log']),'a')
     sys.stdout=Out
-    results=list(SearchIO.parse('PrimerBlast.result','blast-xml'))
+    results=list(SearchIO.parse(''.join([area,'-PB']),'blast-xml'))
     for record in results:
         if len(record)==0:
             continue
@@ -24,6 +24,7 @@ def Parse():
         BlastResult[record.id]=tophit.id
 
 #main
+area=sys.argv[1].replace('.fastq','')
 Out=list()
 Unknown=list()
 BlastResult=dict()
@@ -57,6 +58,6 @@ SeqIO.write(Unknown,'unknown.fastq','fastq')
 Sum['unknown']=len(Unknown)
 Sum['blasted']=len(BlastResult)
 Sum['all']=all
-with open(''.join([sys.argv[1].replace('.fastq',''),'-devideraw.csv']),'w') as Out:
+with open(''.join([area,'-devideraw.csv']),'w') as Out:
     for key,value in Sum.items():
         Out.write(' '.join([key,str(value),'\n']))
