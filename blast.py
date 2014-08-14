@@ -28,13 +28,15 @@ def newparse():
     global BlastResult
     BlastResult=dict()
     Out=open('blast.log','a')
-    sys.stdout=Out
+#    sys.stdout=Out
     results=list(SearchIO.parse('blast.result','blast-xml'))
     for record in results:
-        try:
-            print(record[0])
-        except:
-            pass
+        if len(record)==0:
+            continue
+        else: 
+            tophit=record[0]
+        print(tophit.id,record.id,'\n',tophit)
+        BlastResult[record.id]=tophit.id
 
 runblast()
 newparse()
