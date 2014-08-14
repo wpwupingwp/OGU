@@ -6,14 +6,14 @@ from Bio.Blast.Applications import NcbiblastnCommandline as nb
 import sys
 
 def RunBlast():
-    cmd=nb(query='unknown.fasta',db='primer',task='blastn-short',evalue=0.001,outfmt=5,out='blast.result')
+    cmd=nb(query='unknown.fasta',db='primer',task='blastn-short',evalue=0.001,outfmt=5,out='PrimerBlast.result')
     stdout,stderr=cmd()
     return 
 
 def Parse():
     Out=open('blast.log','a')
     sys.stdout=Out
-    results=list(SearchIO.parse('blast.result','blast-xml'))
+    results=list(SearchIO.parse('PrimerBlast.result','blast-xml'))
     for record in results:
         if len(record)==0:
             continue
@@ -57,6 +57,6 @@ SeqIO.write(Unknown,'unknown.fastq','fastq')
 Sum['unknown']=len(Unknown)
 Sum['blasted']=len(BlastResult)
 Sum['all']=all
-with open('sum.csv','w') as Out:
+with open('devideraw.csv','w') as Out:
     for key,value in Sum.items():
         Out.write(' '.join([key,str(value),'\n']))
