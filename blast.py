@@ -1,21 +1,27 @@
 #!/usr/bin/python3
 from Bio.Blast.Applications import NcbiblastnCommandline as nb
 from Bio.Blast import NCBIXML as nx 
+import sys
 
 def runblast():
-    cmd=nb(query='unknown.fasta',db='primer',task='blastn-short',evalue=0.001,outfmt=5,out='result')
+    cmd=nb(query='unknown.fasta',db='primer',task='blastn-short',evalue=0.001,outfmt=5,out='blast.result')
     stdout,stderr=cmd()
     return 
 
 def parse():
-    handle=open('result','r')
-    result=list(nx.parse(handle))
-    for record in result:
-        for item in record.alignments:
-            a=item.hsps[0]
-            print(a.score,item.hit_def)
-            #for hsp in item.hsps:
-#                print(item.title,hsp.query,hsp.score)
+    global BlastResult
+    BlastResult=dict()
+    In=open('blast.result','r')
+    Out=open('blast.log','a')
+    sys.stdout=Out
+    results=list(nx.parse(In))
+    for record in results:
+        for hit in record.alignments:
+            a=hit.hsps[0]
+            if a.score<15:
+                continue
+            BlastResult[record.query]=hit.hit_def
+            print(record.query,hit.hit_def,'\n',a)
 
 runblast()
 parse()
