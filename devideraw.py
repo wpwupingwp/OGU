@@ -50,7 +50,7 @@ for index,record in enumerate(Unknown):
         Out.append(add)
         Unknown.pop(index)
 for cp in Out:
-    handle=open(''.join([cp[0],'.fastq']),'a')
+    handle=open(cp[0],'a')
     Sum[cp[0]]+=1
     SeqIO.write(cp[1],handle,'fastq')
 SeqIO.write(Unknown,'unknown.fastq','fastq')
