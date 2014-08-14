@@ -40,8 +40,6 @@ def NewParse():
 
 #main
 Out=list()
-Unknown=list()
-Toblast=list()
 BlastResult=dict()
 Sum={'cp{:03d}'.format(n+1):0 for n in range(140)}
 Primer=list(SeqIO.parse(sys.argv[2],'fasta'))
@@ -56,15 +54,13 @@ for index,record in enumerate(Unknown):
             Out.append(add)
             Unknown.pop(index)
             break
-for item in Unknown:
-    add=SeqRecord(id=item.id,description='',seq=item.seq[:30])
-    Toblast.append(add)
 SeqIO.write(Unknown,'unknown.fasta','fasta')
-#SeqIO.write(Toblast,'unknown.fasta','fasta')
 RunBlast()
 NewParse()
 for index,record in enumerate(Unknown):
     if record.id in BlastResult:
+        add=[BlastResult[record.id][:-1],record]
+        Out.append(add)
         Unknown.pop(index)
 for cp in Out:
     handle=open(''.join([cp[0],'.fastq']),'a')
