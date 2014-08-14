@@ -29,12 +29,9 @@ Unknown=list()
 BlastResult=dict()
 Sum={'cp{:03d}'.format(n+1):0 for n in range(140)}
 Primer=list(SeqIO.parse(sys.argv[2],'fasta'))
-#Unknown=list(SeqIO.parse(sys.argv[1],'fastq'))
-Unknown0=SeqIO.parse(sys.argv[1],'fastq')
-#all=len(Unknown)
+Sequences=SeqIO.parse(sys.argv[1],'fastq')
 all=0
-#for index,record in enumerate(Unknown):
-for record in Unknown0:
+for record in Sequences:
     all+=1
     Unknown.append(record)
     head=str((record.seq)[0:15])
