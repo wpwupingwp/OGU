@@ -27,19 +27,21 @@ def OldParse():
 
 def NewParse():
     Out=open('blast.log','a')
-#    sys.stdout=Out
+    sys.stdout=Out
     results=list(SearchIO.parse('blast.result','blast-xml'))
     for record in results:
         if len(record)==0:
             continue
         else: 
             tophit=record[0]
+            #ignore multiple hsps
         print(tophit.id,record.id,'\n',tophit)
         BlastResult[record.id]=tophit.id
 
 #main
 Out=list()
 Unknown=list()
+Toblast=list()
 BlastResult=dict()
 Sum={'cp{:03d}'.format(n+1):0 for n in range(140)}
 Primer=list(SeqIO.parse(sys.argv[2],'fasta'))
@@ -54,20 +56,23 @@ for index,record in enumerate(Unknown):
             Out.append(add)
             Unknown.pop(index)
             break
+for item in Unknown:
+    add=SeqRecord(id=item.id,description='',seq=item.seq[:30])
+    Toblast.append(add)
+SeqIO.write(Unknown,'unknown.fasta','fasta')
+#SeqIO.write(Toblast,'unknown.fasta','fasta')
+RunBlast()
+NewParse()
+for index,record in enumerate(Unknown):
+    if record.id in BlastResult:
+        Unknown.pop(index)
 for cp in Out:
     handle=open(''.join([cp[0],'.fastq']),'a')
     Sum[cp[0]]+=1
     SeqIO.write(cp[1],handle,'fastq')
 Sum['unknown']=len(Unknown)
+Sum['blasted']=len(BlastResult)
 Sum['all']=all
-Toblast=list()
-for item in Unknown:
-    add=SeqRecord(id=item.id,description='',seq=item.seq[:30])
-    Toblast.append(add)
-SeqIO.write(Toblast,'unknown.fasta','fasta')
 with open('sum.csv','w') as Out:
     for key,value in Sum.items():
         Out.write(' '.join([key,str(value),'\n']))
-
-RunBlast()
-NewParse()
