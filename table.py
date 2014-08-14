@@ -11,13 +11,13 @@ Row=list()
 Out=list()
 Fna=sys.argv[1]
 List=sys.argv[2]
-with open(Fna,'rb') as In:
-    Raw=str(In.read())
+with open(Fna,'r') as In:
+    Raw=In.read()
 with open(List,'r') as List:
     Rows=List.read().split(sep='\n')
 Rows.sort()
 Rows.pop(0)
-Line=['cp{:03d}'.format(n) for n in range(141)]
+Line=['{:03d}'.format(n) for n in range(141)]
 Line[0]=''.join(['area',Fna.replace('.fna','')])
 Out.append(Line)
 fill=[0 for n in range(140)]
@@ -26,10 +26,9 @@ for n in range(len(Rows)):
         Add=[Rows[n],]
         Add.extend(fill)
         Out.append(Add)
-#Out1=deepcopy(Out)
 Out2=deepcopy(Out)
 #one species
-Id=re.findall('(?<=\>)[A-Z][a-z]+-cp\d{3}',Raw)
+Id=re.findall('(?<=\>)[A-Z][a-z]+-\d{3}',Raw)
 for record in Id:
     toadd=(str(record)).split(sep='-')
     if not toadd in Value:
@@ -45,7 +44,7 @@ writer=csv.writer(handle1)
 for line in Out:
     writer.writerow(line)
 #two species
-Id2=re.findall('(?<=\>)[A-Z][a-z]+-[A-Z][a-z]+-cp\d{3}',Raw.replace('_','-'))
+Id2=re.findall('(?<=\>)[A-Z][a-z]+-[A-Z][a-z]+-\d{3}',Raw.replace('_','-'))
 for record in Id2:
     toadd=(str(record)).split(sep='-')
     if not toadd in Value2:
