@@ -57,6 +57,6 @@ SeqIO.write(Unknown,'unknown.fastq','fastq')
 Sum['unknown']=len(Unknown)
 Sum['blasted']=len(BlastResult)
 Sum['all']=all
-with open('devideraw.csv','w') as Out:
+with open(''.join([sys.argv[1].replace('.fastq',''),'-devideraw.csv']),'w') as Out:
     for key,value in Sum.items():
         Out.write(' '.join([key,str(value),'\n']))
