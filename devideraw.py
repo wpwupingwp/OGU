@@ -10,22 +10,7 @@ def RunBlast():
     stdout,stderr=cmd()
     return 
 
-def OldParse():
-    global BlastResult
-    BlastResult=dict()
-    In=open('blast.result','r')
-    Out=open('blast.log','a')
-    sys.stdout=Out
-    results=list(nx.parse(In))
-    for record in results:
-        for hit in record.alignments:
-            a=hit.hsps[0]
-            if a.score<15:
-                continue
-            BlastResult[record.query]=hit.hit_def
-            print(record.query,hit.hit_def,'\n',a)
-
-def NewParse():
+def Parse():
     Out=open('blast.log','a')
     sys.stdout=Out
     results=list(SearchIO.parse('blast.result','blast-xml'))
@@ -40,23 +25,28 @@ def NewParse():
 
 #main
 Out=list()
+Unknown=list()
 BlastResult=dict()
 Sum={'cp{:03d}'.format(n+1):0 for n in range(140)}
 Primer=list(SeqIO.parse(sys.argv[2],'fasta'))
-Unknown=list(SeqIO.parse(sys.argv[1],'fastq'))
-all=len(Unknown)
-for index,record in enumerate(Unknown):
-    head=str((record.seq)[2:17])
+#Unknown=list(SeqIO.parse(sys.argv[1],'fastq'))
+Unknown0=SeqIO.parse(sys.argv[1],'fastq')
+#all=len(Unknown)
+all=0
+#for index,record in enumerate(Unknown):
+for record in Unknown0:
+    all+=1
+    Unknown.append(record)
+    head=str((record.seq)[0:15])
     for p in Primer:
-        score=0
         if head in p.seq:
             add=[p.id[:-1],record]
             Out.append(add)
-            Unknown.pop(index)
+            Unknown.pop(Unknown.index(record))
             break
 SeqIO.write(Unknown,'unknown.fasta','fasta')
 RunBlast()
-NewParse()
+Parse()
 for index,record in enumerate(Unknown):
     if record.id in BlastResult:
         add=[BlastResult[record.id][:-1],record]
@@ -66,6 +56,7 @@ for cp in Out:
     handle=open(''.join([cp[0],'.fastq']),'a')
     Sum[cp[0]]+=1
     SeqIO.write(cp[1],handle,'fastq')
+SeqIO.write(Unknown,'unknown.fastq','fastq')
 Sum['unknown']=len(Unknown)
 Sum['blasted']=len(BlastResult)
 Sum['all']=all
