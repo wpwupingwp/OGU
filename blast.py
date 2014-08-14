@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 from Bio.Blast.Applications import NcbiblastnCommandline as nb
 from Bio.Blast import NCBIXML as nx 
 
@@ -11,9 +12,11 @@ def parse():
     result=list(nx.parse(handle))
     for record in result:
         for item in record.alignments:
-            for hsp in item.hsps:
+            a=item.hsps[0]
+            print(a.score,item.hit_def)
+            #for hsp in item.hsps:
 #                print(item.title,hsp.query,hsp.score)
 
-#runblast()
+runblast()
 parse()
 
