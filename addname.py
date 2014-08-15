@@ -2,6 +2,7 @@
 import sys
 import re
 from Bio import SeqIO
+from Bio.SeqIO.QualityIO import PairedFastaQualIterator as fqout
 
 with open(sys.argv[1],'r') as fna:
     In=fna.read()
@@ -13,9 +14,22 @@ for name in Rawinfo:
     Out=re.sub(info,name,Out,count=1)
 with open(sys.argv[2],'w') as out:
     out.write(Out)
-fna=list(SeqIO.parse(sys.argv[1],'fasta'))
-qual=list(SeqIO.parse(sys.argv[2],'qual'))
-fna.sort(key=lambda x:x.id)
-qual.sort(key=lambda x:x.id)
-SeqIO.write(fna,sys.argv[1],'fasta')
-SeqIO.write(qual,sys.argv[2],'qual')
+
+fnaout=list()
+qualout=list()
+fna=SeqIO.to_dict(SeqIO.parse(sys.argv[1],'fasta'),key_function=lambda rec:rec.id)
+qual=SeqIO.to_dict(SeqIO.parse(sys.argv[2],'qual'),key_function=lambda rec:rec.id)
+for keys,value in fna.items():
+    if keys in qual:
+        fnaout.append(value)
+        qualout.append(qual[keys])
+fnaout.sort(key=lambda x:x.id)
+qualout.sort(key=lambda x:x.id)
+SeqIO.write(fnaout,sys.argv[1],'fasta')
+SeqIO.write(qualout,sys.argv[2],'qual')
+
+fna=sys.argv[1]
+qual=sys.argv[2]
+fastq=sys.argv[3]
+records=fqout(open(fna),open(qual))
+SeqIO.write(records,fastq,'fastq')
