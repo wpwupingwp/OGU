@@ -28,7 +28,7 @@ for n in range(len(Rows)):
         Out.append(Add)
 Out2=deepcopy(Out)
 #one species
-Id=re.findall('(?<=\>[0-9]{1,2}-)[A-Z][a-z]+-\d{3}',Raw)
+Id=re.findall('(?<=\>[0-9]{2}-)[A-Z][a-z]+-\d{3}',Raw)
 #                   >10        - E     ricales-001  
 #                    area      - Species      -gene
 for record in Id:
@@ -46,7 +46,7 @@ writer=csv.writer(handle1)
 for line in Out:
     writer.writerow(line)
 #two species
-Id2=re.findall('(?<=\>[0-9]{1,2}-)[A-Z][a-z]+-[A-Z][a-z]+-\d{3}',Raw.replace('_','-'))
+Id2=re.findall('(?<=\>[0-9]{2}-)[A-Z][a-z]+-[A-Z][a-z]+-\d{3}',Raw.replace('_','-'))
 for record in Id2:
     toadd=(str(record)).split(sep='-')
     if not toadd in Value2:
