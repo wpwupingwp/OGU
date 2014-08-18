@@ -11,6 +11,7 @@ Row=list()
 Out=list()
 Fna=sys.argv[1]
 List=sys.argv[2]
+area=Fna.replace('.fna','')
 with open(Fna,'r') as In:
     Raw=In.read()
 with open(List,'r') as List:
@@ -18,12 +19,12 @@ with open(List,'r') as List:
 Rows.sort()
 Rows.pop(0)
 Line=['{:03d}'.format(n) for n in range(141)]
-Line[0]=''.join(['area',Fna.replace('.fna','')])
+Line[0]=area
 Out.append(Line)
 fill=[0 for n in range(140)]
 for n in range(len(Rows)):
     if Rows[n]!='':
-        Add=[Rows[n],]
+        Add=[Rows[n],area]
         Add.extend(fill)
         Out.append(Add)
 Out2=deepcopy(Out)
@@ -38,7 +39,7 @@ for record in Id:
 Value.sort()
 for item in Value:
     if item[0] in Rows:
-        x=Line.index(item[1])
+        x=Line.index(item[1])+1
         y=Rows.index(item[0])+1
         Out[y][x]=1
 handle1=open(''.join([Fna.replace('.fna',''),'-1.csv']),'w')
@@ -53,7 +54,7 @@ for record in Id2:
         Value2.append(toadd)
 Value2.sort()
 for item in Value2:
-    x=Line.index(item[2])
+    x=Line.index(item[2])+1
     y=Rows.index(item[0])+1
     z=Rows.index(item[1])+1
     if Out[y][x]==1:
