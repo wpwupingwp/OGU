@@ -2,7 +2,7 @@
 from Bio import SeqIO
 import sys
 
-area=sys.argv[2][-1]
+area=sys.argv[2].replace('list','')
 with open(sys.argv[2],'r') as In:
     List=In.read().split(sep='\n')
 List.pop()
