@@ -143,8 +143,8 @@ def SeqQuery():
 
     '''Sequence query function, to be continued.'''
 
-    Querytype=input("1.Specific fragment\n2.Specific Organism\n3.Specific gene\n4.All\n")
-    if Querytype not in ["1","2","3","4"]:
+    Querytype=input("1.Specific fragment\n2.Specific Organism\n3.Specific gene\n4.All\n5.All cds\n")
+    if Querytype not in ["1","2","3","4","5"]:
         raise ValueError('wrong input!\n')
     con=sqlite3.connect("./test/DB")
     cur=con.cursor()
@@ -169,6 +169,9 @@ def SeqQuery():
         Result=cur.fetchall()
     elif Querytype=="4":
         cur.execute("select Taxon,Organism,Name,Type,Strand,Sequence,Head from main order by Taxon")
+        Result=cur.fetchall()
+    elif Querytype=="5":
+        cur.execute("select Taxon,Organism,Name,Type,Strand,Sequence,Head from main where type='cds' order by Taxon")
         Result=cur.fetchall()
 
     All=[]
