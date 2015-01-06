@@ -197,7 +197,12 @@ def UpdateSeqDBFromGenbank():
 
     Down=urllib.request.urlopen("http://www.ncbi.nlm.nih.gov/genomes/GenomesGroup.cgi?taxid=2759&opt=plastid").read().decode("utf-8")
     GenomeList=re.findall("((?<=nuccore/)[0-9]{9})",Down)
-    Entrez.email="wpwupingwp@outlook.com"
+    userEmail=input('Input your email address for downloading data or use default(by press enter):\n')
+    if userEmail is '\n':
+        Entrez.email="wpwupingwp@outlook.com"
+    else:
+        Entrez.email=userEmail
+    #need email address certify
     handle=Entrez.read(Entrez.epost(db="nuccore",id=",".join(GenomeList)))
     W=handle["WebEnv"]
     K=handle["QueryKey"]
