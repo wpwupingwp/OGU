@@ -227,6 +227,7 @@ def UpdateSeqFromFile(FileIn):
 def InitTaxon():
     
     '''Init Taxon database from file. to be continued(add download function'''
+    '''ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz'''
 
     Id=dict()
     Data=list()
@@ -364,7 +365,7 @@ def TaxonQueryNoAuto():
 
 '''main function, entrance of the program.'''
 
-Option=input("Select:\n1.Update database from GenBank\n2.Add pvirate data\n3.Query\n")
+Option=input("Select:\n1.Update database from GenBank\n2.Add pvirate data\n3.Query\n4.Taxon\n")
 Date=str(datetime.datetime.now())[:19].replace(" ","-")
 if Option=="1":
     UpdateSeqFromGenbank()
@@ -373,5 +374,8 @@ elif Option=="2":
     UpdateSeqFromFile(FileIn)
 elif Option=="3":
     SeqQuery()
+elif Option=="4":
+    InitTaxon()
+    TaxonQueryNoAuto()
 else:
     print("Input error!\n")
