@@ -146,24 +146,26 @@ def SeqBatchQuery():
     Results=list()
     with open(listfile,'r') as In:
         Organisms=In.read().split(sep='\n')
+    cur.execute('create table if not exists tasklist (Name text,);')
     for Organism in Organisms:
-        cur.execute("select Taxon,Organism,Name,Type,Strand,Sequence,Head from main where Organism=?  order by Head",(Organism,))
-        Result=cur.fetchall()
-        Results.append(Result)
+        cur.execute('insert into tasklist (Name,) values (?,);',(Organism,))
+    cur.execute("select Taxon,Organism,Name,Type,Strand,Sequence,Head from main where Organism in select Name from tasklist order by Head",(Organism,))
+    Result=cur.fetchall()
+    cur.execute('drop table tasklist;')
     cur.close()
     con.close()
     All=[]
-    for Result in Results:
-        for i in Result:
-            Title="|".join([str(i[0]),i[1],i[2],i[3]])
-            Sequence=MutableSeq(i[5])
-            if i[4]=="-1":
-                Sequence.seq=Sequence.reverse_complement()
-            Record=[Title,Sequence]
-            All.append(Record)
+    for i in Result:
+        Title="|".join([str(i[0]),i[1],i[2],i[3]])
+        Filename=i[2]
+        Sequence=MutableSeq(i[5])
+        if i[4]=="-1":
+            Sequence.seq=Sequence.reverse_complement()
+        Record=[Title,Filename,Sequence]
+        All.append(Record)
     for i in All:
-        with open('.'.join([i[0],'.fasta']),'a') as Fileout:
-            Fileout.write(">%s\n%s\n"%(i[0],i[1]))
+        with open(''.join(['./out/',i[1],'.fasta']),'a') as Fileout:
+            Fileout.write(">%s\n%s\n"%(i[0],i[2]))
     print("Done.\n")
 
 
@@ -392,7 +394,7 @@ def TaxonQueryNoAuto():
 
 '''main function, entrance of the program.'''
 
-Option=input("Select:\n1.Update database from GenBank\n2.Add pvirate data\n3.Query\n4.Init Taxon\n5.Query Taxon\n\6.Batch Query\n")
+Option=input("Select:\n1.Update database from GenBank\n2.Add pvirate data\n3.Query\n4.Init Taxon\n5.Query Taxon\n6.Batch Query\n")
 Date=str(datetime.datetime.now())[:19].replace(" ","-")
 if Option=="1":
     UpdateSeqDBFromGenbank()
