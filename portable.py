@@ -365,7 +365,7 @@ def TaxonQueryNoAuto():
 
 '''main function, entrance of the program.'''
 
-Option=input("Select:\n1.Update database from GenBank\n2.Add pvirate data\n3.Query\n4.Taxon\n")
+Option=input("Select:\n1.Update database from GenBank\n2.Add pvirate data\n3.Query\n4.Init Taxon\n5.Query Taxon\n")
 Date=str(datetime.datetime.now())[:19].replace(" ","-")
 if Option=="1":
     UpdateSeqDBFromGenbank()
@@ -375,7 +375,8 @@ elif Option=="2":
 elif Option=="3":
     SeqQuery()
 elif Option=="4":
-    #InitTaxon()
+    InitTaxon()
+elif Option=="5":
     TaxonQueryNoAuto()
 else:
     print("Input error!\n")
