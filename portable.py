@@ -167,7 +167,7 @@ def SeqBatchQuery():
     print("Done.\n")
 
 
-def SeqQuery()
+def SeqQuery():
     '''Sequence query function, to be continued.'''
 
     Querytype=input("1.Specific fragment\n2.Specific Organism\n3.Specific gene\n4.All\n5.All cds\n")
