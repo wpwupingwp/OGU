@@ -139,8 +139,35 @@ def InitSeq():
     con.close()
     print("Done.\n")
     
-def SeqQuery():
+def SeqBatchQuery():
+    con=sqlite3.connect("./test/DB")
+    cur=con.cursor()
+    listfile=input("list file name:\n")
+    Results=list()
+    with open(listfile,'r') as In:
+        Organisms=In.read().split(sep='\n')
+    for Organism in Organisms:
+        cur.execute("select Taxon,Organism,Name,Type,Strand,Sequence,Head from main where Organism=?  order by Head",(Organism,))
+        Result=cur.fetchall()
+        Results.append(Result)
+    cur.close()
+    con.close()
+    All=[]
+    for Result in Results:
+        for i in Result:
+            Title="|".join([str(i[0]),i[1],i[2],i[3]])
+            Sequence=MutableSeq(i[5])
+            if i[4]=="-1":
+                Sequence.seq=Sequence.reverse_complement()
+            Record=[Title,Sequence]
+            All.append(Record)
+    for i in All:
+        with open('.'.join([i[0],'.fasta']),'a') as Fileout:
+            Fileout.write(">%s\n%s\n"%(i[0],i[1]))
+    print("Done.\n")
 
+
+def SeqQuery()
     '''Sequence query function, to be continued.'''
 
     Querytype=input("1.Specific fragment\n2.Specific Organism\n3.Specific gene\n4.All\n5.All cds\n")
@@ -299,13 +326,13 @@ def InitTaxon():
     con.close()
     print('Done.\n')
     
-def TaxonQueryAuto(Id,Rank):
+def TaxonQueryAuto(Name):
 
     '''Taxon query for seqquery, may be remove'''
 
     con=sqlite3.connect('./test/DB')
     cur=con.cursor()
-    cur.execute('select Parent from taxon where Id=? or Name=?;',(Id,'%'+Name+'%'))
+    cur.execute('select Parent from taxon where  Name like ?;',('%'+Name+'%',))
     Result=cur.fetchall()
     Rank=dict()
     for record in Record:
@@ -365,7 +392,7 @@ def TaxonQueryNoAuto():
 
 '''main function, entrance of the program.'''
 
-Option=input("Select:\n1.Update database from GenBank\n2.Add pvirate data\n3.Query\n4.Init Taxon\n5.Query Taxon\n")
+Option=input("Select:\n1.Update database from GenBank\n2.Add pvirate data\n3.Query\n4.Init Taxon\n5.Query Taxon\n\6.Batch Query\n")
 Date=str(datetime.datetime.now())[:19].replace(" ","-")
 if Option=="1":
     UpdateSeqDBFromGenbank()
@@ -378,5 +405,7 @@ elif Option=="4":
     InitTaxon()
 elif Option=="5":
     TaxonQueryNoAuto()
+elif Option=='6':
+    SeqBatchQuery()
 else:
     print("Input error!\n")
