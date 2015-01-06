@@ -146,10 +146,10 @@ def SeqBatchQuery():
     Results=list()
     with open(listfile,'r') as In:
         Organisms=In.read().split(sep='\n')
-    cur.execute('create table if not exists tasklist (Name text,);')
+    cur.execute('create table if not exists tasklist (Name text);')
     for Organism in Organisms:
-        cur.execute('insert into tasklist (Name,) values (?,);',(Organism,))
-    cur.execute("select Taxon,Organism,Name,Type,Strand,Sequence,Head from main where Organism in select Name from tasklist order by Head",(Organism,))
+        cur.execute('insert into tasklist (Name) values (?);',(Organism,))
+    cur.execute("select Taxon,Organism,Name,Type,Strand,Sequence,Head from main where Organism in (select Name from tasklist) order by Head",(Organism))
     Result=cur.fetchall()
     cur.execute('drop table tasklist;')
     cur.close()
@@ -166,6 +166,13 @@ def SeqBatchQuery():
     for i in All:
         with open(''.join(['./out/',i[1],'.fasta']),'a') as Fileout:
             Fileout.write(">%s\n%s\n"%(i[0],i[2]))
+#rps12 may have larger than 50k fragments, here to filter it
+    rps12=SeqIO.parse('./out/rps12.fasta','fasta')
+    rps12short=list()
+    for item in rps12:
+        if len(item.seq)<4000:
+            rps12short.append(item)
+    SeqIO.write(rps12short,'./out/rps12short.fasta','fasta')
     print("Done.\n")
 
 
