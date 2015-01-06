@@ -239,16 +239,16 @@ def InitTaxon():
     Rank=dict()
     global Taxon
     Taxon=list()
-    with open('./test/name','r') as In:
+    with open('./test/names.dmp','r') as In:
         Raw=list(In.readlines())
         for record in Raw:
             add=record.replace('\n','').split(sep='|')
             if add[0] not in Name or add[2]=='scientific name':
                 Name[add[0]]=add[1]
-    with open('./test/nodes','r') as In:
+    with open('./test/nodes.dmp','r') as In:
         Raw=list(In.readlines())
         for record in Raw:
-            add=record.replace('\n','').split(sep=' ')
+            add=record.replace('\n','').split(sep='|')
             Id[add[0]]=add[1]
             Rank[add[0]]=add[2]
             if add[2]=='species':
@@ -368,14 +368,14 @@ def TaxonQueryNoAuto():
 Option=input("Select:\n1.Update database from GenBank\n2.Add pvirate data\n3.Query\n4.Taxon\n")
 Date=str(datetime.datetime.now())[:19].replace(" ","-")
 if Option=="1":
-    UpdateSeqFromGenbank()
+    UpdateSeqDBFromGenbank()
 elif Option=="2":
     FileIn=input("Genbank format filename:\n")
     UpdateSeqFromFile(FileIn)
 elif Option=="3":
     SeqQuery()
 elif Option=="4":
-    InitTaxon()
+    #InitTaxon()
     TaxonQueryNoAuto()
 else:
     print("Input error!\n")
