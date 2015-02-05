@@ -26,6 +26,7 @@ def Query():
     )
     with open(tmpfile_name,'w') as tmpfile:
         tmpfile.write(blast_results.read())
+    return
 
 def Parse():
     parse_blast_results=list(SearchIO.parse(tmpfile_name,'blast-xml'))
@@ -35,13 +36,13 @@ def Parse():
         for hit in result:
             hit_id=hit.description
             hit_score=hit[0].evalue     #Only use first HSP
-            name=hit_id.split(sep=' ')[:2]      #The first three words of description is usually enough to know the organism name
+            name=hit_id.split(sep=' ')[:3]      #The first three words of description is usually enough to know the organism name
             name=' '.join(name)
             dictionary[name]=None
             add.append([query_id,hit_id,str(hit_score),name])
         out.extend(add)
 
-def Translate():
+#Translate organism name with YouDao API
     api_key='1630771459' #1000 times per hour
     for words in dictionary.keys():
         if dictionary[words] is not None:
@@ -51,12 +52,12 @@ def Translate():
             api_key,
             '&type=data&doctype=json&version=1.1&q=',
             words
-        ])).read()
+        ])).read().decode('utf-8')
         parse_translate_results=json.loads(youdao_results)
         translation_results=parse_translate_results['translation']
         dictionary[words]=translation_results[0]
 
-def Output():
+#Output
     n=0
     for item in out:
         if n%3 is 0:
@@ -69,6 +70,7 @@ def Output():
             '\n'
               )
         n=n+1
+    return
 
 tmpfile_name='.'.join([sys.argv[1],'tmp'])
 out=list()
@@ -76,8 +78,6 @@ dictionary=dict()
 if os.path.exists(tmpfile_name):
     print('Found old results.')
     Parse()
-    Output()
 else:
     Query()
     Parse()
-    Output()
