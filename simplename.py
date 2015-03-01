@@ -6,7 +6,7 @@ def main():
     data=SeqIO.parse(handle,'gb')
     target=list()
     for record in data:
-        organism=record.annotations['organism']
+        organism=record.annotations['organism'].replace(' ','_')
         accession=record.annotations['accessions'][0]
         for feature in record.features:
             if feature.type=='gene' and 'gene' in feature.qualifiers:
