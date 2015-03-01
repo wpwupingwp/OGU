@@ -13,7 +13,7 @@ def main():
                 gene=str(feature.qualifiers['gene'][0])
                 sequence=str(record.seq[feature.location.start:feature.location.end])
                 target.append([organism,accession,gene,sequence])
-    handle_out=open('_'.join([sys.argv[1],'simplify']),'w')
+    handle_out=open(sys.argv[1].replace('.gb','.fasta'),'w')
     for item in target:
         handle_out.write('>')
         handle_out.write('|'.join([item[0],item[1],item[2]]))
