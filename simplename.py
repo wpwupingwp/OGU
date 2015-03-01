@@ -16,11 +16,11 @@ def main():
     handle_out=open('_'.join([sys.argv[1],'simplify']),'w')
     for item in target:
         handle_out.write('>')
-        handle_out.write('|'.join([item[:3]]))
+        handle_out.write('|'.join([item[0],item[1],item[2]]))
         handle_out.write('\n')
         handle_out.write(item[3])
         handle_out.write('\n')
     print('Done.')
 
-if __main__='main':
+if __name__=='__main__':
     main()
