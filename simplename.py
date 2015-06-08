@@ -14,11 +14,11 @@ def main():
 #Use for to get all sub_features
         for feature in record.features:
             try:
-                position = [(i.location.start,i.location.end) for i in feature.sub_features]
+                position = [[i.location.start,i.location.end] for i in feature.sub_features]
             except:
-                position = (feature.location.start,feature.location.end)
+                position = [feature.location.start,feature.location.end]
 
-            sequence = [str(record.seq[*frag]) for frag in position]
+            sequence = [str(record.seq(*frag)) for frag in position]
             if feature.type=='misc_feature': 
                 name=str(feature.qualifiers['note'][0]).replace(' ','_')
             elif feature.type=='gene' and 'gene' in feature.qualifiers:
