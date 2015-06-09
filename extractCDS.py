@@ -11,36 +11,39 @@ def main():
         accession = record.annotations['accessions'][0]
         full = str(record.seq)
         name = ''
-        target.append([organism, accession, 'full', full])
+        target.append([
+            organism, 
+            accession, 
+            'full', 
+            full
+            ])
 #Use for to get all sub_features
         for feature in record.features:
            # try:
           #      position  =  [[i.location.start, i.location.end] for i in feature.sub_features]
           #  except:
           #      position  =  [feature.location.start, feature.location.end]
+          #if feature.type == 'misc_feature': 
+          #    name = str(feature.qualifiers['note'][0]).replace(' ', '_')
+          #elif feature.type =='gene' and 'gene' in feature.qualifiers:
+          #    name = str(feature.qualifiers['gene'][0]).replace(' ', '_')
 
-            if feature.location_poerator != 'join':
+          #if feature.type != 'CDS' and 'CDS' in feature.qualifiers:
+
+            if feature.type != 'CDS':
+                continue
+
+#avoid space by replacing it with dash
+            name = str(feature.qualifiers['gene'][0]).replace(' ', '_')
+            if feature.location_operator != 'join':
                 position = [
                     feature.location.start, 
                     feature.location.end
                 ]
             else:
-                position = [
-                    [
-                        i.location.start,
-                        i.location.end
-                    ] 
-                    for i in feature.sub_features
-                ]
+                position = [[i.location.start, i.location.end] for i in feature.sub_features ]
             sequence = [str(record.seq[frag[0]:frag[1]]) for frag in position]
             sequence = ''.join(sequence)
-            if feature.type == 'misc_feature': 
-                name = str(feature.qualifiers['note'][0]).replace(' ', '_')
-            elif feature.type =='gene' and 'gene' in feature.qualifiers:
-                name = str(feature.qualifiers['gene'][0]).replace(' ', '_')
-            elif feature.type == 'CDS' and 'CDS' in feature.qualifiers:
-                name = str(feature.qualifiers['note'][0]).replace(' ', '_')
-
             target.append([organism, accession, name, sequence])
     handle_out = open(sys.argv[1].replace('.gb', '.fasta'),'w')
     for item in target:
