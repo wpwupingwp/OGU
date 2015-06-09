@@ -29,7 +29,6 @@ def main():
 
           #if feature.type != 'CDS' and 'CDS' in feature.qualifiers:
 
-            name = ''
             sequence = list()
             position = list()
             if feature.type != 'CDS':
@@ -53,13 +52,18 @@ def main():
 
             sequence = ''.join(sequence)
             target.append([organism, accession, name, sequence])
-    handle_out = open(sys.argv[1].replace('.gb', '.fasta'),'w')
+
+#Output
     for item in target:
-        handle_out.write('>')
-        handle_out.write('|'.join([item[0], item[1],item[2]]))
-        handle_out.write('\n')
-        handle_out.write(item[3])
-        handle_out.write('\n')
+        handle = open(item[2], 'a')
+        handle.write(''.join(['>','|'.join([item[0], item[1], item[2]]),'\n',item[3],'\n']))
+        handle.close()
+    #for item in target:
+    #    handle_out.write('>')
+    #    handle_out.write('|'.join([item[0], item[1],item[2]]))
+    #    handle_out.write('\n')
+    #    handle_out.write(item[3])
+    #    handle_out.write('\n')
     print('Done.')
 
 if __name__ =='__main__':
