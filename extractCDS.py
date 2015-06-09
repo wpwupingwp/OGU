@@ -16,7 +16,7 @@ def main():
             'full', 
             full
             ])
-#Use for to get all sub_features
+#Got warning that sub_feature may be deprecated
         for feature in record.features:
            # try:
           #      position  =  [[i.location.start, i.location.end] for i in feature.sub_features]
