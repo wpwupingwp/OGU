@@ -10,7 +10,6 @@ def main():
         organism = record.annotations['organism'].replace(' ', '_')
         accession = record.annotations['accessions'][0]
         full = str(record.seq)
-        name = ''
         target.append([
             organism, 
             accession, 
@@ -30,19 +29,28 @@ def main():
 
           #if feature.type != 'CDS' and 'CDS' in feature.qualifiers:
 
+            name = ''
+            sequence = list()
+            position = list()
             if feature.type != 'CDS':
                 continue
 
 #avoid space by replacing it with dash
             name = str(feature.qualifiers['gene'][0]).replace(' ', '_')
             if feature.location_operator != 'join':
-                position = [
-                    feature.location.start, 
-                    feature.location.end
-                ]
+                position.append([
+                    int(feature.location.start), 
+                    int(feature.location.end)
+                ])
             else:
-                position = [[i.location.start, i.location.end] for i in feature.sub_features ]
-            sequence = [str(record.seq[frag[0]:frag[1]]) for frag in position]
+                for i in feature.sub_features:
+                    position.append([
+                        int(i.location.start), 
+                        int(i.location.end)
+                    ])
+            for frag in position:
+                sequence.append(str(record.seq[frag[0]:frag[1]]))
+
             sequence = ''.join(sequence)
             target.append([organism, accession, name, sequence])
     handle_out = open(sys.argv[1].replace('.gb', '.fasta'),'w')
