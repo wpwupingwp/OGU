@@ -34,8 +34,13 @@ def main():
             if feature.type != 'CDS':
                 continue
 
+#some CDS doesn't have name???
+            if 'gene' in feature.qualifiers: 
 #avoid space by replacing it with dash
-            name = str(feature.qualifiers['gene'][0]).replace(' ', '_')
+                name = str(feature.qualifiers['gene'][0]).replace(' ', '_')
+            else:
+                continue
+
             if feature.location_operator != 'join':
                 position.append([
                     int(feature.location.start), 
