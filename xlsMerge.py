@@ -17,12 +17,37 @@ def get_sample_data(raw, sample):
     """This function will get every sample's data and its two references 
     data.
     """
+#Initiate sample, aka sample_raw_data
+    default = {
+        'raw':[0,0,0,0,0,0],
+        'ref_1':[0,0,0,0,0,0],
+        'ref_2':[0,0,0,0,0,0]
+    }
+    for library in ['A', 'B']:
+        for plate in range(56):
+            if library == 'B' and plate>25:
+                continue
+            for line in 'ABCDEFGH':
+                for row in range(12):
+                    name = ''.join([
+                        library,
+                        '{:{fill}2d}'.format(plate+1,fill='0'),
+                        '-',
+                        line,
+                        '{:{fill}2d}'.format(row+1,fill='0'),
+                    ])
+                    sample[name] = default
+                #value = sheet[row][line]
+
+
+    print(sample)
+    raise ValueError
     for sheet_name in raw.keys():
         sheet = raw[sheet_name]
         for row in sheet.columns:
 #row 1 and row 12 are references
             if row in [1, 12]:
-            continue
+                continue
             else:
                 for line in sheet.index:
                     name = ''.join([
@@ -33,37 +58,6 @@ def get_sample_data(raw, sample):
                         sheet.columns
                     ])
                     value = sheet[row][line]
-
-
-
-    for library in ['A', 'B']:
-        for plate in range(56):
-            for times in range(6):
-                sheet_name = ''.join([
-                    library,
-                    '{:{fill}2d}'.format(plate+1,fill='0'),
-                    '-',
-                    str(times+1)
-                ])
-                sheet = raw[sheet_name]
-
-                for row in sheet.columns:
-#row 1 and row 12 are references
-                    if row in [1, 12]:
-                        continue
-                    else:
-                        for line in sheet.index:
-                            name = ''.join([
-                                library,
-                                plate,
-                                '-',
-                                sheet.index,
-                                sheet.columns
-                            ])
-                            value = sheet[row][line]
-                print(sheet.index,sheet.columns)
-
-
 
 
 def main():
@@ -82,16 +76,7 @@ def main():
     raw_data = dict()
     name_list = glob.glob('*.xls')
     get_raw_data(name_list, raw_data)
-
     sample_raw_data = dict()
-    initial = {
-        'raw':[0,0,0,0,0,0],
-        'ref_1':[0,0,0,0,0,0],
-        'ref_2':[0,0,0,0,0,0]
-    }
-    for name in raw_data.keys():
-        sample_raw_data[name] = initial
-
     get_sample_data(raw_data, sample_raw_data)
     print(sample_raw_data)
 
