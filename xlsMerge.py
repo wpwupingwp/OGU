@@ -1,13 +1,15 @@
 #!/usr/bin/python3
 
-import os
+import glob
 import xlrd
 
-def read_xls(filename):
-    book=xlrd.open_workbook(filename)
+#To get all xls filename in present directory
+#For example, 'A23-4.xls'
+data = list()
+name_list = glob.glob('*.xls')
+for name in name_list:
+    book = xlrd.open_workbook(name)
 #Use first sheet
-    sheet=book.sheet_by_index(0)
-
-
-def get_filename():
-
+    sheet = book.sheet_by_index(0)
+    data.append([name,sheet])
+print(data)
