@@ -3,12 +3,17 @@
 import glob
 import pandas
 
-#To get all xls filename in present directory
-#For example, 'A23-4.xls'
-data = list()
-name_list = glob.glob('*.xls')
-for name in name_list:
-#Use first sheet
-    sheet = pandas.read_excel(name)
-    data.append([name,sheet])
-    print(sheet)
+def get_data(filenames, data):
+    for name in filenames:
+        sheet = pandas.read_excel(name)
+        data.append([name, sheet])
+
+def main():
+    raw_data = list()
+    name_list = glob.glob('*.xls')
+    get_data(name_list, raw_data)
+    print(raw_data)
+
+
+if __name__ == '__main__':
+    main()
