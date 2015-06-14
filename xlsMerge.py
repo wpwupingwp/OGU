@@ -10,12 +10,32 @@ def get_raw_data(filenames, data):
     """
     for name in filenames:
         sheet = pandas.read_excel(name)
-        data[name] = sheet
+#drop '.xls' from name
+        data[name[:5]] = sheet
 
 def get_sample_data(raw, sample):
     """This function will get every sample's data and its two references 
     data.
     """
+    for sheet_name in raw.keys():
+        sheet = raw[sheet_name]
+        for row in sheet.columns:
+#row 1 and row 12 are references
+            if row in [1, 12]:
+            continue
+            else:
+                for line in sheet.index:
+                    name = ''.join([
+                        library,
+                        plate,
+                        '-',
+                        sheet.index,
+                        sheet.columns
+                    ])
+                    value = sheet[row][line]
+
+
+
     for library in ['A', 'B']:
         for plate in range(56):
             for times in range(6):
@@ -26,7 +46,22 @@ def get_sample_data(raw, sample):
                     str(times+1)
                 ])
                 sheet = raw[sheet_name]
-                print(sheet.index,shet.columns)
+
+                for row in sheet.columns:
+#row 1 and row 12 are references
+                    if row in [1, 12]:
+                        continue
+                    else:
+                        for line in sheet.index:
+                            name = ''.join([
+                                library,
+                                plate,
+                                '-',
+                                sheet.index,
+                                sheet.columns
+                            ])
+                            value = sheet[row][line]
+                print(sheet.index,sheet.columns)
 
 
 
@@ -45,15 +80,20 @@ def main():
             simplify the program, here it just omit tables from 7 to 10.
     """
     raw_data = dict()
-    sample_raw_data = {
-        'raw':[1, 2, 3, 4, 5, 6],
-        'ref_1':[1, 2, 3, 4, 5, 6],
-        'ref_2':[1, 2, 3, 4, 5, 6]
-    }
-
     name_list = glob.glob('*.xls')
     get_raw_data(name_list, raw_data)
+
+    sample_raw_data = dict()
+    initial = {
+        'raw':[0,0,0,0,0,0],
+        'ref_1':[0,0,0,0,0,0],
+        'ref_2':[0,0,0,0,0,0]
+    }
+    for name in raw_data.keys():
+        sample_raw_data[name] = initial
+
     get_sample_data(raw_data, sample_raw_data)
+    print(sample_raw_data)
 
 
 if __name__ == '__main__':
