@@ -28,7 +28,6 @@ def initiate_sample_data(raw, sample):
     sample name then will looks like:
         A33-11D
     """
-#Initiate sample, aka sample_raw_data
     for library in ['A', 'B']:
         for plate in range(56):
             if library == 'B' and plate>25:
@@ -50,6 +49,9 @@ def initiate_sample_data(raw, sample):
                     }
 
 def get_sample_data(raw_data, sample):
+    """It is better to check the original data to ensure this function works
+    well.
+    """
     for sheet_name, sheet in raw_data.items():
         time = int(sheet_name[-1])
         if time > 6:
@@ -71,7 +73,8 @@ def get_sample_data(raw_data, sample):
                 sample[cell]['ref_2'][time] = ref_2
 
 def analyse(sample_raw_data,analysis):
-#    x = [0, 60, 120, 180, 240, 300]
+    """This function only use the first five points.
+    """
     x = [0, 60, 120, 180, 240]
     for name, data in sample_raw_data.items():
         id = name
@@ -110,9 +113,10 @@ def analyse(sample_raw_data,analysis):
         analysis.append(item)
 
 def output(analysis):
+    """Output csv format.
+    """
     with open('result.csv','w') as out:
         for line in analysis:
-            print(line)
             line_out = [str(i) for i in line]
             out.write(','.join(line_out))
             out.write('\n')
