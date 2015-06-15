@@ -71,19 +71,57 @@ def get_sample_data(raw_data, sample):
                 sample[cell]['ref_2'][time] = ref_2
 
 def analyse(sample_raw_data,analysis):
-    for key, value in sample_raw_data.items():
-        y = value['raw']
+    analysis = [
+        'id', 
+        'fold_1', 'fold_2', 
+        'slope_raw', 'intercept_raw','r_square_raw', 
+        'slope_ref_1', 'intercept_ref_1','r_square_ref_1', 
+        'slope_ref_2', 'intercept_ref_2','r_square_ref_2', 
+        'raw_1', 'raw_2', 'raw_3', 'raw_4', 'raw_5', 'raw_6', 
+        'ref_1_1', 'ref_1_2', 'ref_1_3', 'ref_1_4', 'ref_1_5', 'ref_1_6', 
+        'ref_2_1', 'ref_2_2', 'ref_2_3', 'ref_2_4', 'ref_2_5', 'ref_2_6' 
+    ]
+    x = [0, 60, 120, 180, 240, 300]
+    for name, data in sample_raw_data.items():
+        id = name
+        item = [id, 0, 0, 0]
+        raw = value['raw']
+        ref_1 = value['ref_1']
+        ref_2 = value['ref_2']
         if 'OVRFLW' in y:
             continue
-        if '0' in y:
-            print(key, value)
-        x = [0, 60, 120, 180, 240, 300]
-        print(key, value)
-        print()
-        slope, intercept, r_value, _, _ = linregress(x, y)
-        print(slope, intercept, r_value)
+        slope, intercept, r_value, _, _ = linregress(x, raw)
+        r_square = r_value ** 2
+        item.extend([
+            slope,
+            intercept,
+            r_square
+        )]
+        slope, intercept, r_value, _, _ = linregress(x, ref_1)
+        r_square = r_value ** 2
+        item.extend([
+            slope,
+            intercept,
+            r_square
+        )]
+        slope, intercept, r_value, _, _ = linregress(x, ref_2)
+        r_square = r_value ** 2
+        item.extend([
+            slope,
+            intercept,
+            r_square
+        )]
+        item.extend(raw)
+        item.extend(ref_1)
+        item.extend(ref_2)
+        item[1] = item[3] / item[6]
+        item[2] = item[3] / item[9]
+        analysis.append(item)
 
-
+def output(analysis):
+    with open('result.csv','w') as out:
+        for line in analysis:
+            out.write(','.join(line))
 
 
 def test(raw_data,sample_raw_data):
@@ -108,12 +146,12 @@ def main():
     raw_data = dict()
     sample_raw_data = dict()
     sample = dict()
-    analysis = dict()
+    analysis = list()
     get_raw_data(name_list, raw_data)
     initiate_sample_data(raw_data, sample_raw_data)
     get_sample_data(raw_data, sample_raw_data)
     analyse(sample_raw_data, analysis)
-    test(raw_data, sample_raw_data)
+    output(analysis)
 
 if __name__ == '__main__':
     main()
