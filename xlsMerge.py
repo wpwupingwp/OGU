@@ -145,9 +145,9 @@ def main():
         'slope_raw', 'intercept_raw','r_square_raw', 
         'slope_ref_1', 'intercept_ref_1','r_square_ref_1', 
         'slope_ref_2', 'intercept_ref_2','r_square_ref_2', 
-        'raw_1', 'raw_2', 'raw_3', 'raw_4', 'raw_5', 'raw_6', 
-        'ref_1_1', 'ref_1_2', 'ref_1_3', 'ref_1_4', 'ref_1_5', 'ref_1_6', 
-        'ref_2_1', 'ref_2_2', 'ref_2_3', 'ref_2_4', 'ref_2_5', 'ref_2_6' 
+        'raw_1', 'raw_2', 'raw_3', 'raw_4', 'raw_5', 
+        'ref_1_1', 'ref_1_2', 'ref_1_3', 'ref_1_4', 'ref_1_5',  
+        'ref_2_1', 'ref_2_2', 'ref_2_3', 'ref_2_4', 'ref_2_5',  
     ]]
     get_raw_data(name_list, raw_data)
     initiate_sample_data(raw_data, sample_raw_data)
