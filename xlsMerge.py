@@ -71,24 +71,14 @@ def get_sample_data(raw_data, sample):
                 sample[cell]['ref_2'][time] = ref_2
 
 def analyse(sample_raw_data,analysis):
-    analysis = [
-        'id', 
-        'fold_1', 'fold_2', 
-        'slope_raw', 'intercept_raw','r_square_raw', 
-        'slope_ref_1', 'intercept_ref_1','r_square_ref_1', 
-        'slope_ref_2', 'intercept_ref_2','r_square_ref_2', 
-        'raw_1', 'raw_2', 'raw_3', 'raw_4', 'raw_5', 'raw_6', 
-        'ref_1_1', 'ref_1_2', 'ref_1_3', 'ref_1_4', 'ref_1_5', 'ref_1_6', 
-        'ref_2_1', 'ref_2_2', 'ref_2_3', 'ref_2_4', 'ref_2_5', 'ref_2_6' 
-    ]
     x = [0, 60, 120, 180, 240, 300]
     for name, data in sample_raw_data.items():
         id = name
-        item = [id, 0, 0, 0]
-        raw = value['raw']
-        ref_1 = value['ref_1']
-        ref_2 = value['ref_2']
-        if 'OVRFLW' in y:
+        item = [id, 0, 0]
+        raw = data['raw']
+        ref_1 = data['ref_1']
+        ref_2 = data['ref_2']
+        if 'OVRFLW' in raw:
             continue
         slope, intercept, r_value, _, _ = linregress(x, raw)
         r_square = r_value ** 2
@@ -96,21 +86,21 @@ def analyse(sample_raw_data,analysis):
             slope,
             intercept,
             r_square
-        )]
+        ])
         slope, intercept, r_value, _, _ = linregress(x, ref_1)
         r_square = r_value ** 2
         item.extend([
             slope,
             intercept,
             r_square
-        )]
+        ])
         slope, intercept, r_value, _, _ = linregress(x, ref_2)
         r_square = r_value ** 2
         item.extend([
             slope,
             intercept,
             r_square
-        )]
+        ])
         item.extend(raw)
         item.extend(ref_1)
         item.extend(ref_2)
@@ -121,13 +111,9 @@ def analyse(sample_raw_data,analysis):
 def output(analysis):
     with open('result.csv','w') as out:
         for line in analysis:
-            out.write(','.join(line))
-
-
-def test(raw_data,sample_raw_data):
-    print('A01-4\n',raw_data['A01-4'])
-    print('A01-5\n',raw_data['A01-5'])
-    print('A03-03D\n',sample_raw_data['A03-03D'])
+            print(line)
+            line_out = [str(i) for i in line]
+            out.write(','.join(line_out))
 
 def main():
     """It uses glob.glob to get names of all xls files. Hence it should be 
@@ -147,6 +133,16 @@ def main():
     sample_raw_data = dict()
     sample = dict()
     analysis = list()
+    analysis = [[
+        'id', 
+        'fold_1', 'fold_2', 
+        'slope_raw', 'intercept_raw','r_square_raw', 
+        'slope_ref_1', 'intercept_ref_1','r_square_ref_1', 
+        'slope_ref_2', 'intercept_ref_2','r_square_ref_2', 
+        'raw_1', 'raw_2', 'raw_3', 'raw_4', 'raw_5', 'raw_6', 
+        'ref_1_1', 'ref_1_2', 'ref_1_3', 'ref_1_4', 'ref_1_5', 'ref_1_6', 
+        'ref_2_1', 'ref_2_2', 'ref_2_3', 'ref_2_4', 'ref_2_5', 'ref_2_6' 
+    ]]
     get_raw_data(name_list, raw_data)
     initiate_sample_data(raw_data, sample_raw_data)
     get_sample_data(raw_data, sample_raw_data)
