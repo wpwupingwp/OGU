@@ -71,13 +71,14 @@ def get_sample_data(raw_data, sample):
                 sample[cell]['ref_2'][time] = ref_2
 
 def analyse(sample_raw_data,analysis):
-    x = [0, 60, 120, 180, 240, 300]
+#    x = [0, 60, 120, 180, 240, 300]
+    x = [0, 60, 120, 180, 240]
     for name, data in sample_raw_data.items():
         id = name
         item = [id, 0, 0]
-        raw = data['raw']
-        ref_1 = data['ref_1']
-        ref_2 = data['ref_2']
+        raw = data['raw'][:5]
+        ref_1 = data['ref_1'][:5]
+        ref_2 = data['ref_2'][:5]
         if 'OVRFLW' in raw:
             continue
         slope, intercept, r_value, _, _ = linregress(x, raw)
@@ -114,6 +115,7 @@ def output(analysis):
             print(line)
             line_out = [str(i) for i in line]
             out.write(','.join(line_out))
+            out.write('\n')
 
 def main():
     """It uses glob.glob to get names of all xls files. Hence it should be 
