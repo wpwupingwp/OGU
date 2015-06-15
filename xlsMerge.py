@@ -34,7 +34,8 @@ def initiate_sample_data(raw, sample):
             if library == 'B' and plate>25:
                 continue
             for idx in 'ABCDEFGH':
-                for col in ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']:
+                for col in ['02', '03', '04', '05', '06',
+                            '07', '08', '09', '10', '11']:
                     name = ''.join([
                         library,
                         '{:{fill}2d}'.format(plate+1,fill='0'),
