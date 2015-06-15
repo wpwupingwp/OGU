@@ -71,6 +71,7 @@ def get_sample_data(raw_data, sample):
                     print(sheet_name, cell, time)
                     print(sample[cell])
                     raise ValueError
+#found reason, here it edit sample[*]['raw'][time]
                 sample[cell]['raw'][time] = raw
                 sample[cell]['ref_1'][time] = ref_1
                 sample[cell]['ref_2'][time] = ref_2
