@@ -13,7 +13,7 @@ def get_raw_data(filenames, data):
 #drop '.xls' from name
         data[name[:5]] = sheet
 
-def get_sample_data(raw, sample):
+def initiate_sample_data(raw, sample):
     """This function will get every sample's data and its two references 
     data.
     table:
@@ -25,9 +25,9 @@ def get_sample_data(raw, sample):
     """
 #Initiate sample, aka sample_raw_data
     default = {
-        'raw':[0,0,0,0,0,0,0],
-        'ref_1':[0,0,0,0,0,0,0],
-        'ref_2':[0,0,0,0,0,0,0]
+        'raw':[0,0,0,0,0,0],
+        'ref_1':[0,0,0,0,0,0],
+        'ref_2':[0,0,0,0,0,0]
     }
     for library in ['A', 'B']:
         for plate in range(56):
@@ -44,28 +44,41 @@ def get_sample_data(raw, sample):
                     ])
                     sample[name] = default
 
+def get_sample_data(raw, sample):
 #get values from sheets
     for sheet_name, sheet  in raw.items():
-#time-1
-        time = int(sheet_name[-1])-1
+#omit time 7 to 10
+        time = int(sheet_name[-1])
+        if time > 6:
+            continue
+
 #drop 'Unnamed: 12'
         for col in sheet.columns[:12]:
             if col in [1, 12]:
                 continue
             else:
                 for idx in sheet.index:
-                    ref_1 = line[0]
-                    ref_2 = line[-1]
+                    ref_1 = sheet[1][idx]
+                    ref_2 = sheet[12][idx]
                     raw = sheet[col][idx]
-                    print(col, idx, raw, sheet_name)
                     name = ''.join([
                         sheet_name[0:-1],
                         idx,
                         '{:{fill}2d}'.format(col,fill='0')
                     ])
-                    sample[name]['raw'][time] = raw
-                    sample[name]['ref_1'][time] = ref_1
-                    sample[name]['ref_2'][time] = ref_2
+                    print(sheet_name, name, time)
+                    print(sample[name])
+                    sample[name]['raw'][time-1] = raw
+                    sample[name]['ref_1'][time-1] = ref_1
+                    sample[name]['ref_2'][time-1] = ref_2
+                    print(sheet)
+                    print(sample[name])
+                    return 
+
+def test(raw_data,sample_raw_data):
+    print('a01-4\n',raw_data['A01-4'])
+    print('a01-5\n',raw_data['A01-5'])
+    print('a01-d01\n',sample_raw_data['A01-D01'])
 
 def main():
     """It uses glob.glob to get names of all xls files. Hence it should be 
@@ -73,21 +86,20 @@ def main():
     All xls filename should follow this format:
      A00-0.xls
      01234
-
+    
     Library: A B
        Plate: A 56, B 26
        Times: 6 
             There are A28 and others which have 7 or 10 tables. In order to 
             simplify the program, here it just omit tables from 7 to 10.
     """
+    name_list = glob.glob('*.xls')
     raw_data = dict()
     sample_raw_data = dict()
-
-    name_list = glob.glob('*.xls')
     get_raw_data(name_list, raw_data)
+    initiate_sample_data(raw_data, sample_raw_data)
     get_sample_data(raw_data, sample_raw_data)
-    print(sample_raw_data)
-
+    #test(raw_data,sample_raw_data)
 
 if __name__ == '__main__':
     main()
