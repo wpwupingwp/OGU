@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+from __future__ import print_function
 import glob
 import pandas
 
@@ -22,6 +23,8 @@ def initiate_sample_data(raw, sample):
         >>> a.columns
         Index([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 'Unnamed: 12'],
               dtype='object')
+    sample name then will looks like:
+        A33-11D
     """
 #Initiate sample, aka sample_raw_data
     default = {
@@ -33,52 +36,49 @@ def initiate_sample_data(raw, sample):
         for plate in range(56):
             if library == 'B' and plate>25:
                 continue
-            for line in 'ABCDEFGH':
-                for row in range(12):
+            for idx in 'ABCDEFGH':
+                for col in ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']:
                     name = ''.join([
                         library,
                         '{:{fill}2d}'.format(plate+1,fill='0'),
                         '-',
-                        line,
-                        '{:{fill}2d}'.format(row+1,fill='0'),
+                        col,
+                        idx
                     ])
                     sample[name] = default
 
-def get_sample_data(raw, sample):
-#get values from sheets
-    for sheet_name, sheet  in raw.items():
-#omit time 7 to 10
+def get_sample_data(raw_data, sample):
+    for sheet_name, sheet in raw_data.items():
         time = int(sheet_name[-1])
         if time > 6:
             continue
-
-#drop 'Unnamed: 12'
-        for col in sheet.columns[:12]:
-            if col in [1, 12]:
-                continue
-            else:
-                for idx in sheet.index:
-                    ref_1 = sheet[1][idx]
-                    ref_2 = sheet[12][idx]
-                    raw = sheet[col][idx]
-                    name = ''.join([
-                        sheet_name[0:-1],
-                        idx,
-                        '{:{fill}2d}'.format(col,fill='0')
-                    ])
-                    print(sheet_name, name, time)
-                    print(sample[name])
-                    sample[name]['raw'][time-1] = raw
-                    sample[name]['ref_1'][time-1] = ref_1
-                    sample[name]['ref_2'][time-1] = ref_2
-                    print(sheet)
-                    print(sample[name])
-                    return 
+        else:
+            time = time - 1
+        for idx in 'ABCDEFGH':
+            for col in ['02', '03', '04', '05', '06', '07', '08', '09', '10', '11']:
+                cell = ''.join([
+                    sheet_name[0:-1],
+                    col,
+                    idx
+                ])
+                ref_1 = sheet[1][idx]
+                ref_2 = sheet[12][idx]
+                raw = sheet[int(col)][idx]
+                print('cell\tcol\tidx\traw\ttime\n')
+                print(cell,col,idx,raw,time)
+                if sample[cell]['raw'][time] != 0:
+                    print('Break')
+                    print(sheet_name, cell, time)
+                    print(sample[cell])
+                    raise ValueError
+                sample[cell]['raw'][time] = raw
+                sample[cell]['ref_1'][time] = ref_1
+                sample[cell]['ref_2'][time] = ref_2
 
 def test(raw_data,sample_raw_data):
     print('a01-4\n',raw_data['A01-4'])
     print('a01-5\n',raw_data['A01-5'])
-    print('a01-d01\n',sample_raw_data['A01-D01'])
+    print('a01-01d\n',sample_raw_data['A01-01D'])
 
 def main():
     """It uses glob.glob to get names of all xls files. Hence it should be 
@@ -99,7 +99,7 @@ def main():
     get_raw_data(name_list, raw_data)
     initiate_sample_data(raw_data, sample_raw_data)
     get_sample_data(raw_data, sample_raw_data)
-    #test(raw_data,sample_raw_data)
+    test(raw_data,sample_raw_data)
 
 if __name__ == '__main__':
     main()
