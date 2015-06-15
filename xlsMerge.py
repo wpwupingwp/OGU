@@ -4,6 +4,7 @@ from __future__ import print_function
 from copy import deepcopy
 import glob
 import pandas
+from scipy.stats import linregress
 
 def get_raw_data(filenames, data):
     """Here it uses pandas.read_excel to get contents from all xls files in
@@ -68,6 +69,22 @@ def get_sample_data(raw_data, sample):
                 sample[cell]['ref_1'][time] = ref_1
                 sample[cell]['ref_2'][time] = ref_2
 
+def analyse(sample_raw_data,analysis):
+    for key, value in sample_raw_data.items():
+        y = value['raw']
+        if 'OVRFLW' in y:
+            continue
+        if '0' in y:
+            print(key, value)
+        x = [0, 60, 120, 180, 240, 300]
+        print(key, value)
+        print()
+        slope, intercept, r_value, _, _ = linregress(x, y)
+        print(slope, intercept, r_value)
+
+
+
+
 def test(raw_data,sample_raw_data):
     print('A01-4\n',raw_data['A01-4'])
     print('A01-5\n',raw_data['A01-5'])
@@ -90,10 +107,11 @@ def main():
     raw_data = dict()
     sample_raw_data = dict()
     sample = dict()
+    analysis = dict()
     get_raw_data(name_list, raw_data)
     initiate_sample_data(raw_data, sample_raw_data)
     get_sample_data(raw_data, sample_raw_data)
-    print(sample_raw_data)
+    analyse(sample_raw_data, analysis)
     test(raw_data, sample_raw_data)
 
 if __name__ == '__main__':
