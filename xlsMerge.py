@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 from __future__ import print_function
+from copy import deepcopy
 import glob
 import pandas
 
@@ -27,11 +28,6 @@ def initiate_sample_data(raw, sample):
         A33-11D
     """
 #Initiate sample, aka sample_raw_data
-    default = {
-        'raw':[0,0,0,0,0,0],
-        'ref_1':[0,0,0,0,0,0],
-        'ref_2':[0,0,0,0,0,0]
-    }
     for library in ['A', 'B']:
         for plate in range(56):
             if library == 'B' and plate>25:
@@ -45,7 +41,11 @@ def initiate_sample_data(raw, sample):
                         col,
                         idx
                     ])
-                    sample[name] = default
+                    sample[name] = { 
+                        'raw':[0,0,0,0,0,0], 
+                        'ref_1':[0,0,0,0,0,0], 
+                        'ref_2':[0,0,0,0,0,0] 
+                    }
 
 def get_sample_data(raw_data, sample):
     for sheet_name, sheet in raw_data.items():
@@ -64,19 +64,14 @@ def get_sample_data(raw_data, sample):
                 ref_1 = sheet[1][idx]
                 ref_2 = sheet[12][idx]
                 raw = sheet[int(col)][idx]
-                if sample[cell]['raw'][time] != 0:
-                    print(sheet_name, cell, time)
-                    print(sample[cell])
-                    raise ValueError
-#found reason, here it edit sample[*]['raw'][time]
                 sample[cell]['raw'][time] = raw
                 sample[cell]['ref_1'][time] = ref_1
                 sample[cell]['ref_2'][time] = ref_2
 
 def test(raw_data,sample_raw_data):
-    print('a01-4\n',raw_data['A01-4'])
-    print('a01-5\n',raw_data['A01-5'])
-    print('a01-01d\n',sample_raw_data['A01-01D'])
+    print('A01-4\n',raw_data['A01-4'])
+    print('A01-5\n',raw_data['A01-5'])
+    print('A03-03D\n',sample_raw_data['A03-03D'])
 
 def main():
     """It uses glob.glob to get names of all xls files. Hence it should be 
@@ -98,6 +93,7 @@ def main():
     get_raw_data(name_list, raw_data)
     initiate_sample_data(raw_data, sample_raw_data)
     get_sample_data(raw_data, sample_raw_data)
+    print(sample_raw_data)
     test(raw_data, sample_raw_data)
 
 if __name__ == '__main__':
