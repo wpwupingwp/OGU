@@ -64,10 +64,7 @@ def get_sample_data(raw_data, sample):
                 ref_1 = sheet[1][idx]
                 ref_2 = sheet[12][idx]
                 raw = sheet[int(col)][idx]
-                print('cell\tcol\tidx\traw\ttime\n')
-                print(cell,col,idx,raw,time)
                 if sample[cell]['raw'][time] != 0:
-                    print('Break')
                     print(sheet_name, cell, time)
                     print(sample[cell])
                     raise ValueError
@@ -97,10 +94,11 @@ def main():
     name_list = glob.glob('*.xls')
     raw_data = dict()
     sample_raw_data = dict()
+    sample = dict()
     get_raw_data(name_list, raw_data)
     initiate_sample_data(raw_data, sample_raw_data)
     get_sample_data(raw_data, sample_raw_data)
-    test(raw_data,sample_raw_data)
+    test(raw_data, sample_raw_data)
 
 if __name__ == '__main__':
     main()
