@@ -1,10 +1,10 @@
 #!/usr/bin/python3
 
 from __future__ import print_function
-from copy import deepcopy
 import glob
 import pandas
 from scipy.stats import linregress
+
 
 def get_raw_data(filenames, data):
     """Here it uses pandas.read_excel to get contents from all xls files in
@@ -13,8 +13,9 @@ def get_raw_data(filenames, data):
     """
     for name in filenames:
         sheet = pandas.read_excel(name)
-#drop '.xls' from name
+# drop '.xls' from name
         data[name[:5]] = sheet
+
 
 def initiate_sample_data(raw, sample):
     """This function will get every sample's data and its two references 
@@ -30,23 +31,24 @@ def initiate_sample_data(raw, sample):
     """
     for library in ['A', 'B']:
         for plate in range(56):
-            if library == 'B' and plate>25:
+            if library == 'B' and plate > 25:
                 continue
             for idx in 'ABCDEFGH':
                 for col in ['02', '03', '04', '05', '06',
                             '07', '08', '09', '10', '11']:
                     name = ''.join([
                         library,
-                        '{:{fill}2d}'.format(plate+1,fill='0'),
+                        '{:{fill}2d}'.format(plate+1, fill='0'),
                         '-',
                         col,
                         idx
                     ])
                     sample[name] = { 
-                        'raw':[0,0,0,0,0,0], 
-                        'ref_1':[0,0,0,0,0,0], 
-                        'ref_2':[0,0,0,0,0,0] 
+                        'raw': [0, 0, 0, 0, 0, 0],
+                        'ref_1': [0, 0, 0, 0, 0, 0],
+                        'ref_2': [0, 0, 0, 0, 0, 0]
                     }
+
 
 def get_sample_data(raw_data, sample):
     """It is better to check the original data to ensure this function works
@@ -72,7 +74,8 @@ def get_sample_data(raw_data, sample):
                 sample[cell]['ref_1'][time] = ref_1
                 sample[cell]['ref_2'][time] = ref_2
 
-def analyse(sample_raw_data,analysis):
+
+def analyse(sample_raw_data, analysis):
     """This function only use the first five points.
     """
     x = [0, 60, 120, 180, 240]
@@ -112,14 +115,16 @@ def analyse(sample_raw_data,analysis):
         item[2] = item[3] / item[9]
         analysis.append(item)
 
+
 def output(analysis):
     """Output csv format.
     """
-    with open('result.csv','w') as out:
+    with open('result.csv', 'w') as out:
         for line in analysis:
             line_out = [str(i) for i in line]
             out.write(','.join(line_out))
             out.write('\n')
+
 
 def main():
     """It uses glob.glob to get names of all xls files. Hence it should be 
@@ -142,9 +147,9 @@ def main():
     analysis = [[
         'id', 
         'fold_1', 'fold_2', 
-        'slope_raw', 'intercept_raw','r_square_raw', 
-        'slope_ref_1', 'intercept_ref_1','r_square_ref_1', 
-        'slope_ref_2', 'intercept_ref_2','r_square_ref_2', 
+        'slope_raw', 'intercept_raw', 'r_square_raw',
+        'slope_ref_1', 'intercept_ref_1', 'r_square_ref_1',
+        'slope_ref_2', 'intercept_ref_2', 'r_square_ref_2',
         'raw_1', 'raw_2', 'raw_3', 'raw_4', 'raw_5', 
         'ref_1_1', 'ref_1_2', 'ref_1_3', 'ref_1_4', 'ref_1_5',  
         'ref_2_1', 'ref_2_2', 'ref_2_3', 'ref_2_4', 'ref_2_5',  
