@@ -78,6 +78,10 @@ def get_sample_data(raw_data, sample):
                 if plate >= 5:
                     ref5 = sheet[5][idx]
                     ref6 = sheet[10][idx]
+                if plate == 7:
+                    ref2 = ref1
+                    ref4 = ref3
+                    ref6 = ref5
                 raw = sheet[int(col)][idx]
                 if col == '01':
                     fifty = sheet[2][idx]
@@ -120,10 +124,12 @@ def analyse(sample_raw_data, analysis, id_list):
         ref4 = data['ref4']
         ref5 = data['ref5']
         ref6 = data['ref6']
-        ref = [0, 0, 0, 0, 0, 0, 0]
-        for i in ref:
-            ref[i] = mean([ref1[i], ref2[i], ref3[i], ref4[i], ref5[i],
-                           ref6[i]])
+        ref = list()
+        for i in range(7):
+            to_mean = [ref1[i], ref2[i], ref3[i], ref4[i], ref5[i], ref6[i]]
+#            ref[i] = mean(to_mean)
+            ref.append(sum(to_mean)/6)
+            print(to_mean, ref[i])
 
         slope, intercept, r_value, _, _ = linregress(x, fifty)
         item[5] = slope
@@ -176,7 +182,6 @@ def main():
     id_list = [i.split()[::-1] for i in id_list]
     id_list.pop()
     id_list = dict(id_list)
-    print(id_list)
 
     name_list = glob.glob('*-*')
     raw_data = dict()
