@@ -98,9 +98,9 @@ def get_sample_data(raw_data, sample):
                 sample[cell]['ref6'][time] = ref6
 
 def analyse(sample_raw_data, analysis):
-    """This function only use the first five points.
+    """This function use all seven points.
     """
-    x = [0, 60, 120, 180, 240]
+    x = [0, 60, 120, 180, 240, 300, 360]
     for name, data in sample_raw_data.items():
         id = name
         item = [id, 0, 0]
@@ -155,6 +155,12 @@ def main():
      P0-0.xls
     """
     name_list = glob.glob('*-*')
+    id_list = open('round2.csv', 'r').read().split(sep='\n')
+    id_list = [i.split() for i in id_list]
+    id_list.pop()
+    id_list = dict(id_list)
+    print(id_list)
+    exit -1
     raw_data = dict()
     sample_raw_data = dict()
     sample = dict()
@@ -178,8 +184,6 @@ def main():
     get_raw_data(name_list, raw_data)
     initiate_sample_data(raw_data, sample_raw_data)
     get_sample_data(raw_data, sample_raw_data)
-    for i in sample_raw_data:
-        print(i)
     analyse(sample_raw_data, analysis)
     output(analysis)
 
