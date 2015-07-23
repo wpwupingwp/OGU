@@ -135,7 +135,7 @@ def analyse(sample_raw_data, analysis, id_list):
         item[6] = slope
         item[10] = intercept
         item[14] = r_value ** 2
-        slope, intercept, r_value, _, _ = linregress(x, fifty)
+        slope, intercept, r_value, _, _ = linregress(x, ten)
         item[7] = slope
         item[11] = intercept
         item[15] = r_value ** 2
