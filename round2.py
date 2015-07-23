@@ -4,6 +4,7 @@ from __future__ import print_function
 import glob
 import pandas
 from scipy.stats import linregress
+from numpy import mean
 
 
 def get_raw_data(filenames, data):
@@ -55,7 +56,6 @@ def get_sample_data(raw_data, sample):
     But in Plate 1 and 2, there are some data does not follow this rule.
     """
     for sheet_name, sheet in raw_data.items():
-        print(sheet_name, sheet)
         time = int(sheet_name[-1])
         plate = int(sheet_name[1])
         time = time - 1
@@ -68,10 +68,10 @@ def get_sample_data(raw_data, sample):
                 ])
                 ref1 = sheet[1][idx]
                 ref2 = sheet[12][idx]
-                ref3 = None
-                ref4 = None
-                ref5 = None
-                ref6 = None
+                ref3 = ref1
+                ref4 = ref2
+                ref5 = ref1
+                ref6 = ref2
                 if plate >= 3:
                     ref3 = sheet[6][idx]
                     ref4 = sheet[11][idx]
@@ -102,39 +102,57 @@ def analyse(sample_raw_data, analysis):
     """
     x = [0, 60, 120, 180, 240, 300, 360]
     for name, data in sample_raw_data.items():
-        id = name
-        item = [id, 0, 0]
-        raw = data['raw'][:5]
-        ref_1 = data['ref_1'][:5]
-        ref_2 = data['ref_2'][:5]
+        item = [id_list[name],
+                name, 
+                0, 0, 0,
+                0, 0, 0, 0,
+                0, 0, 0, 0,
+                0, 0, 0, 0
+                ]
         if 'OVRFLW' in raw:
             continue
-        slope, intercept, r_value, _, _ = linregress(x, raw)
-        r_square = r_value ** 2
-        item.extend([
-            slope,
-            intercept,
-            r_square
-        ])
-        slope, intercept, r_value, _, _ = linregress(x, ref_1)
-        r_square = r_value ** 2
-        item.extend([
-            slope,
-            intercept,
-            r_square
-        ])
-        slope, intercept, r_value, _, _ = linregress(x, ref_2)
-        r_square = r_value ** 2
-        item.extend([
-            slope,
-            intercept,
-            r_square
-        ])
-        item.extend(raw)
-        item.extend(ref_1)
-        item.extend(ref_2)
-        item[1] = item[3] / item[6]
-        item[2] = item[3] / item[9]
+        fifty = data['50uM']
+        twenty = data['20uM']
+        ten = data['10uM']
+        ref1 = data['ref1']
+        ref2 = data['ref2']
+        ref3 = data['ref3']
+        ref4 = data['ref4']
+        ref5 = data['ref5']
+        ref6 = data['ref6']
+        ref = [0, 0, 0, 0, 0, 0, 0]
+        for i in ref:
+            ref[i] = mean([ref1[i], ref2[i], ref3[i], ref4[i], ref5[i],
+                           ref6[i]])
+
+        slope, intercept, r_value, _, _ = linregress(x, fifty)
+        item[5] = slope
+        item[9] = intercept
+        item[13] = r_value ** 2
+        slope, intercept, r_value, _, _ = linregress(x, twenty)
+        item[6] = slope
+        item[10] = intercept
+        item[14] = r_value ** 2
+        slope, intercept, r_value, _, _ = linregress(x, fifty)
+        item[7] = slope
+        item[11] = intercept
+        item[15] = r_value ** 2
+        slope, intercept, r_value, _, _ = linregress(x, ref)
+        item[8] = slope
+        item[12] = intercept
+        item[16] = r_value ** 2
+        item.extend(fifty)
+        item.extend(twenty)
+        item.extend(ten)
+        item.extend(ref1)
+        item.extend(ref2)
+        item.extend(ref3)
+        item.extend(ref4)
+        item.extend(ref5)
+        item.extend(ref6)
+        item[2] = item[5] / item[8]
+        item[3] = item[6] / item[8]
+        item[4] = item[7] / item[8]
         analysis.append(item)
 
 
@@ -154,13 +172,12 @@ def main():
     All xls filename should follow this format:
      P0-0.xls
     """
-    name_list = glob.glob('*-*')
     id_list = open('round2.csv', 'r').read().split(sep='\n')
-    id_list = [i.split() for i in id_list]
+    id_list = [i.split()[::-1] for i in id_list]
     id_list.pop()
     id_list = dict(id_list)
-    print(id_list)
-    exit -1
+
+    name_list = glob.glob('*-*')
     raw_data = dict()
     sample_raw_data = dict()
     sample = dict()
@@ -168,12 +185,14 @@ def main():
     analysis = [[
         'id', 
         'cell',
-        'slope_of_slope',
-        'fold_1', 'fold_2', 'fold_3',
+        'fold_50uM', 'fold_20uM', 'fold_10uM',
         'slope_50uM', 'slope_20uM', 'slope_10uM', 'slope_ref'
         'intercept_50uM', 'intercept_20uM', 'intercept_10uM', 'intercept_ref',
         'r^2_50uM', 'r^2_20uM', 'r^2_10uM', 'r^2_ref'
-        'raw_1', 'raw_2', 'raw_3', 'raw_4', 'raw_5', 'raw_6', 'raw_7',
+        '50uM_1', '50uM_2', '50uM_3', '50uM_4', '50uM_5', '50uM_6', '50uM_7',
+        '20uM_1', '20uM_2', '20uM_3', '20uM_4', '20uM_5', '20uM_6', '20uM_7',
+        '10uM_1', '10uM_2', '10uM_3', '10uM_4', '10uM_5', '10uM_6', '10uM_7',
+        'ref_1', 'ref_2', 'ref_3', 'ref_4', 'ref_5', 'ref_6', 'ref_7', 
         'ref1_1', 'ref1_2', 'ref1_3', 'ref1_4', 'ref1_5', 'ref1_6', 'ref1_7', 
         'ref2_1', 'ref2_2', 'ref2_3', 'ref2_4', 'ref2_5', 'ref2_6', 'ref2_7', 
         'ref3_1', 'ref3_2', 'ref3_3', 'ref3_4', 'ref3_5', 'ref3_6', 'ref3_7', 
