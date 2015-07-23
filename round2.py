@@ -97,7 +97,7 @@ def get_sample_data(raw_data, sample):
                 sample[cell]['ref5'][time] = ref5
                 sample[cell]['ref6'][time] = ref6
 
-def analyse(sample_raw_data, analysis):
+def analyse(sample_raw_data, analysis, id_list):
     """This function use all seven points.
     """
     x = [0, 60, 120, 180, 240, 300, 360]
@@ -109,11 +109,11 @@ def analyse(sample_raw_data, analysis):
                 0, 0, 0, 0,
                 0, 0, 0, 0
                 ]
-        if 'OVRFLW' in raw:
-            continue
         fifty = data['50uM']
         twenty = data['20uM']
         ten = data['10uM']
+        if 'OVRFLW' in fifty:
+            continue
         ref1 = data['ref1']
         ref2 = data['ref2']
         ref3 = data['ref3']
@@ -176,6 +176,7 @@ def main():
     id_list = [i.split()[::-1] for i in id_list]
     id_list.pop()
     id_list = dict(id_list)
+    print(id_list)
 
     name_list = glob.glob('*-*')
     raw_data = dict()
@@ -186,9 +187,9 @@ def main():
         'id', 
         'cell',
         'fold_50uM', 'fold_20uM', 'fold_10uM',
-        'slope_50uM', 'slope_20uM', 'slope_10uM', 'slope_ref'
+        'slope_50uM', 'slope_20uM', 'slope_10uM', 'slope_ref',
         'intercept_50uM', 'intercept_20uM', 'intercept_10uM', 'intercept_ref',
-        'r^2_50uM', 'r^2_20uM', 'r^2_10uM', 'r^2_ref'
+        'r^2_50uM', 'r^2_20uM', 'r^2_10uM', 'r^2_ref',
         '50uM_1', '50uM_2', '50uM_3', '50uM_4', '50uM_5', '50uM_6', '50uM_7',
         '20uM_1', '20uM_2', '20uM_3', '20uM_4', '20uM_5', '20uM_6', '20uM_7',
         '10uM_1', '10uM_2', '10uM_3', '10uM_4', '10uM_5', '10uM_6', '10uM_7',
@@ -203,7 +204,7 @@ def main():
     get_raw_data(name_list, raw_data)
     initiate_sample_data(raw_data, sample_raw_data)
     get_sample_data(raw_data, sample_raw_data)
-    analyse(sample_raw_data, analysis)
+    analyse(sample_raw_data, analysis, id_list)
     output(analysis)
 
 if __name__ == '__main__':
