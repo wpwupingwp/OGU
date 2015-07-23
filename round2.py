@@ -4,7 +4,6 @@ from __future__ import print_function
 import glob
 import pandas
 from scipy.stats import linregress
-from numpy import mean
 
 
 def get_raw_data(filenames, data):
@@ -127,9 +126,7 @@ def analyse(sample_raw_data, analysis, id_list):
         ref = list()
         for i in range(7):
             to_mean = [ref1[i], ref2[i], ref3[i], ref4[i], ref5[i], ref6[i]]
-#            ref[i] = mean(to_mean)
             ref.append(sum(to_mean)/6)
-            print(to_mean, ref[i])
 
         slope, intercept, r_value, _, _ = linregress(x, fifty)
         item[5] = slope
@@ -147,18 +144,21 @@ def analyse(sample_raw_data, analysis, id_list):
         item[8] = slope
         item[12] = intercept
         item[16] = r_value ** 2
+
+        item[2] = item[5] / item[8]
+        item[3] = item[6] / item[8]
+        item[4] = item[7] / item[8]
+
         item.extend(fifty)
         item.extend(twenty)
         item.extend(ten)
+        item.extend(ref)
         item.extend(ref1)
         item.extend(ref2)
         item.extend(ref3)
         item.extend(ref4)
         item.extend(ref5)
         item.extend(ref6)
-        item[2] = item[5] / item[8]
-        item[3] = item[6] / item[8]
-        item[4] = item[7] / item[8]
         analysis.append(item)
 
 
