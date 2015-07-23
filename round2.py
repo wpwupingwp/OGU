@@ -14,7 +14,7 @@ def get_raw_data(filenames, data):
         data[name] = sheet
 
 
-def initiate_sample_data(raw, sample):
+def initiate_sample_data(sample):
     """This function will get every sample's data and its two references 
     data.
     table:
@@ -55,9 +55,8 @@ def get_sample_data(raw_data, sample):
     But in Plate 1 and 2, there are some data does not follow this rule.
     """
     for sheet_name, sheet in raw_data.items():
-        time = int(sheet_name[-1])
+        time = int(sheet_name[-1])-1
         plate = int(sheet_name[1])
-        time = time - 1
         for idx in 'ABCDEFGH':
             for col in ['01', '12']:
                 cell = ''.join([
@@ -81,7 +80,6 @@ def get_sample_data(raw_data, sample):
                     ref2 = ref1
                     ref4 = ref3
                     ref6 = ref5
-                raw = sheet[int(col)][idx]
                 if col == '01':
                     fifty = sheet[2][idx]
                     twenty = sheet[3][idx]
@@ -99,6 +97,7 @@ def get_sample_data(raw_data, sample):
                 sample[cell]['ref4'][time] = ref4
                 sample[cell]['ref5'][time] = ref5
                 sample[cell]['ref6'][time] = ref6
+
 
 def analyse(sample_raw_data, analysis, id_list):
     """This function use all seven points.
@@ -207,7 +206,7 @@ def main():
         'ref6_1', 'ref6_2', 'ref6_3', 'ref6_4', 'ref6_5', 'ref6_6', 'ref6_7', 
     ]]
     get_raw_data(name_list, raw_data)
-    initiate_sample_data(raw_data, sample_raw_data)
+    initiate_sample_data(sample_raw_data)
     get_sample_data(raw_data, sample_raw_data)
     analyse(sample_raw_data, analysis, id_list)
     output(analysis)
