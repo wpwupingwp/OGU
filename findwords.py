@@ -20,7 +20,7 @@ for word in wordlist:
     if is_all_vowel(word, under) is True:
         all_under.append(word)
 
-
+all_under.sort(key=lambda x:len(x))
 print('word length')
 for word in all_under:
     print(word,len(word))
