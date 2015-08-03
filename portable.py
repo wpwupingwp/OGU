@@ -1,17 +1,19 @@
 #!/usr/bin/python3
 
 import datetime
+from ftplib import FTP
 import re
 import sqlite3
 import urllib.request
 import warnings
-import ZipFile
 
 from Bio import BiopythonDeprecationWarning
 from Bio import Entrez
 from Bio import SeqIO
 from Bio.Seq import MutableSeq
 from os import makedirs
+from os.path import exists
+from zipfile import ZipFile 
 
 warnings.simplefilter('ignore', BiopythonDeprecationWarning)
 
@@ -204,7 +206,7 @@ def SeqQuery():
         cur.execute('select Taxon, Organism, Name, Type, Strand, Sequence, Head from main order by Taxon')
         Result = cur.fetchall()
     elif Querytype == '5':
-        cur.execute('select Taxon, Organism, Name, Type, Strand, Sequence, Head from main where type = 'cds' order by Taxon')
+        cur.execute('select Taxon, Organism, Name, Type, Strand, Sequence, Head from main where type = "cds" order by Taxon')
         Result = cur.fetchall()
 
     All = []
@@ -274,12 +276,16 @@ def UpdateSeqFromFile(FileIn):
 def InitTaxon():
     '''Init Taxon database from file. 
     to be continued(add download function
-    ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz
+    ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdmp.tar.gz
     '''
-    download = urllib.request.urlopen('hftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz').read().decode('utf-8')
-    with open('taxdump.zip', 'w') as taxdump:
-        taxdump.write(download)
-    ZipFile.extractall('taxdump.zip', path='./test/')
+    if exists('./test/taxdmp.zip') == False:
+        ftp = FTP('ftp.ncbi.nih.gov')
+        ftp.login()
+        ftp.cwd('pub/taxonomy')
+        ftp.retrbinary('RETR taxdump.zip', open('taxdmp.zip', 'wb').write)
+        ftp.quit
+    with ZipFile('./test/taxdmp.zip', 'r') as dmpfile:
+        dmpfile.extractall(path='./test/')
     Id = dict()
     Data = list()
     Name = dict()
@@ -290,18 +296,21 @@ def InitTaxon():
     Rank = dict()
     global Taxon
     Taxon = list()
-    with open('./test/names.dmp', 'r') as In:
-        Raw = list(In.readlines())
-        for record in Raw:
-            add = record.replace('\n', '').split(sep='|')
+    with open('./test/names.dmp', 'r') as dmpfile:
+        raw = dmpfile.read().split(sep='\n')
+        raw.pop()
+        for record in raw:
+            add = record.replace('\t', '').split(sep='|')
             if add[0] not in Name or add[2] == 'scientific name':
                 Name[add[0]] = add[1]
-    with open('./test/nodes.dmp', 'r') as In:
-        Raw = list(In.readlines())
-        for record in Raw:
-            add = record.replace('\n', '').split(sep='|')
+    with open('./test/nodes.dmp', 'r') as dmpfile:
+        raw = dmpfile.read().split(sep='\n')
+        raw.pop()
+        for record in raw:
+            add = record.replace('\t', '').split(sep='|')
+#1696063|Sarcocystis corvusi||scientific name|   
             Id[add[0]] = add[1]
-            Rank[add[0]] = add[2]
+            Rank[add[0]] = add[3]
             if add[2] == 'species':
                 Specie.append(add[0])
     for specie in Specie:
@@ -377,7 +386,8 @@ def TaxonQueryNoAuto():
             Result = cur.fetchall()
         elif Querytype == '2':
             Name = input('scientific name:\n')
-            cur.execute('select * from taxon where Name like ?;', ('%'+Name+'%', ))
+#            cur.execute('select * from taxon where Name like ?;', ('%'+Name+'%', ))
+            cur.execute('select * from taxon where Name = ?;', (Name, ))
             Result = cur.fetchall()
         cur.execute('select Id, Name from taxon;')
         Result2 = cur.fetchall()
