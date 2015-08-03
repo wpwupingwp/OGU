@@ -79,8 +79,14 @@ def blast(dbname):
     stdout, stderr = cmd()
     return 
 
-def parse():
-    pass
+def parse(target):
+    blast_result = list(SearchIO.parse('BlastResult.xml', 'blast-xml'))
+    for record in blast_result:
+        if len(record) == 0:
+            continue
+        else:
+            tophit = record[0]
+        target.append([tophit[0][0].query, tophit[0][0].hit])
 
 def main():
     """Usage:
@@ -93,7 +99,9 @@ def main():
     get(fragments)
     out(fragments)
     blast(sys.argv[2])
-    parse()
+    parse(target)
+    for i in target:
+        print(i)
 
 if __name__ =='__main__':
     main()
