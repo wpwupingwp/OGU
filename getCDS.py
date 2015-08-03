@@ -2,6 +2,7 @@
 import sys
 from Bio import SeqIO
 from Bio import SearchIO
+from Bio.SeqRecord import SeqRecord 
 from Bio.Blast.Applications import NcbiblastnCommandline as nb
 from os import makedirs
 from os.path import exists
@@ -88,15 +89,24 @@ def parse(target):
 
 def output(target):
     for record in target:
-        id = record[0].id.split(sep='|')[-1]
+        gene = record[0].id.split(sep='|')[-1]
         output_file = ''.join([
             'output/',
             sys.argv[2], 
             '-',
-            id, 
+            gene, 
             '.fasta'
         ])
-        SeqIO.write(record[1], output_file, 'fasta')
+        rename_seq = SeqRecord(
+            seq=record[1].seq, 
+            id='|'.join([
+                gene,
+                sys.argv[2],
+                record[1].id
+            ]),
+            description=''
+        )
+        SeqIO.write(rename_seq, output_file, 'fasta')
 
 def main():
     """Usage:
