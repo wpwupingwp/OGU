@@ -31,8 +31,8 @@ def Parser():
     rec = [Taxon, Organism, Accession, Name, Type, Start, End, Strand, Sequence, Date]
     All.append(rec)
     for i in Record.features:
-        if i.type = ="gene" and "gene" in i.qualifiers:
-            if i.location_operator! = "join":
+        if i.type =="gene" and "gene" in i.qualifiers:
+            if i.location_operator!= "join":
                 Type = "gene"
                 Start = int(i.location.start)
                 End = int(i.location.end)
@@ -41,7 +41,7 @@ def Parser():
                 Strand = str(i.location.strand)
                 rec = [Taxon, Organism, Accession, Name, Type, Start, End, Strand, Sequence, Date]
                 Gene.append(rec)
-            elif i.location_operator = ="join":
+            elif i.location_operator =="join":
                 Type = "gene"
                 Start = int(i.sub_features[0].location.start)
                 End = int(i.sub_features[0].location.end)
@@ -54,7 +54,7 @@ def Parser():
                 End = int(i.sub_features[1].location.end)
                 Sequence = "".join([str(Record.seq[Start:End]), str(Record.seq[Start:End])])
                 rec = [Taxon, Organism, Accession, Name, Type, Start, End, Strand, Sequence, Date]
-        elif i.type = ="CDS" and "gene" in i.qualifiers:
+        elif i.type =="CDS" and "gene" in i.qualifiers:
             Type = "cds"
             Start = int(i.location.start)
             End = int(i.location.end)
@@ -63,18 +63,18 @@ def Parser():
             Strand = str(i.location.strand)
             rec = [Taxon, Organism, Accession, Name, Type, Start, End, Strand, Sequence, Date]
             All.append(rec)
-        elif i.type = ="tRNA" and "gene" in i.qualifiers:
+        elif i.type =="tRNA" and "gene" in i.qualifiers:
             Type = "tRNA"
             Start = int(i.location.start)
             End = int(i.location.end)
             Sequence = str(Record.seq[Start:End])
-            if len(Sequence)> = 100:
+            if len(Sequence)>= 100:
                 Sequence = ""
             Name = str(i.qualifiers["gene"][0]).replace(" ", "_")
             Strand = str(i.location.strand)
             rec = [Taxon, Organism, Accession, Name, Type, Start, End, Strand, Sequence, Date]
             All.append(rec)
-        elif i.type = ="rRNA":
+        elif i.type =="rRNA":
             Type = "rRNA"
             Start = int(i.location.start)
             End = int(i.location.end)
@@ -83,7 +83,7 @@ def Parser():
             Strand = str(i.location.strand)
             rec = [Taxon, Organism, Accession, Name, Type, Start, End, Strand, Sequence, Date]
             All.append(rec)
-        elif i.type = ="exon" and "gene" in i.qualifiers :
+        elif i.type =="exon" and "gene" in i.qualifiers :
             Type = "exon"
             Start = int(i.location.start)
             End = int(i.location.end)
@@ -95,7 +95,7 @@ def Parser():
             Strand = int(i.location.strand)
             rec = [Taxon, Organism, Accession, Name, Type, Start, End, Strand, Sequence, Date]
             All.append(rec)
-        elif i.type = ="intron" and "gene" in i.qualifiers:
+        elif i.type =="intron" and "gene" in i.qualifiers:
             Type = "intron"
             Start = int(i.location.start)
             End = int(i.location.end)
@@ -132,7 +132,7 @@ def InitSeq():
     cur = con.cursor()
     cur.execute("create table if not exists main (Taxon int, Organism text, Accession text, Name text, Type text, Head int, Tail int,  Strand text, Sequence text, Date text, ID integer PRIMARY KEY);")
     for row in SeqDB:
-        if row[8]! = "":
+        if row[8]!= "":
             cur.execute("insert into main (Taxon, Organism, Accession, Name, Type, Head, Tail, Strand, Sequence, Date) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);", (row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9]))
     con.commit()
     cur.close()
@@ -159,7 +159,7 @@ def SeqBatchQuery():
         Title = "|".join([str(i[0]), i[1], i[2], i[3]])
         Filename = i[2]
         Sequence = MutableSeq(i[5])
-        if i[4] = ="-1":
+        if i[4] =="-1":
             Sequence.seq = Sequence.reverse_complement()
         Record = [Title, Filename, Sequence]
         All.append(Record)
@@ -184,29 +184,29 @@ def SeqQuery():
         raise ValueError('wrong input!\n')
     con = sqlite3.connect("./test/DB")
     cur = con.cursor()
-    if Querytype = ="1":
+    if Querytype =="1":
         Organism = input("Organism:\n")
         Gene = input("Gene:\n")
         Type = input("Fragment type(gene, cds, rRNA, tRNA, exon, intron, spacer):\n")
         cur.execute("select Taxon, Organism, Name, Type, Strand, Sequence from main where Name like ? and Type = ? and Organism=?", ('%'+Gene+'%', Type, Organism))
         Result = cur.fetchall()
-    elif Querytype = ="2":
+    elif Querytype =="2":
         Organism = input("Organism:\n")
         Type = input("Fragment type(gene, cds, rRNA, tRNA, exon, intron, spacer, whole, fragments):\n")
-        if Type = ="fragments":
+        if Type =="fragments":
             cur.execute("select Taxon, Organism, Name, Type, Strand, Sequence, Head from main where Organism = ?  order by Head", (Organism, ))
         else:
             cur.execute("select Taxon, Organism, Name, Type, Strand, Sequence, Head from main where Organism like ? and Type = ? order by Head", ('%'+Organism+'%', Type))
         Result = cur.fetchall()
-    elif Querytype = ="3":
+    elif Querytype =="3":
         Gene = input("Gene:\n")
         Type = input("Fragment type(gene, cds, rRNA, tRNA, exon, intron, spacer):\n")
         cur.execute("select Taxon, Organism, Name, Type, Strand, Sequence from main where Name like ? and Type = ? order by Taxon", ('%'+Gene+'%', Type))
         Result = cur.fetchall()
-    elif Querytype = ="4":
+    elif Querytype =="4":
         cur.execute("select Taxon, Organism, Name, Type, Strand, Sequence, Head from main order by Taxon")
         Result = cur.fetchall()
-    elif Querytype = ="5":
+    elif Querytype =="5":
         cur.execute("select Taxon, Organism, Name, Type, Strand, Sequence, Head from main where type = 'cds' order by Taxon")
         Result = cur.fetchall()
 
@@ -214,7 +214,7 @@ def SeqQuery():
     for i in Result:
         Title = "|".join([str(i[0]), i[1], i[2], i[3]])
         Sequence = MutableSeq(i[5])
-        if i[4] = ="-1":
+        if i[4] =="-1":
             Sequence.seq = Sequence.reverse_complement()
         Record = [Title, Sequence]
         All.append(Record)
@@ -279,7 +279,7 @@ def InitTaxon():
         Raw = list(In.readlines())
         for record in Raw:
             add = record.replace('\n', '').split(sep='|')
-            if add[0] not in Name or add[2] = ='scientific name':
+            if add[0] not in Name or add[2] =='scientific name':
                 Name[add[0]] = add[1]
     with open('./test/nodes.dmp', 'r') as In:
         Raw = list(In.readlines())
@@ -287,11 +287,11 @@ def InitTaxon():
             add = record.replace('\n', '').split(sep='|')
             Id[add[0]] = add[1]
             Rank[add[0]] = add[2]
-            if add[2] = ='species':
+            if add[2] =='species':
                 Specie.append(add[0])
     for specie in Specie:
         record = [specie, ]
-        while Id[specie]! = '1' :
+        while Id[specie]!= '1' :
             record.append(Id[specie])
             specie = Id[specie]
 #        if '33090' in record:
@@ -302,7 +302,7 @@ def InitTaxon():
         for n in range(len(data)):
             if data[n] not in Parent:
                 Parent[data[n]] = data[(n+1):]
-            if n = =0:
+            if n ==0:
                 continue
             if data[n] not in Son:
                 Son[data[n]] = {data[n-1], }
@@ -358,11 +358,11 @@ def TaxonQueryNoAuto():
             return
         con = sqlite3.connect('./test/DB')
         cur = con.cursor()
-        if Querytype = ='1':
+        if Querytype =='1':
             Id = input('taxon id:\n')
             cur.execute('select * from taxon where Id = ?;', (Id, ))
             Result = cur.fetchall()
-        elif Querytype = ='2':
+        elif Querytype =='2':
             Name = input('scientific name:\n')
             cur.execute('select * from taxon where Name like ?;', ('%'+Name+'%', ))
             Result = cur.fetchall()
@@ -403,18 +403,18 @@ def TaxonQueryNoAuto():
 
 Option = input("Select:\n1.Update database from GenBank\n2.Add pvirate data\n3.Query\n4.Init Taxon\n5.Query Taxon\n6.Batch Query\n")
 Date = str(datetime.datetime.now())[:19].replace(" ", "-")
-if Option = ="1":
+if Option =="1":
     UpdateSeqDBFromGenbank()
-elif Option = ="2":
+elif Option =="2":
     FileIn = input("Genbank format filename:\n")
     UpdateSeqFromFile(FileIn)
-elif Option = ="3":
+elif Option =="3":
     SeqQuery()
-elif Option = ="4":
+elif Option =="4":
     InitTaxon()
-elif Option = ="5":
+elif Option =="5":
     TaxonQueryNoAuto()
-elif Option = ='6':
+elif Option =='6':
     SeqBatchQuery()
 else:
     print("Input error!\n")
