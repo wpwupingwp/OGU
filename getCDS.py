@@ -6,7 +6,7 @@ from Bio.Blast.Applications import NcbiblastnCommandline as nb
 from os import makedirs
 from os.path import exists
 
-def get(target):
+def get(fragments):
     wanted_gene = [
         'accD', 'atpA', 'atpB', 'atpE', 'atpF', 'atpH', 'atpI', 'ccsA', 'cemA', 
         'clpP', 'infA', 'matK', 'ndhA', 'ndhB', 'ndhC', 'ndhD', 'ndhE', 'ndhF', 
@@ -48,13 +48,13 @@ def get(target):
                 sequence = str(record.seq[frag[0]:frag[1]])
                 if n > 0:
                     name = '-'.join([name, str(n+1)])
-                target.append([organism, accession, name, sequence])
+                fragments.append([organism, accession, name, sequence])
 
-def out(target):
+def out(fragments):
     if exists == False:
         makedirs('output')
     handle_all = open('output/all.fasta', 'a')
-    for item in target:
+    for item in fragments:
         handle = open(''.join([
             'output/',
             item[2],
@@ -83,10 +83,15 @@ def parse():
     pass
 
 def main():
-    print('Usage:\npython3 getCDS.py genbank_file contig_file\n')
+    """Usage:
+    python3 getCDS.py genbank_file contig_file
+    Before running this script, ensure you already put blast database file in current path. 
+    To create the db file: 
+    makeblastdb -in infile -out outfile -dbtype nucl"""
+    fragments = list()
     target = list()
-    get(target)
-    out(target)
+    get(fragments)
+    out(fragments)
     blast(sys.argv[2])
     parse()
 
