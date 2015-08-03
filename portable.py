@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-import datetime
+from datetime import datetime
 from ftplib import FTP
 import re
 import sqlite3
@@ -18,8 +18,8 @@ from zipfile import ZipFile
 warnings.simplefilter('ignore', BiopythonDeprecationWarning)
 
 def Parser():
-    '''Base on annotations in genbank files to extract fragments from Chloroplast Genome Sequence.
-    '''
+    """Base on annotations in genbank files to extract fragments from Chloroplast Genome Sequence.
+    """
     Taxon = int(Record.features[0].qualifiers['db_xref'][0][6:])
     Organism = Record.annotations['organism']
     Accession = Record.annotations['accessions'][0]
@@ -124,8 +124,8 @@ def Parser():
     SeqDB.extend(All)
 
 def InitSeq():
-    '''Init Sequence Database.
-    '''
+    """Init Sequence Database.
+    """
     con = sqlite3.connect('./test/DB')
     cur = con.cursor()
     cur.execute('create table if not exists main (Taxon int, Organism text, Accession text, Name text, Type text, Head int, Tail int,  Strand text, Sequence text, Date text, ID integer PRIMARY KEY);')
@@ -175,9 +175,15 @@ def SeqBatchQuery():
 
 
 def SeqQuery():
-    '''Sequence query function,  to be continued.
-    '''
-    Querytype = input('1.Specific fragment\n2.Specific Organism\n3.Specific gene\n4.All\n5.All cds\n')
+    """Sequence query function,  to be continued.
+    """
+    Querytype = input(
+        '1.Specific fragment\n'
+        '2.Specific Organism\n'
+        '3.Specific gene\n'
+        '4.All\n'
+        '5.All cds\n'
+    )
     organize = input('Organize output?(y/n)\n')
     if Querytype not in ['1', '2', '3', '4', '5']:
         raise ValueError('wrong input!\n')
@@ -241,8 +247,8 @@ def SeqQuery():
     print('Done.\n')
 
 def UpdateSeqDBFromGenbank():
-    '''Update Sequence database from Genbank,  need time to download.
-    '''
+    """Update Sequence database from Genbank,  need time to download.
+    """
     Down = urllib.request.urlopen('http://www.ncbi.nlm.nih.gov/genomes/GenomesGroup.cgi?taxid=2759&opt=plastid').read().decode('utf-8')
     GenomeList = re.findall('((?<=nuccore/)[0-9]{9})', Down)
     userEmail = input('Input your email address for downloading data or use default(by press enter):\n')
@@ -261,8 +267,8 @@ def UpdateSeqDBFromGenbank():
     UpdateSeqFromFile('genbank')
     
 def UpdateSeqFromFile(FileIn):
-    '''Update Sequence database from private file.
-    '''
+    """Update Sequence database from private file.
+    """
     global Record
     global SeqDB
     SeqDB = []
@@ -274,10 +280,10 @@ def UpdateSeqFromFile(FileIn):
     handle.close()
 
 def InitTaxon():
-    '''Init Taxon database from file. 
+    """Init Taxon database from file.
     to be continued(add download function
     ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdmp.tar.gz
-    '''
+    """
     if exists('./test/taxdmp.zip') == False:
         ftp = FTP('ftp.ncbi.nih.gov')
         ftp.login()
@@ -360,8 +366,8 @@ def InitTaxon():
     print('Done.\n')
     
 def TaxonQueryAuto(Name):
-    '''Taxon query for seqquery,  may be remove.
-    '''
+    """Taxon query for seqquery,  may be remove.
+     """
     con = sqlite3.connect('./test/DB')
     cur = con.cursor()
     cur.execute('select Parent from taxon where  Name like ?;', ('%'+Name+'%', ))
@@ -372,10 +378,13 @@ def TaxonQueryAuto(Name):
     '''to be contiuned'''
 
 def TaxonQueryNoAuto():
-    '''Interactive query taxon database.
-    '''
+    """Interactive query taxon database.
+    """
     while True:
-        Querytype = input('1.by id\n2.by name\n')
+        Querytype = input(
+            '1.by id\n'
+            '2.by name\n'
+        )
         if Querytype not in ['1', '2']:
             return
         con = sqlite3.connect('./test/DB')
@@ -424,8 +433,16 @@ def TaxonQueryNoAuto():
 
 '''main function,  entrance of the program.'''
 
-Option = input('Select:\n1.Update database from GenBank\n2.Add pvirate data\n3.Query\n4.Init Taxon\n5.Query Taxon\n6.Batch Query\n')
-Date = str(datetime.datetime.now())[:19].replace(' ', '-')
+Option = input(
+    'Select:\n'
+    '1.Update database from GenBank\n'
+    '2.Add pvirate data\n'
+    '3.Query\n'
+    '4.Init Taxon\n'
+    '5.Query Taxon\n'
+    '6.Batch Query\n'
+)
+Date = str(datetime.now())[:19].replace(' ', '-')
 if Option == '1':
     UpdateSeqDBFromGenbank()
 elif Option == '2':
