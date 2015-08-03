@@ -10,6 +10,7 @@ from Bio import BiopythonDeprecationWarning
 from Bio import Entrez
 from Bio import SeqIO
 from Bio.Seq import MutableSeq
+from os import makedirs
 
 warnings.simplefilter("ignore", BiopythonDeprecationWarning)
 
@@ -40,7 +41,6 @@ def Parser():
                 Name = str(i.qualifiers["gene"][0])
                 Strand = str(i.location.strand)
                 rec = [Taxon, Organism, Accession, Name, Type, Start, End, Strand, Sequence, Date]
-                Gene.append(rec)
             elif i.location_operator =="join":
                 Type = "gene"
                 Start = int(i.sub_features[0].location.start)
@@ -62,7 +62,6 @@ def Parser():
             Name = str(i.qualifiers["gene"][0]).replace(" ", "_")
             Strand = str(i.location.strand)
             rec = [Taxon, Organism, Accession, Name, Type, Start, End, Strand, Sequence, Date]
-            All.append(rec)
         elif i.type =="tRNA" and "gene" in i.qualifiers:
             Type = "tRNA"
             Start = int(i.location.start)
@@ -73,7 +72,6 @@ def Parser():
             Name = str(i.qualifiers["gene"][0]).replace(" ", "_")
             Strand = str(i.location.strand)
             rec = [Taxon, Organism, Accession, Name, Type, Start, End, Strand, Sequence, Date]
-            All.append(rec)
         elif i.type =="rRNA":
             Type = "rRNA"
             Start = int(i.location.start)
@@ -82,7 +80,6 @@ def Parser():
             Name = str(i.qualifiers["product"][0]).replace(" ", "_")
             Strand = str(i.location.strand)
             rec = [Taxon, Organism, Accession, Name, Type, Start, End, Strand, Sequence, Date]
-            All.append(rec)
         elif i.type =="exon" and "gene" in i.qualifiers :
             Type = "exon"
             Start = int(i.location.start)
@@ -94,7 +91,6 @@ def Parser():
                 Name = "_".join([str(i.qualifiers["gene"][0]), "exon"])
             Strand = int(i.location.strand)
             rec = [Taxon, Organism, Accession, Name, Type, Start, End, Strand, Sequence, Date]
-            All.append(rec)
         elif i.type =="intron" and "gene" in i.qualifiers:
             Type = "intron"
             Start = int(i.location.start)
@@ -106,7 +102,8 @@ def Parser():
             else:
                 Name = "_".join([str(i.qualifiers["gene"][0]), "intron"])
             rec = [Taxon, Organism, Accession, Name, Type, Start, End, Strand, Sequence, Date]
-            All.append(rec)
+
+        All.append(rec)
     Gene.sort(key = lambda x:x[5])
 
     for i in range(len(Gene)-1):
@@ -180,6 +177,7 @@ def SeqQuery():
     '''Sequence query function,  to be continued.'''
 
     Querytype = input("1.Specific fragment\n2.Specific Organism\n3.Specific gene\n4.All\n5.All cds\n")
+    organize = input('Organize output?(y/n)\n')
     if Querytype not in ["1", "2", "3", "4", "5"]:
         raise ValueError('wrong input!\n')
     con = sqlite3.connect("./test/DB")
@@ -214,18 +212,31 @@ def SeqQuery():
     for i in Result:
         Title = "|".join([str(i[0]), i[1], i[2], i[3]])
         Sequence = MutableSeq(i[5])
+        gene = i[2]
         if i[4] =="-1":
             Sequence.seq = Sequence.reverse_complement()
-        Record = [Title, Sequence]
+        Record = [Title, gene, Sequence]
         All.append(Record)
 
-    Output = input("Enter output filename:\n")
-    Fileout = open(".".join([Output, "fasta"]), "w")
-    for i in All:
-        Fileout.write(">%s\n%s\n"%(i[0], i[1]))
+    if organize == 'y':
+        makedirs('output')
+        for i in All:
+            file_name = ''.join([
+                'output',
+                '/',
+                i[1].replace('/', ''),
+                '.fasta'
+            ])
+            with open(file_name, 'a') as output_file:
+                output_file.write('>%s\n%s\n' %(i[0], i[2]))
+    else:
+        Output = input("Enter output filename:\n")
+        with  open(".".join([Output, "fasta"]), "w") as output_file:
+            for i in All:
+                output_file.write(">%s\n%s\n"%(i[0], i[2]))
+
     cur.close()
     con.close()
-    Fileout.close()
     print("Done.\n")
 
 def UpdateSeqDBFromGenbank():
