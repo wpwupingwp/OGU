@@ -242,7 +242,8 @@ def seq_query():
         query_result.append(record)
 
     if organize == 'y':
-        makedirs('output')
+        if not exists('output'):
+            makedirs('output')
         for i in query_result:
             file_name = ''.join([
                 'output',
