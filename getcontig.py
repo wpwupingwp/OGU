@@ -66,13 +66,14 @@ def out_cds(fragments):
     handle_all.close()
     print('Done.')
 
-def blast(option):
+def blast(query_file, db_file):
     cmd = nb(
-        query='./output/all.fasta',
-        db=dbname, 
-        task='blastn', 
+        query=query_file,
+        db=db_file, 
+        task='megablast', 
         evalue=0.001, 
         outfmt=5, 
+        # xml format
         out='BlastResult.xml'
     )
     stdout, stderr = cmd()
@@ -118,7 +119,7 @@ def main():
         makedirs('output')
     fragments = list()
     target = list()
-    print(main.__doc__)
+    print('\n', main.__doc__)
     option = input(
         '1. Query cds in contig\n'
         '2. Query contig in genome\n'
