@@ -126,13 +126,7 @@ def output(target, option):
             )
             SeqIO.write(rename_seq, output_file, 'fasta')
     else:
-        output_file = ''.join([
-            'output/',
-            sys.argv[2], 
-            '-',
-            'filtered', 
-            '.fasta'
-        ])
+        output_file = open('output/' + sys.argv[2] + '-filtered.fasta', 'w' )
         contig_id = {i[0].id for i in target} 
         query_file = SeqIO.parse(sys.argv[1], 'fasta')
         for record in query_file:
