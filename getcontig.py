@@ -7,7 +7,14 @@ from Bio.Blast.Applications import NcbiblastnCommandline as nb
 from os import makedirs
 from os.path import exists
 
-def get_cds(fragments):
+def get_cds(fragments, option):
+    if option == '1':
+        pass
+    elif option == '2':
+        return 
+    else:
+        raise ValueError('Wrong option!\n')
+
     wanted_gene = [
         'accD', 'atpA', 'atpB', 'atpE', 'atpF', 'atpH', 'atpI', 'ccsA', 'cemA', 
         'clpP', 'infA', 'matK', 'ndhA', 'ndhB', 'ndhC', 'ndhD', 'ndhE', 'ndhF', 
@@ -51,7 +58,11 @@ def get_cds(fragments):
                     name = '-'.join([name, str(n+1)])
                 fragments.append([organism, accession, name, sequence])
 
-def out_cds(fragments):
+def out_cds(fragments, option):
+    if option == '1':
+        pass
+    else:
+        return
     handle_all = open('output/all.fasta', 'a')
     for item in fragments:
         handle = open(''.join([
@@ -66,10 +77,14 @@ def out_cds(fragments):
     handle_all.close()
     print('Done.')
 
-def blast(query_file, db_file):
+def blast(option):
+    if option == '1':
+        query_file = './output/all.fasta'
+    else:
+        query_file = sys.argv[1]
     cmd = nb(
         query=query_file,
-        db=db_file, 
+        db=sys.argv[2], 
         task='megablast', 
         evalue=0.001, 
         outfmt=5, 
@@ -87,28 +102,45 @@ def parse(target):
         else:
             tophit = record[0]
         target.append([tophit[0][0].query, tophit[0][0].hit])
-        print(tophit[0][0].query.id)
 
-def output(target):
-    for record in target:
-        gene = record[0].id.split(sep='|')[-1]
+def output(target, option):
+    if option == '1':
+        for record in target:
+            gene = record[0].id.split(sep='|')[-1]
+            output_file = ''.join([
+                'output/',
+                sys.argv[2], 
+                '-',
+                gene, 
+                '.fasta'
+            ])
+            rename_seq = SeqRecord(
+                seq=record[1].seq, 
+                id='|'.join([
+                    gene,
+                    sys.argv[2],
+                    record[1].id
+                ]),
+                description=''
+            )
+            SeqIO.write(rename_seq, output_file, 'fasta')
+    else:
         output_file = ''.join([
             'output/',
             sys.argv[2], 
             '-',
-            gene, 
+            'filtered', 
             '.fasta'
         ])
-        rename_seq = SeqRecord(
-            seq=record[1].seq, 
-            id='|'.join([
-                gene,
-                sys.argv[2],
-                record[1].id
-            ]),
-            description=''
-        )
-        SeqIO.write(rename_seq, output_file, 'fasta')
+        contig_id = {i[0].id for i in target} 
+        query_file = SeqIO.parse(sys.argv[1], 'fasta')
+        for record in query_file:
+            if record.id in contig_id:
+                SeqIO.write(record, output_file, 'fasta')
+
+
+
+
 
 def main():
     """Usage:
@@ -122,19 +154,14 @@ def main():
     target = list()
     print('\n', main.__doc__)
     option = input(
-        '1. Query cds in contig\n'
+        '1. Query CDS in contig\n'
         '2. Query contig in genome\n'
     )
-    if option == '1':
-        get_cds(fragments)
-        out_cds(fragments)
-        blast('./output/all.fasta', sys.argv[2])
-        parse(target)
-        output(target)
-    elif option == '2':
-        blast(sys.argv[1], sys.argv[2])
-        parse(target)
-        output(target)
+    get_cds(fragments, option)
+    out_cds(fragments, option)
+    blast(option)
+    parse(target)
+    output(target, option)
 
 if __name__ =='__main__':
     main()
