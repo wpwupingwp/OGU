@@ -119,39 +119,35 @@ def output(target, option):
                 seq=record[1].seq, 
                 id='|'.join([
                     gene,
-                    sys.argv[2],
+                    sys.argv[1],
                     record[1].id
                 ]),
                 description=''
             )
             SeqIO.write(rename_seq, output_file, 'fasta')
     else:
-        output_file = open('output/' + sys.argv[2] + '-filtered.fasta', 'w' )
+        output_file = open('output/' + sys.argv[1] + '-filtered.fasta', 'w' )
         contig_id = {i[0].id for i in target} 
         query_file = SeqIO.parse(sys.argv[1], 'fasta')
         for record in query_file:
             if record.id in contig_id:
                 SeqIO.write(record, output_file, 'fasta')
 
-
-
-
-
 def main():
     """Usage:
-    python3 getCDS.py genbank_file contig_file
+    python3 getCDS.py genbank_file/fasta_file contig_file mode
     Before running this script, ensure you already put blast database file in current path. 
     To create the db file: 
-    makeblastdb -in infile -out outfile -dbtype nucl"""
+    makeblastdb -in infile -out outfile -dbtype nucl
+    Before run, you need to chose mode:
+        '1. Query CDS in contig\n'
+        '2. Query contig in genome\n'"""
     if exists('output') == False:
         makedirs('output')
     fragments = list()
     target = list()
     print('\n', main.__doc__)
-    option = input(
-        '1. Query CDS in contig\n'
-        '2. Query contig in genome\n'
-    )
+    option = sys.argv[3]
     get_cds(fragments, option)
     out_cds(fragments, option)
     blast(option)
