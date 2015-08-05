@@ -87,6 +87,7 @@ def parse(target):
         else:
             tophit = record[0]
         target.append([tophit[0][0].query, tophit[0][0].hit])
+        print(tophit[0][0].query.id)
 
 def output(target):
     for record in target:
