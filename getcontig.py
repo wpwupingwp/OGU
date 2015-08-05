@@ -83,6 +83,7 @@ def blast(option):
     else:
         query_file = sys.argv[1]
     cmd = nb(
+    #  num_threads=8,
         query=query_file,
         db=sys.argv[2], 
         task='megablast', 
