@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+
 import sys
 from Bio import SeqIO
 from Bio import SearchIO
@@ -136,7 +137,8 @@ def output(target, option):
 def main():
     """Usage:
     python3 getCDS.py genbank_file/fasta_file contig_file mode
-    Before running this script, ensure you already put blast database file in current path. 
+    Before running this script, ensure you already put blast database file in
+    current path. Also, it assumes that you have installed BLAST suite before. 
     To create the db file: 
     makeblastdb -in infile -out outfile -dbtype nucl
     Before run, you need to chose mode:
