@@ -140,8 +140,8 @@ def main():
     To create the db file: 
     makeblastdb -in infile -out outfile -dbtype nucl
     Before run, you need to chose mode:
-        '1. Query CDS in contig\n'
-        '2. Query contig in genome\n'"""
+        1. Query CDS in contig
+        2. Query contig in genome"""
     if exists('output') == False:
         makedirs('output')
     fragments = list()
