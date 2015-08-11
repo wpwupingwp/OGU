@@ -21,6 +21,7 @@ warnings.simplefilter('ignore', BiopythonDeprecationWarning)
 def parser(raw_seq):
     """Base on annotations in genbank files to extract fragments from Chloroplast Genome Sequence.
     """
+    global date
     taxon_id = int(raw_seq.features[0].qualifiers['db_xref'][0][6:])
     organism = raw_seq.annotations['organism']
     accession = raw_seq.annotations['accessions'][0]
@@ -128,7 +129,7 @@ def parser(raw_seq):
 def init_seq():
     """Init Sequence Database.
     """
-    con = sqlite3.connect('./test/DB')
+    con = sqlite3.connect('./data/DB')
     cur = con.cursor()
     cur.execute(
         'CREATE TABLE IF NOT EXISTS main (Taxon INT, Organism TEXT, Accession TEXT, Name TEXT, Type TEXT, Head INT, Tail INT,  Strand TEXT, Sequence TEXT, Date TEXT, ID INTEGER PRIMARY KEY);')
@@ -144,7 +145,7 @@ def init_seq():
 
 
 def seq_batch_query():
-    con = sqlite3.connect('./test/DB')
+    con = sqlite3.connect('./data/DB')
     cur = con.cursor()
     list_file = input('list file name:\n')
     with open(list_file, 'r') as In:
@@ -194,7 +195,7 @@ def seq_query():
     organize = input('Organize output?(y/n)\n')
     if query_type not in ['1', '2', '3', '4', '5']:
         raise ValueError('wrong input!\n')
-    con = sqlite3.connect('./test/DB')
+    con = sqlite3.connect('./data/DB')
     cur = con.cursor()
     if query_type == '1':
         organism = input('Organism:\n')
@@ -304,14 +305,14 @@ def init_taxon():
     to be continued(add download function
     ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdmp.tar.gz
     """
-    if not exists('./test/taxdmp.zip'):
+    if not exists('./data/taxdmp.zip'):
         ftp = FTP('ftp.ncbi.nih.gov')
         ftp.login()
         ftp.cwd('pub/taxonomy')
-        ftp.retrbinary('RETR taxdump.zip', open('taxdmp.zip', 'wb').write)
+        ftp.retrbinary('RETR taxdmp.zip', open('./data/taxdmp.zip', 'wb').write)
         ftp.quit
-    with ZipFile('./test/taxdmp.zip', 'r') as dumpfile:
-        dumpfile.extractall(path='./test/')
+    with ZipFile('./data/taxdmp.zip', 'r') as dumpfile:
+        dumpfile.extractall(path='./data/')
     taxon_id = dict()
     data = list()
     name = dict()
@@ -322,14 +323,14 @@ def init_taxon():
     rank = dict()
     global taxon
     taxon = list()
-    with open('./test/names.dmp', 'r') as dumpfile:
+    with open('./data/names.dmp', 'r') as dumpfile:
         raw = dumpfile.read().split(sep='\n')
         raw.pop()
         for record in raw:
             add = record.replace('\t', '').split(sep='|')
             if add[0] not in name or add[2] == 'scientific name':
                 name[add[0]] = add[1]
-    with open('./test/nodes.dmp', 'r') as dumpfile:
+    with open('./data/nodes.dmp', 'r') as dumpfile:
         raw = dumpfile.read().split(sep='\n')
         raw.pop()
         for record in raw:
@@ -372,7 +373,7 @@ def init_taxon():
         record = [specie[0], name[specie[0]], rank[specie[0]], son[specie[0]], parent[specie[0]], greatson[specie[0]]]
         taxon.append(record)
 
-    con = sqlite3.connect('./test/DB')
+    con = sqlite3.connect('./data/DB')
     cur = con.cursor()
     cur.execute(
         'CREATE TABLE IF NOT EXISTS taxon (Id TEXT, Name TEXT, Rank TEXT, Son TEXT, Parent TEXT, GreatSon TEXT);')
@@ -391,7 +392,7 @@ def init_taxon():
 def taxon_query_auto(name):
     """Taxon query for seqquery,  may be remove.
      """
-    con = sqlite3.connect('./test/DB')
+    con = sqlite3.connect('./data/DB')
     cur = con.cursor()
     cur.execute('SELECT Parent FROM taxon WHERE  Name LIKE ?;', ('%' + name + '%',))
     # Result = cur.fetchall()
@@ -411,7 +412,7 @@ def taxon_query_no_auto():
         )
         if query_type not in ['1', '2']:
             return
-        con = sqlite3.connect('./test/DB')
+        con = sqlite3.connect('./data/DB')
         cur = con.cursor()
         if query_type == '1':
             taxon_id = input('taxon id:\n')
@@ -466,7 +467,7 @@ def main():
         '5.Query Taxon\n'
         '6.Batch Query\n'
     )
-    Date = str(datetime.now())[:19].replace(' ', '-')
+    date = str(datetime.now())[:19].replace(' ', '-')
     if option == '1':
         update_seq_db_from_genbank()
     elif option == '2':
