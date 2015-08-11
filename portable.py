@@ -455,31 +455,35 @@ def taxon_query_no_auto():
 
 
 # __main()__
+def main():
+    '''Main function,  entrance of the program.'''
+    option = input(
+        'Select:\n'
+        '1.Update database from GenBank\n'
+        '2.Add pvirate data\n'
+        '3.Query\n'
+        '4.Init Taxon\n'
+        '5.Query Taxon\n'
+        '6.Batch Query\n'
+    )
+    Date = str(datetime.now())[:19].replace(' ', '-')
+    if option == '1':
+        update_seq_db_from_genbank()
+    elif option == '2':
+        FileIn = input('Genbank format filename:\n')
+        update_seq_from_file(FileIn)
+    elif option == '3':
+        seq_query()
+    elif option == '4':
+        init_taxon()
+    elif option == '5':
+        taxon_query_no_auto()
+    elif option == '6':
+        seq_batch_query()
+    else:
+        raise ValueError('Input error!\n')
+    if not exists('data'):
+        makedirs('data')
 
-'''main function,  entrance of the program.'''
-
-option = input(
-    'Select:\n'
-    '1.Update database from GenBank\n'
-    '2.Add pvirate data\n'
-    '3.Query\n'
-    '4.Init Taxon\n'
-    '5.Query Taxon\n'
-    '6.Batch Query\n'
-)
-Date = str(datetime.now())[:19].replace(' ', '-')
-if option == '1':
-    update_seq_db_from_genbank()
-elif option == '2':
-    FileIn = input('Genbank format filename:\n')
-    update_seq_from_file(FileIn)
-elif option == '3':
-    seq_query()
-elif option == '4':
-    init_taxon()
-elif option == '5':
-    taxon_query_no_auto()
-elif option == '6':
-    seq_batch_query()
-else:
-    print('Input error!\n')
+if __name__ == "__main__":
+    main()
