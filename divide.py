@@ -8,15 +8,11 @@ from os import makedirs
 from os.path import exists
 
 def blast(option):
-    if option == '1':
-        query_file = './output/all.fasta'
-    else:
-        query_file = sys.argv[1]
     cmd = nb(
     #  num_threads=8,
         query=query_file,
         db=sys.argv[2], 
-        task='megablast', 
+        task='blastn-short', 
         evalue=0.001, 
         outfmt=5, 
         # xml format
@@ -64,9 +60,10 @@ def output(target, option):
                 SeqIO.write(record, output_file, 'fasta')
 
 def main():
-    """\n
+    """
     Usage:
     python3 divide.py fastq_file barcode_file primer_file
+    This program may use large memory, be careful!
 #    Before running this script, ensure you already put blast database file in
     current path. Also, it assumes that you have installed BLAST suite before. 
     To create the db file: 
@@ -79,7 +76,10 @@ def main():
     From left to right, there are:
     1. gene name
     2. primer name
-    3. primer sequence"""
+    3. primer sequence
+    In this program, primer have common sequence whose length is 14, and
+    barcode's is 5.
+    """
 
     print(main.__doc__)
     if not exists('output'):
@@ -95,13 +95,27 @@ def main():
     primer_raw.pop()
     primer = [i.split() for i in primer_raw]
     print(primer)
-    raise ValueError('test')
-
+    #large memory
+    fastq_raw = list(SeqIO.parse(sys.argv[1], 'fastq'))
+    divide_via_barcode(fastq_raw, barcode, primer)
+    #convert fastq to fasta, then use BLAST to divide sequence via primer
     fasta_file = sys.argv[1].replace('fastq', 'fasta')
     SeqIO.convert(sys.argv[1], 'fastq', fasta_file, 'fasta')
+
+    fasta_raw = list(SeqIO.parse(fasta_file, 'fasta'))
+    raise ValueError('test')
     blast(option)
     parse(target)
     output(target, option)
 
+
+def divide_via_barcode(fastq_raw, barcode, barcode_length, primer):
+    #change if necessary
+    primer_adapter = 14
+    barcode_length = len(barcode[0][0])
+
+
+
+    return
 if __name__ =='__main__':
     main()
