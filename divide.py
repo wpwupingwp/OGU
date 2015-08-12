@@ -5,10 +5,10 @@ from Bio import SearchIO
 from Bio.Blast.Applications import NcbiblastnCommandline as nb
 from Bio.SeqRecord import SeqRecord
 from glob import glob
+from multiprocessing import cpu_count
 from os import makedirs
 from os.path import exists
 from subprocess import call
-from multiprocessing import cpu_count
 import sys
 
 
@@ -37,31 +37,31 @@ def step1():
     total = 0
     not_found = 0
     found = list()
+    handle = open('output/step1.fastq', 'w')
     for record in fastq_raw:
         total += 1
         record_barcode = str(record.seq[:5])
         try:
-            number = barcode[record_barcode]
-            output_file = ''.join(['output/', number, '.fastq'])
-            handle = open(output_file, 'a')
-            SeqIO.write(record, handle, 'fastq')
-            found.append(record)
+            new_id = barcode[record_barcode]
         except:
             not_found += 1
-    exit -1
+            continue
+        record.id = '|'.join([new_id, record.id]),
+        SeqIO.write(record, handle, 'fastq')
+        print(record,total)
+        exit -1
+        found.append(record)
     return (not_found, total)
 
-def blast():
+def blast(query_file):
     cmd = nb(
-    #change if necessary
-        num_threads=4,
+        num_threads=cpu_count(),
         query=query_file,
         db=sys.argv[2], 
         task='blastn-short', 
         evalue=0.001, 
         outfmt=5, 
-        # xml format
-        out='BlastResult.xml'
+        out=query_file.replace('fasta', 'blast')
     )
     stdout, stderr = cmd()
     pass
@@ -74,7 +74,7 @@ def step2():
     Also convert fastq file to fasta file.
     Then BLAST fastq in first step against primer database.
     Next, use BLAST result to divide again."""
-    print(create_blast_db.__doc__)
+    print(step2.__doc__)
     barcode_length = 5
     primer_adapter = 14
     skip = barcode_length + primer_adapter
@@ -121,11 +121,12 @@ def main():
     2. primer name
     3. primer sequence
     In this program, primer have common sequence whose length is 14, and
-    barcode's is 5. Change them if necessary(in step2_prepare).  """
+    barcode's is 5. Change them if necessary(in step2)."""
     print(main.__doc__)
     if not exists('output'):
         makedirs('output')
     miss_step1, total = step1()
+    print(miss_step1, total)
     step2()
 
 if __name__ =='__main__':
