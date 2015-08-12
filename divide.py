@@ -11,7 +11,6 @@ from os.path import exists
 from subprocess import call
 import sys
 
-
 def parse(target):
     blast_result = list(SearchIO.parse('BlastResult.xml', 'blast-xml'))
     for record in blast_result:
