@@ -91,7 +91,7 @@ def main():
     barcode_list = [i.split() for i in barcode_raw]
     barcode = dict(barcode_list)
     print(barcode)
-    raise ValueError('test')
+    #raise ValueError('test')
     #read primer file
     with open(sys.argv[3], 'r') as primer_file:
         primer_raw = primer_file.read().split(sep='\n')
@@ -113,8 +113,12 @@ def main():
 def divide_via_barcode(fastq_raw, barcode, primer):
     #change if necessary
     primer_adapter = 14
-    barcode_length = len(barcode[0][0])
+    barcode_length = 5
+    print(barcode_length)
     for record in fastq_raw:
+        record_barcode = str(record.seq[:5])
+        number = barcode[record_barcode]
+        print(number)
         pass
     return
 if __name__ =='__main__':
