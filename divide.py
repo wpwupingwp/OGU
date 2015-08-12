@@ -88,13 +88,15 @@ def main():
     with open(sys.argv[2], 'r') as barcode_file:
         barcode_raw = barcode_file.read().split(sep='\n')
     barcode_raw.pop()
-    barcode = [i.split() for i in barcode_raw]
+    barcode_list = [i.split() for i in barcode_raw]
+    barcode = dict(barcode_list)
+    print(barcode)
+    raise ValueError('test')
     #read primer file
     with open(sys.argv[3], 'r') as primer_file:
         primer_raw = primer_file.read().split(sep='\n')
     primer_raw.pop()
     primer = [i.split() for i in primer_raw]
-    print(primer)
     #large memory
     fastq_raw = list(SeqIO.parse(sys.argv[1], 'fastq'))
     divide_via_barcode(fastq_raw, barcode, primer)
@@ -103,19 +105,17 @@ def main():
     SeqIO.convert(sys.argv[1], 'fastq', fasta_file, 'fasta')
 
     fasta_raw = list(SeqIO.parse(fasta_file, 'fasta'))
-    raise ValueError('test')
     blast(option)
     parse(target)
     output(target, option)
 
 
-def divide_via_barcode(fastq_raw, barcode, barcode_length, primer):
+def divide_via_barcode(fastq_raw, barcode, primer):
     #change if necessary
     primer_adapter = 14
     barcode_length = len(barcode[0][0])
-
-
-
+    for record in fastq_raw:
+        pass
     return
 if __name__ =='__main__':
     main()
