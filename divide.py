@@ -90,7 +90,6 @@ def main():
     barcode_raw.pop()
     barcode_list = [i.split() for i in barcode_raw]
     barcode = dict(barcode_list)
-    print(barcode)
     #raise ValueError('test')
     #read primer file
     with open(sys.argv[3], 'r') as primer_file:
@@ -102,24 +101,29 @@ def main():
     divide_via_barcode(fastq_raw, barcode, primer)
     #convert fastq to fasta, then use BLAST to divide sequence via primer
     fasta_file = sys.argv[1].replace('fastq', 'fasta')
-    SeqIO.convert(sys.argv[1], 'fastq', fasta_file, 'fasta')
+    #SeqIO.convert(sys.argv[1], 'fastq', fasta_file, 'fasta')
 
     fasta_raw = list(SeqIO.parse(fasta_file, 'fasta'))
-    blast(option)
-    parse(target)
-    output(target, option)
+    #blast(option)
+    #parse(target)
+    #output(target, option)
 
 
 def divide_via_barcode(fastq_raw, barcode, primer):
     #change if necessary
     primer_adapter = 14
     barcode_length = 5
-    print(barcode_length)
+    total = len(fastq_raw)
+    not_found = 0
     for record in fastq_raw:
         record_barcode = str(record.seq[:5])
-        number = barcode[record_barcode]
-        print(number)
+        print(record_barcode)
+        try:
+            number = barcode[record_barcode]
+        except:
+            not_found += 1
         pass
-    return
+    print(not_found, total)
+    exit -1
 if __name__ =='__main__':
     main()
