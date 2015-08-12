@@ -4,8 +4,10 @@ import sys
 from Bio import SeqIO
 from Bio import SearchIO
 from Bio.Blast.Applications import NcbiblastnCommandline as nb
+from Bio.SeqRecord import SeqRecord
 from os import makedirs
 from os.path import exists
+from subprocess import call
 
 def blast(option):
     cmd = nb(
@@ -59,59 +61,17 @@ def output(target, option):
             if record.id in contig_id:
                 SeqIO.write(record, output_file, 'fasta')
 
-def main():
-    """
-    Usage:
-    python3 divide.py fastq_file barcode_file primer_file
-    This program may use large memory, be careful!
-#    Before running this script, ensure you already put blast database file in
-    current path. Also, it assumes that you have installed BLAST suite before. 
-    To create the db file: 
-    makeblastdb -in infile -out outfile -dbtype nucl
 
-    Barcode file looks like this:
-    ATACG BOP00001
-    Primer file looks like this:
-    rbcL rbcLF ATCGATCGATCGA
-    From left to right, there are:
-    1. gene name
-    2. primer name
-    3. primer sequence
-    In this program, primer have common sequence whose length is 14, and
-    barcode's is 5.
-    """
+def step1():
+    """Divide raw data via barcode."""
+    print(step1.__doc__)
 
-    print(main.__doc__)
-    if not exists('output'):
-        makedirs('output')
-    #read barcode file
     with open(sys.argv[2], 'r') as barcode_file:
         barcode_raw = barcode_file.read().split(sep='\n')
     barcode_raw.pop()
     barcode_list = [i.split() for i in barcode_raw]
     barcode = dict(barcode_list)
-    #raise ValueError('test')
-    #read primer file
-    with open(sys.argv[3], 'r') as primer_file:
-        primer_raw = primer_file.read().split(sep='\n')
-    primer_raw.pop()
-    primer = [i.split() for i in primer_raw]
-    divide_via_barcode(barcode, primer)
-    #convert fastq to fasta, then use BLAST to divide sequence via primer
-    fasta_file = sys.argv[1].replace('fastq', 'fasta')
-    #SeqIO.convert(sys.argv[1], 'fastq', fasta_file, 'fasta')
-
-    fasta_raw = list(SeqIO.parse(fasta_file, 'fasta'))
-    #blast(option)
-    #parse(target)
-    #output(target, option)
-
-
-def divide_via_barcode(barcode, primer):
-    #change if necessary
     fastq_raw = SeqIO.parse(sys.argv[1], 'fastq')
-    primer_adapter = 14
-    barcode_length = 5
     total = 0
     not_found = 0
     for record in fastq_raw:
@@ -124,7 +84,64 @@ def divide_via_barcode(barcode, primer):
             SeqIO.write(record, handle, 'fastq')
         except:
             not_found += 1
-    print(not_found, total)
-    exit -1
+    return (not_found, total)
+
+def create_blast_db(barcode_length, primer_adapter)
+
+    #read primer file
+    skip = barcode_length + primer_adapter
+    with open(sys.argv[3], 'r') as primer_file:
+        primer_raw = primer_file.read().split(sep='\n')
+    primer_raw.pop()
+    primer = [i.split() for i in primer_raw]
+    primer_fasta = list()
+    for index in range(0, len(primer), 2):
+        primer_short_left = primer[index][2][skip:]
+        primer_short_right = primer[index+1][2][skip:]
+        primer_short = 'NNNNN'.join([primer_short_left, primer_short_right])
+        primer_fasta.append([
+            id=primer[index][0],
+            description='',
+            seq=primer_short
+        ])
+
+
+    fasta_file = sys.argv[1].replace('fastq', 'fasta')
+    SeqIO.convert(sys.argv[1], 'fastq', fasta_file, 'fasta')
+    #create blast database file
+    call(['makeblastdb -in', sys.argv[3], '-out primer -dbtype nucl']) 
+
+
+def divide_via_primer(barcode_length, primer_adapter):
+def main():
+    """
+    Usage:
+    python3 divide.py fastq_file barcode_file primer_file
+    Ensure that you have installed BLAST suite before. 
+    Barcode file looks like this:
+    ATACG BOP00001
+    Primer file looks like this:
+    rbcL rbcLF ATCGATCGATCGA
+    From left to right, there are:
+    1. gene name
+    2. primer name
+    3. primer sequence
+    In this program, primer have common sequence whose length is 14, and
+    barcode's is 5. Change them if necessary
+    """
+    barcode_length = 5
+    primer_adapter = 14
+    print(main.__doc__)
+    if not exists('output'):
+        makedirs('output')
+
+    miss_step1, total = step1()
+    create_blast_db(barcode_length, primer_adapter)
+    step2(barcode_length, primer_adapter)
+    #blast(option)
+    #parse(target)
+    #output(target, option)
+
+
 if __name__ =='__main__':
     main()
