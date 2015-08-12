@@ -1,13 +1,15 @@
 #!/usr/bin/python3
 
-import sys
 from Bio import SeqIO
 from Bio import SearchIO
 from Bio.Blast.Applications import NcbiblastnCommandline as nb
 from Bio.SeqRecord import SeqRecord
+from glob import glob
 from os import makedirs
 from os.path import exists
 from subprocess import call
+from multiprocessing import cpu_count
+import sys
 
 
 def parse(target):
@@ -34,21 +36,36 @@ def step1():
     fastq_raw = SeqIO.parse(sys.argv[1], 'fastq')
     total = 0
     not_found = 0
-    found = list
+    found = list()
     for record in fastq_raw:
         total += 1
         record_barcode = str(record.seq[:5])
         try:
             number = barcode[record_barcode]
-            print(record.description)
-            exit -1
             output_file = ''.join(['output/', number, '.fastq'])
             handle = open(output_file, 'a')
             SeqIO.write(record, handle, 'fastq')
             found.append(record)
         except:
             not_found += 1
+    exit -1
     return (not_found, total)
+
+def blast():
+    cmd = nb(
+    #change if necessary
+        num_threads=4,
+        query=query_file,
+        db=sys.argv[2], 
+        task='blastn-short', 
+        evalue=0.001, 
+        outfmt=5, 
+        # xml format
+        out='BlastResult.xml'
+    )
+    stdout, stderr = cmd()
+    pass
+
 
 def step2():
     """
@@ -84,18 +101,6 @@ def step2():
     fasta_file = sys.argv[1].replace('fastq', 'fasta')
     SeqIO.convert(sys.argv[1], 'fastq', fasta_file, 'fasta')
     call('makeblastdb -in output/primer.fasta -out output/primer -dbtype nucl') 
-    #Prepare finish, start BLAST
-    cmd = nb(
-    #  num_threads=8,
-        query=query_file,
-        db=sys.argv[2], 
-        task='blastn-short', 
-        evalue=0.001, 
-        outfmt=5, 
-        # xml format
-        out='BlastResult.xml'
-    )
-    stdout, stderr = cmd()
 
 
 def main():
