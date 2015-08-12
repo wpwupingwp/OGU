@@ -96,9 +96,7 @@ def main():
         primer_raw = primer_file.read().split(sep='\n')
     primer_raw.pop()
     primer = [i.split() for i in primer_raw]
-    #large memory
-    fastq_raw = list(SeqIO.parse(sys.argv[1], 'fastq'))
-    divide_via_barcode(fastq_raw, barcode, primer)
+    divide_via_barcode(barcode, primer)
     #convert fastq to fasta, then use BLAST to divide sequence via primer
     fasta_file = sys.argv[1].replace('fastq', 'fasta')
     #SeqIO.convert(sys.argv[1], 'fastq', fasta_file, 'fasta')
@@ -109,13 +107,15 @@ def main():
     #output(target, option)
 
 
-def divide_via_barcode(fastq_raw, barcode, primer):
+def divide_via_barcode(barcode, primer):
     #change if necessary
+    fastq_raw = SeqIO.parse(sys.argv[1], 'fastq')
     primer_adapter = 14
     barcode_length = 5
-    total = len(fastq_raw)
+    total = 0
     not_found = 0
     for record in fastq_raw:
+        total += 1
         record_barcode = str(record.seq[:5])
         try:
             number = barcode[record_barcode]
