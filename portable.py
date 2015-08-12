@@ -18,10 +18,9 @@ from zipfile import ZipFile
 warnings.simplefilter('ignore', BiopythonDeprecationWarning)
 
 
-def parser(raw_seq):
+def parser(raw_seq, date):
     """Base on annotations in genbank files to extract fragments from Chloroplast Genome Sequence.
     """
-    global date
     taxon_id = int(raw_seq.features[0].qualifiers['db_xref'][0][6:])
     organism = raw_seq.annotations['organism']
     accession = raw_seq.annotations['accessions'][0]
@@ -33,7 +32,7 @@ def parser(raw_seq):
     sequence = str(raw_seq.seq)
     name = organism
     strand = 1
-    rec = [taxon_id, organism, accession, name, frag_type, begin, end, strand, sequence, Date]
+    rec = [taxon_id, organism, accession, name, frag_type, begin, end, strand, sequence, date]
     records.append(rec)
     for i in raw_seq.features:
         if i.type == 'gene' and 'gene' in i.qualifiers:
@@ -44,7 +43,7 @@ def parser(raw_seq):
                 sequence = str(raw_seq.seq[begin:end])
                 name = str(i.qualifiers['gene'][0])
                 strand = str(i.location.strand)
-                rec = [taxon_id, organism, accession, name, frag_type, begin, end, strand, sequence, Date]
+                rec = [taxon_id, organism, accession, name, frag_type, begin, end, strand, sequence, date]
             elif i.location_operator == 'join':
                 frag_type = 'gene'
                 begin = int(i.sub_features[0].location.start)
@@ -52,12 +51,12 @@ def parser(raw_seq):
                 name = str(i.qualifiers['gene'][0])
                 strand = str(i.location.strand)
                 sequence = ''
-                rec = [taxon_id, organism, accession, name, frag_type, begin, end, strand, sequence, Date]
+                rec = [taxon_id, organism, accession, name, frag_type, begin, end, strand, sequence, date]
                 gene.append(rec)
                 begin = int(i.sub_features[1].location.start)
                 end = int(i.sub_features[1].location.end)
                 sequence = ''.join([str(raw_seq.seq[begin:end]), str(raw_seq.seq[begin:end])])
-                rec = [taxon_id, organism, accession, name, frag_type, begin, end, strand, sequence, Date]
+                rec = [taxon_id, organism, accession, name, frag_type, begin, end, strand, sequence, date]
         elif i.type == 'CDS' and 'gene' in i.qualifiers:
             frag_type = 'cds'
             begin = int(i.location.start)
@@ -65,7 +64,7 @@ def parser(raw_seq):
             sequence = str(raw_seq.seq[begin:end])
             name = str(i.qualifiers['gene'][0]).replace(' ', '_')
             strand = str(i.location.strand)
-            rec = [taxon_id, organism, accession, name, frag_type, begin, end, strand, sequence, Date]
+            rec = [taxon_id, organism, accession, name, frag_type, begin, end, strand, sequence, date]
         elif i.type == 'tRNA' and 'gene' in i.qualifiers:
             frag_type = 'tRNA'
             begin = int(i.location.start)
@@ -75,7 +74,7 @@ def parser(raw_seq):
                 sequence = ''
             name = str(i.qualifiers['gene'][0]).replace(' ', '_')
             strand = str(i.location.strand)
-            rec = [taxon_id, organism, accession, name, frag_type, begin, end, strand, sequence, Date]
+            rec = [taxon_id, organism, accession, name, frag_type, begin, end, strand, sequence, date]
         elif i.type == 'rRNA':
             frag_type = 'rRNA'
             begin = int(i.location.start)
@@ -83,7 +82,7 @@ def parser(raw_seq):
             sequence = str(raw_seq.seq[begin:end])
             name = str(i.qualifiers['product'][0]).replace(' ', '_')
             strand = str(i.location.strand)
-            rec = [taxon_id, organism, accession, name, frag_type, begin, end, strand, sequence, Date]
+            rec = [taxon_id, organism, accession, name, frag_type, begin, end, strand, sequence, date]
         elif i.type == 'exon' and 'gene' in i.qualifiers:
             frag_type = 'exon'
             begin = int(i.location.start)
@@ -94,7 +93,7 @@ def parser(raw_seq):
             else:
                 name = '_'.join([str(i.qualifiers['gene'][0]), 'exon'])
             strand = int(i.location.strand)
-            rec = [taxon_id, organism, accession, name, frag_type, begin, end, strand, sequence, Date]
+            rec = [taxon_id, organism, accession, name, frag_type, begin, end, strand, sequence, date]
         elif i.type == 'intron' and 'gene' in i.qualifiers:
             frag_type = 'intron'
             begin = int(i.location.start)
@@ -105,7 +104,7 @@ def parser(raw_seq):
                 name = '_'.join([str(i.qualifiers['gene'][0]), 'intron', str(i.qualifiers['number'][0])])
             else:
                 name = '_'.join([str(i.qualifiers['gene'][0]), 'intron'])
-            rec = [taxon_id, organism, accession, name, frag_type, begin, end, strand, sequence, Date]
+            rec = [taxon_id, organism, accession, name, frag_type, begin, end, strand, sequence, date]
 
         records.append(rec)
     gene.sort(key=lambda x: x[5])
@@ -119,11 +118,11 @@ def parser(raw_seq):
         sequence = str(raw_seq.seq[tail:head])
         name = '_'.join(['-'.join([now[3], then[3]]), 'Spacer'])
         strand = 0
-        rec = [taxon_id, organism, accession, name, frag_type, begin, end, strand, sequence, Date]
+        rec = [taxon_id, organism, accession, name, frag_type, begin, end, strand, sequence, date]
         records.append(rec)
     records.extend(gene)
 
-    SeqDB.extend(records)
+    database.extend(records)
 
 
 def init_seq():
@@ -133,7 +132,7 @@ def init_seq():
     cur = con.cursor()
     cur.execute(
         'CREATE TABLE IF NOT EXISTS main (Taxon INT, Organism TEXT, Accession TEXT, Name TEXT, Type TEXT, Head INT, Tail INT,  Strand TEXT, Sequence TEXT, Date TEXT, ID INTEGER PRIMARY KEY);')
-    for row in SeqDB:
+    for row in database:
         if row[8] != '':
             cur.execute(
                 'INSERT INTO main (Taxon, Organism, Accession, Name, Type, Head, Tail, Strand, Sequence, Date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
@@ -265,7 +264,7 @@ def seq_query():
     print('Done.\n')
 
 
-def update_seq_db_from_genbank():
+def update_seq_db_from_genbank(date):
     """Update Sequence database from Genbank,  need time to download.
     """
     down = urllib.request.urlopen(
@@ -284,20 +283,18 @@ def update_seq_db_from_genbank():
     output = open('genbank', 'w')
     output.write(genome_content.read())
     output.close()
-    update_seq_from_file('genbank')
+    update_seq_from_file('genbank', date)
 
 
-def update_seq_from_file(input_file):
+def update_seq_from_file(genbank_file, date):
     """Update Sequence database from private file.
     """
-    global SeqDB
-    SeqDB = []
-    handle = open(input_file, 'r')
-    records = SeqIO.parse(input_file, 'genbank')
+    global database
+    database = []
+    records = SeqIO.parse(genbank_file, 'genbank')
     for raw_seq in records:
-        parser(raw_seq)
+        parser(raw_seq, date)
     init_seq()
-    handle.close()
 
 
 def init_taxon():
@@ -469,10 +466,10 @@ def main():
     )
     date = str(datetime.now())[:19].replace(' ', '-')
     if option == '1':
-        update_seq_db_from_genbank()
+        update_seq_db_from_genbank(date)
     elif option == '2':
-        FileIn = input('Genbank format filename:\n')
-        update_seq_from_file(FileIn)
+        genbank_file = input('Genbank format filename:\n')
+        update_seq_from_file(genbank_file, date)
     elif option == '3':
         seq_query()
     elif option == '4':
