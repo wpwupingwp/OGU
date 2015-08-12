@@ -117,12 +117,13 @@ def divide_via_barcode(fastq_raw, barcode, primer):
     not_found = 0
     for record in fastq_raw:
         record_barcode = str(record.seq[:5])
-        print(record_barcode)
         try:
             number = barcode[record_barcode]
+            output_file = ''.join(['output/', number, '.fastq'])
+            handle = open(output_file, 'a')
+            SeqIO.write(record, handle, 'fastq')
         except:
             not_found += 1
-        pass
     print(not_found, total)
     exit -1
 if __name__ =='__main__':
