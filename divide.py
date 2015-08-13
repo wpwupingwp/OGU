@@ -97,7 +97,7 @@ def blast(query_file, database):
 
 def parse():
     parse_result = list()
-    blast_result = list(SearchIO.parse('out/BlastResult.xml', 'blast-xml'))
+    blast_result = SearchIO.parse('out/BlastResult.xml', 'blast-xml')
     for record in blast_result:
         if len(record) == 0:
             continue
