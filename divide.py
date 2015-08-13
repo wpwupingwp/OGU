@@ -35,21 +35,24 @@ def step1():
     fastq_raw = SeqIO.parse(sys.argv[1], 'fastq')
     total = 0
     not_found = 0
-    found = list()
     handle = open('output/step1.fastq', 'w')
+    handle2 = open('output/step1_miss.fastq', 'w')
     for record in fastq_raw:
         total += 1
         record_barcode = str(record.seq[:5])
         try:
             new_id = barcode[record_barcode]
         except:
+            SeqIO.write(record, handle2, 'fastq')
             not_found += 1
             continue
-        record.id = '|'.join([new_id, record.id]),
-        SeqIO.write(record, handle, 'fastq')
-        print(record,total)
-        exit -1
-        found.append(record)
+        new_record = SeqRecord(
+            id='|'.join([new_id, record.id]),
+            description=record.description,
+            seq=record.seq,
+            letter_annotations=record.letter_annotations
+        )
+        SeqIO.write(new_record, handle, 'fastq')
     return (not_found, total)
 
 def blast(query_file):
@@ -125,7 +128,10 @@ def main():
     if not exists('output'):
         makedirs('output')
     miss_step1, total = step1()
-    print(miss_step1, total)
+    print('''Step1 results:\n
+          Total: {0} reads\n
+          unrecognize {1} reads\n 
+          {2}percent'''.format(total, miss_step1, miss_step1/total))
     step2()
 
 if __name__ =='__main__':
