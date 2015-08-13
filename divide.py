@@ -4,6 +4,7 @@ from Bio import SeqIO
 from Bio import SearchIO
 from Bio.Blast.Applications import NcbiblastnCommandline as nb
 from Bio.SeqRecord import SeqRecord
+from Bio.Alphabet import IUPAC
 from glob import glob
 from multiprocessing import cpu_count
 from os import makedirs
@@ -20,18 +21,23 @@ def parse(target):
             tophit = record[0]
         target.append([tophit[0][0].query, tophit[0][0].hit])
 
+def get_barcode_dict():
+    with open(sys.argv[2], 'r') as input_file:
+        barcode_raw = input_file.read().split(sep='\n')
+    barcode_raw.pop(0)
+    barcode_raw.pop(-1)
+    barcode_list = [i.split(sep=',') for i in barcode_raw]
+    barcode_dict = dict(barcode_list)
+    return barcode
+
 
 def step1():
     """
     Divide raw data via barcode.
+    ID were added into the beginning of sequence id.
     Results were placed in 'output/'."""
     print(step1.__doc__)
-
-    with open(sys.argv[2], 'r') as barcode_file:
-        barcode_raw = barcode_file.read().split(sep='\n')
-    barcode_raw.pop()
-    barcode_list = [i.split() for i in barcode_raw]
-    barcode = dict(barcode_list)
+    barcode_dict = get_barcode_dict()
     fastq_raw = SeqIO.parse(sys.argv[1], 'fastq')
     total = 0
     not_found = 0
@@ -64,46 +70,44 @@ def blast(query_file, database):
         query=query_file,
         db=database,
         task='blastn-short', 
-        evalue=0.001, 
+        evalue=1e-9, 
         outfmt=5, 
         out='output/BlastResult.xml'
     )
     stdout, stderr = cmd()
 
+def get_primer_list():
+    with open(sys.argv[3], 'r') as input_file:
+        primer_raw = input_file.read().split(sep='\n')
+    primer_raw.pop(0)
+    primer_raw.pop(-1)
+    primer_list = [i.split(sep=',') for i in primer_raw]
+    return primer_list
+
+
+def write_fasta(primer_list, skip):
+    handle = open('output/primer.fasta', 'w')
+    join_seq = 'NNNNNNNNNNNNNNN'
+    for index in range(0, len(primer_list)-1, 2):
+        left = primer_list[index][2][skip:]
+        right = primer_list[index+1][2][skip:]
+        short_primer = ''.join([left, join_seq, right])
+        name = str(primer_list[index][0],)
+        handle.write(''.join(['>', name]))
+        handle.write(short_primer)
+    handle.close()
+
 
 def step2():
     """
-    At first, create blast database file with makeblastdb.
-    Database will be put in 'output/', and named 'primer'.
-    Also convert fastq file to fasta file.
-    Then BLAST fastq in first step against primer database.
+    BLAST fastq in first step against primer database.
     Next, use BLAST result to divide again."""
     print(step2.__doc__)
     barcode_length = 5
     primer_adapter = 14
     skip = barcode_length + primer_adapter
-
-    with open(sys.argv[3], 'r') as primer_file:
-        primer_raw = primer_file.read().split(sep='\n')
-    primer_raw.pop(0)
-    primer_raw.pop(-1)
-    primer_list = [i.split() for i in primer_raw]
-
-    primer_fasta = list()
-    for index in range(0, len(primer_list), 2):
-        left = primer_list[index][2][skip:]
-        try:
-            right = primer_list[index+1][2][skip:]
-        except:
-            continue
-        short_primer = 'NNNNN'.join([left, right])
-        sequence = SeqRecord(
-            id=primer_list[index][0],
-            description='',
-            seq=short_primer
-        )
-        primer_fasta.append(sequence)
-    SeqIO.write(primer_fasta, 'output/primer.fasta', 'fasta')
+    primer_list = get_primer_list()
+    write_fasta(primer_list, skip)
     call('makeblastdb -in output/primer.fasta -out output/primer -dbtype nucl') 
     blast('output/step1.fasta', 'output/primer')
 
@@ -111,15 +115,16 @@ def step2():
 def main():
     """
     Usage:
-    python3 divide.py fastq_file barcode_file primer_file
+    python3 divide.py fastqFile barcodeFile primerFile
     Step 1, divide data by barcode.
     Step 2, divide data by primer via BLAST.
     Ensure that you have installed BLAST suite before. 
     Barcode file looks like this:
-    ATACG BOP00001
+    ATACG,BOP00001
     Primer file looks like this:
-    rbcL rbcLF ATCGATCGATCGA
-    rbcL rbcLR TACGTACGTACG
+    rbcL,rbcLF,ATCGATCGATCGA
+    rbcL,rbcLR,TACGTACGTACG
+    To get these two files, save your excel file as csv file.
     Be carefull of the order of  each pair of primers.
     From left to right, there are:
     1. gene name
@@ -130,12 +135,12 @@ def main():
     print(main.__doc__)
     if not exists('output'):
         makedirs('output')
-    miss_step1, total = step1()
-    print('''
-    Step1 results:
-    Total: {0} reads
-    unrecognize {1} reads 
-    {2:3f} percent'''.format(total, miss_step1, miss_step1/total))
+    #miss_step1, total = step1()
+    #print('''
+    #Step1 results:
+    #Total: {0} reads
+    #unrecognize {1} reads 
+    #{2:3f} percent'''.format(total, miss_step1, miss_step1/total))
     step2()
 
 if __name__ =='__main__':
