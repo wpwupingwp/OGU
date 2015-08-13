@@ -34,36 +34,35 @@ def get_barcode_dict():
     return barcode_dict
 
 
-def step1():
+def step1(skip):
     """
-    Divide raw data via barcode.
-    ID were added into the beginning of sequence id."""
+    Divide raw data via barcode."""
     print(step1.__doc__)
     barcode = get_barcode_dict()
     fastq_raw = SeqIO.parse(sys.argv[1], 'fastq')
     total = 0
     not_found = 0
-    handle = open('step1.fastq', 'w')
-    handle2 = open('step1_miss.fastq', 'w')
+    handle_miss = open('step1_miss.fastq', 'w')
+    handle_fasta = open('step1.fasta', 'w')
     for record in fastq_raw:
         total += 1
         record_barcode = str(record.seq[:5])
         try:
-            new_id = barcode[record_barcode]
+            name = barcode[record_barcode]
         except:
-            SeqIO.write(record, handle2, 'fastq')
+            SeqIO.write(record, handle_miss, 'fastq')
             not_found += 1
             continue
-        new_record = SeqRecord(
-            id='|'.join([new_id, record.id]),
-            description=record.description,
-            seq=record.seq,
-            letter_annotations=record.letter_annotations
-        )
-        SeqIO.write(new_record, handle, 'fastq')
-    SeqIO.convert('step1.fastq', 'fastq', 
-                  'step1.fasta', 'fasta')
-
+        handle = open(name+'.fastq', 'a')
+        SeqIO.write(record, handle, 'fastq')
+    #only use head to blast
+        handle_fasta.write(''.join([
+            '>', name, '|', record.description, '\n',
+            str(record.seq[skip:skip+20]), '\n'
+        ]))
+    handle.close()
+    handle_miss.close()
+    handle_fasta.close()
     return (not_found, total)
 
 def blast(query_file, database):
@@ -87,34 +86,39 @@ def get_primer_list():
     return primer_list
 
 
-def write_fasta(primer_list, skip):
+def write_fasta(primer_list, primer_adapter):
+    handle = open('primer.fasta', 'w')
+    for index in range(len(primer_list)):
+        short_primer = primer_list[index][2][primer_adapter:]
+        name = ''.join([primer_list[index][0], '-', index])
+        handle.write(''.join([
+            '>', name, '\n',
+            short_primer, '\n'
+        ]))
+    handle.close()
+
+def write_fasta_2(primer_list, primer_adapter):
     handle = open('primer.fasta', 'w')
     join_seq = 'NNNNNNNNNNNNNNN'
     for index in range(0, len(primer_list)-1, 2):
-        left = primer_list[index][2][skip:]
-        right = primer_list[index+1][2][skip:]
+        left = primer_list[index][2][primer_adapter:]
+        right = primer_list[index+1][2][primer_adapter:]
         short_primer = ''.join([left, join_seq, right])
-        name = str(primer_list[index][0],)
+        name = primer_list[index][0]
         handle.write(''.join([
-            '>', 
-            name, 
-            '\n',
-            short_primer,
-            '\n'
+            '>', name, '\n',
+            short_primer, '\n'
         ]))
     handle.close()
 
 
-def step2():
+def step2(primer_adapter):
     """
     BLAST fastq in first step against primer database.  Next, use BLAST 
     result to divide again."""
     print(step2.__doc__)
-    barcode_length = 5
-    primer_adapter = 14
-    skip = barcode_length + primer_adapter
     primer_list = get_primer_list()
-    write_fasta(primer_list, skip)
+    write_fasta(primer_list, primer_adapter)
     call('makeblastdb -in primer.fasta -out primer -dbtype nucl',
          shell=True) 
     blast('step1.fasta', 'primer')
@@ -140,15 +144,18 @@ def main():
     In this program, primer have common sequence whose length is 14, and
     barcode's is 5. Change them if necessary(in step2)."""
     print(main.__doc__)
+    barcode_length = 5
+    primer_adapter = 14
+    skip = barcode_length + primer_adapter
     if not exists('out'):
         makedirs('out')
-    miss_step1, total = step1()
+    miss_step1, total = step1(skip)
     print('''
     Step1 results:
     Total: {0} reads
     unrecognize {1} reads 
     {2:3f} percent'''.format(total, miss_step1, miss_step1/total))
-    step2()
+    step2(primer_adapter)
 
 if __name__ =='__main__':
     main()
