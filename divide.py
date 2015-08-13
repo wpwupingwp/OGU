@@ -92,7 +92,10 @@ def step2():
     primer_fasta = list()
     for index in range(0, len(primer_list), 2):
         left = primer_list[index][2][skip:]
-        right = primer_list[index+1][2][skip:]
+        try:
+            right = primer_list[index+1][2][skip:]
+        except:
+            continue
         short_primer = 'NNNNN'.join([left, right])
         sequence = SeqRecord(
             id=primer_list[index][0],
@@ -128,10 +131,11 @@ def main():
     if not exists('output'):
         makedirs('output')
     miss_step1, total = step1()
-    print('''Step1 results:\n
-          Total: {0} reads\n
-          unrecognize {1} reads\n 
-          {2:3f} percent'''.format(total, miss_step1, miss_step1/total))
+    print('''
+    Step1 results:
+    Total: {0} reads
+    unrecognize {1} reads 
+    {2:3f} percent'''.format(total, miss_step1, miss_step1/total))
     step2()
 
 if __name__ =='__main__':
