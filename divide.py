@@ -30,7 +30,6 @@ def get_barcode_dict():
     barcode_raw.pop(-1)
     barcode_list = [i.split(sep=',') for i in barcode_raw]
     barcode_dict = dict(barcode_list)
-    print(barcode_dict)
     return barcode_dict
 
 
@@ -49,12 +48,12 @@ def step1(skip):
         record_barcode = str(record.seq[:5])
         try:
             name = barcode[record_barcode]
+            handle = open(name+'.fastq', 'a')
+            SeqIO.write(record, handle, 'fastq')
         except:
             SeqIO.write(record, handle_miss, 'fastq')
             not_found += 1
             continue
-        handle = open(name+'.fastq', 'a')
-        SeqIO.write(record, handle, 'fastq')
     #only use head to blast
         handle_fasta.write(''.join([
             '>', name, '|', record.description, '\n',
