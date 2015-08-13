@@ -13,14 +13,6 @@ from subprocess import call
 import sys
 
 
-def parse(target):
-    blast_result = list(SearchIO.parse('BlastResult.xml', 'blast-xml'))
-    for record in _result:
-        if len(record) == 0:
-            continue
-        else:
-            tophit = record[0]
-        target.append([tophit[0][0].query, tophit[0][0].hit])
 
 
 def get_barcode_dict():
@@ -64,17 +56,6 @@ def step1(skip):
     handle_fasta.close()
     return (not_found, total)
 
-def blast(query_file, database):
-    cmd = nb(
-        num_threads=cpu_count(),
-        query=query_file,
-        db=database,
-        task='blastn-short', 
-        evalue=1e-5, 
-        outfmt=5, 
-        out='out/BlastResult.xml'
-    )
-    stdout, stderr = cmd()
 
 def get_primer_list():
     with open(sys.argv[3], 'r') as input_file:
@@ -110,6 +91,32 @@ def write_fasta_2(primer_list, primer_adapter):
         ]))
     handle.close()
 
+def blast(query_file, database):
+    cmd = nb(
+        num_threads=cpu_count(),
+        query=query_file,
+        db=database,
+        task='blastn-short', 
+        evalue=1e-5, 
+        outfmt=5, 
+        out='out/BlastResult.xml'
+    )
+    stdout, stderr = cmd()
+
+def parse():
+    parse_result = list()
+    blast_result = list(SearchIO.parse('out/BlastResult.xml', 'blast-xml'))
+    for record in blast_result:
+        if len(record) == 0:
+            continue
+        else:
+            tophit = record[0]
+        parse_result.append([tophit[0][0].query, tophit[0][0].hit])
+    return parse_result
+
+def output(blast_result):
+    pass
+
 
 def step2(primer_adapter):
     """
@@ -121,7 +128,8 @@ def step2(primer_adapter):
     call('makeblastdb -in primer.fasta -out primer -dbtype nucl',
          shell=True) 
     blast('step1.fasta', 'primer')
-
+    blast_result = parse()
+    output(blast_result)
 
 def main():
     """
