@@ -52,7 +52,6 @@ def step1(skip):
         except:
             SeqIO.write(record, handle_miss, 'fastq')
             not_found += 1
-            SeqIO.write(record, handle2, 'fastq')
             continue
         handle = open(name+'.fastq', 'a')
         SeqIO.write(record, handle, 'fastq')
@@ -91,7 +90,7 @@ def write_fasta(primer_list, primer_adapter):
     handle = open('primer.fasta', 'w')
     for index in range(len(primer_list)):
         short_primer = primer_list[index][2][primer_adapter:]
-        name = ''.join([primer_list[index][0], '-', index])
+        name = ''.join([primer_list[index][0], '-', str(index)])
         handle.write(''.join([
             '>', name, '\n',
             short_primer, '\n'
