@@ -22,7 +22,6 @@ def get_barcode_dict():
     barcode_dict = dict(barcode_list)
     return barcode_dict
 
-
 def step1(skip):
     """
     Divide raw data via barcode."""
@@ -51,7 +50,6 @@ def step1(skip):
     handle_fasta.close()
     return (not_found, total)
 
-
 def get_primer_list():
     with open(sys.argv[3], 'r') as input_file:
         primer_raw = input_file.read().split(sep='\n')
@@ -59,7 +57,6 @@ def get_primer_list():
     primer_raw.pop(-1)
     primer_list = [i.split(sep=',') for i in primer_raw]
     return primer_list
-
 
 def write_fasta(primer_list, primer_adapter):
     handle = open('primer.fasta', 'w')
@@ -71,7 +68,6 @@ def write_fasta(primer_list, primer_adapter):
             short_primer, '\n'
         ]))
     handle.close()
-
 
 def write_fasta_2(primer_list, primer_adapter):
     handle = open('primer.fasta', 'w')
@@ -87,7 +83,6 @@ def write_fasta_2(primer_list, primer_adapter):
         ]))
     handle.close()
 
-
 def blast(query_file, database):
     cmd = nb(
         num_threads=cpu_count(),
@@ -100,7 +95,6 @@ def blast(query_file, database):
     )
     stdout, stderr = cmd()
 
-
 def parse():
     parse_result = list()
     blast_result = list(SearchIO.parse('out/BlastResult.xml', 'blast-xml'))
@@ -111,7 +105,6 @@ def parse():
             tophit = record[0]
         parse_result.append([tophit[0][0].query, tophit[0][0].hit])
     return parse_result
-
 
 def step2(primer_adapter):
     """
@@ -125,7 +118,6 @@ def step2(primer_adapter):
     blast('step1.fasta', 'primer')
     blast_result = parse()
     output(blast_result)
-
 
 def main():
     """
