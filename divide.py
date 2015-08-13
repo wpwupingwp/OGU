@@ -52,6 +52,7 @@ def step1(skip):
         except:
             SeqIO.write(record, handle_miss, 'fastq')
             not_found += 1
+            SeqIO.write(record, handle2, 'fastq')
             continue
         handle = open(name+'.fastq', 'a')
         SeqIO.write(record, handle, 'fastq')
