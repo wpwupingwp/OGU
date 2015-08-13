@@ -35,8 +35,8 @@ def step1():
     fastq_raw = SeqIO.parse(sys.argv[1], 'fastq')
     total = 0
     not_found = 0
-    found = list()
     handle = open('output/step1.fastq', 'w')
+    handle2 = open('output/step1_miss.fastq', 'w')
     for record in fastq_raw:
         total += 1
         record_barcode = str(record.seq[:5])
@@ -44,12 +44,15 @@ def step1():
             new_id = barcode[record_barcode]
         except:
             not_found += 1
+            SeqIO.write(record, handle2, 'fastq')
             continue
-        record.id = '|'.join([new_id, record.id]),
-        SeqIO.write(record, handle, 'fastq')
-        print(record,total)
-        exit -1
-        found.append(record)
+        new_record = SeqRecord(
+            id='|'.join([new_id, record.id]), 
+            description=record.description, 
+            seq=record.seq,
+            letter_annotations=record.letter_annotations
+        )
+        SeqIO.write(new_record, handle, 'fastq')
     return (not_found, total)
 
 def blast(query_file):
@@ -75,7 +78,7 @@ def step2():
     Next, use BLAST result to divide again."""
     print(step2.__doc__)
     barcode_length = 5
-    primer_adapter = 14
+    primer_adapter = 'GTAGACTGCGTACC'
     skip = barcode_length + primer_adapter
 
     with open(sys.argv[3], 'r') as primer_file:
