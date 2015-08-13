@@ -3,9 +3,6 @@
 from Bio import SeqIO
 from Bio import SearchIO
 from Bio.Blast.Applications import NcbiblastnCommandline as nb
-from Bio.SeqRecord import SeqRecord
-from Bio.Alphabet import IUPAC
-from glob import glob
 from multiprocessing import cpu_count
 from os import makedirs
 from os.path import exists
@@ -21,6 +18,7 @@ def get_barcode_dict():
     barcode_list = [i.split(sep=',') for i in barcode_raw]
     barcode_dict = dict(barcode_list)
     return barcode_dict
+
 
 def step1(skip):
     """
@@ -41,14 +39,15 @@ def step1(skip):
             SeqIO.write(record, handle_miss, 'fastq')
             not_found += 1
             continue
-    #only use head to blast
+            # only use head to blast
         handle_fasta.write(''.join([
             '>', name, '|', record.description, '\n',
-            str(record.seq[skip:skip+20]), '\n'
+            str(record.seq[skip:skip + 20]), '\n'
         ]))
     handle_miss.close()
     handle_fasta.close()
-    return (not_found, total)
+    return not_found, total
+
 
 def get_primer_list():
     with open(sys.argv[3], 'r') as input_file:
@@ -57,6 +56,7 @@ def get_primer_list():
     primer_raw.pop(-1)
     primer_list = [i.split(sep=',') for i in primer_raw]
     return primer_list
+
 
 def write_fasta(primer_list, primer_adapter):
     handle = open('primer.fasta', 'w')
@@ -69,12 +69,13 @@ def write_fasta(primer_list, primer_adapter):
         ]))
     handle.close()
 
+
 def write_fasta_2(primer_list, primer_adapter):
     handle = open('primer.fasta', 'w')
     join_seq = 'NNNNNNNNNNNNNNN'
-    for index in range(0, len(primer_list)-1, 2):
+    for index in range(0, len(primer_list) - 1, 2):
         left = primer_list[index][2][primer_adapter:]
-        right = primer_list[index+1][2][primer_adapter:]
+        right = primer_list[index + 1][2][primer_adapter:]
         short_primer = ''.join([left, join_seq, right])
         name = primer_list[index][0]
         handle.write(''.join([
@@ -83,17 +84,19 @@ def write_fasta_2(primer_list, primer_adapter):
         ]))
     handle.close()
 
+
 def blast(query_file, database):
     cmd = nb(
         num_threads=cpu_count(),
         query=query_file,
         db=database,
-        task='blastn-short', 
-        evalue=1e-5, 
-        outfmt=5, 
+        task='blastn-short',
+        evalue=1e-5,
+        outfmt=5,
         out='out/BlastResult.xml'
     )
     stdout, stderr = cmd()
+
 
 def parse():
     parse_result = list()
@@ -106,6 +109,7 @@ def parse():
         parse_result.append([tophit[0][0].query, tophit[0][0].hit])
     return parse_result
 
+
 def step2(primer_adapter):
     """
     BLAST fastq in first step against primer database.  Next, use BLAST 
@@ -114,10 +118,10 @@ def step2(primer_adapter):
     primer_list = get_primer_list()
     write_fasta(primer_list, primer_adapter)
     call('makeblastdb -in primer.fasta -out primer -dbtype nucl',
-         shell=True) 
+         shell=True)
     blast('step1.fasta', 'primer')
     blast_result = parse()
-    output(blast_result)
+
 
 def main():
     """
@@ -148,9 +152,10 @@ def main():
     print('''
     Step1 results:
     Total: {0} reads
-    unrecognize {1} reads 
-    {2:3f} percent'''.format(total, miss_step1, miss_step1/total))
+    unrecognised {1} reads
+    {2:3f} percent'''.format(total, miss_step1, miss_step1 / total))
     step2(primer_adapter)
 
-if __name__ =='__main__':
+
+if __name__ == '__main__':
     main()
