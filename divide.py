@@ -13,8 +13,6 @@ from subprocess import call
 import sys
 
 
-
-
 def get_barcode_dict():
     with open(sys.argv[2], 'r') as input_file:
         barcode_raw = input_file.read().split(sep='\n')
@@ -40,8 +38,6 @@ def step1(skip):
         record_barcode = str(record.seq[:5])
         try:
             name = barcode[record_barcode]
-            handle = open(name+'.fastq', 'a')
-            SeqIO.write(record, handle, 'fastq')
         except:
             SeqIO.write(record, handle_miss, 'fastq')
             not_found += 1
@@ -51,7 +47,6 @@ def step1(skip):
             '>', name, '|', record.description, '\n',
             str(record.seq[skip:skip+20]), '\n'
         ]))
-    handle.close()
     handle_miss.close()
     handle_fasta.close()
     return (not_found, total)
@@ -77,6 +72,7 @@ def write_fasta(primer_list, primer_adapter):
         ]))
     handle.close()
 
+
 def write_fasta_2(primer_list, primer_adapter):
     handle = open('primer.fasta', 'w')
     join_seq = 'NNNNNNNNNNNNNNN'
@@ -91,6 +87,7 @@ def write_fasta_2(primer_list, primer_adapter):
         ]))
     handle.close()
 
+
 def blast(query_file, database):
     cmd = nb(
         num_threads=cpu_count(),
@@ -103,6 +100,7 @@ def blast(query_file, database):
     )
     stdout, stderr = cmd()
 
+
 def parse():
     parse_result = list()
     blast_result = list(SearchIO.parse('out/BlastResult.xml', 'blast-xml'))
@@ -113,9 +111,6 @@ def parse():
             tophit = record[0]
         parse_result.append([tophit[0][0].query, tophit[0][0].hit])
     return parse_result
-
-def output(blast_result):
-    pass
 
 
 def step2(primer_adapter):
@@ -130,6 +125,7 @@ def step2(primer_adapter):
     blast('step1.fasta', 'primer')
     blast_result = parse()
     output(blast_result)
+
 
 def main():
     """
