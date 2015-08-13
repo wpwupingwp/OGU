@@ -58,18 +58,17 @@ def step1():
 
     return (not_found, total)
 
-def blast(query_file):
+def blast(query_file, database):
     cmd = nb(
         num_threads=cpu_count(),
         query=query_file,
-        db=sys.argv[2], 
+        db=database,
         task='blastn-short', 
         evalue=0.001, 
         outfmt=5, 
-        out=query_file.replace('fasta', 'blast')
+        out='output/BlastResult.xml'
     )
     stdout, stderr = cmd()
-    pass
 
 
 def step2():
@@ -96,16 +95,14 @@ def step2():
         right = primer_list[index+1][2][skip:]
         short_primer = 'NNNNN'.join([left, right])
         sequence = SeqRecord(
-            id=primer[index][0],
+            id=primer_list[index][0],
             description='',
             seq=short_primer
         )
         primer_fasta.append(sequence)
     SeqIO.write(primer_fasta, 'output/primer.fasta', 'fasta')
-
-    fasta_file = sys.argv[1].replace('fastq', 'fasta')
-    SeqIO.convert(sys.argv[1], 'fastq', fasta_file, 'fasta')
     call('makeblastdb -in output/primer.fasta -out output/primer -dbtype nucl') 
+    blast('output/step1.fasta', 'output/primer')
 
 
 def main():
@@ -134,7 +131,7 @@ def main():
     print('''Step1 results:\n
           Total: {0} reads\n
           unrecognize {1} reads\n 
-          {2}percent'''.format(total, miss_step1, miss_step1/total))
+          {2:3f} percent'''.format(total, miss_step1, miss_step1/total))
     step2()
 
 if __name__ =='__main__':
