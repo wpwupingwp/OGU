@@ -53,6 +53,9 @@ def step1():
             letter_annotations=record.letter_annotations
         )
         SeqIO.write(new_record, handle, 'fastq')
+    SeqIO.convert('output/step1.fastq', 'fastq', 
+                  'output/step1.fasta', 'fasta')
+
     return (not_found, total)
 
 def blast(query_file):
@@ -89,8 +92,8 @@ def step2():
 
     primer_fasta = list()
     for index in range(0, len(primer_list), 2):
-        left = primer[index][2][skip:]
-        right = primer[index+1][2][skip:]
+        left = primer_list[index][2][skip:]
+        right = primer_list[index+1][2][skip:]
         short_primer = 'NNNNN'.join([left, right])
         sequence = SeqRecord(
             id=primer[index][0],
