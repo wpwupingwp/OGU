@@ -30,7 +30,8 @@ def get_barcode_dict():
     barcode_raw.pop(-1)
     barcode_list = [i.split(sep=',') for i in barcode_raw]
     barcode_dict = dict(barcode_list)
-    return barcode
+    print(barcode_dict)
+    return barcode_dict
 
 
 def step1():
@@ -38,7 +39,7 @@ def step1():
     Divide raw data via barcode.
     ID were added into the beginning of sequence id."""
     print(step1.__doc__)
-    barcode_dict = get_barcode_dict()
+    barcode = get_barcode_dict()
     fastq_raw = SeqIO.parse(sys.argv[1], 'fastq')
     total = 0
     not_found = 0
@@ -71,7 +72,7 @@ def blast(query_file, database):
         query=query_file,
         db=database,
         task='blastn-short', 
-        evalue=1e-9, 
+        evalue=1e-5, 
         outfmt=5, 
         out='out/BlastResult.xml'
     )
@@ -141,12 +142,12 @@ def main():
     print(main.__doc__)
     if not exists('out'):
         makedirs('out')
-    #miss_step1, total = step1()
-    #print('''
-    #Step1 results:
-    #Total: {0} reads
-    #unrecognize {1} reads 
-    #{2:3f} percent'''.format(total, miss_step1, miss_step1/total))
+    miss_step1, total = step1()
+    print('''
+    Step1 results:
+    Total: {0} reads
+    unrecognize {1} reads 
+    {2:3f} percent'''.format(total, miss_step1, miss_step1/total))
     step2()
 
 if __name__ =='__main__':
