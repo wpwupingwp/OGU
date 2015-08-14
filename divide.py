@@ -45,7 +45,7 @@ def step1(skip):
             continue
             # only use head to blast
         handle_fasta.write(''.join([
-            '>', name, '|', record.description, '\n',
+            '>', record.description, '\n',
             str(record.seq[skip:skip + 20]), '\n'
         ]))
     handle.close()
@@ -103,7 +103,7 @@ def parse():
     return parse_result
 
 
-def step2(primer_adapter):
+def step2(primer_adapter, file_list):
     """
     BLAST fastq in first step against primer database.  Next, use BLAST 
     result to divide again."""
@@ -147,7 +147,7 @@ def main():
     Total: {0} reads
     unrecognised {1} reads
     {2:3f} percent'''.format(total, miss_step1, miss_step1 / total))
-    step2(primer_adapter)
+    step2(primer_adapter, file_list)
 
 
 if __name__ == '__main__':
