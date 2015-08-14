@@ -60,18 +60,6 @@ def get_primer_list():
 
 def write_fasta(primer_list, primer_adapter):
     handle = open('primer.fasta', 'w')
-    for index in range(len(primer_list)):
-        short_primer = primer_list[index][2][primer_adapter:]
-        name = ''.join([primer_list[index][0], '-', str(index)])
-        handle.write(''.join([
-            '>', name, '\n',
-            short_primer, '\n'
-        ]))
-    handle.close()
-
-
-def write_fasta_2(primer_list, primer_adapter):
-    handle = open('primer.fasta', 'w')
     join_seq = 'NNNNNNNNNNNNNNN'
     for index in range(0, len(primer_list) - 1, 2):
         left = primer_list[index][2][primer_adapter:]
@@ -106,7 +94,7 @@ def parse():
             continue
         else:
             tophit = record[0]
-        parse_result.append([tophit[0][0].query, tophit[0][0].hit])
+        parse_result.append([tophit[0][0].query.id, tophit[0][0].hit.id])
     return parse_result
 
 
