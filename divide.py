@@ -102,7 +102,7 @@ def blast(query_file, database):
     stdout, stderr = cmd()
 
 
-def parse():
+def parse_blast():
     parse_result = list()
     blast_result = SearchIO.parse('out/BlastResult.xml', 'blast-xml')
     for record in blast_result:
@@ -111,6 +111,7 @@ def parse():
         else:
             tophit = record[0]
         parse_result.append([tophit[0][0].query.id, tophit[0][0].hit.id])
+    parse_result = dict(parse_result)
     return parse_result
 
 
@@ -124,7 +125,8 @@ def step2(primer_adapter, file_list):
     call('makeblastdb -in primer.fasta -out primer -dbtype nucl',
          shell=True)
     blast('step1.fasta', 'primer')
-    blast_result = parse()
+    blast_result = parse_blast()
+    return blast_result
 
 
 def main():
@@ -158,7 +160,8 @@ def main():
     Total: {0} reads
     unrecognised {1} reads
     {2:3f} percent'''.format(total, miss_step1, miss_step1 / total))
-    step2(primer_adapter, file_list)
+    blast_result = step2(primer_adapter, file_list)
+    step3(
 
 
 if __name__ == '__main__':
