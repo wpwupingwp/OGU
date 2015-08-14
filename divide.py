@@ -28,6 +28,7 @@ def step1(skip):
     fastq_raw = SeqIO.parse(sys.argv[1], 'fastq')
     total = 0
     not_found = 0
+    file_list = list()
     handle_miss = open('step1_miss.fastq', 'w')
     handle_fasta = open('step1.fasta', 'w')
     for record in fastq_raw:
@@ -35,6 +36,7 @@ def step1(skip):
         record_barcode = str(record.seq[:5])
         try:
             name = barcode[record_barcode]
+            file_list.append(name)
             handle = open(''.join(['out/', name]), 'a')
             SeqIO.write(record, handle, 'fastq')
         except:
@@ -49,7 +51,7 @@ def step1(skip):
     handle.close()
     handle_miss.close()
     handle_fasta.close()
-    return not_found, total
+    return not_found, total, file_list
 
 
 def get_primer_list():
@@ -139,7 +141,7 @@ def main():
     skip = barcode_length + primer_adapter
     if not exists('out'):
         makedirs('out')
-    miss_step1, total = step1(skip)
+    miss_step1, total, file_list = step1(skip)
     print('''
     Step1 results:
     Total: {0} reads
