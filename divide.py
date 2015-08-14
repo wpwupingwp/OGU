@@ -33,21 +33,32 @@ def step1(skip):
     handle_fasta = open('step1.fasta', 'w')
     for record in fastq_raw:
         total += 1
-        record_barcode = str(record.seq[:5])
-        try:
-            name = barcode[record_barcode]
-            file_list.append(name)
-            handle = open(''.join(['out/', name]), 'a')
+        record_barcode = [str(record.seq[:5]), str(record.seq[-5::-1])]
+        if record_barcode[0] in barcode:
+            name = barcode[record_barcode[0]]
+            output_file = ''.join(['out/', name])
+            file_list.append(output_file)
+            handle = open(output_file, 'a')
             SeqIO.write(record, handle, 'fastq')
-        except:
+            handle_fasta.write(''.join([
+                '>', record.description, '\n',
+                str(record.seq[skip:skip + 20]), '\n'
+            ]))
+        elif record_barcode[1] in barcode:
+            name = barcode[record_barcode[1]]
+            output_file = ''.join(['out/', name])
+            file_list.append(output_file)
+            handle = open(output_file, 'a')
+            SeqIO.write(record, handle, 'fastq')
+            handle_fasta.write(''.join([
+                '>', record.description, '\n',
+                str(record.seq[-(skip + 20)::-1]), '\n'
+            ]))
+        else:
             SeqIO.write(record, handle_miss, 'fastq')
             not_found += 1
             continue
             # only use head to blast
-        handle_fasta.write(''.join([
-            '>', record.description, '\n',
-            str(record.seq[skip:skip + 20]), '\n'
-        ]))
     handle.close()
     handle_miss.close()
     handle_fasta.close()
