@@ -35,6 +35,8 @@ def step1(skip):
         record_barcode = str(record.seq[:5])
         try:
             name = barcode[record_barcode]
+            handle = open(''.join(['out/', name]), 'a')
+            SeqIO.write(record, handle, 'fastq')
         except:
             SeqIO.write(record, handle_miss, 'fastq')
             not_found += 1
@@ -44,6 +46,7 @@ def step1(skip):
             '>', name, '|', record.description, '\n',
             str(record.seq[skip:skip + 20]), '\n'
         ]))
+    handle.close()
     handle_miss.close()
     handle_fasta.close()
     return not_found, total
