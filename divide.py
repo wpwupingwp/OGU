@@ -110,15 +110,21 @@ def parse_blast():
             continue
         else:
             tophit = record[0]
-        parse_result.append([tophit[0][0].query.id, tophit[0][0].hit.id])
+        query_info = ''.join([
+            tophit[0][0].query_id,
+            ' ',
+            tophit[0][0].query_description
+        ])
+        hit_info = tophit[0][0].hit.id
+        parse_result.append([query_info, hit_info])
     parse_result = dict(parse_result)
     return parse_result
 
 
 def step2(primer_adapter, file_list):
     """
-    BLAST fastq in first step against primer database.  Next, use BLAST 
-    result to divide again."""
+    Step 2:
+    BLAST fastq in first step against primer database."""
     print(step2.__doc__)
     primer_list = get_primer_list()
     write_fasta(primer_list, primer_adapter)
@@ -127,6 +133,26 @@ def step2(primer_adapter, file_list):
     blast('step1.fasta', 'primer')
     blast_result = parse_blast()
     return blast_result
+
+
+def step3(blast_result, file_list):
+    """
+    Step 3:
+    First, according BLAST result, split fastq files generated in step1, then
+    assembly."""
+    print(step3.__doc__)
+    count = {i:0 for i in file_list}
+    for fastq_file in file_list:
+        records = list(SeqIO.parse(fastq_file, 'fastq'))
+        for record in records:
+            try:
+                gene = blast_result[str(record.description)]
+                count[fastq_file] += 1
+                handle = open(''.join([fastq_file, '_', gene]), 'a')
+                SeqIO.write(record, handle, 'fastq')
+            except:
+                continue
+
 
 
 def main():
@@ -161,7 +187,7 @@ def main():
     unrecognised {1} reads
     {2:3f} percent'''.format(total, miss_step1, miss_step1 / total))
     blast_result = step2(primer_adapter, file_list)
-    step3(
+    step3(blast_result, file_list)
 
 
 if __name__ == '__main__':
