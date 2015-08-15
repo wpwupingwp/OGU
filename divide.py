@@ -197,6 +197,7 @@ def main():
     with open('count_gene', 'w') as handle:
         for i in count_gene:
             handle.write(' '.join([i[0], i[1]]))
+    #wrong
 
 if __name__ == '__main__':
     main()
