@@ -8,6 +8,7 @@ from os import makedirs
 from os.path import exists
 from subprocess import call
 import sys
+from glob import glob
 
 
 def get_barcode_dict():
@@ -28,7 +29,6 @@ def step1(skip):
     fastq_raw = SeqIO.parse(sys.argv[1], 'fastq')
     total = 0
     not_found = 0
-    file_list = list()
     handle_miss = open('step1_miss.fastq', 'w')
     handle_fasta = open('step1.fasta', 'w')
     for record in fastq_raw:
@@ -37,7 +37,6 @@ def step1(skip):
         if record_barcode[0] in barcode:
             name = barcode[record_barcode[0]]
             output_file = ''.join(['out/', name])
-            file_list.append(output_file)
             handle = open(output_file, 'a')
             SeqIO.write(record, handle, 'fastq')
             handle_fasta.write(''.join([
@@ -47,7 +46,6 @@ def step1(skip):
         elif record_barcode[1] in barcode:
             name = barcode[record_barcode[1]]
             output_file = ''.join(['out/', name])
-            file_list.append(output_file)
             handle = open(output_file, 'a')
             SeqIO.write(record, handle, 'fastq')
             handle_fasta.write(''.join([
@@ -62,7 +60,7 @@ def step1(skip):
     handle.close()
     handle_miss.close()
     handle_fasta.close()
-    return not_found, total, file_list
+    return not_found, total
 
 
 def get_primer_list():
@@ -121,7 +119,7 @@ def parse_blast():
     return parse_result
 
 
-def step2(primer_adapter, file_list):
+def step2(primer_adapter):
     """
     Step 2:
     BLAST fastq in first step against primer database."""
@@ -143,14 +141,14 @@ def step3(blast_result, file_list):
     print(step3.__doc__)
     count = {i:0 for i in file_list}
     for fastq_file in file_list:
-        records = list(SeqIO.parse(fastq_file, 'fastq'))
+        records = SeqIO.parse(fastq_file, 'fastq')
         for record in records:
             gene = record.description
             if gene in blast_result:
                 count[fastq_file] += 1
-                handle = open(''.join([fastq_file, '_', gene]), 'a')
+                handle = open(''.join([fastq_file, '_', blast_result[gene]]), 'a')
                 SeqIO.write(record, handle, 'fastq')
-        print(count)
+        print(fastq_file, count[fastq_file])
 
 
 
@@ -179,13 +177,14 @@ def main():
     skip = barcode_length + primer_adapter
     if not exists('out'):
         makedirs('out')
-    miss_step1, total, file_list = step1(skip)
+    miss_step1, total = step1(skip)
     print('''
     Step1 results:
     Total: {0} reads
     unrecognised {1} reads
     {2:3f} percent'''.format(total, miss_step1, miss_step1 / total))
-    blast_result = step2(primer_adapter, file_list)
+    blast_result = step2(primer_adapter)
+    file_list = glob('out/B*')
     step3(blast_result, file_list)
 
 
