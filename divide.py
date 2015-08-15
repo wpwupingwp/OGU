@@ -34,11 +34,11 @@ def step1(skip):
     for record in fastq_raw:
         total += 1
         record_barcode = [str(record.seq[:5]), str(record.seq[-5::-1])]
-        handle = open(output_file, 'a')
         if record_barcode[0] in barcode:
             name = barcode[record_barcode[0]]
             output_file = ''.join(['out/', name])
-            SeqIO.write(record, handle, 'fastq')
+            with open(output_file, 'a') as handle: 
+                SeqIO.write(record, handle, 'fastq')
             handle_fasta.write(''.join([
                 '>', record.description, '\n',
                 str(record.seq[skip:skip + 20]), '\n'
@@ -46,7 +46,8 @@ def step1(skip):
         elif record_barcode[1] in barcode:
             name = barcode[record_barcode[1]]
             output_file = ''.join(['out/', name])
-            SeqIO.write(record, handle, 'fastq')
+            with open(output_file, 'a') as handle: 
+                SeqIO.write(record, handle, 'fastq')
             handle_fasta.write(''.join([
                 '>', record.description, '\n',
                 str(record.seq[-(skip + 20)::-1]), '\n'
@@ -56,7 +57,6 @@ def step1(skip):
             not_found += 1
             continue
             # only use head to blast
-    handle.close()
     handle_miss.close()
     handle_fasta.close()
     return not_found, total
