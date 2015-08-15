@@ -74,16 +74,19 @@ def get_primer_list():
 def write_fasta(primer_list, primer_adapter):
     handle = open('primer.fasta', 'w')
     join_seq = 'NNNNNNNNNNNNNNN'
+    gene_list = list()
     for index in range(0, len(primer_list) - 1, 2):
         left = primer_list[index][2][primer_adapter:]
         right = primer_list[index + 1][2][primer_adapter:]
         short_primer = ''.join([left, join_seq, right])
         name = primer_list[index][0]
+        gene_list.append(name)
         handle.write(''.join([
             '>', name, '\n',
             short_primer, '\n'
         ]))
     handle.close()
+    return gene_list
 
 
 def blast(query_file, database):
@@ -124,12 +127,12 @@ def step2(primer_adapter):
     BLAST fastq in first step against primer database."""
     print(step2.__doc__)
     primer_list = get_primer_list()
-    write_fasta(primer_list, primer_adapter)
+    gene_list = write_fasta(primer_list, primer_adapter)
     call('makeblastdb -in primer.fasta -out primer -dbtype nucl',
          shell=True)
     blast('step1.fasta', 'primer')
     blast_result = parse_blast()
-    return blast_result
+    return blast_result, gene_list
 
 
 def step3(blast_result, file_list):
@@ -182,9 +185,9 @@ def main():
     Total: {0} reads
     unrecognised {1} reads
     {2:3f} percent'''.format(total, miss_step1, miss_step1 / total))
-    blast_result = step2(primer_adapter)
+    blast_result, gene_list = step2(primer_adapter)
     file_list = glob('out/B*')
-    step3(blast_result, file_list)
+    step3(blast_result, file_list, gene_list)
 
 
 if __name__ == '__main__':
