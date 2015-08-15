@@ -135,23 +135,24 @@ def step2(primer_adapter):
     return blast_result, gene_list
 
 
-def step3(blast_result, file_list):
+def step3(blast_result, file_list, gene_list):
     """
     Step 3:
     First, according BLAST result, split fastq files generated in step1, then
     assembly."""
     print(step3.__doc__)
-    count = {i:0 for i in file_list}
+    count_sample = {i:0 for i in file_list}
+    count_gene = {i:0 for i in gene_list}
     for fastq_file in file_list:
         records = SeqIO.parse(fastq_file, 'fastq')
         for record in records:
             gene = record.description
             if gene in blast_result:
-                count[fastq_file] += 1
+                count_sample[fastq_file] += 1
+                count_gene[gene] += 1
                 handle = open(''.join([fastq_file, '_', blast_result[gene]]), 'a')
                 SeqIO.write(record, handle, 'fastq')
-        print(fastq_file, count[fastq_file])
-
+    return count_sample, count_gene
 
 
 def main():
