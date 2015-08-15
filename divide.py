@@ -188,8 +188,15 @@ def main():
     {2:3f} percent'''.format(total, miss_step1, miss_step1 / total))
     blast_result, gene_list = step2(primer_adapter)
     file_list = glob('out/B*')
-    step3(blast_result, file_list, gene_list)
-
+    count_sample, count_gene = step3(blast_result, file_list, gene_list)
+    count_sample = list(count_sample)
+    count_gene = list(count_gene)
+    with open('count_sample', 'w') as handle:
+        for i in count_sample:
+            handle.write(' '.join([i[0], i[1]]))
+    with open('count_gene', 'w') as handle:
+        for i in count_gene:
+            handle.write(' '.join([i[0], i[1]]))
 
 if __name__ == '__main__':
     main()
