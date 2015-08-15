@@ -146,12 +146,12 @@ def step3(blast_result, file_list):
         records = list(SeqIO.parse(fastq_file, 'fastq'))
         for record in records:
             try:
-                gene = blast_result[str(record.description)]
-                count[fastq_file] += 1
-                handle = open(''.join([fastq_file, '_', gene]), 'a')
-                SeqIO.write(record, handle, 'fastq')
+                gene = blast_result[record.description]
             except:
                 continue
+            count[fastq_file] += 1
+            handle = open(''.join([fastq_file, '_', gene]), 'a')
+            SeqIO.write(record, handle, 'fastq')
 
 
 
