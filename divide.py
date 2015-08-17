@@ -40,7 +40,7 @@ def step1(skip):
         if record_barcode[0] in barcode:
             name = barcode[record_barcode[0]]
             output_file = ''.join(['out/', name])
-            with open(output_file, 'a') as handle: 
+            with open(output_file, 'a') as handle:
                 SeqIO.write(record, handle, 'fastq')
             handle_fasta.write(''.join([
                 '>', record.description, '\n',
@@ -49,7 +49,7 @@ def step1(skip):
         elif record_barcode[1] in barcode:
             name = barcode[record_barcode[1]]
             output_file = ''.join(['out/', name])
-            with open(output_file, 'a') as handle: 
+            with open(output_file, 'a') as handle:
                 SeqIO.write(record, handle, 'fastq')
             handle_fasta.write(''.join([
                 '>', record.description, '\n',
@@ -144,8 +144,8 @@ def step3(blast_result, file_list, gene_list):
     First, according BLAST result, split fastq files generated in step1, then
     assembly."""
     print(step3.__doc__)
-    count_sample = {i:0 for i in file_list}
-    count_gene = {i:0 for i in gene_list}
+    count_sample = {i: 0 for i in file_list}
+    count_gene = {i: 0 for i in gene_list}
     for fastq_file in file_list:
         records = SeqIO.parse(fastq_file, 'fastq')
         for record in records:
@@ -200,7 +200,8 @@ def main():
     with open('count_gene', 'w') as handle:
         for i in count_gene:
             handle.write(' '.join([i[0], str(i[1]), '\n']))
-    #wrong
+            # wrong
+
 
 if __name__ == '__main__':
     main()
