@@ -146,14 +146,13 @@ def step3(blast_result, file_list, gene_list):
     print(step3.__doc__)
     count_sample = {i:0 for i in file_list}
     count_gene = {i:0 for i in gene_list}
-    print(count_gene)
     for fastq_file in file_list:
         records = SeqIO.parse(fastq_file, 'fastq')
         for record in records:
             gene = record.description
             if gene in blast_result:
                 count_sample[fastq_file] += 1
-                count_gene[gene] += 1
+                count_gene[blast_result[gene]] += 1
                 handle = open(''.join([fastq_file, '_', blast_result[gene]]), 'a')
                 SeqIO.write(record, handle, 'fastq')
     return count_sample, count_gene
@@ -193,14 +192,14 @@ def main():
     blast_result, gene_list = step2(primer_adapter)
     file_list = glob('out/B*')
     count_sample, count_gene = step3(blast_result, file_list, gene_list)
-    count_sample = list(count_sample)
-    count_gene = list(count_gene)
+    count_sample = list(count_sample.items())
+    count_gene = list(count_gene.items())
     with open('count_sample', 'w') as handle:
         for i in count_sample:
-            handle.write(' '.join([i[0], i[1]]))
+            handle.write(' '.join([i[0], str(i[1]), '\n']))
     with open('count_gene', 'w') as handle:
         for i in count_gene:
-            handle.write(' '.join([i[0], i[1]]))
+            handle.write(' '.join([i[0], str(i[1]), '\n']))
     #wrong
 
 if __name__ == '__main__':
