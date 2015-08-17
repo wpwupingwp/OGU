@@ -23,8 +23,11 @@ def get_barcode_dict():
 
 def step1(skip):
     """
-    Divide raw data via barcode."""
+    Divide raw data via barcode.
+    In this case, it searches primers in first 20bp sequence of reads, you may
+    edit it."""
     print(step1.__doc__)
+    search_len = 20
     barcode = get_barcode_dict()
     fastq_raw = SeqIO.parse(sys.argv[1], 'fastq')
     total = 0
@@ -41,7 +44,7 @@ def step1(skip):
                 SeqIO.write(record, handle, 'fastq')
             handle_fasta.write(''.join([
                 '>', record.description, '\n',
-                str(record.seq[skip:skip + 20]), '\n'
+                str(record.seq[skip:skip + search_len]), '\n'
             ]))
         elif record_barcode[1] in barcode:
             name = barcode[record_barcode[1]]
@@ -50,7 +53,7 @@ def step1(skip):
                 SeqIO.write(record, handle, 'fastq')
             handle_fasta.write(''.join([
                 '>', record.description, '\n',
-                str(record.seq[-(skip + 20)::-1]), '\n'
+                str(record.seq[-(skip + search_len)::-1]), '\n'
             ]))
         else:
             SeqIO.write(record, handle_miss, 'fastq')
@@ -143,6 +146,7 @@ def step3(blast_result, file_list, gene_list):
     print(step3.__doc__)
     count_sample = {i:0 for i in file_list}
     count_gene = {i:0 for i in gene_list}
+    print(count_gene)
     for fastq_file in file_list:
         records = SeqIO.parse(fastq_file, 'fastq')
         for record in records:
