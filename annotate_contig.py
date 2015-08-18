@@ -7,8 +7,9 @@ from Bio.SeqRecord import SeqRecord
 from Bio.Blast.Applications import NcbiblastnCommandline as nb
 from os import makedirs
 from os.path import exists
-from subprocess import call
 from multiprocessing import cpu_count
+from subprocess import call
+from tempfile import TemporaryFile
 
 
 def get_cds():
@@ -24,8 +25,7 @@ def get_cds():
         'rps19', 'rps2', 'rps3', 'rps4', 'rps7', 'rps8', 'rrn16', 'rrn23', 
         'rrn4.5', 'rrn5', 'ycf1', 'ycf2', 'ycf3', 'ycf4'
     ]
-    handle = open(sys.argv[1], 'r')
-    data = SeqIO.parse(handle, 'gb')
+    data = SeqIO.parse(sys.argv[1], 'gb')
     for record in data:
         organism = record.annotations['organism'].replace(' ', '_')
         accession = record.annotations['accessions'][0]
