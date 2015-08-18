@@ -3,16 +3,17 @@
 import sys
 from Bio import SeqIO
 from Bio import SearchIO
-from Bio.SeqRecord import SeqRecord 
 from Bio.Blast.Applications import NcbiblastnCommandline as nb
+from Bio.SeqRecord import SeqRecord 
+from multiprocessing import cpu_count
 from os import makedirs
 from os.path import exists
-from multiprocessing import cpu_count
 from subprocess import call
 from tempfile import TemporaryFile
 
 
 def get_cds():
+    #Edit it when necessary
     wanted_gene = [
         'accD', 'atpA', 'atpB', 'atpE', 'atpF', 'atpH', 'atpI', 'ccsA', 'cemA', 
         'clpP', 'infA', 'matK', 'ndhA', 'ndhB', 'ndhC', 'ndhD', 'ndhE', 'ndhF', 
@@ -25,11 +26,12 @@ def get_cds():
         'rps19', 'rps2', 'rps3', 'rps4', 'rps7', 'rps8', 'rrn16', 'rrn23', 
         'rrn4.5', 'rrn5', 'ycf1', 'ycf2', 'ycf3', 'ycf4'
     ]
-    data = SeqIO.parse(sys.argv[1], 'gb')
-    for record in data:
-        organism = record.annotations['organism'].replace(' ', '_')
-        accession = record.annotations['accessions'][0]
-        for feature in record.features:
+    genomes = SeqIO.parse(sys.argv[1], 'gb')
+    cds = list()
+    for genome in genomes:
+        organism = genome.annotations['organism'].replace(' ', '_')
+        accession = genome.annotations['accessions'][0]
+        for feature in genome.features:
             sequence = list()
             position = list()
             if feature.type != 'CDS' or 'gene' not in feature.qualifiers: 
@@ -53,7 +55,8 @@ def get_cds():
                 sequence = str(record.seq[frag[0]:frag[1]])
                 if n > 0:
                     name = '-'.join([name, str(n+1)])
-                fragments.append([organism, accession, name, sequence])
+                cds.append([organism, accession, name, sequence])
+    return cds
 
 def out_cds(fragments, option):
     if option == '1':
@@ -131,11 +134,19 @@ def output(target, option):
                 SeqIO.write(record, output_file, 'fasta')
 
 def main():
-    """Usage:
+    """
+    This program will annotate contigs from assembly according to given
+    genbank file, which describes a complete chloroplast genome. The genbank
+    file may contains single or several genomes.
+    Edit wanted_gene list in get_cds(). If you want to annotate 
+    mitochrondria contigs.
+    Usage:
     python3 annotate_contig.py genbank_file contig_file mode
     Mode:
-        1. Query contig against coding genes
-        2. Query contig in whole genome
+        1. Query contig against coding genes, then every contig will be
+        annotated by gene name.
+        2. Query contig in whole genome. It only judge if contig was belong to
+        genome of given genbank file.
     On default, it use Nicotiana.gb which was placed in current path."""
     print(main.__doc__)
     if not exists('out'):
