@@ -9,7 +9,6 @@ from multiprocessing import cpu_count
 from os import makedirs
 from os.path import exists
 from subprocess import call
-from tempfile import TemporaryFile
 
 
 def get_cds():
@@ -31,18 +30,16 @@ def get_cds():
     genomes = SeqIO.parse(sys.argv[1], 'gb')
     for genome in genomes:
         organism = genome.annotations['organism'].replace(' ', '_')
-        accession = genome.annotations['accessions'][0]
         for feature in genome.features:
-            sequence = list()
-            position = list()
             if feature.type != 'CDS' or 'gene' not in feature.qualifiers: 
                 continue
+            sequence = list()
+            position = list()
             if feature.location_operator != 'join':
                 position.append([
                     int(feature.location.start), 
                     int(feature.location.end)
                 ])
-
             else:
                 for i in feature.sub_features:
                     position.append([
@@ -56,27 +53,16 @@ def get_cds():
                 sequence = str(record.seq[frag[0]:frag[1]])
                 if n > 0:
                     name = '-'.join([name, str(n+1)])
-                cds.append([organism, accession, name, sequence])
+                cds.append([organism, name, sequence])
     return cds
 
-def out_cds(fragments, option):
-    if option == '1':
-        pass
-    else:
-        return
-    handle_all = open('output/all.fasta', 'a')
+def out_cds(cds):
     for item in fragments:
-        handle = open(''.join([
-            'output/',
-            item[2],
-            '.fasta'
-        ]),
-                      'a')
-        handle.write(''.join(['>','|'.join([item[0], item[1], item[2]]),'\n',item[3],'\n']))
-        handle_all.write(''.join(['>','|'.join([item[0], item[1], item[2]]),'\n',item[3],'\n']))
-        handle.close()
-    handle_all.close()
-    print('Done.')
+        handle.write(''.join([
+            '>',item[0], '|', item[1], '\n',
+            item[2],'\n'
+        ]))
+
 
 def blast(option):
     if option == '1':
@@ -146,7 +132,7 @@ def main():
     Mode:
         1. Query contig against coding genes, then every contig will be
         annotated by gene name.
-        2. Query contig in whole genome. It only judge if contig was belong to
+        2. Query contig in a whole genome. It only judge if contig was belong to
         genome of given genbank file.
     On default, it use Nicotiana.gb which was placed in current path."""
     print(main.__doc__)
@@ -159,9 +145,9 @@ def main():
     if mode not in ['1', '2']:
         raise ValueError('Bad command!\n')
     if mode == '1':
+        handle = tmp(mode='w', encoding='utf-8')
         cds = get_cds()
-######################
-    out_cds(fragments, option)
+        out_cds(cds, handle)
     blast(option)
     parse(target)
     output(target, option)
