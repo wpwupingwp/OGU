@@ -11,14 +11,7 @@ from subprocess import call
 from multiprocessing import cpu_count
 
 
-def get_cds(fragments, option):
-    if option == '1':
-        pass
-    elif option == '2':
-        return 
-    else:
-        raise ValueError('Wrong option!\n')
-
+def get_cds():
     wanted_gene = [
         'accD', 'atpA', 'atpB', 'atpE', 'atpF', 'atpH', 'atpI', 'ccsA', 'cemA', 
         'clpP', 'infA', 'matK', 'ndhA', 'ndhB', 'ndhC', 'ndhD', 'ndhE', 'ndhF', 
@@ -139,11 +132,12 @@ def output(target, option):
 
 def main():
     """Usage:
-    python3 annotate_contig.py chloroplast_genome_genbank_file contig_file mode
+    python3 annotate_contig.py genbank_file contig_file mode
     Mode:
         1. Query contig against coding genes
-        2. Query contig in whole genome"""
-    print('\n', main.__doc__)
+        2. Query contig in whole genome
+    On default, it use Nicotiana.gb which was placed in current path."""
+    print(main.__doc__)
     if not exists('out'):
         makedirs('out')
     try:
@@ -152,14 +146,14 @@ def main():
         raise ValueError('Bad command!\n')
     if mode not in ['1', '2']:
         raise ValueError('Bad command!\n')
-    fragments = list()
-    target = list()
-    call('makeblastdb -in primer.fasta -out primer -dbtype nucl',
-    get_cds(fragments, option)
+    if mode == '1':
+        cds = get_cds()
+
     out_cds(fragments, option)
     blast(option)
     parse(target)
     output(target, option)
+    call('makeblastdb -in primer.fasta -out primer -dbtype nucl',
 
 if __name__ =='__main__':
     main()
