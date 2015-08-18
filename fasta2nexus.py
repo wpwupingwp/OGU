@@ -5,4 +5,4 @@ from Bio import Alphabet
 import sys
 
 SeqIO.convert(sys.argv[1], 'fasta', sys.argv[1].replace('fasta', 'nexus')
-              ,'nexus', alphabet=Alphabet.generic_dna)
+              , 'nexus', alphabet=Alphabet.generic_dna)

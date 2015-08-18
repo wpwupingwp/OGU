@@ -181,12 +181,9 @@ def main():
     id_list = [i.split()[::-1] for i in id_list]
     id_list.pop()
     id_list = dict(id_list)
-
     name_list = glob.glob('*-*')
     raw_data = dict()
     sample_raw_data = dict()
-    sample = dict()
-    analysis = list()
     analysis = [[
         'id', 
         'cell',

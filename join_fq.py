@@ -11,24 +11,24 @@ print(left.pop())
 print(right.pop())
 join_seq = 'NNNNNNNNNN'
 join_qual = 'AAAAAAAAAA'
-#for i, j,index in enumerate(zip(left, right)):
-length = int(len(left)/4)
-#every record in fastq file have four lines:
-#id\n seq\n id\n qual
+# for i, j,index in enumerate(zip(left, right)):
+length = int(len(left) / 4)
+# every record in fastq file have four lines:
+# id\n seq\n id\n qual
 handle = open('combine.fastq', 'w')
 for index in range(length):
     point = index * 4
     name = left[point]
     seq = ''.join([
-        left[point+1],
+        left[point + 1],
         join_seq,
-        right[point+1][::-1]
+        right[point + 1][::-1]
     ])
-    qual_name = left[point+2]
+    qual_name = left[point + 2]
     qual = ''.join([
-        left[point+3],
+        left[point + 3],
         join_qual,
-        right[point+3][::-1]
+        right[point + 3][::-1]
     ])
     handle.write(''.join([
         name,
