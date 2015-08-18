@@ -7,6 +7,9 @@ from Bio.SeqRecord import SeqRecord
 from Bio.Blast.Applications import NcbiblastnCommandline as nb
 from os import makedirs
 from os.path import exists
+from subprocess import call
+from multiprocessing import cpu_count
+
 
 def get_cds(fragments, option):
     if option == '1':
@@ -84,7 +87,7 @@ def blast(option):
     else:
         query_file = sys.argv[1]
     cmd = nb(
-    #  num_threads=8,
+        num_threads=cpu_count(),
         query=query_file,
         db=sys.argv[2], 
         task='megablast', 
@@ -137,11 +140,7 @@ def output(target, option):
 def main():
     """Usage:
     python3 getCDS.py genbank_file/fasta_file contig_file mode
-    Before running this script, ensure you already put blast database file in
-    current path. Also, it assumes that you have installed BLAST suite before. 
-    To create the db file: 
-    makeblastdb -in infile -out outfile -dbtype nucl
-    Before run, you need to chose mode:
+    Mode:
         1. Query CDS in contig
         2. Query contig in genome"""
     if exists('output') == False:
@@ -150,6 +149,7 @@ def main():
     target = list()
     print('\n', main.__doc__)
     option = sys.argv[3]
+    call('makeblastdb -in primer.fasta -out primer -dbtype nucl',
     get_cds(fragments, option)
     out_cds(fragments, option)
     blast(option)
