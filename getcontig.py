@@ -139,15 +139,15 @@ def output(target, option):
 
 def main():
     """Usage:
-    python3 getCDS.py genbank_file/fasta_file contig_file mode
+    python3 getcontig.py genbank_file/fasta_file contig_file mode
     Mode:
-        1. Query CDS in contig
+        1. Query contig in contig
         2. Query contig in genome"""
-    if exists('output') == False:
+    print('\n', main.__doc__)
+    if not exists('output'):
         makedirs('output')
     fragments = list()
     target = list()
-    print('\n', main.__doc__)
     option = sys.argv[3]
     call('makeblastdb -in primer.fasta -out primer -dbtype nucl',
     get_cds(fragments, option)
