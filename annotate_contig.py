@@ -66,8 +66,7 @@ def out_cds(cds):
     return 'cds.fasta'
 
 
-def blast(query_file):
-    contig_file = sys.argv[2]
+def blast(query_file, contig_file):
     xml_file = 'out/BlastResult.xml'
     call('makeblastdb -in {0} -out {1} -dbtype nucl'.format(contig_file,
                                                             contig_file),
@@ -93,14 +92,18 @@ def parse(xml_file):
             continue
         else:
             tophit = record[0]
-        parse_result.append([tophit[0][0].query, tophit[0][0].hit])
-    return parse_result
+        parse_result.append([tophit[0][0].query.id, tophit[0][0].hit.id])
+    return dict(parse_result)
 
-def output(result):
+def output(result, contig_file):
+    contigs = SeqIO.parse(contig_file, 'fasta')
+    for contig in contigs:
+
+
     for record in result:
-        gene = record[0].id.split(sep='|')[-1]
+        gene = record[0].id
         output_file = ''.join([
-            'output/',
+            'out/',
             sys.argv[2], 
             '-',
             gene, 
@@ -144,12 +147,13 @@ def main():
         makedirs('out')
     if mode not in ['1', '2']:
         raise ValueError('Bad command!\n')
+    contig_file = sys.argv[2]
     if mode == '1':
         cds = get_cds()
         query_file = out_cds(cds)
-        xml_file = blast(query_file)
+        xml_file = blast(query_file, contig_file)
         result = parse(xml_file)
-        output(result)
+        output(result, contig_file)
 
 if __name__ =='__main__':
     main()
