@@ -59,8 +59,8 @@ def generate_query(fragment):
     handle = open('cds.fasta', 'w')
     for gene in fragment:
         handle.write(''.join([
-            '>', gene[0], '|', gene[1], '\n',
-            gene[2], '\n'
+            '>', gene[0], '\n',
+            gene[1], '\n'
         ]))
     handle.close()
     return 'fragment.fasta'
