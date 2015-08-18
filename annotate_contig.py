@@ -139,16 +139,21 @@ def output(target, option):
 
 def main():
     """Usage:
-    python3 getcontig.py genbank_file/fasta_file contig_file mode
+    python3 annotate_contig.py chloroplast_genome_genbank_file contig_file mode
     Mode:
-        1. Query contig in contig
-        2. Query contig in genome"""
+        1. Query contig against coding genes
+        2. Query contig in whole genome"""
     print('\n', main.__doc__)
-    if not exists('output'):
-        makedirs('output')
+    if not exists('out'):
+        makedirs('out')
+    try:
+        mode = sys.argv[3]
+    except:
+        raise ValueError('Bad command!\n')
+    if mode not in ['1', '2']:
+        raise ValueError('Bad command!\n')
     fragments = list()
     target = list()
-    option = sys.argv[3]
     call('makeblastdb -in primer.fasta -out primer -dbtype nucl',
     get_cds(fragments, option)
     out_cds(fragments, option)
