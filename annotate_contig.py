@@ -11,7 +11,7 @@ from os.path import exists
 from subprocess import call
 
 
-def get_cds():
+def get_gene():
     #Edit it when necessary
     wanted_gene_list = [
         'accD', 'atpA', 'atpB', 'atpE', 'atpF', 'atpH', 'atpI', 'ccsA',
@@ -26,11 +26,11 @@ def get_cds():
         'rps19', 'rps2', 'rps3', 'rps4', 'rps7', 'rps8', 'rrn16',
         'rrn23', 'rrn4.5', 'rrn5', 'ycf1', 'ycf2', 'ycf3', 'ycf4'
     ]
-    cds = list()
+    fragment = list()
     genomes = SeqIO.parse(sys.argv[1], 'gb')
     for genome in genomes:
         for feature in genome.features:
-            if feature.type != 'CDS' or 'gene' not in feature.qualifiers: 
+            if feature.type != 'gene' or 'gene' not in feature.qualifiers: 
                 continue
             sequence = list()
             position = list()
@@ -52,10 +52,11 @@ def get_cds():
                 sequence = str(record.seq[frag[0]:frag[1]])
                 if n > 0:
                     name = '-'.join([name, str(n+1)])
-                cds.append([name, sequence])
-    return cds
+                fragment.append([name, sequence])
+    return fragment
 
-def out_cds(cds):
+
+def generate_query(fragment):
     handle = open('cds.fasta' ,'w')
     for gene in cds:
         handle.write(''.join([
@@ -63,7 +64,7 @@ def out_cds(cds):
             gene[2],'\n'
         ]))
     handle.close()
-    return 'cds.fasta'
+    return 'fragment.fasta'
 
 
 def blast(query_file, contig_file):
@@ -92,40 +93,31 @@ def parse(xml_file):
             continue
         else:
             tophit = record[0]
-        parse_result.append([tophit[0][0].query.id, tophit[0][0].hit.id])
+        parse_result.append([tophit[0][0].hit.id, tophit[0][0].query.id])
+    #{contig.id:gene}
     return dict(parse_result)
 
-def output(result, contig_file):
+def output(parse_result, contig_file):
     contigs = SeqIO.parse(contig_file, 'fasta')
+    annotated_contig = contig_file.split(sep='.')[0]
+    handle = open(''.join([
+        'out/',
+        annotated_contig,
+        '_annotated.fasta'
+    ]), 'a')
     for contig in contigs:
+        if contig.id in parse_result:
+            gene = parse_result[contig.id]
+            new_seq = SeqRecord(
+                id='|'.join([gene, contig.id]),
+                description='',
+                seq=contig.seq
+            )
+            SeqIO.write(new_seq, handle, 'fasta')
+            gene_file = '-'.join([annotated_contig, gene])
+            handle_gene = open(gene_file, 'a')
+            SeqIO.write(new_seq, handle_gene, 'fasta')
 
-
-    for record in result:
-        gene = record[0].id
-        output_file = ''.join([
-            'out/',
-            sys.argv[2], 
-            '-',
-            gene, 
-            '.fasta'
-        ])
-        rename_seq = SeqRecord(
-            seq=record[1].seq, 
-            id='|'.join([
-                gene,
-                sys.argv[1],
-                record[1].id
-            ]),
-            description=''
-        )
-        SeqIO.write(rename_seq, output_file, 'fasta')
-    :
-    output_file = open('output/' + sys.argv[1] + '-filtered.fasta', 'w' )
-    contig_id = {i[0].id for i in target} 
-    query_file = SeqIO.parse(sys.argv[1], 'fasta')
-    for record in query_file:
-        if record.id in contig_id:
-            SeqIO.write(record, output_file, 'fasta')
 
 def main():
     """
@@ -149,11 +141,11 @@ def main():
         raise ValueError('Bad command!\n')
     contig_file = sys.argv[2]
     if mode == '1':
-        cds = get_cds()
-        query_file = out_cds(cds)
+        fragment = get_cds()
+        query_file = generate_query(fragment)
         xml_file = blast(query_file, contig_file)
-        result = parse(xml_file)
-        output(result, contig_file)
+        parse_result = parse(xml_file)
+        output(parse_result, contig_file)
 
 if __name__ =='__main__':
     main()
