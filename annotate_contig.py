@@ -57,38 +57,45 @@ def get_cds():
     return cds
 
 def out_cds(cds):
-    handle = open('out/cds.fasta' ,'w')
+    handle = open('cds.fasta' ,'w')
     for gene in cds:
         handle.write(''.join([
             '>',gene[0], '|', gene[1], '\n',
             gene[2],'\n'
         ]))
-    return 'Write cds.fasta succeed.'
+    handle.close()
+    return 'cds.fasta'
 
 
-def blast(option):
-    call(
+def blast(query_file):
+    contig_file = sys.argv[2]
+    xml_file = 'out/BlastResult.xml'
+    call('makeblastdb -in {0} -out {1} -dbtype nucl'.format(contig_file,
+                                                            contig_file),
+         shell=True)
     cmd = nb(
         num_threads=cpu_count(),
-        query=query_file,
-        db=sys.argv[2], 
-        task='megablast', 
+        query='query_file',
+        db=contig_file,
+        task='blastn', 
         evalue=0.001, 
         outfmt=5, 
-        # xml format
-        out='BlastResult.xml'
+        out=xml_file
     )
     stdout, stderr = cmd()
-    return 
+    return xml_file
 
-def parse(target):
-    blast_result = list(SearchIO.parse('BlastResult.xml', 'blast-xml'))
+
+def parse(xml_file):
+    parse_result = list()
+    blast_result = SearchIO.parse(xml_file, 'blast-xml')
     for record in blast_result:
         if len(record) == 0:
             continue
         else:
             tophit = record[0]
-        target.append([tophit[0][0].query, tophit[0][0].hit])
+        parse_result.append([tophit[0][0].query, tophit[0][0].hit])
+    return parse_result
 
 def output(target, option):
     if option == '1':
@@ -141,9 +148,9 @@ def main():
         raise ValueError('Bad command!\n')
     if mode == '1':
         cds = get_cds()
-        out_cds(cds)
-    blast(option)
-    parse(target)
+        query_file = out_cds(cds)
+        xml_file = blast(query_file)
+        result = parse(xml_file)
     output(target, option)
     call('makeblastdb -in primer.fasta -out primer -dbtype nucl')
 
