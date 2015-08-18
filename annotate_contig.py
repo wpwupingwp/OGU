@@ -29,7 +29,6 @@ def get_cds():
     cds = list()
     genomes = SeqIO.parse(sys.argv[1], 'gb')
     for genome in genomes:
-        organism = genome.annotations['organism'].replace(' ', '_')
         for feature in genome.features:
             if feature.type != 'CDS' or 'gene' not in feature.qualifiers: 
                 continue
@@ -53,7 +52,7 @@ def get_cds():
                 sequence = str(record.seq[frag[0]:frag[1]])
                 if n > 0:
                     name = '-'.join([name, str(n+1)])
-                cds.append([organism, name, sequence])
+                cds.append([name, sequence])
     return cds
 
 def out_cds(cds):
@@ -97,34 +96,33 @@ def parse(xml_file):
         parse_result.append([tophit[0][0].query, tophit[0][0].hit])
     return parse_result
 
-def output(target, option):
-    if option == '1':
-        for record in target:
-            gene = record[0].id.split(sep='|')[-1]
-            output_file = ''.join([
-                'output/',
-                sys.argv[2], 
-                '-',
-                gene, 
-                '.fasta'
-            ])
-            rename_seq = SeqRecord(
-                seq=record[1].seq, 
-                id='|'.join([
-                    gene,
-                    sys.argv[1],
-                    record[1].id
-                ]),
-                description=''
-            )
-            SeqIO.write(rename_seq, output_file, 'fasta')
-    else:
-        output_file = open('output/' + sys.argv[1] + '-filtered.fasta', 'w' )
-        contig_id = {i[0].id for i in target} 
-        query_file = SeqIO.parse(sys.argv[1], 'fasta')
-        for record in query_file:
-            if record.id in contig_id:
-                SeqIO.write(record, output_file, 'fasta')
+def output(result):
+    for record in result:
+        gene = record[0].id.split(sep='|')[-1]
+        output_file = ''.join([
+            'output/',
+            sys.argv[2], 
+            '-',
+            gene, 
+            '.fasta'
+        ])
+        rename_seq = SeqRecord(
+            seq=record[1].seq, 
+            id='|'.join([
+                gene,
+                sys.argv[1],
+                record[1].id
+            ]),
+            description=''
+        )
+        SeqIO.write(rename_seq, output_file, 'fasta')
+    :
+    output_file = open('output/' + sys.argv[1] + '-filtered.fasta', 'w' )
+    contig_id = {i[0].id for i in target} 
+    query_file = SeqIO.parse(sys.argv[1], 'fasta')
+    for record in query_file:
+        if record.id in contig_id:
+            SeqIO.write(record, output_file, 'fasta')
 
 def main():
     """
@@ -151,8 +149,7 @@ def main():
         query_file = out_cds(cds)
         xml_file = blast(query_file)
         result = parse(xml_file)
-    output(target, option)
-    call('makeblastdb -in primer.fasta -out primer -dbtype nucl')
+        output(result)
 
 if __name__ =='__main__':
     main()
