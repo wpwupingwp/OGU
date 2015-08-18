@@ -97,7 +97,7 @@ def parse(xml_file):
     #{contig.id:gene}
     return dict(parse_result)
 
-def output(parse_result, contig_file):
+def output(parse_result, contig_file, mode):
     contigs = SeqIO.parse(contig_file, 'fasta')
     annotated_contig = contig_file.split(sep='.')[0]
     handle = open(''.join([
@@ -114,9 +114,12 @@ def output(parse_result, contig_file):
                 seq=contig.seq
             )
             SeqIO.write(new_seq, handle, 'fasta')
-            gene_file = '-'.join([annotated_contig, gene])
-            handle_gene = open(gene_file, 'a')
-            SeqIO.write(new_seq, handle_gene, 'fasta')
+            if mode == '2':
+                minium_length = 200
+                gene_file = '-'.join([annotated_contig, gene])
+                handle_gene = open(gene_file, 'a')
+                SeqIO.write(new_seq, handle_gene, 'fasta')
+    handle.close()
 
 
 def main():
@@ -132,20 +135,27 @@ def main():
         1. Query contig against coding genes, then every contig will be
         annotated by gene name.
         2. Query contig in a whole genome. It only judge if contig was belong to
-        genome of given genbank file.
+        genome of given genbank file. Also, contig less than 200bp will be
+        droped. You can edit 'minium_length' in output.
+    The final result is 'out/contig_file_annotated.fasta'.
     On default, it use Nicotiana.gb which was placed in current path."""
     print(main.__doc__)
     if not exists('out'):
         makedirs('out')
+    mode = sys.argv[3]
     if mode not in ['1', '2']:
         raise ValueError('Bad command!\n')
     contig_file = sys.argv[2]
     if mode == '1':
         fragment = get_cds()
         query_file = generate_query(fragment)
-        xml_file = blast(query_file, contig_file)
-        parse_result = parse(xml_file)
-        output(parse_result, contig_file)
+    else:
+        query_file = sys.argv[1].replace('.gb', '.fasta')
+        SeqIO.convert(sys.argv[1], 'gb', query_file, 'fasta')
+    xml_file = blast(query_file, contig_file)
+    parse_result = parse(xml_file)
+    output(parse_result, contig_file, mode)
+
 
 if __name__ =='__main__':
     main()
