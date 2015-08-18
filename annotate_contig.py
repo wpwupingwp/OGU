@@ -57,18 +57,17 @@ def get_cds():
     return cds
 
 def out_cds(cds):
-    for item in fragments:
+    handle = open('out/cds.fasta' ,'w')
+    for gene in cds:
         handle.write(''.join([
-            '>',item[0], '|', item[1], '\n',
-            item[2],'\n'
+            '>',gene[0], '|', gene[1], '\n',
+            gene[2],'\n'
         ]))
+    return 'Write cds.fasta succeed.'
 
 
 def blast(option):
-    if option == '1':
-        query_file = './output/all.fasta'
-    else:
-        query_file = sys.argv[1]
+    call(
     cmd = nb(
         num_threads=cpu_count(),
         query=query_file,
@@ -138,16 +137,11 @@ def main():
     print(main.__doc__)
     if not exists('out'):
         makedirs('out')
-    try:
-        mode = sys.argv[3]
-    except:
-        raise ValueError('Bad command!\n')
     if mode not in ['1', '2']:
         raise ValueError('Bad command!\n')
     if mode == '1':
-        handle = tmp(mode='w', encoding='utf-8')
         cds = get_cds()
-        out_cds(cds, handle)
+        out_cds(cds)
     blast(option)
     parse(target)
     output(target, option)
