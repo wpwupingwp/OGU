@@ -51,7 +51,7 @@ def get_gene():
                     continue
                 sequence = str(genome.seq[frag[0]:frag[1]])
                 if n > 0:
-                    name = '-'.join([name, organism, str(n + 1)])
+                    name = '{0}-{1}-{2}'.format(name, organism, n+1)
                 fragment.append([name, sequence])
     return fragment
 
@@ -59,10 +59,8 @@ def get_gene():
 def generate_query(fragment):
     handle = open('fragment.fasta', 'w')
     for gene in fragment:
-        handle.write(''.join([
-            '>', gene[0], '\n',
-            gene[1], '\n'
-        ]))
+        handle.write('>{0}\n{1}\n'.format(gene[0], gene[1]))
+#        handle.write(''.join([ '>', gene[0], '\n', gene[1], '\n' ]))
     handle.close()
     return 'fragment.fasta'
 
@@ -99,7 +97,8 @@ def parse(xml_file):
 def output(parse_result, contig_file, mode):
     contigs = SeqIO.parse(contig_file, 'fasta')
     annotated_contig = contig_file.split(sep='.')[0]
-    handle = open(''.join(['out/', annotated_contig, '_filtered.fasta']), 'w')
+#    handle = open(''.join(['out/', annotated_contig, '_filtered.fasta']), 'w')
+    handle = open('out/{0}_filtered.fasta'.format(annotated_contig), 'w')
     parse_result = {i[0].id:i[1] for i in parse_result}
     for contig in contigs:
         if contig.id not in parse_result:
@@ -107,7 +106,8 @@ def output(parse_result, contig_file, mode):
         if mode == '1':
             gene = parse_result[contig.id]
             new_seq = SeqRecord(
-                id='|'.join([gene.id, contig.id]),
+                id='{0}|{1}'.format(gene.id, contig.id),
+           #     id='|'.join([gene.id, contig.id]),
                 description='',
                 # Only use matched sequence
                 seq=gene.seq
