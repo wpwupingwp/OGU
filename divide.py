@@ -39,22 +39,20 @@ def step1(skip):
         record_barcode = [str(record.seq[:5]), str(record.seq[-5::-1])]
         if record_barcode[0] in barcode:
             name = barcode[record_barcode[0]]
-            output_file = ''.join(['out/', name])
+            output_file = 'out/{0}'.format(name)
             with open(output_file, 'a') as handle:
                 SeqIO.write(record, handle, 'fastq')
-            handle_fasta.write(''.join([
-                '>', record.description, '\n',
-                str(record.seq[skip:skip + search_len]), '\n'
-            ]))
+            handle_fasta.write('>{0}\n{1}\n'.format(
+                record.description, 
+                record.seq[skip:skip + search_len]))
         elif record_barcode[1] in barcode:
             name = barcode[record_barcode[1]]
-            output_file = ''.join(['out/', name])
+            output_file = 'out/'.format(name)
             with open(output_file, 'a') as handle:
                 SeqIO.write(record, handle, 'fastq')
-            handle_fasta.write(''.join([
-                '>', record.description, '\n',
-                str(record.seq[-(skip + search_len)::-1]), '\n'
-            ]))
+            handle_fasta.write('>{0}\n{1}\n'.format(
+                record.description,
+                record.seq[-(skip + search_len)::-1]))
         else:
             SeqIO.write(record, handle_miss, 'fastq')
             not_found += 1
@@ -84,10 +82,7 @@ def write_fasta(primer_list, primer_adapter):
         short_primer = ''.join([left, join_seq, right])
         name = primer_list[index][0]
         gene_list.append(name)
-        handle.write(''.join([
-            '>', name, '\n',
-            short_primer, '\n'
-        ]))
+        handle.write('>{0}\n{1}\n'.format(name,short_primer))
     handle.close()
     return gene_list
 
@@ -113,11 +108,9 @@ def parse_blast():
             continue
         else:
             tophit = record[0]
-        query_info = ''.join([
+        query_info = '{0} {1}'.format(
             tophit[0][0].query_id,
-            ' ',
-            tophit[0][0].query_description
-        ])
+            tophit[0][0].query_description)
         hit_info = tophit[0][0].hit.id
         parse_result.append([query_info, hit_info])
     parse_result = dict(parse_result)
@@ -153,7 +146,9 @@ def step3(blast_result, file_list, gene_list):
             if gene in blast_result:
                 count_sample[fastq_file] += 1
                 count_gene[blast_result[gene]] += 1
-                handle = open(''.join([fastq_file, '_', blast_result[gene]]), 'a')
+                handle = open(
+                    '{0}_{1}'.format(fastq_file, blast_result[gene]), 
+                    'a')
                 SeqIO.write(record, handle, 'fastq')
     return count_sample, count_gene
 
@@ -196,10 +191,10 @@ def main():
     count_gene = list(count_gene.items())
     with open('count_sample', 'w') as handle:
         for i in count_sample:
-            handle.write(' '.join([i[0], str(i[1]), '\n']))
+            handle.write('{0} {1} \n'.format(i[0], i[1]))
     with open('count_gene', 'w') as handle:
         for i in count_gene:
-            handle.write(' '.join([i[0], str(i[1]), '\n']))
+            handle.write('{0} {1} \n'.format(i[0], i[1]))
             # wrong
 
 
