@@ -93,14 +93,16 @@ def parse(xml_file):
             continue
         else:
             tophit = record[0]
-        parse_result.append([tophit[0][0].hit, tophit[0][0].query])
-    return dict(parse_result)
+#   ?     parse_result.append([tophit[0][0].hit, tophit[0][0].query])
+        parse_result.append([tophit[0].hit, tophit[0].query])
+    return parse_result
 
 
 def output(parse_result, contig_file, mode):
     contigs = SeqIO.parse(contig_file, 'fasta')
     annotated_contig = contig_file.split(sep='.')[0]
     handle = open(''.join(['out/', annotated_contig, '_filtered.fasta']), 'w')
+    parse_result = [{i[0].id:i[0].seq} for i in parse_result]
     for contig in contigs:
         if contig.id not in parse_result:
             continue
