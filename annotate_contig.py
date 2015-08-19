@@ -100,28 +100,29 @@ def parse(xml_file):
 def output(parse_result, contig_file, mode):
     contigs = SeqIO.parse(contig_file, 'fasta')
     annotated_contig = contig_file.split(sep='.')[0]
-    handle = open(''.join([
-        'out/',
-        annotated_contig,
-        '_annotated.fasta'
-    ]), 'a')
+    handle = open(''.join([ 'out/', annotated_contig, '_filtered.fasta' ]), 'w')
     for contig in contigs:
-        if contig.id in parse_result:
+        if contig.id not in parse_result:
+            continue
+        if mode == '1':
             gene = parse_result[contig.id]
             new_seq = SeqRecord(
                 id='|'.join([gene, contig.id]),
                 description='',
-                seq=contig.seq
+                # Only use matched sequence
+                seq=parse_result[0].seq
             )
-            SeqIO.write(new_seq, handle, 'fasta')
-            if mode == '2':
-                minimum_length = 200
-                if len(contig.seq) <= minimum_length:
-                    continue
-                gene_file = '-'.join([annotated_contig, gene])
-                handle_gene = open(gene_file, 'a')
-                SeqIO.write(new_seq, handle_gene, 'fasta')
+            gene_file = '-'.join([annotated_contig, gene])
+            handle_gene = open(gene_file, 'a')
+            SeqIO.write(new_seq, handle_gene, 'fasta')
+        else: 
+            # Edit if necessary
+            minimum_length = 200
+            if len(contig.seq) <= minimum_length:
+                continue
+            SeqIO.write(contig, handle, 'fasta')
     handle.close()
+    handle_gene.close()
 
 
 def main():
@@ -154,7 +155,7 @@ def main():
         fragment = get_gene()
         query_file = generate_query(fragment)
         xml_file = blast(query_file, contig_file)
-   `    parse_result = parse(xml_file, mode)
+        parse_result = parse(xml_file, mode)
         output(parse_result, contig_file, mode)
     else:
         query_file = sys.argv[1].replace('.gb', '.fasta')
