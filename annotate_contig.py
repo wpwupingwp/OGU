@@ -12,7 +12,11 @@ from subprocess import call
 
 
 def get_gene():
-    # Edit it when necessary
+    """
+    You can edit wanted_gene_list if you want more or less chloroplast coding
+    gene or other fragment as long as it was described in genbank file.
+    Also you can directly add mitochrondria gene name after the list. Ensure
+    you use correct genbank file."""
     wanted_gene_list = [
         'accD', 'atpA', 'atpB', 'atpE', 'atpF', 'atpH', 'atpI', 'ccsA',
         'cemA', 'clpP', 'infA', 'matK', 'ndhA', 'ndhB', 'ndhC', 'ndhD',
@@ -29,7 +33,6 @@ def get_gene():
     fragment = list()
     genomes = SeqIO.parse(sys.argv[1], 'gb')
     for genome in genomes:
-        organism = genome.annotations['organism'].replace(' ', '-')
         for feature in genome.features:
             if feature.type != 'gene' or 'gene' not in feature.qualifiers:
                 continue
@@ -51,21 +54,24 @@ def get_gene():
                     continue
                 sequence = str(genome.seq[frag[0]:frag[1]])
                 if n > 0:
-                    name = '{0}-{1}-{2}'.format(name, organism, n+1)
+                    name = '{0}-{1}'.format(name, n+1)
                 fragment.append([name, sequence])
     return fragment
 
 
 def generate_query(fragment):
+    """
+    Generate fragment.fasta to BLAST. You can delete it freely."""
     handle = open('fragment.fasta', 'w')
     for gene in fragment:
         handle.write('>{0}\n{1}\n'.format(gene[0], gene[1]))
-#        handle.write(''.join([ '>', gene[0], '\n', gene[1], '\n' ]))
     handle.close()
     return 'fragment.fasta'
 
 
 def blast(query_file, contig_file):
+    """
+    BLAST result located in 'out/'."""
     xml_file = 'out/BlastResult.xml'
     call('makeblastdb -in {0} -out {1} -dbtype nucl'.format(contig_file,
                                                             contig_file),
@@ -97,7 +103,6 @@ def parse(xml_file):
 def output(parse_result, contig_file, mode):
     contigs = SeqIO.parse(contig_file, 'fasta')
     annotated_contig = contig_file.split(sep='.')[0]
-#    handle = open(''.join(['out/', annotated_contig, '_filtered.fasta']), 'w')
     handle = open('out/{0}_filtered.fasta'.format(annotated_contig), 'w')
     parse_result = {i[0].id:i[1] for i in parse_result}
     for contig in contigs:
@@ -107,9 +112,8 @@ def output(parse_result, contig_file, mode):
             gene = parse_result[contig.id]
             new_seq = SeqRecord(
                 id='{0}|{1}'.format(gene.id, contig.id),
-           #     id='|'.join([gene.id, contig.id]),
                 description='',
-                # Only use matched sequence
+                # Only use matched fragment
                 seq=gene.seq
             )
             gene_file = 'out/{0}-{1}.fasta'.format(annotated_contig, gene.id)
@@ -135,14 +139,14 @@ def main():
     python3 annotate_contig.py genbank_file contig_file mode
     Mode:
         1. Query contig against coding genes, then every contig will be
-        annotated by gene name. You will get part of each contig which was
+        annotated by gene name. You will only get fragment of contigs which
+        was recognized via BLAST.
         matched in BLAST.
         2. Query contig in a whole genome. It only judge if contig was belong to
         genome of given genbank file. Also, contig less than 200bp will be
-        droped. You can edit 'minimum_length' in output. In this mode, you get
+        droped. You can edit 'minimum_length' in output(). In this mode, you get
         full length of contig.
-    The final result is 'out/contig_file_annotated.fasta'.
-    On default, it use chloroplast.gb which was placed in current path."""
+    All results was set in 'out/'."""
     print(main.__doc__)
     if not exists('out'):
         makedirs('out')
