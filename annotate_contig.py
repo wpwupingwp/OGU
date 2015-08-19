@@ -122,7 +122,6 @@ def output(parse_result, contig_file, mode):
                 continue
             SeqIO.write(contig, handle, 'fasta')
     handle.close()
-    handle_gene.close()
 
 
 def main():
@@ -163,9 +162,6 @@ def main():
         xml_file = blast(query_file, contig_file)
         parse_result = parse(xml_file)
         output(parse_result, contig_file, mode)
-
-
-# rewrite
 
 
 if __name__ == '__main__':
