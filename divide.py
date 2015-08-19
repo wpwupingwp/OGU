@@ -56,8 +56,6 @@ def step1(skip):
         else:
             SeqIO.write(record, handle_miss, 'fastq')
             not_found += 1
-            continue
-            # only use head to blast
     handle_miss.close()
     handle_fasta.close()
     return not_found, total
