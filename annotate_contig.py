@@ -91,7 +91,6 @@ def parse(xml_file):
     for record in blast_result:
         if len(record) == 0:
             continue
-        print(record)
         for i in record:
             parse_result.append([i[0][0].hit, i[0][0].query])
     return parse_result
@@ -101,10 +100,11 @@ def output(parse_result, contig_file, mode):
     contigs = SeqIO.parse(contig_file, 'fasta')
     annotated_contig = contig_file.split(sep='.')[0]
     handle = open(''.join(['out/', annotated_contig, '_filtered.fasta']), 'w')
-    parse_result = [{i[0].id:i[0].seq} for i in parse_result]
-    print(parse_result)
+    parse_result = {i[0].id:i[0].seq for i in parse_result}
+    print(parse_result.keys())
     for contig in contigs:
         if contig.id not in parse_result:
+            print(contig.id)
             continue
         if mode == '1':
             gene = parse_result[contig.id]
