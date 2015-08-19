@@ -29,6 +29,7 @@ def get_gene():
     fragment = list()
     genomes = SeqIO.parse(sys.argv[1], 'gb')
     for genome in genomes:
+        organism = genome.annotations['organism'].replace(' ', '-')
         for feature in genome.features:
             if feature.type != 'gene' or 'gene' not in feature.qualifiers:
                 continue
@@ -50,7 +51,7 @@ def get_gene():
                     continue
                 sequence = str(genome.seq[frag[0]:frag[1]])
                 if n > 0:
-                    name = '-'.join([name, str(n + 1)])
+                    name = '-'.join([name, organism, str(n + 1)])
                 fragment.append([name, sequence])
     return fragment
 
