@@ -93,8 +93,7 @@ def parse(xml_file):
             continue
         else:
             tophit = record[0]
-        parse_result.append([tophit[0][0].hit.id, tophit[0][0].query.id])
-    # {contig.id:gene}
+        parse_result.append([tophit[0][0].hit, tophit[0][0].query])
     return dict(parse_result)
 
 
@@ -136,12 +135,14 @@ def main():
     python3 annotate_contig.py genbank_file contig_file mode
     Mode:
         1. Query contig against coding genes, then every contig will be
-        annotated by gene name.
+        annotated by gene name. You will get part of each contig which was
+        matched in BLAST.
         2. Query contig in a whole genome. It only judge if contig was belong to
         genome of given genbank file. Also, contig less than 200bp will be
-        droped. You can edit 'minimum_length' in output.
+        droped. You can edit 'minimum_length' in output. In this mode, you get
+        full length of contig.
     The final result is 'out/contig_file_annotated.fasta'.
-    On default, it use Nicotiana.gb which was placed in current path."""
+    On default, it use chloroplast.gb which was placed in current path."""
     print(main.__doc__)
     if not exists('out'):
         makedirs('out')
@@ -152,12 +153,15 @@ def main():
     if mode == '1':
         fragment = get_gene()
         query_file = generate_query(fragment)
+        xml_file = blast(query_file, contig_file)
+   `    parse_result = parse(xml_file, mode)
+        output(parse_result, contig_file, mode)
     else:
         query_file = sys.argv[1].replace('.gb', '.fasta')
         SeqIO.convert(sys.argv[1], 'gb', query_file, 'fasta')
-    xml_file = blast(query_file, contig_file)
-    parse_result = parse(xml_file)
-    output(parse_result, contig_file, mode)
+        xml_file = blast(query_file, contig_file)
+        parse_result = parse(xml_file, mode)
+        output(parse_result, contig_file, mode)
 #rewrite
 
 
