@@ -100,21 +100,19 @@ def output(parse_result, contig_file, mode):
     contigs = SeqIO.parse(contig_file, 'fasta')
     annotated_contig = contig_file.split(sep='.')[0]
     handle = open(''.join(['out/', annotated_contig, '_filtered.fasta']), 'w')
-    parse_result = {i[0].id:i[0].seq for i in parse_result}
-    print(parse_result.keys())
+    parse_result = {i[0].id:i[1] for i in parse_result}
     for contig in contigs:
         if contig.id not in parse_result:
-            print(contig.id)
             continue
         if mode == '1':
             gene = parse_result[contig.id]
             new_seq = SeqRecord(
-                id='|'.join([gene, contig.id]),
+                id='|'.join([gene.id, contig.id]),
                 description='',
                 # Only use matched sequence
-                seq=parse_result[0].seq
+                seq=gene.seq
             )
-            gene_file = '-'.join([annotated_contig, gene])
+            gene_file = 'out/{0}-{1}.fasta'.format(annotated_contig, gene.id)
             handle_gene = open(gene_file, 'a')
             SeqIO.write(new_seq, handle_gene, 'fasta')
         else:
