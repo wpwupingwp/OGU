@@ -80,7 +80,6 @@ def blast(query_file, contig_file):
         num_threads=cpu_count(),
         query=query_file,
         db=contig_file,
-        perc_identity=20,
         task='blastn',
         evalue=0.001,
         outfmt=5,
