@@ -128,6 +128,19 @@ def output(parse_result, contig_file, mode):
     handle.close()
 
 
+def filter(contig_file):
+    contig_raw = SeqIO.parse(contig_file, 'fasta')
+    contig_long = list
+    for contig in contig_raw:
+        if(len(contig.seq) < 500):
+            pass
+        else:
+            contig_long.append(contig)
+    contig_long_file = '{0}-long'.format(contig_file)
+    SeqIO.write(contig_long, contig_long_file, 'fasta')
+    return contig_long_file
+
+
 def main():
     """
     This program will annotate contigs from assembly according to given
@@ -135,6 +148,7 @@ def main():
     file may contains single or several genomes.
     Edit wanted_gene list in get_cds(). If you want to annotate 
     mitochrondria contigs.
+    Notice that contig shorter than 500bp will be ignored.
     Usage:
     python3 annotate_contig.py genbank_file contig_file mode
     Mode:
@@ -153,7 +167,7 @@ def main():
     mode = sys.argv[3]
     if mode not in ['1', '2']:
         raise ValueError('Bad command!\n')
-    contig_file = sys.argv[2]
+    contig_file = filter(sys.argv[2])
     if mode == '1':
         fragment = get_gene()
         query_file = generate_query(fragment)
