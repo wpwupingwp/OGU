@@ -89,9 +89,10 @@ def parser(raw_seq, date):
             end = int(i.location.end)
             sequence = str(raw_seq.seq[begin:end])
             if 'number' in i.qualifiers:
-                name = '_'.join([str(i.qualifiers['gene'][0]), 'exon', str(i.qualifiers['number'][0])])
+                name = '{0}_exon_{1}'.format(i.qualifiers['gene'][0],
+                                             i.qualifiers['number'][0])
             else:
-                name = '_'.join([str(i.qualifiers['gene'][0]), 'exon'])
+                name = '{0}_exon'.format(i.qualifiers['gene'][0])
             strand = int(i.location.strand)
             rec = [taxon_id, organism, accession, name, frag_type, begin, end, strand, sequence, date]
         elif i.type == 'intron' and 'gene' in i.qualifiers:
@@ -101,9 +102,10 @@ def parser(raw_seq, date):
             sequence = str(raw_seq.seq[begin:end])
             strand = str(i.location.strand)
             if 'number' in i.qualifiers:
-                name = '_'.join([str(i.qualifiers['gene'][0]), 'intron', str(i.qualifiers['number'][0])])
+                name = '{0}_{1}_intron'.format(i.qualifiers['gene'][0],
+                                               i.qualifiers['number'][0])
             else:
-                name = '_'.join([str(i.qualifiers['gene'][0]), 'intron'])
+                name = '{0}_intron'.format(i.qualifiers['gene'][0])
             rec = [taxon_id, organism, accession, name, frag_type, begin, end, strand, sequence, date]
 
         records.append(rec)
@@ -116,7 +118,7 @@ def parser(raw_seq, date):
         tail = now[6] + 1
         head = then[5] - 1
         sequence = str(raw_seq.seq[tail:head])
-        name = '_'.join(['-'.join([now[3], then[3]]), 'Spacer'])
+        name = '{0}-{1}_spacer'.format(now[3], then[3])
         strand = 0
         rec = [taxon_id, organism, accession, name, frag_type, begin, end, strand, sequence, date]
         records.append(rec)
@@ -161,7 +163,7 @@ def seq_batch_query():
     con.close()
     query_result = []
     for i in result:
-        title = '|'.join([str(i[0]), i[1], i[2], i[3]])
+        title = '{0}|{1}|{2}|{3}'.format(i[0], i[1], i[2], i[3])
         filename = i[2]
         sequence = MutableSeq(i[5])
         if i[4] == '-1':
@@ -169,8 +171,8 @@ def seq_batch_query():
         record = [title, filename, sequence]
         query_result.append(record)
     for i in query_result:
-        with open(''.join(['./out/', i[1], '.fasta']), 'a') as Fileout:
-            Fileout.write('>%s\n%s\n' % (i[0], i[2]))
+        with open('./out/{0}.fasta'.format(i[1]), 'a') as output_file:
+            output_file.write('>{0}\n{1}\n'.format(i[0], i[2]))
             # rps12 may have larger than 50k fragments,  here to filter it
     rps12 = SeqIO.parse('./out/rps12.fasta', 'fasta')
     rps12short = list()
@@ -233,7 +235,7 @@ def seq_query():
 
     query_result = []
     for i in result:
-        title = '|'.join([str(i[0]), i[1], i[2], i[3]])
+        title = '{0}|{1}|{2}|{3}'.format(i[0], i[1], i[2], i[3])
         sequence = MutableSeq(i[5])
         gene = i[2]
         if i[4] == '-1':
@@ -245,19 +247,14 @@ def seq_query():
         if not exists('output'):
             makedirs('output')
         for i in query_result:
-            file_name = ''.join([
-                'output',
-                '/',
-                i[1].replace('/', ''),
-                '.fasta'
-            ])
+            file_name = 'output/{0}.fasta'.format(i[1].replace('/', ''))
             with open(file_name, 'a') as output_file:
-                output_file.write('>%s\n%s\n' % (i[0], i[2]))
+                output_file.write('>{0}\n{1}\n'.format(i[0], i[2]))
     else:
         output = input('Enter output filename:\n')
-        with open('.'.join([output, 'fasta']), 'w') as output_file:
+        with open('{0}.fasta'.format(output), 'w') as output_file:
             for i in query_result:
-                output_file.write('>%s\n%s\n' % (i[0], i[2]))
+                output_file.write('>{0}\n{1}\n'.format(i[0], i[2]))
 
     cur.close()
     con.close()
@@ -444,12 +441,12 @@ def taxon_query_no_auto():
             for item3 in greatson:
                 greatson_name.append(name_dict[item3])
             handle = open('out.txt', 'a', encoding='utf-8')
-            handle.write(''.join(['id      : ', taxon_id, '\n']))
-            handle.write(''.join(['name    : ', name, '\n']))
-            handle.write(''.join(['rank    : ', rank, '\n']))
-            handle.write(''.join(['parent  : ', '->'.join(parent_name), '\n']))
-            handle.write(''.join(['son     : ', ', '.join(son_name), '\n']))
-            handle.write(''.join(['greatson: ', ', '.join(greatson_name), '\n\n']))
+            handle.write('id       : {0}\n'.format(taxon_id))
+            handle.write('name     : {0}\n'.format(name))
+            handle.write('rank     : {0}\n'.format(rank))
+            handle.write('parent   : {0}\n'.format('->'.join(parent_name)))
+            handle.write('son      : {0}\n'.format(', '.join(son_name)))
+            handle.write('greatson : {0}\n\n'.format(', '.join(greatson_name)))
 
 
 # __main()__
