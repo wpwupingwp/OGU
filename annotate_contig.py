@@ -130,7 +130,7 @@ def output(parse_result, contig_file, mode):
 
 def filter(contig_file):
     contig_raw = SeqIO.parse(contig_file, 'fasta')
-    contig_long = list
+    contig_long = list()
     for contig in contig_raw:
         if(len(contig.seq) < 500):
             pass

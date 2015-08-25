@@ -21,7 +21,7 @@ def get_barcode_dict():
     return barcode_dict
 
 
-def step1(skip):
+def step1(blen, skip):
     """
     Divide raw data via barcode.
     In this case, it searches primers in first 20bp sequence of reads, you may
@@ -36,7 +36,11 @@ def step1(skip):
     handle_fasta = open('step1.fasta', 'w')
     for record in fastq_raw:
         total += 1
-        record_barcode = [str(record.seq[:5]), str(record.seq[-5::-1])]
+        record_barcode = [
+            str(record.seq[0:blen]), 
+            str(record.seq[:-(blen + 1):-1])
+        ]
+        print(record_barcode)
         if record_barcode[0] in barcode and record_barcode[1] in barcode:
             name = barcode[record_barcode[0]]
             output_file = 'out/{0}'.format(name)
@@ -176,7 +180,7 @@ def main():
     skip = barcode_length + primer_adapter
     if not exists('out'):
         makedirs('out')
-    miss_step1, total = step1(skip)
+    miss_step1, total = step1(barcode_length, skip)
     print('''
     Step1 results:
     Total: {0} reads
