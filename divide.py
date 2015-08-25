@@ -40,7 +40,6 @@ def step1(blen, skip):
             str(record.seq[0:blen]), 
             str(record.seq[:-(blen + 1):-1])
         ]
-        print(record_barcode)
         if record_barcode[0] in barcode and record_barcode[1] in barcode:
             name = barcode[record_barcode[0]]
             output_file = 'out/{0}'.format(name)

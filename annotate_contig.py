@@ -104,7 +104,7 @@ def output(parse_result, contig_file, mode):
     contigs = SeqIO.parse(contig_file, 'fasta')
     annotated_contig = contig_file.split(sep='.')[0]
     handle = open('out/{0}_filtered.fasta'.format(annotated_contig), 'w')
-    parse_result = {i[0].id:i[1] for i in parse_result}
+    #parse_result = {i[0].id:i[1] for i in parse_result}
     for contig in contigs:
         if contig.id not in parse_result:
             continue
