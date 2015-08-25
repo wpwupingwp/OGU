@@ -30,13 +30,4 @@ for index in range(length):
         join_qual,
         right[point + 3][::-1]
     ])
-    handle.write(''.join([
-        name,
-        '\n',
-        seq,
-        '\n',
-        qual_name,
-        '\n',
-        qual,
-        '\n'
-    ]))
+    handle.write('{0}\n{1}\n{2}\n{3}\n'.format(name, seq, qual_name, qual))
