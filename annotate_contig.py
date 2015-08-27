@@ -96,7 +96,7 @@ def parse(xml_file):
         if len(record) == 0:
             continue
         for i in record:
-            parse_result.append([i[0][0].hit, i[0][0].query])
+            parse_result.append([i[0][0].hit, i[0][0].query.id])
              #contig,Nitotiana 
     return parse_result
 
@@ -107,23 +107,20 @@ def output(parse_result, contig_file, mode):
     handle = open('out/{0}_filtered.fasta'.format(annotated_contig), 'w')
     parse_result_d = {i[0].id:[] for i in parse_result}
     for record in parse_result:
-        parse_result_d[record[0].id].append(record[1])
-    for i in parse_result_d:
-        print(i)
+        parse_result_d[record[0].id].append([record[0].seq, record[1]])
     for contig in contigs:
         if contig.id not in parse_result_d:
             continue
         if mode == '1':
             gene = parse_result_d[contig.id]
-            print(gene)
-            for i in gene:
+            for match in gene:
                 new_seq = SeqRecord(
-                    id='{0}|{1}'.format(i.id, contig.id),
+                    id='{0}|{1}|{2}'.format(contig_file, match[1], contig.id),
                     description='',
-                    # Only use matched fragment
-                    seq=i.seq
+                    seq=match[0]
                 )
-                gene_file = 'out/{0}-{1}.fasta'.format(annotated_contig, i.id)
+                gene_file = 'out/{0}-{1}.fasta'.format(annotated_contig,
+                                                       match[1])
                 handle_gene = open(gene_file, 'a')
                 SeqIO.write(new_seq, handle_gene, 'fasta')
         else:
