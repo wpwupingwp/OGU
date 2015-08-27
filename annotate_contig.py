@@ -151,7 +151,7 @@ def main():
     file may contains single or several genomes.
     Edit wanted_gene list in get_cds(). If you want to annotate 
     mitochrondria contigs.
-    Notice that contig shorter than 500bp will be ignored. You can change the
+    Notice that contig shorter than 300bp will be ignored. You can change the
     minium length as you wish.
     Usage:
     python3 annotate_contig.py genbank_file contig_file mode
@@ -171,7 +171,7 @@ def main():
     mode = sys.argv[3]
     if mode not in ['1', '2']:
         raise ValueError('Bad command!\n')
-    minium_length = 500
+    minium_length = 300
     contig_file = filter(sys.argv[2], minium_length)
     if mode == '1':
         fragment = get_gene()
