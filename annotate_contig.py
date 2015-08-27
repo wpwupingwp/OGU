@@ -105,10 +105,11 @@ def output(parse_result, contig_file, mode):
     contigs = SeqIO.parse(contig_file, 'fasta')
     annotated_contig = contig_file.split(sep='.')[0]
     handle = open('out/{0}_filtered.fasta'.format(annotated_contig), 'w')
-    parse_result_d =  {i[0].id:[] for i in parse_result}
+    parse_result_d = {i[0].id:[] for i in parse_result}
     for record in parse_result:
         parse_result_d[record[0].id].append(record[1])
-    print(parse_result_d)
+    for i in parse_result_d:
+        print(i)
     for contig in contigs:
         if contig.id not in parse_result_d:
             continue
@@ -130,15 +131,15 @@ def output(parse_result, contig_file, mode):
     handle.close()
 
 
-def filter(contig_file):
+def filter(contig_file, minium_length):
     contig_raw = SeqIO.parse(contig_file, 'fasta')
     contig_long = list()
     for contig in contig_raw:
-        if(len(contig.seq) < 500):
+        if(len(contig.seq) < minium_length):
             pass
         else:
             contig_long.append(contig)
-    contig_long_file = '{0}-long'.format(contig_file)
+    contig_long_file = '{0}-long.fasta'.format(contig_file)
     SeqIO.write(contig_long, contig_long_file, 'fasta')
     return contig_long_file
 
@@ -150,7 +151,8 @@ def main():
     file may contains single or several genomes.
     Edit wanted_gene list in get_cds(). If you want to annotate 
     mitochrondria contigs.
-    Notice that contig shorter than 500bp will be ignored.
+    Notice that contig shorter than 500bp will be ignored. You can change the
+    minium length as you wish.
     Usage:
     python3 annotate_contig.py genbank_file contig_file mode
     Mode:
@@ -169,7 +171,8 @@ def main():
     mode = sys.argv[3]
     if mode not in ['1', '2']:
         raise ValueError('Bad command!\n')
-    contig_file = filter(sys.argv[2])
+    minium_length = 500
+    contig_file = filter(sys.argv[2], minium_length)
     if mode == '1':
         fragment = get_gene()
         query_file = generate_query(fragment)
