@@ -115,7 +115,10 @@ def output(parse_result, contig_file, mode):
             gene = parse_result_d[contig.id]
             for match in gene:
                 new_seq = SeqRecord(
-                    id='{0}|{1}|{2}'.format(contig_file, match[1], contig.id),
+                    id='{0}|{1}|{2}'.format(
+                        sys.argv[2].replace('.fasta', ''), 
+                        match[1], 
+                        contig.id),
                     description='',
                     seq=match[0]
                 )
