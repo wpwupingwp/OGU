@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+﻿#!/usr/bin/python3
 
 with open('/usr/share/dict/words', 'r') as In:
     wordlist = In.read().split(sep='\n')
