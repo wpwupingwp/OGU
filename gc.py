@@ -1,13 +1,16 @@
 from glob import glob
 from Bio import SeqIO
 
-def count_gc(filelist,result):
+def prepare(filelist, result):
     for fasta_file in filelist:
         raw = list(SeqIO.parse(fasta_file, 'fasta'))
         for record in raw:
-            if len(record.seq) < min_length:
-                print('''{0} in {1} 
-                       has wrong length.\n'''.format(record, fasta_file))
+            length = len(record.seq)
+            if length < min_length or length % 3 != 0:
+                print('{0} in {1} has wrong length.\n'.format(record, 
+                                                              fasta_file))
+
+def count_gc(filelist,result):
             else:
                 new_record = record[3:-3]
                 gc1 = 0
@@ -27,9 +30,10 @@ def main():
     path = input('Enter the folder containing fasta files:\n')
     min_length = 300
     result = list()
-    result.append([gene, seq, gc1, gc2, gc3])
+    result.append([name, seq, gc1, gc2, gc3])
     filelist = glob(path)
-    count_gc(filelist,result)
+    prepare(filelist, result)
+    count_gc(result)
     with open('result.csv', 'w') as handle:
                   for i in result:
                       handle.write(','.join(i))
