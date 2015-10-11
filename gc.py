@@ -1,4 +1,4 @@
-from glob import glob
+﻿from glob import glob
 from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
 import sys
@@ -6,6 +6,7 @@ import sys
 
 def prepare(filelist, data):
     codon = 3
+    min_length = 3
     cut = slice(3, -3)
     head = slice(0, 3)
     start = 'ATG'
@@ -17,16 +18,16 @@ def prepare(filelist, data):
                 print('{0} in {1} has wrong length.\n'.format(record, 
                                                               fasta_file))
                 continue
-            name = fasta_file.replace('.fasta', '_' + record)
-            if seq(record.seq[head]) != start:
+            name = fasta_file.replace('.fasta', '_' + record.id)
+            if str(record.seq[head]) != start:
                 sequence = record.seq.reverse_complement()
             else:
                 sequence = record.seq
-            sequence = record.seq[cut]
-            data.append(name, sequence)
+            sequence = str(record.seq[cut])
+            data.append([name, sequence])
     return data
 
-def count_gc(filelist,result):
+def count_gc(data):
     result = list()
     result.append(['name', 'gc1', 'gc2', 'gc3'])
     ignore = ['ATG', 'TGG']
@@ -35,8 +36,8 @@ def count_gc(filelist,result):
         gc1 = 0
         gc2 = 0
         gc3 = 0
-        for i in range(len(data[1]), 3):
-            now = data[1][i:i+2]
+        for i in range(0, len(record[1]), 3):
+            now = record[1][i:i+3]
             if now in ignore:
                 continue
             if now[0] in gc:
@@ -45,20 +46,20 @@ def count_gc(filelist,result):
                 gc2 += 1
             if now[2] in gc:
                 gc3 += 1
-        result.append([data[0], gc1, gc2, gc3])
+        result.append([record[0], gc1, gc2, gc3])
     return result
 
 def main():
     path = sys.argv[1]
-    min_length = 300
     filelist = glob(path)
     data = list()
-    data.append([name, seq])
+    data.append(['name', 'seq'])
     prepare(filelist, data)
     result = count_gc(data)
+    print(result)
     with open('result.csv', 'w') as handle:
         for i in result:
-            handle.write(','.join(i))
+            handle.write(','.join(str(i)))
     return 0
 
 if __name__ == '__main__':
