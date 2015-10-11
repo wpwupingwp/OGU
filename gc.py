@@ -1,6 +1,5 @@
 ﻿from glob import glob
 from Bio import SeqIO
-from Bio.SeqRecord import SeqRecord
 import sys
 
 
