@@ -40,7 +40,7 @@ def step1(blen, skip):
     for record in fastq_raw:
         total += 1
         #ignore wrong barcode
-        if record.seq[:half] != record.seq[half:blen]:
+        if str(record.seq[:half]) != str(record.seq[half:blen]):
             continue
         record_barcode = [
             str(record.seq[:blen]), 
