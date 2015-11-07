@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+﻿#!/usr/bin/python3
 
 from Bio import SeqIO
 from Bio import SearchIO
@@ -33,20 +33,22 @@ def step1(blen, skip):
     barcode = get_barcode_dict()
     fastq_raw = SeqIO.parse(sys.argv[1], 'fastq')
     total = 0
+    half = blen//2
     not_found = 0
     handle_miss = open('step1_miss.fastq', 'w')
     handle_fasta = open('step1.fasta', 'w')
     for record in fastq_raw:
         total += 1
-        half = blen/2
         #ignore wrong barcode
-        if record[:half] != record[half:blen]:
+        if record.seq[:half] != record.seq[half:blen]:
             continue
         record_barcode = [
             str(record.seq[:blen]), 
             str(record.seq[:-(blen + 1):-1])
         ]
-        if record_barcode[0] in barcode and record_barcode[1] in barcode:
+        print(record_barcode)
+        #try ignore backward direction next time
+        if record_barcode[0] in barcode or record_barcode[1] in barcode:
             name = barcode[record_barcode[0]]
             output_file = 'out/{0}'.format(name)
             with open(output_file, 'a') as handle:
