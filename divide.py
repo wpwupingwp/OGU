@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+﻿#!/usr/bin/python3
 
 from Bio import SeqIO
 from Bio import SearchIO
@@ -40,7 +40,7 @@ def step1(blen, skip):
         total += 1
         half = blen/2
         #ignore wrong barcode
-        if record[:half] != record[half:blen]:
+        if record.seq[:half] != record.seq[half:blen]:
             continue
         record_barcode = [
             str(record.seq[:blen]), 
