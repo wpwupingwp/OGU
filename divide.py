@@ -38,9 +38,9 @@ def step1(blen, skip):
     handle_fasta = open('step1.fasta', 'w')
     for record in fastq_raw:
         total += 1
-        half = blen/2
+        half = blen//2
         #ignore wrong barcode
-        if record.seq[:half] != record.seq[half:blen]:
+        if record[:half] != record[half:blen]:
             continue
         record_barcode = [
             str(record.seq[:blen]), 
