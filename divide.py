@@ -29,7 +29,7 @@ def step1(blen, skip):
     Before the search, it filters sequence accordting to the 5-2 repeat at the
     beginning."""
     print(step1.__doc__)
-    search_len = 20 + blen
+    search_len = 20 
     barcode = get_barcode_dict()
     fastq_raw = SeqIO.parse(sys.argv[1], 'fastq')
     total = 0
@@ -47,7 +47,7 @@ def step1(blen, skip):
             str(record.seq[:-(blen + 1):-1])
         ]
         #try ignore backward direction 
-        #if record_barcode[0] in barcode or record_barcode[1] in barcode:
+        #if record_barcode[0] in barcode and record_barcode[1] in barcode:
         if record_barcode[0] in barcode :
             name = barcode[record_barcode[0]]
             output_file = 'out/{0}'.format(name)
