@@ -25,9 +25,11 @@ def step1(blen, skip):
     """
     Divide raw data via barcode.
     In this case, it searches primers in first 20bp sequence of reads, you may
-    edit it."""
+    edit it.
+    Before the search, it filters sequence accordting to the 5-2 repeat at the
+    beginning."""
     print(step1.__doc__)
-    search_len = 20
+    search_len = 20 + blen
     barcode = get_barcode_dict()
     fastq_raw = SeqIO.parse(sys.argv[1], 'fastq')
     total = 0
@@ -36,8 +38,12 @@ def step1(blen, skip):
     handle_fasta = open('step1.fasta', 'w')
     for record in fastq_raw:
         total += 1
+        half = blen/2
+        #ignore wrong barcode
+        if record[:half] != record[half:blen]:
+            continue
         record_barcode = [
-            str(record.seq[0:blen]), 
+            str(record.seq[:blen]), 
             str(record.seq[:-(blen + 1):-1])
         ]
         if record_barcode[0] in barcode and record_barcode[1] in barcode:
@@ -171,10 +177,10 @@ def main():
     1. gene name
     2. primer name
     3. primer sequence
-    In this program, primer have common sequence whose length is 14, and
+    In this program, primers have common sequence whose length is 14, and
     barcode's is 5. Change them if necessary(in step2)."""
     print(main.__doc__)
-    barcode_length = 5
+    barcode_length = 10
     primer_adapter = 14
     skip = barcode_length + primer_adapter
     if not exists('out'):
@@ -196,8 +202,6 @@ def main():
     with open('count_gene', 'w') as handle:
         for i in count_gene:
             handle.write('{0} {1} \n'.format(i[0], i[1]))
-            # wrong
-
 
 if __name__ == '__main__':
     main()
