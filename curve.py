@@ -32,7 +32,7 @@ else:
     ydata = [1.04,0.99,0.93,0.82,0.33,0.20,0.13,0.03,0.02]
     yerror = [0.05,0.09,0.07,0.09,0.02,0.02,0.03,0.01,0.02]
 
-popt, pcov = curve_fit(logistics, xdata, ydata, p0=guess)
+popt, pcov = curve_fit(logistics, xdata, ydata, p0=guess, maxfev=50000)
 a, b, c = popt
 print('function: y={0}/(1+{1}*exp(-1*{2}*x))'.format(a, b, c))
 print('Standard deviation error: A {0:.3f} B {1:g} C {2:.3f}'.format(*sqrt(diag(pcov))))
