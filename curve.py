@@ -3,7 +3,7 @@ from scipy.optimize import *
 import matplotlib.pyplot as plt
 import sys
 
-with open('data.txt', 'r') as data:
+#with open('data.txt', 'r') as data:
 
 xdata = [-7,-6.3,-6,-5.7,-5.3,-5.1,-5,-4.7,-4.4]
 ydata = [1.04,0.99,0.93,0.82,0.33,0.20,0.13,0.03,0.02]
@@ -28,8 +28,7 @@ plt.show()
 ic50_log10 = fsolve(fit, -5)
 ic50 = 10**(6+ic50_log10)
 print(ic50_log10)
-print('IC50 of this component is {0} μM'.format(ic50[0]))
+print('IC50 of this component is {0:.3f} μM'.format(ic50[0]))
 popt, pcov = curve_fit(logistics, xdata, ydata, p0=guess)
 print('function: y={0}/(1+{1}*exp(-1*{2}*x))'.format(*popt))
-print('Standard deviation error: {0}'.format(sqrt(diag(pcov))))
-print(sqrt(pcov))
+print('Standard deviation error: \nA {0:.3f}\nB{1}\nC {2:.3f}'.format(*sqrt(diag(pcov))))
