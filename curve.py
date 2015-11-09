@@ -3,11 +3,22 @@ from scipy.optimize import *
 import matplotlib.pyplot as plt
 import sys
 
-#with open('data.txt', 'r') as data:
+if len(sys.argv) >1:
+    with open(sys.argv[1], 'r') as data:
+        raw = data.read()
+        raw_1 = raw.split(sep='\n')
+        raw_1.pop(-1)
+        raw_1.pop(0)
+        raw_2 = [i.split(sep=',') for i in raw_1]
+        xdata = [i[0] for i in raw_2]
+        ydata = [i[1] for i in raw_2]
+        yerror = [i[2] for i in raw_2]
+else:
+    xdata = [-7,-6.3,-6,-5.7,-5.3,-5.1,-5,-4.7,-4.4]
+    ydata = [1.04,0.99,0.93,0.82,0.33,0.20,0.13,0.03,0.02]
+    yerror = [0.05,0.09,0.07,0.09,0.02,0.02,0.03,0.01,0.02]
 
-xdata = [-7,-6.3,-6,-5.7,-5.3,-5.1,-5,-4.7,-4.4]
-ydata = [1.04,0.99,0.93,0.82,0.33,0.20,0.13,0.03,0.02]
-yerror = [0.05,0.09,0.07,0.09,0.02,0.02,0.03,0.01,0.02]
+print(xdata,ydata,yerror)
 guess = (1, 1e10, -5)
 t = arange(-7.5,-4,1e-3)
 ic = 0.5
