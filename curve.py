@@ -23,7 +23,7 @@ if len(sys.argv) >1:
         raw_1 = raw.split(sep='\n')
         raw_1.pop(-1)
         raw_1.pop(0)
-        raw_2 = [i.split(sep=',') for i in raw_1]
+        raw_2 = [i.split(sep='\t') for i in raw_1]
         xdata = [float(i[0]) for i in raw_2]
         ydata = [float(i[1]) for i in raw_2]
         yerror = [float(i[2]) for i in raw_2]
