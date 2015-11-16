@@ -1,4 +1,4 @@
-from Bio import SeqIO
+﻿from Bio import SeqIO
 import sys
 
 left = SeqIO.parse(sys.argv[1], 'fastq')
@@ -14,7 +14,7 @@ for l,r in zip(left,right):
     r_qual = ''.join([chr(i+offset) for i in
               r.letter_annotations['phred_quality']])
     sequence = 'NNNNNNNNNN'.join([l_seq, r_seq])
-    quality = 'AAAAAAAAAA'.join([l_qual, r_qual])
+    quality = 'AAAAAAAAAA'.join([l_qual, r_qual[::-1]])
     name = l.description
     handle.write('@{0}\n{1}\n+\n{2}'.format(name,sequence,quality))
 
