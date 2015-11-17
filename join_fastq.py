@@ -4,7 +4,7 @@ import sys
 left = SeqIO.parse(sys.argv[1], 'fastq')
 right = SeqIO.parse(sys.argv[2], 'fastq')
 handle = open('combine.fastq', 'w')
-offset = 33
+offset = 64
 for l,r in zip(left,right):
     print(l, r)
     l_seq = str(l.seq)
