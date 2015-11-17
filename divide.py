@@ -148,7 +148,7 @@ def step3(blast_result, file_list, gene_list):
                 count_sample[fastq_file] += 1
                 count_gene[blast_result[gene]] += 1
                 handle = open(
-                    '{0}_{1}'.format(fastq_file, blast_result[gene]), 
+                    '{0}_{1}.fastq'.format(fastq_file, blast_result[gene]), 
                     'a')
                 SeqIO.write(record, handle, 'fastq')
     return count_sample, count_gene
