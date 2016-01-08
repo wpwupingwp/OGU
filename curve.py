@@ -8,7 +8,7 @@ import sys
 Sample  x   y   stdev.p(y)'''
 
 guess = (1, 1e10, -5)
-t = arange(-7.5,-4,1e-3)
+t = arange(-7.5,-3,1e-3)
 ic = 0.5
 #result from SPSS 21, R square equals 0.998
 a = 1.023
