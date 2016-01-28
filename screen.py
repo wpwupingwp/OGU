@@ -13,11 +13,15 @@ with open(arg.filename, 'r') as input_file:
     raw = list(SeqIO.parse(input_file, 'fasta'))
 output_file = arg.filename + '.filtered'
 handle = open(output_file, 'w')
+
+pattern = re.compile(r'length_(\d+)_cov_(\d+.\d)_')
+count = 0
 for i in raw:
-    m = re.search(r'length_(\d+)_cov_(\d+.\d)_', i.id)
+    m = pattern.search(i.id)
     if m is not None:
+        count += 1
         length = int(m.group(1))
         cover = float(m.group(2))
         if length > arg.length and cover > arg.cover:
             SeqIO.write(i, handle, 'fasta')
-            print(length,cover)
+            print('No.{0}\tlength: {1}\tCover: {2}'.format(count, length, cover))
