@@ -16,15 +16,15 @@ pattern = re.compile(r'(.*)-(.*).fasta')
 gene = ''
 sample = ''
 for i in filename:
-    print(i)
     match = pattern.search(i)
-    if match is not None:
+    if match is None:
+        pass
+    else:
         gene = match.group(1)
+        handle = open('merge-'+gene, 'a')
         sample = match.group(2)
-        print(gene, sample)
-    fasta_file = SeqIO.parse(i, 'fasta')
-    for sequence in fasta_file:
-        sequence.id = re.sub(gene,'-'.join([gene, sample]), sequence.id)
-        SeqIO.write(sequence, gene + '.merge', 'fasta')
-
-
+        fasta_file = SeqIO.parse(i, 'fasta')
+        #print('{0} is not a legal fasta file.'.format(i))
+        for sequence in fasta_file:
+            sequence.id = re.sub(gene,'-'.join([gene, sample]), sequence.id)
+            SeqIO.write(sequence, handle, 'fasta')
