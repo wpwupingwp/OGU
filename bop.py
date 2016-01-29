@@ -24,7 +24,11 @@ for i in filename:
         handle = open('merge-'+gene, 'a')
         sample = match.group(2)
         fasta_file = SeqIO.parse(i, 'fasta')
-        #print('{0} is not a legal fasta file.'.format(i))
         for sequence in fasta_file:
-            sequence.id = re.sub(gene,'-'.join([gene, sample]), sequence.id)
+            sequence.description = re.sub(gene, 
+                                          '-'.join([gene, sample]),
+                                          sequence.description)
+#to avoid repeat replacement
+            sequence.id = ''
             SeqIO.write(sequence, handle, 'fasta')
+print('Done.\n')
