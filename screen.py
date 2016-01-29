@@ -1,4 +1,7 @@
+#!/usr/bin/python3
+
 from Bio import SeqIO
+from time import process_time
 import re
 import sys
 import argparse
@@ -25,3 +28,4 @@ for i in raw:
         if length > arg.length and cover > arg.cover:
             SeqIO.write(i, handle, 'fasta')
             print('No.{0}\tlength: {1}\tCover: {2}'.format(count, length, cover))
+print('Finished within {:.3f}s.'.format(process_time()))

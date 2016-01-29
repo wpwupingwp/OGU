@@ -1,6 +1,7 @@
 #!/usr/local/bin/python3
 
 from Bio import SeqIO
+from time import process_time
 import argparse
 import re
 import os
@@ -31,4 +32,4 @@ for i in filename:
 #to avoid repeat replacement
             sequence.id = ''
             SeqIO.write(sequence, handle, 'fasta')
-print('Done.\n')
+print('Finished in {:.3f}s.'.format(process_time()))
