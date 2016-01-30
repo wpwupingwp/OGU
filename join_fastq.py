@@ -6,7 +6,6 @@ right = SeqIO.parse(sys.argv[2], 'fastq')
 handle = open('combine.fastq', 'w')
 offset = 64
 for l,r in zip(left,right):
-    print(l, r)
     l_seq = str(l.seq)
     r_seq = str(r.seq.reverse_complement())
     l_qual = ''.join([chr(i+offset) for i in
