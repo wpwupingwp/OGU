@@ -4,7 +4,7 @@ import sys
 left = SeqIO.parse(sys.argv[1], 'fastq')
 right = SeqIO.parse(sys.argv[2], 'fastq')
 handle = open('combine.fastq', 'w')
-offset = 64
+offset = 32
 for l,r in zip(left,right):
     l_seq = str(l.seq)
     r_seq = str(r.seq.reverse_complement())
@@ -15,5 +15,5 @@ for l,r in zip(left,right):
     sequence = 'NNNNNNNNNN'.join([l_seq, r_seq])
     quality = 'AAAAAAAAAA'.join([l_qual, r_qual[::-1]])
     name = l.description
-    handle.write('@{0}\n{1}\n+\n{2}'.format(name,sequence,quality))
+    handle.write('@{0}\n{1}\n+\n{2}\n'.format(name,sequence,quality))
 
