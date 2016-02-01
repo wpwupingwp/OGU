@@ -15,9 +15,9 @@ arg = parser.parse_args()
 with open(arg.filename, 'r') as input_file:
     raw = list(SeqIO.parse(input_file, 'fasta'))
 output_file = arg.filename + '.filtered'
-handle = open(output_file, 'w')
+handle = open(output_file, 'a')
 
-pattern = re.compile(r'length_(\d+)_cov_(\d+.\d)_')
+pattern = re.compile(r'length_(\d+)_cov_(\d+.\d+)_')
 count = 0
 for i in raw:
     m = pattern.search(i.id)
