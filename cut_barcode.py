@@ -20,8 +20,7 @@ with open(arg.barcode_file, 'r') as barcode_file:
     for i in barcode_file.readline():
         if i.startswith('>sample'):
             break
-    barcode = re.findall('(?<=,)[ATCG]+(?>=,)')
-    #barcode = re.findall('(?<=,)[ATCG]{0}(?>=,)'.format(arg.barcode_length), barcode_file.read())
+    barcode = re.findall('(?<=,)[ATCG]+(?=,)', barcode_file.read())
 barcode_dict = {i:None for i in barcode}
 barcode_link = dict()
 for i in barcode:
