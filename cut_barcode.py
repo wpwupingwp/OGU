@@ -1,4 +1,5 @@
 from Bio import SeqIO
+from time import process_time
 import argparse
 import re
 
@@ -11,7 +12,6 @@ parser.add_argument('input', help='input fastq file')
 parser.add_argument('-o', '--output', help='output fastq file')
 parser.add_argument('-t', '--barcode_type',default='5*2')
 arg = parser.parse_args()
-print(arg)
 if arg.barcode_type != '5*2':
     raise ValueError('Do not support this type of barcode.\n')
 
@@ -36,3 +36,5 @@ for sequence in raw:
     else:
         continue
     SeqIO.write(sequence[arg.cut:], handle, 'fastq')
+
+print('Finished within {:.3f} seconds.'.format(process_time()))
