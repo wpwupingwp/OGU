@@ -11,4 +11,4 @@ arg = parser.parse_args()
 #start here
 
 #end
-print('Finished in {:.3f}s.'.format(process_time()))
+print('Finished in {:.3f}s.\n'.format(process_time()))
