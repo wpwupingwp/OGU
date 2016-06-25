@@ -12,10 +12,12 @@ parser.add_argument('--path', default='./', help='target path, default is "./"')
 arg = parser.parse_args()
 
 filename = os.listdir(arg.path)
+filename = [i for i in filename if i[-1] == 'q']
+#only contain fastq files
 os.chdir(arg.path)
-pattern = re.compile(r'(.*)-(.*).fasta')
-gene = ''
+pattern = re.compile(r'(.*)_(.*).fasta')
 sample = ''
+gene = ''
 for i in filename:
     match = pattern.search(i)
     if match is None:
