@@ -161,10 +161,13 @@ def main():
     Step 1, divide data by barcode. Step 2, divide data by primer via BLAST.
     Ensure that you have installed BLAST suite before. 
     Barcode file looks like this:
+    Make sure you don't miss the first line.
     ATACG,BOP00001
     Primer file looks like this:
+    gene,primer,sequence
     rbcL,rbcLF,ATCGATCGATCGA
     rbcL,rbcLR,TACGTACGTACG
+    Make sure you don't miss the first line.
     To get these two files, save your excel file as csv file.  Be carefull 
     of the order of  each pair of primers.
     From left to right, there are:
