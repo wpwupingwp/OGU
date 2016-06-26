@@ -15,7 +15,7 @@ filename = os.listdir(arg.path)
 filename = [i for i in filename if i[-1] == 'q']
 #only contain fastq files
 os.chdir(arg.path)
-pattern = re.compile(r'(.*)_(.*).fasta')
+pattern = re.compile(r'(.*)_(.*).fastq')
 sample = ''
 gene = ''
 for i in filename:
