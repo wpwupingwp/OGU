@@ -23,9 +23,9 @@ for i in filename:
     if match is None:
         pass
     else:
-        gene = match.group(1)
+        sample = match.group(1)
+        gene = match.group(2)
         handle = open('merge-'+gene, 'a')
-        sample = match.group(2)
         fasta_file = SeqIO.parse(i, 'fastq')
         for sequence in fasta_file:
             sequence.description = '-'.join([gene, sample, sequence.description])
