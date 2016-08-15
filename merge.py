@@ -18,28 +18,29 @@ def main():
     key = int(arg.column)
     new = list()
     new.append(raw[0])
-
-    for n,line_present in enumerate(raw):
-        if n == 1:
-            continue
-        line_before = raw[n-1]
-        if line_present[key] == line_before[key]:
-            for m, field in enumerate(line_present):
-                ref = line_before[m]
-                if field != ref:
-                    if field == '':
-                        field = ref
-                    else:
-                        field = ref + '/' + field
-            new.pop(-1)
-        new.append(line_present)
+    length = len(raw)
+    fields = len(raw[0])
+    n = 1
+    while n < length - 1:
+        line_present = raw[n]
+        line_after = raw[n+1]
+        offset = 0
+        merge = [set([i]) for i in line_present]
+        while line_present[key] == line_after[key]:
+            offset += 1
+            for i, field in enumerate(line_after):
+                merge[i].add(field)
+            line_present = raw[n+offset]
+            line_after = raw[n+1+offset]
+        merge = ['/'.join(j) for j in merge]
+        new.append(merge)
+        n = n + offset + 1
 
     with open('output.csv', 'w', newline='', encoding='utf8') as output_file:
         writer = csv.writer(output_file)
         writer.writerows(new)
 
     print('Cost {:.3f}s.\n'.format(process_time()))
-    done = input('Press any key to continue ...')
 
 if __name__ == '__main__':
     main()
