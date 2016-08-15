@@ -30,6 +30,10 @@ def main():
             offset += 1
             for i, field in enumerate(line_after):
                 merge[i].add(field)
+                try:
+                    merge[i].remove('')
+                except:
+                    pass
             line_present = raw[n+offset]
             line_after = raw[n+1+offset]
         merge = ['/'.join(j) for j in merge]
