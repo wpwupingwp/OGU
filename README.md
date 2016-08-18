@@ -2,6 +2,8 @@
 Here are some python scripts I wrote. Most of them process fasta/fastq/gb
 files.
 From now on, I will add some descriptions for each program.
+You can ask me any question about these programs via
+**wpwupingwp@outlook.com** .
 # Requirement
 * python3
 * Bioython
