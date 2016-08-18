@@ -13,4 +13,8 @@ Use info in **wanted** to filter fasta file, the output sequences contain
 ## get_whole.py
 Give fragment sequence, return whole length of specific input fragment from
 given big fasta file via BLAST.
+## rename.py
+Generate fasta file with special id format from given genbank format file
+ID looks like this:
+>organism|specimen_voucher|isolate|gene_name_series
 
