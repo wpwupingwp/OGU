@@ -10,4 +10,7 @@ works fine on Windows.
 ## filter.py
 Use info in **wanted** to filter fasta file, the output sequences contain
 **wanted** in their id.
+## get_whole.py
+Give fragment sequence, return whole length of specific input fragment from
+given big fasta file via BLAST.
 
