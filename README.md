@@ -4,6 +4,15 @@ files.
 
 From now on, I will add some descriptions for each program.
 
+You can type 
+>python3 pyfile -h
+
+or
+
+>python3 pyfile
+
+to print usage of each program.
+
 You can ask me any question about these programs via
 **wpwupingwp@outlook.com** .
 # Requirement
