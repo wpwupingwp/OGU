@@ -16,11 +16,10 @@ for sequence in SeqIO.parse(arg.input, 'genbank'):
     specimen = 'specimen_vourcher'
     isolate = 'isolate'
     gene = list()
-    try:
-        specimen = sequence.features[0].qualifiers['specimen_vourcher']
-        isolate = sequence.features[0].qualifiers['isolate']
-    except:
-        pass
+    if 'specimen_voucher' in sequence.features[0].qualifiers:
+        specimen = sequence.features[0].qualifiers['specimen_voucher'][0]
+    if 'isolate' in sequence.features[0].qualifiers:
+        isolate = sequence.features[0].qualifiers['isolate'][0]
     for feature in sequence.features:
         if feature.type == 'gene' and 'gene' in feature.qualifiers:
             gene.append(feature.qualifiers['gene'][0].replace(' ', '_'))
@@ -29,8 +28,8 @@ for sequence in SeqIO.parse(arg.input, 'genbank'):
                 misc_info = list(feature.qualifiers.values())[0]
             except:
                 misc_info = ''
-            print(misc_info)
             gene.append('_'.join(misc_info).replace(' ', '_'))
     gene = '-'.join(gene)
     handle.write('>{0}\n{1}\n'.format(
         '|'.join([organism, specimen, isolate, gene]), str(sequence.seq)))
+print('Done.')
