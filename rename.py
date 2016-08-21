@@ -11,7 +11,8 @@ parameters.add_argument('-o', '--output', default='output.fasta',
 parameters.print_help()
 arg = parameters.parse_args()
 handle = open(arg.output, 'w')
-for sequence in SeqIO.parse(arg.input, 'genbank'):
+for n, sequence in enumerate(SeqIO.parse(arg.input, 'genbank')):
+    print('Processing No.{0} record.'.format(n))
     organism = sequence.annotations['organism'].replace(' ', '_')
     specimen = 'specimen_vourcher'
     isolate = 'isolate'
