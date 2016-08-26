@@ -1,31 +1,26 @@
 #!/usr/bin/python3
 
 import sys
-import time
 
 def main():
-    '''This file will do something VLOOKUP cannot. It will lookup values in a
-    given range defined by two column.
-    Table 1 looks like this:
-    A, B
-    Table 2 looks like this:
-    C, D, E
-    It will fill B with C if A smaller than E and bigger than D.
-
-    Usage:
-    python3 vlookup_assistant.py table_1_file table_2_file
-    '''
+    """Expand a given table according to range.
+    Input table (CSV format) looks like this:
+    >    A,B,C
+    It will generate a new table:
+    >    D,E 
+    where D was expanded from range(B, C) and E is related A.
+    """
     print(main.__doc__)
-    file_1 = sys.argv[1]
-    file_2 = sys.argv[2]
-    table_2 = list()
-    with open(file_1, 'r') as f:
-        table_1 = [[i, ''] for i in f.read().split(sep='\n')]
-        table_1.pop()
-    with open(file_2, 'r') as f:
-        table_2 = [i.split(sep=',') for i in f.read().split(sep='\n')]
-        table_2.pop()
+    handle = open('output.csv', 'w')
+    with open(sys.argv[1], 'r') as f:
+        table = [i.split(sep=',') for i in f.read().split(sep='\n')]
+        table.pop(0)
+        table.pop(-1)
     pass
+    for line in table:
+        for i in range(int(line[1]), int(line[2])+1):
+            handle.write('{0:06d},{1}\n'.format(i, line[0]))
+
 
 if __name__ == '__main__':
     main()

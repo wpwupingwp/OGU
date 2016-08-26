@@ -30,4 +30,11 @@ given big fasta file via BLAST.
 Generate fasta file with special id format from given genbank format file
 ID looks like this:
 >organism|specimen_voucher|isolate|gene_name_series
+## vlookup_assistant.py
+Expand a given table according to range.
+Input table (CSV format) looks like this:
+>    A,B,C
+It will generate a new table:
+>    D,E 
+where D was expanded from range(B, C) and E is related A.
 
