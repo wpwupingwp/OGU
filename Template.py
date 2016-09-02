@@ -7,6 +7,7 @@ parser = argparse.ArgumentParser(
     description='''This program will do something.''')
 parser.add_argument('--path', default='./', 
                     help='target path, default is "./"')
+parser.print_help()
 arg = parser.parse_args()
 
 #start here
