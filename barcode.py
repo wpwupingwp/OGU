@@ -37,8 +37,15 @@ def screen_merge(fasta_files, path, cut_off, sample):
 
 
 def mafft(fas_file):
+    if os.name == 'nt':
+        pass
+    elif os.name == 'posix':
+        pass
+    else:
+        raise OSError('Unsupport system!')
+
     for fas in fas_file:
-        run('mafft.bat --reorder --thread {0} {1} > {2}'.format(cpu_count, fas, fas.replace('.fas', '.aln')))
+        run(['mafft.bat', '--reorder --thread {0} {1} > {2}'.format(cpu_count(), fas, fas.replace('.fas', '.aln'))], shell=True)
 
 
 def main():
