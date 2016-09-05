@@ -4,7 +4,6 @@ import argparse
 import os
 from Bio import SeqIO
 from glob import glob
-from time import process_time
 from multiprocessing import cpu_count
 from subprocess import run
 
@@ -30,7 +29,7 @@ def screen_merge(fasta_files, path, cut_off, sample):
                 SeqIO.write(record, handle_out, 'fasta')
         handle.close()
         handle_out.close()
-    merge_file = path + '/merge.fas'
+    merge_file = path + 'merge.fas'
     SeqIO.write(merge, merge_file, 'fasta')
     output.append(merge_file)
     return output
@@ -38,7 +37,7 @@ def screen_merge(fasta_files, path, cut_off, sample):
 
 def mafft(fas_file):
     for fas in fas_file:
-        run(['mafft', '--reorder --thread {0} {1} > {2}'.format(cpu_count(), fas, fas.replace('.fas', '.aln'))], shell=True)
+        run('mafft --reorder --thread {0} {1} > {2}'.format(cpu_count(), fas, fas.replace('.fas', '.aln')), shell=True)
 
 
 def main():
@@ -51,11 +50,10 @@ def main():
     parser.add_argument('--sample',default=5,type=int,help='sample selected from each group')
     parser.print_help()
     arg = parser.parse_args() 
-    fasta_files = glob(arg.path+'/*.fasta')
+    fasta_files = glob(arg.path+'*.fasta')
     #merge = screen_merge(fasta_files, arg.path, arg.cut_off, arg.sample)
     merge = screen_merge(fasta_files, **vars(arg))
     mafft(merge)
-    print('Cost {:.3f}s.\n'.format(process_time()))
 
 
 if __name__ == '__main__':
