@@ -3,57 +3,79 @@
 import argparse
 import os
 from Bio import SeqIO
+from Bio.Blast.Applications import NcbiblastnCommandline as nb
 from glob import glob
 from multiprocessing import cpu_count
 from subprocess import run
 
 
-def screen_merge(fasta_files, path, cut_off, sample):
-    merge = list()
-    output = list()
+def find_longest(fasta_files):
+    avg_length = list()
     for fasta in fasta_files:
-        count = list()
-        handle = open(fasta, 'r')
-        file_name = fasta.replace('.fasta', '.fas')
-        handle_out = open(file_name, 'w')
-        output.append(file_name)
-        f = SeqIO.parse(handle, 'fasta')
-        for record in f:
-            count.append(len(record))
-        average = sum(count) / len(count)
-        handle.seek(0)
-        f = SeqIO.parse(handle, 'fasta')
-        for n, record in zip(range(sample), f):
-            if len(record) > average*cut_off:
-                merge.append(record)
-                SeqIO.write(record, handle_out, 'fasta')
-        handle.close()
-        handle_out.close()
-    merge_file = path + 'merge.fas'
-    SeqIO.write(merge, merge_file, 'fasta')
-    output.append(merge_file)
-    return output
+        length = list()
+        raw = SeqIO.parse(fasta, 'fasta')
+        for sequence in raw:
+            length.append(len(sequence))
+        avg_length.append([fasta, sum(length)/len(length)])
+    avg_length.sort(key=lambda i:i[1])
+    return  [i[0] for i in avg_length]
 
 
-def mafft(fas_file):
-    for fas in fas_file:
-        run('mafft --reorder --thread {0} {1} > {2}'.format(cpu_count(), fas, fas.replace('.fas', '.aln')), shell=True)
+def get_sample(fasta_files, target):
+    new_fasta_files = list()
+    for fasta in fasta_files:
+        output = fasta.replace('.fasta', '_{0}.fasta'.format(target))
+        raw = SeqIO.parse(fasta, 'fasta')
+        with open(output, 'w') as output_file:
+            for n in range(target):
+               SeqIO.write(next(raw), output_file, 'fasta')
+        new_fasta_files.append(output)
+    return new_fasta_files
+
+
+def makeblastdb(db_file):
+    db_name = db_file.replace('.fasta', '')
+    run('makeblastdb -in {0} -title {1} -out {1} -dbtype nucl'.format(
+        db_file, db_name), shell=True)
+    return db_name
+
+
+def blast(query_file, db_file, output_file='BLASTResult.xml'):
+    """Here we use "max_hsps" to restrict only first hsp.
+    """
+    cmd = nb(num_threads=cpu_count(),
+             query=query_file,
+             db=db_file,
+             task='blastn',
+             outfmt=5,
+             out=output_file)
+    stdout, stderr = cmd()
+    return output_file
 
 
 def main():
     """This program will try to find out barcode to devide different species
     while ignore distinction among subspecies level."""
-    parser = argparse.ArgumentParser( description=main.__doc__)
-    parser.add_argument('--path', default='.', 
+    parser = argparse.ArgumentParser(description=main.__doc__)
+    parser.add_argument('--path', default='.',
                         help='target path, default is present directory')
-    parser.add_argument('--cut_off', default=0.8, type=float, help='cut off for screening length, those length shorter than average_length*cut_off will be drop off')
-    parser.add_argument('--sample',default=5,type=int,help='sample selected from each group')
+    parser.add_argument('--db', default=None, help='fasta file to make blast database, which contains longest sequence')
+    parser.add_argument('--sample', default=None, type=int, help='sample numbers')
     parser.print_help()
     arg = parser.parse_args() 
     fasta_files = glob(arg.path+'*.fasta')
-    #merge = screen_merge(fasta_files, arg.path, arg.cut_off, arg.sample)
-    merge = screen_merge(fasta_files, **vars(arg))
-    mafft(merge)
+    if arg.sample is not None:
+        fasta_files = get_sample(fasta_files, arg.sample)
+    if arg.db is None:
+        *query, db = find_longest(fasta_files)
+    else:
+        db = arg.db
+        query = set(fasta_files) - db
+    db_name = makeblastdb(db)
+    blast_result = list()
+    for fasta in query:
+        result_file = fasta.replace('.fasta', '.xml')
+        blast_result.append(blast(fasta, db_name, result_file))
 
 
 if __name__ == '__main__':
