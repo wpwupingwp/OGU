@@ -9,7 +9,14 @@ from subprocess import run
 from glob import glob
 
 
-def get_barcode_dict():
+def divide_barcode(blen, skip):
+    """Divide raw data via barcode.
+    In this case, it searches primers in first 20bp sequence of reads, you may
+    edit it.
+    Before the search, it filters sequence accordting to the 5-2 repeat at the
+    beginning.
+    """
+    # get barcode dict
     barcode = dict()
     with open(arg.barcode_file, 'r') as input_file:
         for line in input_file:
@@ -17,24 +24,14 @@ def get_barcode_dict():
                 continue
             line = line.split(sep=',')
             barcode[line[0]] = line[1]
-    return barcode
 
-
-def step1(blen, skip):
-    """Divide raw data via barcode.
-    In this case, it searches primers in first 20bp sequence of reads, you may
-    edit it.
-    Before the search, it filters sequence accordting to the 5-2 repeat at the
-    beginning.
-    """
     search_len = 20
-    barcode = get_barcode_dict()
     fastq_raw = SeqIO.parse(arg.input, 'fastq')
     total = 0
     half = blen//2
     not_found = 0
-    handle_miss = open('step1_miss.fastq', 'w')
-    handle_fasta = open('step1.fasta', 'w')
+    handle_miss = open('divide_barcode_miss.fastq', 'w')
+    handle_fasta = open('divide_barcode.fasta', 'w')
     for record in fastq_raw:
         total += 1
         # ignore wrong barcode
@@ -127,14 +124,14 @@ def step2(primer_adapter):
     primer_list = get_primer_list()
     gene_list = write_fasta(primer_list, primer_adapter)
     run('makeblastdb -in primer.fasta -out primer -dbtype nucl', shell=True)
-    blast_result = parse_blast(blast('step1.fasta', 'primer'))
+    blast_result = parse_blast(blast('divide_barcode.fasta', 'primer'))
     return blast_result, gene_list
 
 
 def step3(blast_result, file_list, gene_list):
     """Step 3:
-    First, according BLAST result, split fastq files generated in step1, then
-    assembly.
+    First, according BLAST result, split fastq files generated in
+    divide_barcode, then assembly.
     """
     count_sample = {i: 0 for i in file_list}
     count_gene = {i: 0 for i in gene_list}
@@ -192,12 +189,7 @@ def main():
     skip = arg.barcode_length + arg.primer_adapter
     if not os.path.exists(arg.output):
         os.mkdir(arg.output)
-    miss_step1, total = step1(arg.barcode_length, skip)
-    print('''
-    Step1 results:
-    Total: {0} reads
-    unrecognised {1} reads
-    {2:3f} percent'''.format(total, miss_step1, miss_step1/total))
+    miss_divide_barcode, total = divide_barcode(arg.barcode_length, skip)
     blast_result, gene_list = step2(arg.primer_adapter)
     file_list = glob(arg.output+'B*')
     count_sample, count_gene = step3(blast_result, file_list, gene_list)
