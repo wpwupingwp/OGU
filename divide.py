@@ -85,24 +85,26 @@ def write_fasta(primer_list, primer_adapter):
     return gene_list
 
 
-def blast(query_file, database):
+def blast(query_file, db_file):
     """Use blastn-short for primers.
     """
+    result = os.path.join(arg.output, 'BlastResult.xml')
     cmd = nb(
         num_threads=cpu_count(),
         query=query_file,
-        db=database,
+        db=db_file,
         task='blastn-short',
-        evalue=1e-5,
+        evalue=arg.evalue,
         outfmt=5,
-        out='out/BlastResult.xml'
+        out=result
     )
     stdout, stderr = cmd()
+    return result
 
 
-def parse_blast():
+def parse_blast(blast_result):
     parse_result = list()
-    blast_result = SearchIO.parse('out/BlastResult.xml', 'blast-xml')
+    blast_result = SearchIO.parse(blast_result, 'blast-xml')
     for record in blast_result:
         if len(record) == 0:
             continue
@@ -124,8 +126,7 @@ def step2(primer_adapter):
     primer_list = get_primer_list()
     gene_list = write_fasta(primer_list, primer_adapter)
     run('makeblastdb -in primer.fasta -out primer -dbtype nucl', shell=True)
-    blast('step1.fasta', 'primer')
-    blast_result = parse_blast()
+    blast_result = parse_blast(blast('step1.fasta', 'primer'))
     return blast_result, gene_list
 
 
@@ -180,6 +181,8 @@ def main():
                         help='csv file containing barcode info')
     parser.add_argument('-p', '--primer_file',
                         help='csv file containing primer info')
+    parser.add_argument('-e', '--evalue', default=1e-5, type=float,
+                        help='evalue for BLAST')
     parser.add_argument('input', help='input file, fastq format')
     parser.add_argument('-o', '--output', defalut='out', help='output path')
     parser.print_help()
