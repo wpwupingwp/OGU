@@ -158,8 +158,8 @@ def main():
     python3 divide.py fastqFile barcodeFile primerFile
     Step 1, divide data by barcode. Step 2, divide data by primer via BLAST.
     Ensure that you have installed BLAST suite before.
-    Barcode file looks like this:
     Make sure you don't miss the first line.
+    Barcode file looks like this:
     ATACG,BOP00001
     Primer file looks like this:
     gene,primer,sequence
@@ -172,8 +172,9 @@ def main():
     1. gene name
     2. primer name
     3. primer sequence
+    4. forward/backward
     """
-    parser = argparse.ArgumentParser(description=main.__doc__)
+    parser = argparse.ArgumentParser()
     parser.add_argument('--barcode_length', default=10, type=int,
                         help='length of barcode')
     parser.add_argument('--primer_adapter', default=14, type=int,
@@ -185,8 +186,7 @@ def main():
     parser.add_argument('-e', '--evalue', default=1e-5, type=float,
                         help='evalue for BLAST')
     parser.add_argument('input', help='input file, fastq format')
-    parser.add_argument('-o', '--output', defalut='out', help='output path')
-    parser.print_help()
+    parser.add_argument('-o', '--output', default='out', help='output path')
     global arg
     arg = parser.parse_args()
     skip = arg.barcode_length + arg.primer_adapter
