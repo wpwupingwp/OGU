@@ -26,7 +26,6 @@ def step1(blen, skip):
     Before the search, it filters sequence accordting to the 5-2 repeat at the
     beginning.
     """
-    print(step1.__doc__)
     search_len = 20
     barcode = get_barcode_dict()
     fastq_raw = SeqIO.parse(arg.input, 'fastq')
@@ -73,7 +72,7 @@ def get_primer_list():
 
 def write_fasta(primer_list, primer_adapter):
     handle = open('primer.fasta', 'w')
-    join_seq = 'NNNNNNNNNNNNNNN'
+    join_seq = 'N'*15
     gene_list = list()
     for index in range(0, len(primer_list) - 1, 2):
         left = primer_list[index][2][primer_adapter:]
@@ -119,25 +118,22 @@ def parse_blast():
 
 
 def step2(primer_adapter):
+    """Step 2:
+    BLAST fastq in first step against primer database.
     """
-    Step 2:
-    BLAST fastq in first step against primer database."""
-    print(step2.__doc__)
     primer_list = get_primer_list()
     gene_list = write_fasta(primer_list, primer_adapter)
-    run('makeblastdb -in primer.fasta -out primer -dbtype nucl',
-        shell=True)
+    run('makeblastdb -in primer.fasta -out primer -dbtype nucl', shell=True)
     blast('step1.fasta', 'primer')
     blast_result = parse_blast()
     return blast_result, gene_list
 
 
 def step3(blast_result, file_list, gene_list):
-    """
-    Step 3:
+    """Step 3:
     First, according BLAST result, split fastq files generated in step1, then
-    assembly."""
-    print(step3.__doc__)
+    assembly.
+    """
     count_sample = {i: 0 for i in file_list}
     count_gene = {i: 0 for i in gene_list}
     for fastq_file in file_list:
@@ -197,7 +193,7 @@ def main():
     Step1 results:
     Total: {0} reads
     unrecognised {1} reads
-    {2:3f} percent'''.format(total, miss_step1, miss_step1 / total))
+    {2:3f} percent'''.format(total, miss_step1, miss_step1/total))
     blast_result, gene_list = step2(arg.primer_adapter)
     file_list = glob(arg.output+'B*')
     count_sample, count_gene = step3(blast_result, file_list, gene_list)
