@@ -214,3 +214,6 @@ ModelManifest.xml
 
 *.fas
 *.fasta
+*.swp
+*.gb
+*.fastq

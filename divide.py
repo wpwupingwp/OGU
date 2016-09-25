@@ -2,11 +2,10 @@
 
 import argparse
 import os
-from Bio import SeqIO
-from Bio import SearchIO
+from Bio import SearchIO, SeqIO
 from Bio.Blast.Applications import NcbiblastnCommandline as nb
 from multiprocessing import cpu_count
-from subprocess import call
+from subprocess import run
 from glob import glob
 
 
@@ -21,12 +20,12 @@ def get_barcode_dict():
 
 
 def step1(blen, skip):
-    """
-    Divide raw data via barcode.
+    """Divide raw data via barcode.
     In this case, it searches primers in first 20bp sequence of reads, you may
     edit it.
     Before the search, it filters sequence accordting to the 5-2 repeat at the
-    beginning."""
+    beginning.
+    """
     print(step1.__doc__)
     search_len = 20 
     barcode = get_barcode_dict()
@@ -126,8 +125,8 @@ def step2(primer_adapter):
     print(step2.__doc__)
     primer_list = get_primer_list()
     gene_list = write_fasta(primer_list, primer_adapter)
-    call('makeblastdb -in primer.fasta -out primer -dbtype nucl',
-         shell=True)
+    run('makeblastdb -in primer.fasta -out primer -dbtype nucl',
+        shell=True)
     blast('step1.fasta', 'primer')
     blast_result = parse_blast()
     return blast_result, gene_list
@@ -200,7 +199,7 @@ def main():
     Total: {0} reads
     unrecognised {1} reads
     {2:3f} percent'''.format(total, miss_step1, miss_step1 / total))
-    blast_result, gene_list = step2(primer_adapter)
+    blast_result, gene_list = step2(arg.primer_adapter)
     file_list = glob(arg.output+'B*')
     count_sample, count_gene = step3(blast_result, file_list, gene_list)
     count_sample = list(count_sample.items())
