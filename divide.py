@@ -176,14 +176,20 @@ def main():
                         help='length of barcode')
     parser.add_argument('--primer_adapter', default=14, type=int,
                         help='length of primer_adapter, typical 14 for AFLP')
-    parser.add_argument('-b', '--barcode_file',
+    parser.add_argument('-b', dest='barcode_file',
                         help='csv file containing barcode info')
-    parser.add_argument('-p', '--primer_file',
+    parser.add_argument('-p', dest='primer_file',
                         help='csv file containing primer info')
-    parser.add_argument('-e', '--evalue', default=1e-5, type=float,
+    parser.add_argument('-e', dest='evalue', default=1e-5, type=float,
                         help='evalue for BLAST')
+    parser.add_argument('-n', '--nostrict', action='store_false',
+                        help='''if set nostrict, it will only consider
+                        barcode on the head; if not, consider head and tail''')
+    parser.add_argument('-m', dest='mode', default='5-2',
+                        help='''barcode mode, default value is 5-2, i.e.,
+                        barcode with length 5 repeated twice''')
     parser.add_argument('input', help='input file, fastq format')
-    parser.add_argument('-o', '--output', default='out', help='output path')
+    parser.add_argument('-o', dest='output', default='out', help='output path')
     global arg
     arg = parser.parse_args()
     skip = arg.barcode_length + arg.primer_adapter
