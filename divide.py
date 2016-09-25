@@ -190,7 +190,7 @@ def main():
     global arg
     arg = parser.parse_args()
     skip = arg.barcode_length + arg.primer_adapter
-    if not os.exists(arg.output):
+    if not os.path.exists(arg.output):
         os.mkdir(arg.output)
     miss_step1, total = step1(arg.barcode_length, skip)
     print('''
