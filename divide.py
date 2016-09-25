@@ -10,13 +10,14 @@ from glob import glob
 
 
 def get_barcode_dict():
+    barcode = dict()
     with open(arg.barcode_file, 'r') as input_file:
-        barcode_raw = input_file.read().split(sep='\n')
-    barcode_raw.pop(0)
-    barcode_raw.pop(-1)
-    barcode_list = [i.split(sep=',') for i in barcode_raw]
-    barcode_dict = dict(barcode_list)
-    return barcode_dict
+        for line in input_file:
+            if line.startswith('barcode') is True:
+                continue
+            line = line.split(sep=',')
+            barcode[line[0]] = line[1]
+    return barcode
 
 
 def step1(blen, skip):
