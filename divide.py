@@ -27,7 +27,7 @@ def step1(blen, skip):
     beginning.
     """
     print(step1.__doc__)
-    search_len = 20 
+    search_len = 20
     barcode = get_barcode_dict()
     fastq_raw = SeqIO.parse(arg.input, 'fastq')
     total = 0
@@ -37,22 +37,22 @@ def step1(blen, skip):
     handle_fasta = open('step1.fasta', 'w')
     for record in fastq_raw:
         total += 1
-        #ignore wrong barcode
+        # ignore wrong barcode
         if str(record.seq[:half]) != str(record.seq[half:blen]):
             continue
         record_barcode = [
-            str(record.seq[:blen]), 
+            str(record.seq[:blen]),
             str(record.seq[:-(blen + 1):-1])
         ]
-        #try ignore backward direction 
-        #if record_barcode[0] in barcode and record_barcode[1] in barcode:
-        if record_barcode[0] in barcode :
+        # try ignore backward direction
+        # if record_barcode[0] in barcode and record_barcode[1] in barcode:
+        if record_barcode[0] in barcode:
             name = barcode[record_barcode[0]]
             output_file = 'out/{0}'.format(name)
             with open(output_file, 'a') as handle:
                 SeqIO.write(record, handle, 'fastq')
             handle_fasta.write('>{0}\n{1}\n'.format(
-                record.description, 
+                record.description,
                 record.seq[skip:skip + search_len]))
         else:
             SeqIO.write(record, handle_miss, 'fastq')
@@ -81,7 +81,7 @@ def write_fasta(primer_list, primer_adapter):
         short_primer = ''.join([left, join_seq, right])
         name = primer_list[index][0]
         gene_list.append(name)
-        handle.write('>{0}\n{1}\n'.format(name,short_primer))
+        handle.write('>{0}\n{1}\n'.format(name, short_primer))
     handle.close()
     return gene_list
 
@@ -148,7 +148,7 @@ def step3(blast_result, file_list, gene_list):
                 count_sample[fastq_file] += 1
                 count_gene[blast_result[gene]] += 1
                 handle = open(
-                    '{0}_{1}.fastq'.format(fastq_file, blast_result[gene]), 
+                    '{0}_{1}.fastq'.format(fastq_file, blast_result[gene]),
                     'a')
                 SeqIO.write(record, handle, 'fastq')
     return count_sample, count_gene
@@ -159,7 +159,7 @@ def main():
     Usage:
     python3 divide.py fastqFile barcodeFile primerFile
     Step 1, divide data by barcode. Step 2, divide data by primer via BLAST.
-    Ensure that you have installed BLAST suite before. 
+    Ensure that you have installed BLAST suite before.
     Barcode file looks like this:
     Make sure you don't miss the first line.
     ATACG,BOP00001
@@ -168,14 +168,13 @@ def main():
     rbcL,rbcLF,ATCGATCGATCGA
     rbcL,rbcLR,TACGTACGTACG
     Make sure you don't miss the first line.
-    To get these two files, save your excel file as csv file.  Be carefull 
+    To get these two files, save your excel file as csv file.  Be carefull
     of the order of  each pair of primers.
     From left to right, there are:
     1. gene name
     2. primer name
     3. primer sequence
-    In this program, primers have common sequence whose length is 14, and
-    barcode's is 5. Change them if necessary(in step2)."""
+    """
     parser = argparse.ArgumentParser(description=main.__doc__)
     parser.add_argument('--barcode_length', default=10, type=int,
                         help='length of barcode')
