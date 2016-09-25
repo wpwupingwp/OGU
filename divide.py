@@ -1,18 +1,17 @@
 ﻿#!/usr/bin/python3
 
+import argparse
+import os
 from Bio import SeqIO
 from Bio import SearchIO
 from Bio.Blast.Applications import NcbiblastnCommandline as nb
 from multiprocessing import cpu_count
-from os import makedirs
-from os.path import exists
 from subprocess import call
-import sys
 from glob import glob
 
 
 def get_barcode_dict():
-    with open(sys.argv[2], 'r') as input_file:
+    with open(arg.barcode_file, 'r') as input_file:
         barcode_raw = input_file.read().split(sep='\n')
     barcode_raw.pop(0)
     barcode_raw.pop(-1)
@@ -31,7 +30,7 @@ def step1(blen, skip):
     print(step1.__doc__)
     search_len = 20 
     barcode = get_barcode_dict()
-    fastq_raw = SeqIO.parse(sys.argv[1], 'fastq')
+    fastq_raw = SeqIO.parse(arg.input, 'fastq')
     total = 0
     half = blen//2
     not_found = 0
@@ -65,7 +64,7 @@ def step1(blen, skip):
 
 
 def get_primer_list():
-    with open(sys.argv[3], 'r') as input_file:
+    with open(arg.primer_file, 'r') as input_file:
         primer_raw = input_file.read().split(sep='\n')
     primer_raw.pop(0)
     primer_raw.pop(-1)
@@ -89,6 +88,8 @@ def write_fasta(primer_list, primer_adapter):
 
 
 def blast(query_file, database):
+    """Use blastn-short for primers.
+    """
     cmd = nb(
         num_threads=cpu_count(),
         query=query_file,
@@ -176,20 +177,31 @@ def main():
     3. primer sequence
     In this program, primers have common sequence whose length is 14, and
     barcode's is 5. Change them if necessary(in step2)."""
-    print(main.__doc__)
-    barcode_length = 10
-    primer_adapter = 14
-    skip = barcode_length + primer_adapter
-    if not exists('out'):
-        makedirs('out')
-    miss_step1, total = step1(barcode_length, skip)
+    parser = argparse.ArgumentParser(description=main.__doc__)
+    parser.add_argument('--barcode_length', default=10, type=int,
+                        help='length of barcode')
+    parser.add_argument('--primer_adapter', default=14, type=int,
+                        help='length of primer_adapter, typical 14 for AFLP')
+    parser.add_argument('-b', '--barcode_file',
+                        help='csv file containing barcode info')
+    parser.add_argument('-p', '--primer_file',
+                        help='csv file containing primer info')
+    parser.add_argument('input', help='input file, fastq format')
+    parser.add_argument('-o', '--output', defalut='out', help='output path')
+    parser.print_help()
+    global arg
+    arg = parser.parse_args()
+    skip = arg.barcode_length + arg.primer_adapter
+    if not os.exists(arg.output):
+        os.mkdir(arg.output)
+    miss_step1, total = step1(arg.barcode_length, skip)
     print('''
     Step1 results:
     Total: {0} reads
     unrecognised {1} reads
     {2:3f} percent'''.format(total, miss_step1, miss_step1 / total))
     blast_result, gene_list = step2(primer_adapter)
-    file_list = glob('out/B*')
+    file_list = glob(arg.output+'B*')
     count_sample, count_gene = step3(blast_result, file_list, gene_list)
     count_sample = list(count_sample.items())
     count_gene = list(count_gene.items())
