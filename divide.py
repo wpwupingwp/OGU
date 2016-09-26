@@ -148,6 +148,8 @@ def step3(blast_result, file_list, gene_list):
 
 
 def main():
+    # todo
+    # implement mode
     """
     Usage:
     python3 divide.py fastqFile barcodeFile primerFile
