@@ -4,9 +4,9 @@ import argparse
 import os
 from Bio import SearchIO, SeqIO
 from Bio.Blast.Applications import NcbiblastnCommandline as nb
+from glob import glob
 from multiprocessing import cpu_count
 from subprocess import run
-from glob import glob
 
 
 def divide_barcode(barcode_len, skip):
