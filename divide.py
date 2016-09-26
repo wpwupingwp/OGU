@@ -25,8 +25,9 @@ def divide_barcode(barcode_len, skip):
     half = barcode_len//2
     barcode_mismatch = 0
     barcode_mode_wrong = 0
-    handle_miss = open('divide_barcode_miss.fastq', 'w')
-    handle_fasta = open('divide_barcode.fasta', 'w')
+    handle_miss = open(os.path.join(arg.output, 'divide_barcode_miss.fastq'),
+                       'w')
+    handle_fasta = open(os.path.join(arg.output, 'divide_barcode.fasta'), 'w')
     for record in fastq_raw:
         total += 1
         # ignore wrong barcode
@@ -42,7 +43,7 @@ def divide_barcode(barcode_len, skip):
             condition = (record_barcode[0] in barcode)
         if condition:
             name = barcode[record_barcode[0]]
-            output_file = 'out/{0}'.format(name)
+            output_file = os.path.join(arg.output) + name
             with open(output_file, 'a') as handle:
                 SeqIO.write(record, handle, 'fastq')
             handle_fasta.write('>{0}\n{1}\n'.format(
@@ -66,7 +67,7 @@ def get_primer_list():
 
 
 def write_fasta(primer_list, primer_adapter):
-    handle = open('primer.fasta', 'w')
+    handle = open(os.path.join(arg.output, 'primer.fasta'), 'w')
     join_seq = 'N'*15
     gene_list = list()
     for index in range(0, len(primer_list) - 1, 2):
@@ -203,10 +204,10 @@ def main():
     count_sample, count_gene = step3(blast_result, file_list, gene_list)
     count_sample = list(count_sample.items())
     count_gene = list(count_gene.items())
-    with open('count_sample', 'w') as handle:
+    with open(os.path.join(arg.output, 'count_sample'), 'w') as handle:
         for i in count_sample:
             handle.write('{0} {1} \n'.format(i[0], i[1]))
-    with open('count_gene', 'w') as handle:
+    with open(os.path.join(arg.output, 'count_gene'), 'w') as handle:
         for i in count_gene:
             handle.write('{0} {1} \n'.format(i[0], i[1]))
     end_time = timer()
