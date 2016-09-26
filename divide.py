@@ -89,7 +89,7 @@ def blast(query_file, db_file):
         query=query_file,
         db=db_file,
         task='blastn-short',
-        max_target_seqns=1,
+        max_target_seqs=1,
         max_hsps=1,
         evalue=arg.evalue,
         outfmt=5,
