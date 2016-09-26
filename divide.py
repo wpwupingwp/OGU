@@ -204,12 +204,12 @@ def main():
     count_sample, count_gene = step3(blast_result, file_list, gene_list)
     count_sample = list(count_sample.items())
     count_gene = list(count_gene.items())
-    with open(os.path.join(arg.output, 'count_sample'), 'w') as handle:
+    with open(os.path.join(arg.output, 'count_sample.csv'), 'w') as handle:
         for i in count_sample:
-            handle.write('{0} {1} \n'.format(i[0], i[1]))
-    with open(os.path.join(arg.output, 'count_gene'), 'w') as handle:
+            handle.write('{0},{1} \n'.format(i[0], i[1]))
+    with open(os.path.join(arg.output, 'count_gene.csv'), 'w') as handle:
         for i in count_gene:
-            handle.write('{0} {1} \n'.format(i[0], i[1]))
+            handle.write('{0},{1} \n'.format(i[0], i[1]))
     end_time = timer()
     print('Finished with {0:.3f}s. You can find results in {1}.\n'.format(
         end_time-start_time, arg.output))
