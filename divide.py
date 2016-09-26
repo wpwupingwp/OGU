@@ -79,10 +79,10 @@ def write_fasta(primer_list, primer_adapter):
     return gene_list
 
 
-def blast(query_file, db_file):
+def blast_and_parse(query_file, db_file):
     """Use blastn-short for primers.
     """
-    result = os.path.join(arg.output, 'BlastResult.xml')
+    blast_result_file = os.path.join(arg.output, 'BlastResult.xml')
     cmd = nb(
         num_threads=cpu_count(),
         query=query_file,
@@ -92,13 +92,10 @@ def blast(query_file, db_file):
         max_hsps=1,
         evalue=arg.evalue,
         outfmt=5,
-        out=result
+        out=blast_result_file
     )
     stdout, stderr = cmd()
-    return result
-
-
-def parse_blast(blast_result_file):
+    # parse
     blast_result = SearchIO.parse(blast_result_file, 'blast-xml')
     parse_result = dict()
     for record in blast_result:
@@ -122,7 +119,7 @@ def step2(primer_adapter):
     primer_list = get_primer_list()
     gene_list = write_fasta(primer_list, primer_adapter)
     run('makeblastdb -in primer.fasta -out primer -dbtype nucl', shell=True)
-    blast_result = parse_blast(blast('divide_barcode.fasta', 'primer'))
+    blast_result = blast_and_parse('divide_barcode.fasta', 'primer')
     return blast_result, gene_list
 
 
