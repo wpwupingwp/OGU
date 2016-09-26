@@ -7,6 +7,7 @@ from Bio.Blast.Applications import NcbiblastnCommandline as nb
 from glob import glob
 from multiprocessing import cpu_count
 from subprocess import run
+from timeit import default_timer as timer
 
 
 def divide_barcode(barcode_len, skip):
@@ -170,6 +171,7 @@ def main():
     3. primer sequence
     4. forward/backward
     """
+    start_time = timer()
     parser = argparse.ArgumentParser()
     parser.add_argument('--barcode_length', default=10, type=int,
                         help='length of barcode')
@@ -207,6 +209,9 @@ def main():
     with open('count_gene', 'w') as handle:
         for i in count_gene:
             handle.write('{0} {1} \n'.format(i[0], i[1]))
+    end_time = timer()
+    print('Finished with {0:.3f}s. You can find results in {1}.\n'.format(
+        end_time-start_time, arg.output))
 
 if __name__ == '__main__':
     main()
