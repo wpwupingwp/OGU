@@ -89,6 +89,8 @@ def blast(query_file, db_file):
         query=query_file,
         db=db_file,
         task='blastn-short',
+        max_target_seqns=1,
+        max_hsps=1,
         evalue=arg.evalue,
         outfmt=5,
         out=result
@@ -97,9 +99,9 @@ def blast(query_file, db_file):
     return result
 
 
-def parse_blast(blast_result):
+def parse_blast(blast_result_file):
     parse_result = list()
-    blast_result = SearchIO.parse(blast_result, 'blast-xml')
+    blast_result = SearchIO.parse(blast_result_file, 'blast-xml')
     for record in blast_result:
         if len(record) == 0:
             continue
