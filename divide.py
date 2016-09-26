@@ -35,10 +35,10 @@ def divide_barcode(barcode_len, skip):
         record_barcode = [str(record.seq[:barcode_len]),
                           str(record.seq[:-(barcode_len + 1):-1])]
         if arg.strict:
-            condition = (record_barcode[0] in barcode)
-        else:
             condition = (record_barcode[0] in barcode and
                          record_barcode[1] in barcode)
+        else:
+            condition = (record_barcode[0] in barcode)
         if condition:
             name = barcode[record_barcode[0]]
             output_file = 'out/{0}'.format(name)
@@ -147,6 +147,7 @@ def step3(blast_result, file_list, gene_list):
 def main():
     # todo
     # implement mode
+    # process_time
     """
     Usage:
     python3 divide.py fastqFile barcodeFile primerFile
