@@ -17,8 +17,7 @@ def divide_barcode(barcode_len, skip):
             if line.startswith('barcode') is True:
                 continue
             line = line.split(sep=',')
-            barcode[line[0]] = line[1]
-
+            barcode[line[0]] = line[1].strip()
     SEARCH_LEN = 20
     fastq_raw = SeqIO.parse(arg.input, 'fastq')
     total = 0
@@ -100,9 +99,10 @@ def blast(query_file, db_file):
 
 
 def parse_blast(blast_result_file):
-    parse_result = list()
     blast_result = SearchIO.parse(blast_result_file, 'blast-xml')
+    parse_result = dict()
     for record in blast_result:
+        # skip empty blast result item
         if len(record) == 0:
             continue
         else:
@@ -111,8 +111,7 @@ def parse_blast(blast_result_file):
             tophit[0][0].query_id,
             tophit[0][0].query_description)
         hit_info = tophit[0][0].hit.id
-        parse_result.append([query_info, hit_info])
-    parse_result = dict(parse_result)
+        parse_result[query_info] = hit_info
     return parse_result
 
 
@@ -152,7 +151,8 @@ def main():
     """
     Usage:
     python3 divide.py fastqFile barcodeFile primerFile
-    Step 1, divide data by barcode. Step 2, divide data by primer via BLAST.
+    Step 1, divide data by barcode.
+    Step 2, divide data by primer via BLAST.
     Ensure that you have installed BLAST suite before.
     Make sure you don't miss the first line.
     Barcode file looks like this:
