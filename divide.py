@@ -10,12 +10,6 @@ from subprocess import run
 
 
 def divide_barcode(barcode_len, skip):
-    """Divide raw data via barcode.
-    In this case, it searches primers in first 20bp sequence of reads, you may
-    edit it.
-    Before the search, it filters sequence accordting to the 5-2 repeat at the
-    beginning.
-    """
     # get barcode dict
     barcode = dict()
     with open(arg.barcode_file, 'r') as input_file:
@@ -29,15 +23,15 @@ def divide_barcode(barcode_len, skip):
     fastq_raw = SeqIO.parse(arg.input, 'fastq')
     total = 0
     half = barcode_len//2
-    not_found = 0
-    barcode_wrong = 0
+    barcode_mismatch = 0
+    barcode_mode_wrong = 0
     handle_miss = open('divide_barcode_miss.fastq', 'w')
     handle_fasta = open('divide_barcode.fasta', 'w')
     for record in fastq_raw:
         total += 1
         # ignore wrong barcode
         if str(record.seq[:half]) != str(record.seq[half:barcode_len]):
-            barcode_wrong += 1
+            barcode_mode_wrong += 1
             continue
         record_barcode = [str(record.seq[:barcode_len]),
                           str(record.seq[:-(barcode_len + 1):-1])]
@@ -56,10 +50,10 @@ def divide_barcode(barcode_len, skip):
                 record.seq[skip:skip + SEARCH_LEN]))
         else:
             SeqIO.write(record, handle_miss, 'fastq')
-            not_found += 1
+            barcode_mismatch += 1
     handle_miss.close()
     handle_fasta.close()
-    return not_found, total
+    return barcode_mode_wrong, barcode_mismatch, total
 
 
 def get_primer_list():
@@ -195,11 +189,11 @@ def main():
     parser.add_argument('-o', dest='output', default='out', help='output path')
     global arg
     arg = parser.parse_args()
-    print(vars(arg))
     skip = arg.barcode_length + arg.primer_adapter
     if not os.path.exists(arg.output):
         os.mkdir(arg.output)
-    miss_divide_barcode, total = divide_barcode(arg.barcode_length, skip)
+    barcode_mode_wrong, barcode_mismatch, total = divide_barcode(
+        arg.barcode_length, skip)
     blast_result, gene_list = step2(arg.primer_adapter)
     file_list = glob(arg.output+'B*')
     count_sample, count_gene = step3(blast_result, file_list, gene_list)
