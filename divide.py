@@ -9,7 +9,7 @@ from subprocess import run
 from glob import glob
 
 
-def divide_barcode(blen, skip):
+def divide_barcode(barcode_len, skip):
     """Divide raw data via barcode.
     In this case, it searches primers in first 20bp sequence of reads, you may
     edit it.
@@ -25,32 +25,35 @@ def divide_barcode(blen, skip):
             line = line.split(sep=',')
             barcode[line[0]] = line[1]
 
-    search_len = 20
+    SEARCH_LEN = 20
     fastq_raw = SeqIO.parse(arg.input, 'fastq')
     total = 0
-    half = blen//2
+    half = barcode_len//2
     not_found = 0
+    barcode_wrong = 0
     handle_miss = open('divide_barcode_miss.fastq', 'w')
     handle_fasta = open('divide_barcode.fasta', 'w')
     for record in fastq_raw:
         total += 1
         # ignore wrong barcode
-        if str(record.seq[:half]) != str(record.seq[half:blen]):
+        if str(record.seq[:half]) != str(record.seq[half:barcode_len]):
+            barcode_wrong += 1
             continue
-        record_barcode = [
-            str(record.seq[:blen]),
-            str(record.seq[:-(blen + 1):-1])
-        ]
-        # try ignore backward direction
-        # if record_barcode[0] in barcode and record_barcode[1] in barcode:
-        if record_barcode[0] in barcode:
+        record_barcode = [str(record.seq[:barcode_len]),
+                          str(record.seq[:-(barcode_len + 1):-1])]
+        if arg.strict:
+            condition = (record_barcode[0] in barcode)
+        else:
+            condition = (record_barcode[0] in barcode and
+                         record_barcode[1] in barcode)
+        if condition:
             name = barcode[record_barcode[0]]
             output_file = 'out/{0}'.format(name)
             with open(output_file, 'a') as handle:
                 SeqIO.write(record, handle, 'fastq')
             handle_fasta.write('>{0}\n{1}\n'.format(
                 record.description,
-                record.seq[skip:skip + search_len]))
+                record.seq[skip:skip + SEARCH_LEN]))
         else:
             SeqIO.write(record, handle_miss, 'fastq')
             not_found += 1
@@ -182,7 +185,7 @@ def main():
                         help='csv file containing primer info')
     parser.add_argument('-e', dest='evalue', default=1e-5, type=float,
                         help='evalue for BLAST')
-    parser.add_argument('-n', '--nostrict', action='store_false',
+    parser.add_argument('-s', '--strict', action='store_true',
                         help='''if set nostrict, it will only consider
                         barcode on the head; if not, consider head and tail''')
     parser.add_argument('-m', dest='mode', default='5-2',
@@ -192,6 +195,7 @@ def main():
     parser.add_argument('-o', dest='output', default='out', help='output path')
     global arg
     arg = parser.parse_args()
+    print(vars(arg))
     skip = arg.barcode_length + arg.primer_adapter
     if not os.path.exists(arg.output):
         os.mkdir(arg.output)
