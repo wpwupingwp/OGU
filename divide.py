@@ -22,9 +22,7 @@ def divide_barcode(barcode_len, skip):
     divided_files = list()
     SEARCH_LEN = 20
     half = barcode_len // 2
-    statistics = {'mismatch': 0,
-                  'mode_wrong': 0,
-                  'total': 0}
+    statistics = {'mismatch': 0, 'mode_wrong': 0, 'total': 0}
     fastq_raw = SeqIO.parse(arg.input, 'fastq')
     handle_miss = open(os.path.join(arg.output, 'barcode_miss.fastq'), 'w')
     head_file = os.path.join(arg.output, 'head.fasta')
@@ -91,7 +89,7 @@ def blast_and_parse(query_file, db_file):
     return parse_result
 
 
-def divide_gene(divided_files):
+def divide_gene(head_file, divided_files):
     # generate primer db
     primer = list()
     with open(arg.primer_file, 'r') as input_file:
@@ -101,7 +99,8 @@ def divide_gene(divided_files):
             line = line.split(sep=',')
             primer.append([i.strip() for i in line])
     # join primer pairs
-    handle = open(os.path.join(arg.output, 'primer.fasta'), 'w')
+    primer_file = os.path.join(arg.output, 'primer.fasta')
+    handle = open(primer_file, 'w')
     join_seq = 'N'*15
     gene_list = list()
     for index in range(0, len(primer) - 1, 2):
@@ -112,9 +111,10 @@ def divide_gene(divided_files):
         gene_list.append(name)
         handle.write('>{0}\n{1}\n'.format(name, short_primer))
     handle.close()
-    run('makeblastdb -in primer.fasta -out primer -dbtype nucl', shell=True)
+    run('makeblastdb -in {0} -out {1} -dbtype nucl'.format(
+        primer_file, primer_file.replace('.fasta', '')), shell=True)
     # blast, parse, split and count
-    blast_result = blast_and_parse('divide_barcode.fasta', 'primer')
+    blast_result = blast_and_parse(head_file, 'primer')
     sample_count = {i: 0 for i in divided_files}
     gene_count = {i: 0 for i in gene_list}
     for fastq_file in divided_files:
