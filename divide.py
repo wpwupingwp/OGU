@@ -82,8 +82,7 @@ def write_fasta(primer_list, primer_adapter):
 
 
 def blast_and_parse(query_file, db_file):
-    """Use blastn-short for primers.
-    """
+    # Use blastn-short for primers.
     blast_result_file = os.path.join(arg.output, 'BlastResult.xml')
     cmd = nb(
         num_threads=cpu_count(),
@@ -114,10 +113,7 @@ def blast_and_parse(query_file, db_file):
     return parse_result
 
 
-def step2(primer_adapter):
-    """Step 2:
-    BLAST fastq in first step against primer database.
-    """
+def divide_gene(primer_adapter):
     primer_list = get_primer_list()
     gene_list = write_fasta(primer_list, primer_adapter)
     run('makeblastdb -in primer.fasta -out primer -dbtype nucl', shell=True)
@@ -149,10 +145,8 @@ def step3(blast_result, file_list, gene_list):
 def main():
     # todo
     # implement mode
-    # process_time
+    # test if blast exists
     """
-    Usage:
-    python3 divide.py fastqFile barcodeFile primerFile
     Step 1, divide data by barcode.
     Step 2, divide data by primer via BLAST.
     Ensure that you have installed BLAST suite before.
@@ -173,6 +167,7 @@ def main():
     4. forward/backward
     """
     start_time = timer()
+    print(main.__doc__)
     parser = argparse.ArgumentParser()
     parser.add_argument('--barcode_length', default=10, type=int,
                         help='length of barcode')
@@ -199,7 +194,7 @@ def main():
         os.mkdir(arg.output)
     barcode_mode_wrong, barcode_mismatch, total = divide_barcode(
         arg.barcode_length, skip)
-    blast_result, gene_list = step2(arg.primer_adapter)
+    blast_result, gene_list = divide_gene(arg.primer_adapter)
     file_list = glob(arg.output+'B*')
     count_sample, count_gene = step3(blast_result, file_list, gene_list)
     count_sample = list(count_sample.items())
