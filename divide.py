@@ -131,6 +131,10 @@ def divide_gene(head_file, divided_files):
                 handle = open('{0}_{1}.fastq'.format(
                     fastq_file.replace('.fastq', ''), blast_result[gene]), 'a')
                 SeqIO.write(record, handle, 'fastq')
+                if not arg.no_merge_gene:
+                    handle_gene = open(os.path.join(
+                        arg.output, gene+'.fastq'), 'a')
+                    SeqIO.write(record, handle_gene, 'fastq')
     return sample_count, gene_count
 
 
@@ -189,6 +193,8 @@ def main():
     parser.add_argument('-m', dest='mode', default='5-2',
                         help='''barcode mode, default value is 5-2, i.e.,
                         barcode with length 5 repeated twice''')
+    parser.add_argument('--no_merge_gene', action='store_true',
+                        help='merge output files by gene')
     parser.add_argument('input', help='input file, fastq format')
     parser.add_argument('-o', dest='output', default='out', help='output path')
     global arg
