@@ -18,21 +18,22 @@ def divide_barcode(barcode_len, skip):
                 continue
             line = line.split(sep=',')
             barcode[line[0]] = line[1].strip()
-    SEARCH_LEN = 20
-    fastq_raw = SeqIO.parse(arg.input, 'fastq')
-    total = 0
-    half = barcode_len//2
-    barcode_mismatch = 0
-    barcode_mode_wrong = 0
-    handle_miss = open(os.path.join(arg.output, 'divide_barcode_miss.fastq'),
-                       'w')
-    handle_fasta = open(os.path.join(arg.output, 'divide_barcode.fasta'), 'w')
+    # analyze input files
     divided_files = list()
+    SEARCH_LEN = 20
+    half = barcode_len // 2
+    statistics = {'mismatch': 0,
+                  'mode_wrong': 0,
+                  'total': 0}
+    fastq_raw = SeqIO.parse(arg.input, 'fastq')
+    handle_miss = open(os.path.join(arg.output, 'barcode_miss.fastq'), 'w')
+    head_file = os.path.join(arg.output, 'head.fasta')
+    handle_fasta = open(head_file, 'w')
     for record in fastq_raw:
-        total += 1
+        statistics['total'] += 1
         # ignore wrong barcode
         if str(record.seq[:half]) != str(record.seq[half:barcode_len]):
-            barcode_mode_wrong += 1
+            statistics['mode_wrong'] += 1
             continue
         record_barcode = [str(record.seq[:barcode_len]),
                           str(record.seq[:-(barcode_len + 1):-1])]
@@ -52,10 +53,10 @@ def divide_barcode(barcode_len, skip):
                 record.seq[skip:skip + SEARCH_LEN]))
         else:
             SeqIO.write(record, handle_miss, 'fastq')
-            barcode_mismatch += 1
+            statistics['mismatch'] += 1
     handle_miss.close()
     handle_fasta.close()
-    return barcode_mode_wrong, barcode_mismatch, total, divided_files
+    return statistics, head_file, divided_files
 
 
 def blast_and_parse(query_file, db_file):
@@ -190,9 +191,9 @@ def main():
     if not os.path.exists(arg.output):
         os.mkdir(arg.output)
 
-    (barcode_mode_wrong, barcode_mismatch, total,
-     divided_files) = divide_barcode(arg.barcode_length, skip)
-    sample_count, gene_count = divide_gene(divided_files)
+    barcode_info, head_file, divided_files = divide_barcode(
+        arg.barcode_length, skip)
+    sample_count, gene_count = divide_gene(head_file, divided_files)
     print_stats(sample_count, gene_count)
 
     end_time = timer()
