@@ -99,10 +99,10 @@ def divide_gene(head_file, divided_files):
             line = line.split(sep=',')
             primer.append([i.strip() for i in line])
     # join primer pairs
-    primer_file = os.path.join(arg.output, 'primer.fasta')
-    handle = open(primer_file, 'w')
     join_seq = 'N'*15
     gene_list = list()
+    primer_file = os.path.join(arg.output, 'primer.fasta')
+    handle = open(primer_file, 'w')
     for index in range(0, len(primer) - 1, 2):
         left = primer[index][2][arg.primer_adapter:]
         right = primer[index + 1][2][arg.primer_adapter:]
@@ -111,10 +111,12 @@ def divide_gene(head_file, divided_files):
         gene_list.append(name)
         handle.write('>{0}\n{1}\n'.format(name, short_primer))
     handle.close()
+    # blast and parse
+    db_name = primer_file.replace('.fasta', '')
     run('makeblastdb -in {0} -out {1} -dbtype nucl'.format(
-        primer_file, primer_file.replace('.fasta', '')), shell=True)
-    # blast, parse, split and count
+        primer_file, db_name), shell=True)
     blast_result = blast_and_parse(head_file, 'primer')
+    # split and count
     sample_count = {i: 0 for i in divided_files}
     gene_count = {i: 0 for i in gene_list}
     for fastq_file in divided_files:
@@ -124,9 +126,8 @@ def divide_gene(head_file, divided_files):
             if gene in blast_result:
                 sample_count[fastq_file] += 1
                 gene_count[blast_result[gene]] += 1
-                handle = open(
-                    '{0}_{1}.fastq'.format(fastq_file, blast_result[gene]),
-                    'a')
+                handle = open('{0}_{1}.fastq'.format(
+                    fastq_file, blast_result[gene]), 'a')
                 SeqIO.write(record, handle, 'fastq')
     return sample_count, gene_count
 
