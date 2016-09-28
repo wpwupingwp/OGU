@@ -146,7 +146,7 @@ def print_stats(barcode, sample, gene):
 def main():
     # todo
     # implement mode
-    # test if blast exists
+    # check input
     """
     Step 1, divide data by barcode.
     Step 2, divide data by primer via BLAST.
