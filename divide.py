@@ -58,31 +58,6 @@ def divide_barcode(barcode_len, skip):
     return barcode_mode_wrong, barcode_mismatch, total, divided_files
 
 
-def get_primer_list():
-    primer_raw = list()
-    with open(arg.primer_file, 'r') as input_file:
-        for line in input_file:
-            if line.startswith('gene'):
-                continue
-            line = line.split(sep=',')
-            primer_raw.append([i.strip() for i in line])
-
-
-def write_fasta(primer_list, primer_adapter):
-    handle = open(os.path.join(arg.output, 'primer.fasta'), 'w')
-    join_seq = 'N'*15
-    gene_list = list()
-    for index in range(0, len(primer_list) - 1, 2):
-        left = primer_list[index][2][primer_adapter:]
-        right = primer_list[index + 1][2][primer_adapter:]
-        short_primer = ''.join([left, join_seq, right])
-        name = primer_list[index][0]
-        gene_list.append(name)
-        handle.write('>{0}\n{1}\n'.format(name, short_primer))
-    handle.close()
-    return gene_list
-
-
 def blast_and_parse(query_file, db_file):
     # Use blastn-short for primers.
     blast_result_file = os.path.join(arg.output, 'BlastResult.xml')
@@ -115,15 +90,33 @@ def blast_and_parse(query_file, db_file):
     return parse_result
 
 
-def divide_gene(primer_adapter):
-    primer_list = get_primer_list()
-    gene_list = write_fasta(primer_list, primer_adapter)
+def divide_gene(divided_files):
+    # generate primer db
+    primer = list()
+    with open(arg.primer_file, 'r') as input_file:
+        for line in input_file:
+            if line.startswith('gene'):
+                continue
+            line = line.split(sep=',')
+            primer.append([i.strip() for i in line])
+    # join primer pairs
+    handle = open(os.path.join(arg.output, 'primer.fasta'), 'w')
+    join_seq = 'N'*15
+    gene_list = list()
+    for index in range(0, len(primer) - 1, 2):
+        left = primer[index][2][arg.primer_adapter:]
+        right = primer[index + 1][2][arg.primer_adapter:]
+        short_primer = ''.join([left, join_seq, right])
+        name = primer[index][0]
+        gene_list.append(name)
+        handle.write('>{0}\n{1}\n'.format(name, short_primer))
+    handle.close()
     run('makeblastdb -in primer.fasta -out primer -dbtype nucl', shell=True)
+    # blast, parse and split
     blast_result = blast_and_parse('divide_barcode.fasta', 'primer')
-    # split files by gene
-    count_sample = {i: 0 for i in file_list}
+    count_sample = {i: 0 for i in divided_files}
     count_gene = {i: 0 for i in gene_list}
-    for fastq_file in file_list:
+    for fastq_file in divided_files:
         records = SeqIO.parse(fastq_file, 'fastq')
         for record in records:
             gene = record.description
@@ -149,7 +142,7 @@ def main():
     Barcode file looks like this:
     ATACG,BOP00001
     Primer file looks like this:
-    gene,primer,sequence
+    gene,primer,sequence,direction
     rbcL,rbcLF,ATCGATCGATCGA
     rbcL,rbcLR,TACGTACGTACG
     Make sure you don't miss the first line and the capitalization.
@@ -189,8 +182,7 @@ def main():
         os.mkdir(arg.output)
     (barcode_mode_wrong, barcode_mismatch, total,
      divided_files) = divide_barcode(arg.barcode_length, skip)
-    blast_result, gene_list = divide_gene(arg.primer_adapter)
-    count_sample, count_gene = step3(blast_result, divided_files, gene_list)
+    count_sample, count_gene = divide_gene(divided_files)
     count_sample = list(count_sample.items())
     count_gene = list(count_gene.items())
     with open(os.path.join(arg.output, 'count_sample.csv'), 'w') as handle:
