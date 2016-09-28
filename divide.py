@@ -4,7 +4,6 @@ import argparse
 import os
 from Bio import SearchIO, SeqIO
 from Bio.Blast.Applications import NcbiblastnCommandline as nb
-from glob import glob
 from multiprocessing import cpu_count
 from subprocess import run
 from timeit import default_timer as timer
@@ -15,7 +14,7 @@ def divide_barcode(barcode_len, skip):
     barcode = dict()
     with open(arg.barcode_file, 'r') as input_file:
         for line in input_file:
-            if line.startswith('barcode') is True:
+            if line.startswith('barcode'):
                 continue
             line = line.split(sep=',')
             barcode[line[0]] = line[1].strip()
@@ -60,12 +59,13 @@ def divide_barcode(barcode_len, skip):
 
 
 def get_primer_list():
+    primer_raw = list()
     with open(arg.primer_file, 'r') as input_file:
-        primer_raw = input_file.read().split(sep='\n')
-    primer_raw.pop(0)
-    primer_raw.pop(-1)
-    primer_list = [i.split(sep=',') for i in primer_raw]
-    return primer_list
+        for line in input_file:
+            if line.startswith('gene'):
+                continue
+            line = line.split(sep=',')
+            primer_raw.append([i.strip() for i in line])
 
 
 def write_fasta(primer_list, primer_adapter):
@@ -152,7 +152,7 @@ def main():
     gene,primer,sequence
     rbcL,rbcLF,ATCGATCGATCGA
     rbcL,rbcLR,TACGTACGTACG
-    Make sure you don't miss the first line.
+    Make sure you don't miss the first line and the capitalization.
     To get these two files, save your excel file as csv file.  Be carefull
     of the order of  each pair of primers.
     From left to right, there are:
