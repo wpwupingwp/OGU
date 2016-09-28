@@ -42,7 +42,7 @@ def divide_barcode(barcode_len, skip):
             condition = (record_barcode[0] in barcode)
         if condition:
             name = barcode[record_barcode[0]]
-            output_file = os.path.join(arg.output) + name
+            output_file = os.path.join(arg.output, name)
             divided_files.append(output_file)
             with open(output_file, 'a') as handle:
                 SeqIO.write(record, handle, 'fastq')
