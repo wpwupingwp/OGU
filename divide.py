@@ -112,22 +112,31 @@ def divide_gene(divided_files):
         handle.write('>{0}\n{1}\n'.format(name, short_primer))
     handle.close()
     run('makeblastdb -in primer.fasta -out primer -dbtype nucl', shell=True)
-    # blast, parse and split
+    # blast, parse, split and count
     blast_result = blast_and_parse('divide_barcode.fasta', 'primer')
-    count_sample = {i: 0 for i in divided_files}
-    count_gene = {i: 0 for i in gene_list}
+    sample_count = {i: 0 for i in divided_files}
+    gene_count = {i: 0 for i in gene_list}
     for fastq_file in divided_files:
         records = SeqIO.parse(fastq_file, 'fastq')
         for record in records:
             gene = record.description
             if gene in blast_result:
-                count_sample[fastq_file] += 1
-                count_gene[blast_result[gene]] += 1
+                sample_count[fastq_file] += 1
+                gene_count[blast_result[gene]] += 1
                 handle = open(
                     '{0}_{1}.fastq'.format(fastq_file, blast_result[gene]),
                     'a')
                 SeqIO.write(record, handle, 'fastq')
-    return count_sample, count_gene
+    return sample_count, gene_count
+
+
+def print_stats(sample, gene):
+    with open(os.path.join(arg.output, 'sample_info.csv'), 'w') as handle:
+        for record in sample.items():
+            handle.write('{0},{1} \n'.format(*record))
+    with open(os.path.join(arg.output, 'gene_info.csv'), 'w') as handle:
+        for record in gene.items():
+            handle.write('{0},{1} \n'.format(*record))
 
 
 def main():
@@ -180,17 +189,12 @@ def main():
     skip = arg.barcode_length + arg.primer_adapter
     if not os.path.exists(arg.output):
         os.mkdir(arg.output)
+
     (barcode_mode_wrong, barcode_mismatch, total,
      divided_files) = divide_barcode(arg.barcode_length, skip)
-    count_sample, count_gene = divide_gene(divided_files)
-    count_sample = list(count_sample.items())
-    count_gene = list(count_gene.items())
-    with open(os.path.join(arg.output, 'count_sample.csv'), 'w') as handle:
-        for i in count_sample:
-            handle.write('{0},{1} \n'.format(i[0], i[1]))
-    with open(os.path.join(arg.output, 'count_gene.csv'), 'w') as handle:
-        for i in count_gene:
-            handle.write('{0},{1} \n'.format(i[0], i[1]))
+    sample_count, gene_count = divide_gene(divided_files)
+    print_stats(sample_count, gene_count)
+
     end_time = timer()
     print('Finished with {0:.3f}s. You can find results in {1}.\n'.format(
         end_time-start_time, arg.output))
