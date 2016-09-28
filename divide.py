@@ -131,7 +131,10 @@ def divide_gene(head_file, divided_files):
     return sample_count, gene_count
 
 
-def print_stats(sample, gene):
+def print_stats(barcode, sample, gene):
+    with open(os.path.join(arg.output, 'barcode_info.csv'), 'w') as handle:
+        for record in barcode.items():
+            handle.write('{0},{1} \n'.format(*record))
     with open(os.path.join(arg.output, 'sample_info.csv'), 'w') as handle:
         for record in sample.items():
             handle.write('{0},{1} \n'.format(*record))
@@ -194,7 +197,7 @@ def main():
     barcode_info, head_file, divided_files = divide_barcode(
         arg.barcode_length, skip)
     sample_count, gene_count = divide_gene(head_file, divided_files)
-    print_stats(sample_count, gene_count)
+    print_stats(barcode_info, sample_count, gene_count)
 
     end_time = timer()
     print('Finished with {0:.3f}s. You can find results in {1}.\n'.format(
