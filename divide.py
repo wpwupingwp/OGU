@@ -28,6 +28,7 @@ def divide_barcode(barcode_len, skip):
     handle_miss = open(os.path.join(arg.output, 'divide_barcode_miss.fastq'),
                        'w')
     handle_fasta = open(os.path.join(arg.output, 'divide_barcode.fasta'), 'w')
+    divided_files = list()
     for record in fastq_raw:
         total += 1
         # ignore wrong barcode
@@ -44,6 +45,7 @@ def divide_barcode(barcode_len, skip):
         if condition:
             name = barcode[record_barcode[0]]
             output_file = os.path.join(arg.output) + name
+            divided_files.append(output_file)
             with open(output_file, 'a') as handle:
                 SeqIO.write(record, handle, 'fastq')
             handle_fasta.write('>{0}\n{1}\n'.format(
@@ -54,7 +56,7 @@ def divide_barcode(barcode_len, skip):
             barcode_mismatch += 1
     handle_miss.close()
     handle_fasta.close()
-    return barcode_mode_wrong, barcode_mismatch, total
+    return barcode_mode_wrong, barcode_mismatch, total, divided_files
 
 
 def get_primer_list():
@@ -118,14 +120,7 @@ def divide_gene(primer_adapter):
     gene_list = write_fasta(primer_list, primer_adapter)
     run('makeblastdb -in primer.fasta -out primer -dbtype nucl', shell=True)
     blast_result = blast_and_parse('divide_barcode.fasta', 'primer')
-    return blast_result, gene_list
-
-
-def step3(blast_result, file_list, gene_list):
-    """Step 3:
-    First, according BLAST result, split fastq files generated in
-    divide_barcode, then assembly.
-    """
+    # split files by gene
     count_sample = {i: 0 for i in file_list}
     count_gene = {i: 0 for i in gene_list}
     for fastq_file in file_list:
@@ -166,8 +161,8 @@ def main():
     3. primer sequence
     4. forward/backward
     """
-    start_time = timer()
     print(main.__doc__)
+    start_time = timer()
     parser = argparse.ArgumentParser()
     parser.add_argument('--barcode_length', default=10, type=int,
                         help='length of barcode')
@@ -192,11 +187,10 @@ def main():
     skip = arg.barcode_length + arg.primer_adapter
     if not os.path.exists(arg.output):
         os.mkdir(arg.output)
-    barcode_mode_wrong, barcode_mismatch, total = divide_barcode(
-        arg.barcode_length, skip)
+    (barcode_mode_wrong, barcode_mismatch, total,
+     divided_files) = divide_barcode(arg.barcode_length, skip)
     blast_result, gene_list = divide_gene(arg.primer_adapter)
-    file_list = glob(arg.output+'B*')
-    count_sample, count_gene = step3(blast_result, file_list, gene_list)
+    count_sample, count_gene = step3(blast_result, divided_files, gene_list)
     count_sample = list(count_sample.items())
     count_gene = list(count_gene.items())
     with open(os.path.join(arg.output, 'count_sample.csv'), 'w') as handle:
