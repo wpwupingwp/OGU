@@ -115,7 +115,7 @@ def divide_gene(head_file, divided_files):
     db_name = primer_file.replace('.fasta', '')
     run('makeblastdb -in {0} -out {1} -dbtype nucl'.format(
         primer_file, db_name), shell=True)
-    blast_result = blast_and_parse(head_file, 'primer')
+    blast_result = blast_and_parse(head_file, db_name)
     # split and count
     sample_count = {i: 0 for i in divided_files}
     gene_count = {i: 0 for i in gene_list}
