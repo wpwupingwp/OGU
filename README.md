@@ -15,15 +15,12 @@ to print usage of each program.
 
 You can ask me any question about these programs via
 **wpwupingwp@outlook.com** .
+
 # Requirement
-* python3
+* python3, 3.5 or above
 * Bioython
 
 And notice that all scripts were just tested on Linux system, although it may works fine on Windows.
-
-#Requirement
-
-python3 3.5 or above.
 
 ## filter.py
 
@@ -57,3 +54,14 @@ where D was expanded from range(B, C) and E is related A.
 
 Divide fastq file by gene and barcode.
 
+Make sure you don't miss the first line.
+Barcode file looks like this:
+
+>    barcode,sample
+>    ATACG,BOP00001
+
+Primer file looks like this:
+
+>    gene,primer,sequence,direction
+>    rbcL,rbcLF,ATCGATCGATCGA,f
+>    rbcL,rbcLR,TACGTACGTACG,r
