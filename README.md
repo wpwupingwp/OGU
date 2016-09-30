@@ -17,7 +17,10 @@ You can ask me any question about these programs via
 **wpwupingwp@outlook.com** .
 
 # Requirement
-* python3, 3.5 or above
+* python3
+
+	3.5 or above
+
 * Bioython
 
 And notice that all scripts were just tested on Linux system, although it may works fine on Windows.
@@ -58,10 +61,13 @@ Make sure you don't miss the first line.
 Barcode file looks like this:
 
 >    barcode,sample
+
 >    ATACG,BOP00001
 
 Primer file looks like this:
 
 >    gene,primer,sequence,direction
+
 >    rbcL,rbcLF,ATCGATCGATCGA,f
+
 >    rbcL,rbcLR,TACGTACGTACG,r
