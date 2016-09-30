@@ -21,6 +21,10 @@ You can ask me any question about these programs via
 
 And notice that all scripts were just tested on Linux system, although it may works fine on Windows.
 
+#Requirement
+
+python3 3.5 or above.
+
 ## filter.py
 
 Use info in **wanted** to filter fasta file, the output sequences contain **wanted** in their id.
@@ -48,3 +52,8 @@ It will generate a new table:
 >    D,E 
 
 where D was expanded from range(B, C) and E is related A.
+
+## divide.py
+
+Divide fastq file by gene and barcode.
+
