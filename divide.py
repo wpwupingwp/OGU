@@ -127,7 +127,7 @@ def divide_gene(head_file, divided_files):
                 sample_count[fastq_file] += 1
                 gene_count[blast_result[gene]] += 1
                 barcode = os.path.basename(fastq_file).replace('.fastq', '')
-                record.id = '|'.join([barcode, record.id])
+                record.id = '|'.join([barcode, blast_result[gene], ''])
                 handle = open('{0}_{1}.fastq'.format(
                     fastq_file.replace('.fastq', ''), blast_result[gene]), 'a')
                 SeqIO.write(record, handle, 'fastq')
