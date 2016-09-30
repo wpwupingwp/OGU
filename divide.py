@@ -131,9 +131,10 @@ def divide_gene(head_file, divided_files):
                 handle = open('{0}_{1}.fastq'.format(
                     fastq_file.replace('.fastq', ''), blast_result[gene]), 'a')
                 SeqIO.write(record, handle, 'fastq')
+                # output merged file
                 if not arg.no_merge_gene:
                     handle_gene = open(os.path.join(
-                        arg.output, gene+'.fastq'), 'a')
+                        arg.output, blast_result[gene]+'.fastq'), 'a')
                     SeqIO.write(record, handle_gene, 'fastq')
     return sample_count, gene_count
 
