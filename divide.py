@@ -19,7 +19,7 @@ def divide_barcode(barcode_len, skip):
             line = line.split(sep=',')
             barcode[line[0]] = line[1].strip()
     # analyze input files
-    divided_files = list()
+    divided_files = set()
     SEARCH_LEN = 20
     half = barcode_len // 2
     statistics = {'mismatch': 0, 'mode_wrong': 0, 'total': 0}
@@ -43,7 +43,7 @@ def divide_barcode(barcode_len, skip):
         if condition:
             name = barcode[record_barcode[0]]
             output_file = os.path.join(arg.output, name)
-            divided_files.append(output_file)
+            divided_files.add(output_file)
             with open(output_file, 'a') as handle:
                 SeqIO.write(record, handle, 'fastq')
             handle_fasta.write('>{0}\n{1}\n'.format(
