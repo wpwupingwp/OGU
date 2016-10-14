@@ -1,7 +1,25 @@
 #!/usr/bin/python3
 
 import argparse
+from functools import wraps
 from timeit import default_timer as timer
+
+
+def print_time(function):
+    @wraps(function)
+    def wrapper(*args, **kargs):
+        start = timer()
+        function(*args, **kargs)
+        end = timer()
+        print('The function {0} Cost {1:3f}s.\n'.format(
+            function.__name__, end-start))
+    return wrapper
+
+
+@print_time
+def function():
+    print('ok')
+    pass
 
 
 def main():
@@ -14,7 +32,8 @@ def main():
     parser.print_help()
     arg = parser.parse_args()
     # start here
-    print(arg)
+    print(vars(arg))
+    function()
     # end
     end_time = timer()
     print('Cost {:.3f}s.\n'.format(end_time-start_time))
