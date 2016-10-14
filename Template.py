@@ -9,10 +9,11 @@ def print_time(function):
     @wraps(function)
     def wrapper(*args, **kargs):
         start = timer()
-        function(*args, **kargs)
+        result = function(*args, **kargs)
         end = timer()
         print('The function {0} Cost {1:3f}s.\n'.format(
             function.__name__, end-start))
+        return result
     return wrapper
 
 
