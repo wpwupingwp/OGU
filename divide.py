@@ -189,8 +189,9 @@ def main():
     parser.add_argument('-e', dest='evalue', default=1e-5, type=float,
                         help='evalue for BLAST')
     parser.add_argument('-s', '--strict', action='store_true',
-                        help='''if set nostrict, it will only consider
-                        barcode on the head; if not, consider head and tail''')
+                        help='''if set no strict, it will only consider
+                        barcode on the forward; if not, consider forward and
+                        backward''')
     parser.add_argument('-m', dest='mode', default='5-2',
                         help='''barcode mode, default value is 5-2, i.e.,
                         barcode with length 5 repeated twice''')
