@@ -51,24 +51,26 @@ def main():
     parser.add_argument('-t', '--type', dest='type',
                         choices=['dot', 'bar', 'line'])
     parser.add_argument('-s', '--split', default=' ', type=str)
+    parser.add_argument('-o', '--output', dest='output',
+                        default='output')
     global arg
     arg = parser.parse_args()
-    # start here
-    data = get_data(arg.data)
+
     markers = MarkerStyle.filled_markers
+    data = get_data(arg.data)
     unit, x, y = data
-    print(data)
     plt.xlabel(unit['x'])
     plt.ylabel(unit['y'])
     for i in y.keys():
         if len(y[i][1]) == 0:
+            # 'k' means black
             plt.plot(x, y[i], fmt='k-'+choice(markers), label=i)
         else:
             plt.errorbar(x, y[i][0], yerr=y[i][1],
                          fmt='k-'+choice(markers), label=i)
     plt.legend(loc='best')
+    plt.savefig(arg.output+'.png')
     plt.show()
-    # end
 
 
 if __name__ == '__main__':
