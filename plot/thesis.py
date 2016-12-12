@@ -66,7 +66,7 @@ def main():
         else:
             plt.errorbar(x, y[i][0], yerr=y[i][1],
                          fmt='k-'+choice(markers), label=i)
-    plt.legend()
+    plt.legend(loc='best')
     plt.show()
     # end
 
