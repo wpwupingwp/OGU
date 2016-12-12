@@ -2,6 +2,8 @@
 
 import argparse
 from matplotlib import pyplot as plt
+from matplotlib.markers import MarkerStyle
+from random import choice
 
 
 def get_data(data_file):
@@ -49,8 +51,13 @@ def main():
     arg = parser.parse_args()
     # start here
     data = get_data(arg.data)
+    markers = MarkerStyle.filled_markers
     unit, x, x_label, y, y_sd = data
+    plt.xlabel(unit['x'])
+    plt.ylabel(unit['y'])
     plt.plot(x, y['y2'])
+    for i in y.keys():
+        plt.errorbar(x, y[i], yerr=y_sd[i], fmt='k-'+choice(markers))
     plt.show()
     # end
 
