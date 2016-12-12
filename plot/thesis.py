@@ -1,11 +1,7 @@
 #!/usr/bin/python3
 
 import argparse
-import seaborn as s
-
-
-def set_seaborn():
-    pass
+from matplotlib import pyplot as plt
 
 
 def get_data(data_file):
@@ -28,13 +24,14 @@ def get_data(data_file):
             if line[0].startswith('x'):
                 x_label = line[0].split(sep=':')[0]
                 x = line[1:]
+                x = [float(i) for i in x]
                 continue
             if line[0].startswith('y'):
                 y_id, label = line[0].split(sep=':')
                 if label != 'sd':
-                    y[y_id] = line[1:]
+                    y[y_id] = [float(i) for i in line[1:]]
                 else:
-                    y_sd = line[1:]
+                    y_sd[y_id] = [float(i) for i in line[1:]]
     return unit, x, x_label, y, y_sd
 
 
@@ -51,11 +48,10 @@ def main():
     global arg
     arg = parser.parse_args()
     # start here
-    set_seaborn()
     data = get_data(arg.data)
-    for i in data:
-        print(i)
     unit, x, x_label, y, y_sd = data
+    plt.plot(x, y['y2'])
+    plt.show()
     # end
 
 
