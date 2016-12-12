@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import argparse
+import seaborn as s
 from functools import wraps
 from timeit import default_timer as timer
 
@@ -23,6 +24,10 @@ def function():
     pass
 
 
+def set_seaborn():
+    pass
+
+
 def main():
     """docstring
     """
@@ -31,10 +36,12 @@ def main():
     parser.add_argument('--path', default='./',
                         help='target path, default is "./"')
     parser.add_argument('data', default='a.txt')
-    parser.add_argument('-t','--type', dest='type', choices=['dot', 'bar', 'line'])
+    parser.add_argument('-t', '--type', dest='type',
+                        choices=['dot', 'bar', 'line'])
     parser.print_help()
     arg = parser.parse_args()
     # start here
+    set_seaborn()
     print(vars(arg))
     function()
     # end
