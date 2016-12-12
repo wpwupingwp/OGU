@@ -24,7 +24,6 @@ def get_data(data_file):
                 unit['y'] = line[0].split(sep='=')[1]
                 continue
             if line[0].startswith('x'):
-                x_label = line[0].split(sep=':')[0]
                 x = line[1:]
                 x = [float(i) for i in x]
                 continue
@@ -34,7 +33,7 @@ def get_data(data_file):
                     y[y_id] = [float(i) for i in line[1:]]
                 else:
                     y_sd[y_id] = [float(i) for i in line[1:]]
-    return unit, x, x_label, y, y_sd
+    return unit, x, y, y_sd
 
 
 def main():
@@ -52,12 +51,12 @@ def main():
     # start here
     data = get_data(arg.data)
     markers = MarkerStyle.filled_markers
-    unit, x, x_label, y, y_sd = data
+    unit, x, y, y_sd = data
     plt.xlabel(unit['x'])
     plt.ylabel(unit['y'])
     plt.plot(x, y['y2'])
     for i in y.keys():
-        plt.errorbar(x, y[i], yerr=y_sd[i], fmt='k-'+choice(markers))
+        plt.errorbar(x, y[i], yerr=y_sd[i], fmt='k-'+choice(markers), label=i)
     plt.show()
     # end
 
