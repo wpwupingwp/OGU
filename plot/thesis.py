@@ -6,34 +6,38 @@ from matplotlib.markers import MarkerStyle
 from random import choice
 
 
+def float_line(line):
+    return [float(i) for i in line]
+
+
 def get_data(data_file):
     """
     Hyposis that there is no SD bar for x axis.
     """
     unit = dict()
     y = dict()
-    y_sd = dict()
     with open(data_file, 'r') as raw:
-        for line in raw:
-            line = line.strip()
-            line = line.split(sep=arg.split)
-            if line[0].startswith('x_unit'):
-                unit['x'] = line[0].split(sep='=')[1]
-                continue
-            if line[0].startswith('y_unit'):
-                unit['y'] = line[0].split(sep='=')[1]
-                continue
-            if line[0].startswith('x'):
-                x = line[1:]
-                x = [float(i) for i in x]
-                continue
-            if line[0].startswith('y'):
-                y_id, label = line[0].split(sep=':')
-                if label != 'sd':
-                    y[y_id] = [float(i) for i in line[1:]]
-                else:
-                    y_sd[y_id] = [float(i) for i in line[1:]]
-    return unit, x, y, y_sd
+        raw = raw.readlines()
+        raw = [i.strip() for i in raw]
+        raw = [i.split(sep=arg.split) for i in raw]
+    for n, line in enumerate(raw):
+        label = line[0]
+        if label.startswith('x_unit'):
+            unit['x'] = line[1]
+            continue
+        if label.startswith('y_unit'):
+            unit['y'] = line[1]
+            continue
+        if label.startswith('x_value'):
+            x = float_line(line[1:])
+        # to be continue
+            continue
+        last_line = raw[n-1]
+        if label == last_line[0]:
+            y[last_line[0]] = (float_line(line[1:]), float_line(last_line[1:]))
+        else:
+            y[line[0]] = (float_line(line[1:]), list())
+    return unit, x, y
 
 
 def main():
@@ -51,12 +55,17 @@ def main():
     # start here
     data = get_data(arg.data)
     markers = MarkerStyle.filled_markers
-    unit, x, y, y_sd = data
+    unit, x, y = data
+    print(data)
     plt.xlabel(unit['x'])
     plt.ylabel(unit['y'])
-    plt.plot(x, y['y2'])
     for i in y.keys():
-        plt.errorbar(x, y[i], yerr=y_sd[i], fmt='k-'+choice(markers), label=i)
+        if len(y[i][1]) == 0:
+            plt.plot(x, y[i], fmt='k-'+choice(markers), label=i)
+        else:
+            plt.errorbar(x, y[i][0], yerr=y[i][1],
+                         fmt='k-'+choice(markers), label=i)
+    plt.legend()
     plt.show()
     # end
 
