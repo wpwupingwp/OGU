@@ -71,3 +71,8 @@ Primer file looks like this:
 >    rbcL,rbcLF,ATCGATCGATCGA,f
 
 >    rbcL,rbcLR,TACGTACGTACG,r
+
+## add_gene_name.py
+
+Rename fasta files in one directory according to gene info provided by the
+first record in each file
