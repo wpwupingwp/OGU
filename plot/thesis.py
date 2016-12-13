@@ -20,16 +20,25 @@ def get_data(data_file):
     """
     Hyposis that there is no SD bar for x axis.
     """
+    clean_data = list()
+    with open(data_file, 'r') as raw:
+        for line in raw.readlines():
+            if line.startswith('#'):
+                continue
+            line = line.strip()
+            line = line.split(sep=arg.split)
+            if len(line) < 2:
+                continue
+            clean_data.append(line)
+
     axis_unit = dict()
     y = dict()
-    with open(data_file, 'r') as raw:
-        raw = raw.readlines()
-        raw = [i.strip() for i in raw]
-        raw = [i.split(sep=arg.split) for i in raw]
-    for n, line in enumerate(raw):
+    for n, line in enumerate(clean_data):
         label = line[0]
         unit = line[1]
         value = convert(line[2:])
+        if len(value) == 0:
+            continue
         if label.startswith('x_value'):
             axis_unit['x'] = unit
             x = convert(value)
@@ -38,7 +47,7 @@ def get_data(data_file):
             continue
         else:
             axis_unit['y'] = unit
-        last_line = raw[n-1]
+        last_line = clean_data[n-1]
         if label == last_line[0]:
             y[last_line[0]] = (convert(last_line[2:]), convert(value))
         else:
