@@ -46,13 +46,16 @@ def get_data(data_file):
     return axis_unit, x, y
 
 
-def fit(x, y, range):
+def draw_fit(x, y):
+    range = arg.regression
     x = x[:range]
     y = y[:range]
     factors = polyfit(x, y, deg=1)
     k = factors[0]
     b = factors[1]
-    return [k*i+b for i in x]
+    fit = [k*i+b for i in x]
+    plt.plot(x[:arg.regression], fit, 'k-')
+    plt.annotate('y=kx+b', xy=(0.1, 0.1), xycoords='axes fraction')
 
 
 def main():
@@ -91,13 +94,13 @@ def main():
         if len(y[i][1]) == 0:
             plt.plot(x, y[i][0], fmt, label=i)
             if arg.regression != 0:
-                plt.plot(x[:arg.regression], fit(x, y[i][0], arg.regression), 'k-')
+                draw_fit(x, y[i][0])
         else:
             fmt = 'k-'
             plt.errorbar(x, y[i][0], yerr=y[i][1],
                          fmt=fmt+choice(markers), label=i)
             if arg.regression != 0:
-                plt.plot(x[:arg.regression], fit(x, y[i][0], arg.regression), 'k-')
+                draw_fit(x, y[i][0])
     if len(y) > 1:
         plt.legend(loc='best')
     plt.savefig(arg.output+'.png')
