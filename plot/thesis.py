@@ -56,7 +56,7 @@ def main():
                         help='target path, default is "./"')
     parser.add_argument('data', default='a.txt')
     parser.add_argument('-t', '--type', dest='type',
-                        choices=['dot', 'bar', 'line'])
+                        choices=['dot', 'bar', 'line'], default='line')
     parser.add_argument('-s', '--split', default=' ', type=str)
     parser.add_argument('-o', '--output', dest='output',
                         default='output')
@@ -65,15 +65,22 @@ def main():
     markers = MarkerStyle.filled_markers
     data = get_data(arg.data)
     unit, x, y = data
-    plt.xlabel(unit['x'])
-    plt.ylabel(unit['y'])
+    plt.xlabel(unit['x'], fontsize=16)
+    plt.ylabel(unit['y'], fontsize=16)
+    if arg.type == 'line':
+        fmt = 'k-'
+    elif arg.type == 'dot':
+        fmt = 'ko'
+    elif arg.type == 'dot_line':
+        fmt = 'ko-'
     for i in y.keys():
         if len(y[i][1]) == 0:
             # 'k' means black
-            plt.plot(x, y[i][0], 'ko-', label=i)
+            plt.plot(x, y[i][0], fmt, label=i)
         else:
+            fmt = 'k-'
             plt.errorbar(x, y[i][0], yerr=y[i][1],
-                         fmt='k-'+choice(markers), label=i)
+                         fmt=fmt+choice(markers), label=i)
     if len(y) > 1:
         plt.legend(loc='best')
     plt.savefig(arg.output+'.png')
