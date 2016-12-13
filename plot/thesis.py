@@ -52,7 +52,7 @@ def draw_fit(x, y):
     y = y[:range]
     slope, intercept, r_value, *_ = linregress(x, y)
     text = r'$f(x)={0:.3f}x+{1:.3f}, R^2={2:.3f}$'.format(
-        float(slope), float(intercept), float(r_value**2))
+        slope, intercept, r_value**2)
     fit = [slope*i+intercept for i in x]
     plt.plot(x[:arg.regression], fit, 'k-')
     plt.annotate(text, xy=(x[-1], y[-2]))
