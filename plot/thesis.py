@@ -42,7 +42,11 @@ def get_data(data_file):
 
 
 def main():
-    """docstring
+    """
+    The input file should look like this:
+    x_value unit 1 2 3
+    ylabel unit 23 3 5
+    y_sd unit 3 3 3
     """
     parser = argparse.ArgumentParser(description=main.__doc__)
     parser.add_argument('--path', default='./',
@@ -55,7 +59,6 @@ def main():
                         default='output')
     global arg
     arg = parser.parse_args()
-
     markers = MarkerStyle.filled_markers
     data = get_data(arg.data)
     unit, x, y = data
