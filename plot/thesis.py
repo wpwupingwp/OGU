@@ -3,8 +3,8 @@
 import argparse
 from matplotlib import pyplot as plt
 from matplotlib.markers import MarkerStyle
-from numpy import polyfit
 from random import choice
+from scipy.stats.stats import linregress
 
 
 def convert(line, target='float'):
@@ -50,12 +50,12 @@ def draw_fit(x, y):
     range = arg.regression
     x = x[:range]
     y = y[:range]
-    factors = polyfit(x, y, deg=1)
-    k = factors[0]
-    b = factors[1]
-    fit = [k*i+b for i in x]
+    slope, intercept, r_value, *_ = linregress(x, y)
+    text = r'$f(x)={0:.3f}x+{1:.3f}, R^2={2:.3f}$'.format(
+        float(slope), float(intercept), float(r_value**2))
+    fit = [slope*i+intercept for i in x]
     plt.plot(x[:arg.regression], fit, 'k-')
-    plt.annotate('y=kx+b', xy=(0.1, 0.1), xycoords='axes fraction')
+    plt.annotate(text, xy=(x[-1], y[-2]))
 
 
 def main():
