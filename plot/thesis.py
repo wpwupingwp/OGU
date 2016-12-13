@@ -3,6 +3,7 @@
 import argparse
 from matplotlib import pyplot as plt
 from matplotlib.markers import MarkerStyle
+from numpy import polyfit
 from random import choice
 
 
@@ -11,6 +12,8 @@ def convert(line, target='float'):
         return [float(i) for i in line]
     elif target == 'int':
         return [int(i) for i in line]
+    elif target == 'str':
+        return [str(i) for i in line]
 
 
 def get_data(data_file):
@@ -43,6 +46,15 @@ def get_data(data_file):
     return axis_unit, x, y
 
 
+def fit(x, y, range):
+    x = x[:range]
+    y = y[:range]
+    factors = polyfit(x, y, deg=1)
+    k = factors[0]
+    b = factors[1]
+    return [k*i+b for i in x]
+
+
 def main():
     """
     The input file should look like this:
@@ -59,15 +71,16 @@ def main():
                         choices=['dot', 'bar', 'line, dotline'],
                         default='line')
     parser.add_argument('-s', '--split', default=' ', type=str)
-    parser.add_argument('-o', '--output', dest='output',
-                        default='output')
+    parser.add_argument('-o', '--output', default='output')
+    parser.add_argument('-r', '--regression', type=int, default=0)
     global arg
     arg = parser.parse_args()
-    markers = MarkerStyle.filled_markers
     data = get_data(arg.data)
     unit, x, y = data
     plt.xlabel(unit['x'], fontsize=16)
     plt.ylabel(unit['y'], fontsize=16)
+    markers = MarkerStyle.filled_markers
+    # 'k' means black
     if arg.type == 'line':
         fmt = 'k-'
     elif arg.type == 'dot':
@@ -76,12 +89,15 @@ def main():
         fmt = 'ko-'
     for i in y.keys():
         if len(y[i][1]) == 0:
-            # 'k' means black
             plt.plot(x, y[i][0], fmt, label=i)
+            if arg.regression != 0:
+                plt.plot(x[:arg.regression], fit(x, y[i][0], arg.regression), 'k-')
         else:
             fmt = 'k-'
             plt.errorbar(x, y[i][0], yerr=y[i][1],
                          fmt=fmt+choice(markers), label=i)
+            if arg.regression != 0:
+                plt.plot(x[:arg.regression], fit(x, y[i][0], arg.regression), 'k-')
     if len(y) > 1:
         plt.legend(loc='best')
     plt.savefig(arg.output+'.png')
