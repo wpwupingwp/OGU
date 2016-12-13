@@ -70,11 +70,12 @@ def main():
     for i in y.keys():
         if len(y[i][1]) == 0:
             # 'k' means black
-            plt.plot(x, y[i], fmt='k-'+choice(markers), label=i)
+            plt.plot(x, y[i][0], 'ko-', label=i)
         else:
             plt.errorbar(x, y[i][0], yerr=y[i][1],
                          fmt='k-'+choice(markers), label=i)
-    plt.legend(loc='best')
+    if len(y) > 1:
+        plt.legend(loc='best')
     plt.savefig(arg.output+'.png')
     plt.show()
 
