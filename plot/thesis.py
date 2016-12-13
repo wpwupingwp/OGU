@@ -66,7 +66,6 @@ def main():
     markers = MarkerStyle.filled_markers
     data = get_data(arg.data)
     unit, x, y = data
-    print(data)
     plt.xlabel(unit['x'], fontsize=16)
     plt.ylabel(unit['y'], fontsize=16)
     if arg.type == 'line':
