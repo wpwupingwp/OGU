@@ -31,6 +31,8 @@ def get_data(data_file):
             axis_unit['x'] = unit
             x = convert(value)
             continue
+        elif label.startswith('#'):
+            continue
         else:
             axis_unit['y'] = unit
         last_line = raw[n-1]
@@ -47,6 +49,7 @@ def main():
     x_value unit 1 2 3
     ylabel unit 23 3 5
     y_sd unit 3 3 3
+    The line starts with # will be ignored.
     """
     parser = argparse.ArgumentParser(description=main.__doc__)
     parser.add_argument('--path', default='./',
