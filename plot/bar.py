@@ -84,6 +84,7 @@ def main():
                 align='center', hatch=choice(patterns))
     if len(y) > 1:
         plt.legend(loc='best')
+    fig.autofmt_xdate()
     plt.savefig(arg.output+'.png')
     plt.show()
 
