@@ -2,6 +2,7 @@
 
 import argparse
 from matplotlib import pyplot as plt
+from random import choice
 
 
 def convert(line, target='float'):
@@ -61,6 +62,7 @@ def main():
     parser.add_argument('data', default='a.txt')
     parser.add_argument('-s', '--split', default=' ', type=str)
     parser.add_argument('-o', '--output', default='output')
+    parser.add_argument('-w', '--width', default='0.35', type=float)
     global arg
     arg = parser.parse_args()
 
@@ -69,15 +71,17 @@ def main():
     fig, ax = plt.subplots()
     plt.xlabel(unit['x'], fontsize=16)
     plt.ylabel(unit['y'], fontsize=16)
-    width = 0.35
+    patterns = ('-', '\\', '', '/', '')
     index = list(range(len(x)))
-    index_with_offset = [i+width*(len(y)-1)/2 for i in index]
+    index_with_offset = [i+arg.width*(len(y)-1)/2 for i in index]
     plt.xticks(index_with_offset, x)
     for n, i in enumerate(y.keys()):
-        index_i = [i+width*n for i in index]
+        index_i = [i+arg.width*n for i in index]
         if len(y[i][1]) == 0:
             y[i][1] = [0] * len(y[i][0])
-        plt.bar(index_i, y[i][0], width, yerr=y[i][1], label=i, align='center')
+        plt.bar(index_i, y[i][0], arg.width, color='white',
+                yerr=y[i][1], ecolor='black', label=i,
+                align='center', hatch=choice(patterns))
     if len(y) > 1:
         plt.legend(loc='best')
     plt.savefig(arg.output+'.png')
