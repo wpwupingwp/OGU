@@ -43,9 +43,9 @@ def get_data(data_file):
         value = convert(line[2:])
         last_line = clean_data[n-1]
         if label == last_line[0]:
-            y[last_line[0]] = (convert(last_line[2:]), convert(value))
+            y[last_line[0]] = [convert(last_line[2:]), convert(value)]
         else:
-            y[label] = (convert(value), list())
+            y[label] = [convert(value), list()]
     return axis_unit, x, y
 
 
@@ -76,7 +76,7 @@ def main():
     for n, i in enumerate(y.keys()):
         index_i = [i+width*n for i in index]
         if len(y[i][1]) == 0:
-            y[i][1] = [0 for i in y[i][i]]
+            y[i][1] = [0] * len(y[i][0])
         plt.bar(index_i, y[i][0], width, yerr=y[i][1], label=i, align='center')
     if len(y) > 1:
         plt.legend(loc='best')
