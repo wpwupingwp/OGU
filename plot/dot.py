@@ -49,9 +49,9 @@ def get_data(data_file):
             axis_unit['y'] = unit
         last_line = clean_data[n-1]
         if label == last_line[0]:
-            y[last_line[0]] = (convert(last_line[2:]), convert(value))
+            y[last_line[0]] = [convert(last_line[2:]), convert(value)]
         else:
-            y[label] = (convert(value), list())
+            y[label] = [convert(value), list()]
     return axis_unit, x, y
 
 
@@ -90,17 +90,14 @@ def main():
     plt.ylabel(unit['y'], fontsize=16)
     markers = MarkerStyle.filled_markers
     # black line with mark
-    fmt = 'ko-'
+    fmt = 'k-'
     for i in y.keys():
         if len(y[i][1]) == 0:
-            plt.plot(x, y[i][0], fmt, label=i)
-            if arg.regression != 0:
-                draw_fit(x, y[i][0])
-        else:
-            plt.errorbar(x, y[i][0], yerr=y[i][1],
-                         fmt=fmt+choice(markers), label=i)
-            if arg.regression != 0:
-                draw_fit(x, y[i][0])
+            y[i][1] = [0] * len(y[i][0])
+        plt.errorbar(x, y[i][0], fmt=fmt+choice(markers),
+                     yerr=y[i][1], label=i)
+        if arg.regression != 0:
+            draw_fit(x, y[i][0])
     if len(y) > 1:
         plt.legend(loc='best')
     plt.savefig(arg.output+'.png')
