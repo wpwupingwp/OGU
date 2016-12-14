@@ -79,9 +79,6 @@ def main():
     parser.add_argument('--path', default='./',
                         help='target path, default is "./"')
     parser.add_argument('data', default='a.txt')
-    parser.add_argument('-t', '--type', dest='type',
-                        choices=['dot', 'bar', 'line, dotline'],
-                        default='line')
     parser.add_argument('-s', '--split', default=' ', type=str)
     parser.add_argument('-o', '--output', default='output')
     parser.add_argument('-r', '--regression', type=int, default=0)
@@ -92,20 +89,14 @@ def main():
     plt.xlabel(unit['x'], fontsize=16)
     plt.ylabel(unit['y'], fontsize=16)
     markers = MarkerStyle.filled_markers
-    # 'k' means black
-    if arg.type == 'line':
-        fmt = 'k-'
-    elif arg.type == 'dot':
-        fmt = 'ko'
-    elif arg.type == 'dot_line':
-        fmt = 'ko-'
+    # black line with mark
+    fmt = 'ko-'
     for i in y.keys():
         if len(y[i][1]) == 0:
             plt.plot(x, y[i][0], fmt, label=i)
             if arg.regression != 0:
                 draw_fit(x, y[i][0])
         else:
-            fmt = 'k-'
             plt.errorbar(x, y[i][0], yerr=y[i][1],
                          fmt=fmt+choice(markers), label=i)
             if arg.regression != 0:
