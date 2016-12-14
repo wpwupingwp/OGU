@@ -46,7 +46,7 @@ print('Standard deviation error: A {0:.3f} B {1:g} C {2:.3f}'.format(
 pivot = fsolve(fit, -0.3)
 plt.ylabel('Activity (%)')
 plt.xlabel('Potential/V')
-plt.plot(t, logistics(t, a, b, c),
+plt.plot(t, logistics(t, a, b, c), color='k',
          label='pivot={0:.3f}mV'.format(pivot[0] * 1000))
 plt.legend(loc='upper right')
 plt.errorbar(xdata, ydata, yerr=yerror, fmt='o', color='k', ecolor='k')
