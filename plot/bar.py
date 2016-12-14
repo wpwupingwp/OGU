@@ -2,8 +2,6 @@
 
 import argparse
 from matplotlib import pyplot as plt
-from matplotlib.markers import MarkerStyle
-from random import choice
 
 
 def convert(line, target='float'):
@@ -16,9 +14,6 @@ def convert(line, target='float'):
 
 
 def get_data(data_file):
-    """
-    Hyposis that there is no SD bar for x axis.
-    """
     clean_data = list()
     with open(data_file, 'r') as raw:
         for line in raw.readlines():
@@ -35,17 +30,17 @@ def get_data(data_file):
     for n, line in enumerate(clean_data):
         label = line[0]
         unit = line[1]
-        value = convert(line[2:])
-        if len(value) == 0:
+        if len(line[2:]) == 0:
             continue
         if label.startswith('x_value'):
             axis_unit['x'] = unit
-            x = convert(value)
+            x = convert(line[2:], 'str')
             continue
         elif label.startswith('#'):
             continue
         else:
             axis_unit['y'] = unit
+        value = convert(line[2:])
         last_line = clean_data[n-1]
         if label == last_line[0]:
             y[last_line[0]] = (convert(last_line[2:]), convert(value))
@@ -63,26 +58,26 @@ def main():
     The line starts with # will be ignored.
     """
     parser = argparse.ArgumentParser(description=main.__doc__)
-    parser.add_argument('--path', default='./',
-                        help='target path, default is "./"')
     parser.add_argument('data', default='a.txt')
     parser.add_argument('-s', '--split', default=' ', type=str)
     parser.add_argument('-o', '--output', default='output')
     global arg
     arg = parser.parse_args()
+
     data = get_data(arg.data)
     unit, x, y = data
+    fig, ax = plt.subplots()
     plt.xlabel(unit['x'], fontsize=16)
     plt.ylabel(unit['y'], fontsize=16)
-    markers = MarkerStyle.filled_markers
-    # black line with mark
-    fmt = 'ko-'
-    for i in y.keys():
+    width = 0.35
+    index = list(range(len(x)))
+    index_with_offset = [i+width*(len(y)-1)/2 for i in index]
+    plt.xticks(index_with_offset, x)
+    for n, i in enumerate(y.keys()):
+        index_i = [i+width*n for i in index]
         if len(y[i][1]) == 0:
-            plt.plot(x, y[i][0], fmt, label=i)
-        else:
-            plt.errorbar(x, y[i][0], yerr=y[i][1],
-                         fmt=fmt+choice(markers), label=i)
+            y[i][1] = [0 for i in y[i][i]]
+        plt.bar(index_i, y[i][0], width, yerr=y[i][1], label=i, align='center')
     if len(y) > 1:
         plt.legend(loc='best')
     plt.savefig(arg.output+'.png')
