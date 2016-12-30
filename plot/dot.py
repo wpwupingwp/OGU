@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import argparse
+import matplotlib
 from matplotlib import pyplot as plt
 from matplotlib.markers import MarkerStyle
 from random import choice
@@ -89,8 +90,10 @@ def main():
     plt.xlabel(unit['x'], fontsize=16)
     plt.ylabel(unit['y'], fontsize=16)
     markers = MarkerStyle.filled_markers
-    # black line with mark
+    # format
     fmt = 'k-'
+    matplotlib.rcParams['lines.linewidth'] = 2
+    matplotlib.rcParams['axes.linewidth'] = 2
     for i in y.keys():
         if len(y[i][1]) == 0:
             y[i][1] = [0] * len(y[i][0])

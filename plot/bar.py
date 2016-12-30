@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import argparse
+import matplotlib
 from matplotlib import pyplot as plt
 from random import choice
 
@@ -71,7 +72,10 @@ def main():
     fig, ax = plt.subplots()
     plt.xlabel(unit['x'], fontsize=16)
     plt.ylabel(unit['y'], fontsize=16)
+    # format
     patterns = ('-', '\\', '', '/', '')
+    matplotlib.rcParams['lines.linewidth'] = 2
+    matplotlib.rcParams['axes.linewidth'] = 2
     index = list(range(len(x)))
     index_with_offset = [i+arg.width*(len(y)-1)/2 for i in index]
     plt.xticks(index_with_offset, x)
@@ -80,8 +84,8 @@ def main():
         if len(y[i][1]) == 0:
             y[i][1] = [0] * len(y[i][0])
         plt.bar(index_i, y[i][0], arg.width, color='white',
-                yerr=y[i][1], ecolor='black', label=i,
-                align='center', hatch=choice(patterns))
+                yerr=y[i][1], ecolor='black', linewidth=3,
+                label=i, align='center', hatch=choice(patterns))
     if len(y) > 1:
         plt.legend(loc='best')
     fig.autofmt_xdate()
