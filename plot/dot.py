@@ -1,10 +1,7 @@
 #!/usr/bin/python3
 
 import argparse
-import matplotlib
 from matplotlib import pyplot as plt
-from matplotlib.markers import MarkerStyle
-from random import choice
 from scipy.stats.stats import linregress
 
 import matplotlib
@@ -95,15 +92,15 @@ def main():
     unit, x, y = data
     plt.xlabel(unit['x'])
     plt.ylabel(unit['y'])
-    markers = MarkerStyle.filled_markers
-    # format
-    fmt = 'k-'
+    markers = ('o', 'v', '^', '<', '>', 's', '8', 'p')
+    # line format
+    fmt = '-'
     matplotlib.rcParams['lines.linewidth'] = 2
     matplotlib.rcParams['axes.linewidth'] = 2
-    for i in y.keys():
+    for i, marker in zip(y.keys(), markers):
         if len(y[i][1]) == 0:
             y[i][1] = [0] * len(y[i][0])
-        plt.errorbar(x, y[i][0], fmt=fmt+choice(markers),
+        plt.errorbar(x, y[i][0], fmt=fmt+marker, markeredgecolor='none',
                      yerr=y[i][1], label=i)
         if arg.regression != 0:
             draw_fit(x, y[i][0])
