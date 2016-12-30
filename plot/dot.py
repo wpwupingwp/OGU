@@ -7,6 +7,12 @@ from matplotlib.markers import MarkerStyle
 from random import choice
 from scipy.stats.stats import linregress
 
+import matplotlib
+matplotlib.rcParams['lines.linewidth'] = 1.5
+matplotlib.rcParams['axes.linewidth'] = 1.5
+matplotlib.rcParams['axes.labelsize'] = 16
+matplotlib.rcParams['font.size'] = 10
+
 
 def convert(line, target='float'):
     if target == 'float':
@@ -87,8 +93,8 @@ def main():
     arg = parser.parse_args()
     data = get_data(arg.data)
     unit, x, y = data
-    plt.xlabel(unit['x'], fontsize=16)
-    plt.ylabel(unit['y'], fontsize=16)
+    plt.xlabel(unit['x'])
+    plt.ylabel(unit['y'])
     markers = MarkerStyle.filled_markers
     # format
     fmt = 'k-'

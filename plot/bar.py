@@ -1,9 +1,14 @@
 #!/usr/bin/python3
 
 import argparse
-import matplotlib
-from matplotlib import pyplot as plt
 from random import choice
+from matplotlib import pyplot as plt
+
+import matplotlib
+matplotlib.rcParams['lines.linewidth'] = 1.5
+matplotlib.rcParams['axes.linewidth'] = 1.5
+matplotlib.rcParams['axes.labelsize'] = 16
+matplotlib.rcParams['font.size'] = 10
 
 
 def convert(line, target='float'):
@@ -70,12 +75,10 @@ def main():
     data = get_data(arg.data)
     unit, x, y = data
     fig, ax = plt.subplots()
-    plt.xlabel(unit['x'], fontsize=16)
-    plt.ylabel(unit['y'], fontsize=16)
+    plt.xlabel(unit['x'])
+    plt.ylabel(unit['y'])
     # format
-    patterns = ('-', '\\', '', '/', '')
-    matplotlib.rcParams['lines.linewidth'] = 2
-    matplotlib.rcParams['axes.linewidth'] = 2
+    patterns = ('//', '\\', '', '/', '')
     index = list(range(len(x)))
     index_with_offset = [i+arg.width*(len(y)-1)/2 for i in index]
     plt.xticks(index_with_offset, x)
@@ -84,7 +87,7 @@ def main():
         if len(y[i][1]) == 0:
             y[i][1] = [0] * len(y[i][0])
         plt.bar(index_i, y[i][0], arg.width, color='white',
-                yerr=y[i][1], ecolor='black', linewidth=3,
+                yerr=y[i][1], ecolor='black', edgecolor='black',
                 label=i, align='center', hatch=choice(patterns))
     if len(y) > 1:
         plt.legend(loc='best')
