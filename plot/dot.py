@@ -1,17 +1,16 @@
 #!/usr/bin/python3
 
 import argparse
-import matplotlib
 from matplotlib import pyplot as plt
-from matplotlib.markers import MarkerStyle
-from random import choice
 from scipy.stats.stats import linregress
 
 import matplotlib
 matplotlib.rcParams['lines.linewidth'] = 1.5
 matplotlib.rcParams['axes.linewidth'] = 1.5
 matplotlib.rcParams['axes.labelsize'] = 16
+matplotlib.rcParams['axes.color_cycle'] = list('crgmybk')
 matplotlib.rcParams['font.size'] = 10
+markers = ('o', 'v', '^', '<', '>', 's', '8', 'p')
 
 
 def convert(line, target='float'):
@@ -95,16 +94,13 @@ def main():
     unit, x, y = data
     plt.xlabel(unit['x'])
     plt.ylabel(unit['y'])
-    markers = MarkerStyle.filled_markers
-    # format
-    fmt = 'k-'
-    matplotlib.rcParams['lines.linewidth'] = 2
-    matplotlib.rcParams['axes.linewidth'] = 2
-    for i in y.keys():
+    # line format
+    fmt = '-'
+    for i, marker in zip(y.keys(), markers):
         if len(y[i][1]) == 0:
             y[i][1] = [0] * len(y[i][0])
-        plt.errorbar(x, y[i][0], fmt=fmt+choice(markers),
-                     yerr=y[i][1], label=i)
+        plt.errorbar(x, y[i][0], fmt=fmt+marker, markeredgecolor='none',
+                     yerr=y[i][1], ecolor='k', label=i)
         if arg.regression != 0:
             draw_fit(x, y[i][0])
     if len(y) > 1:
