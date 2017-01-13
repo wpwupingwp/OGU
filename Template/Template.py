@@ -3,6 +3,8 @@
 import argparse
 from functools import wraps
 from timeit import default_timer as timer
+from tempfile import mkdtemp
+from os import path, mkdir
 
 
 def print_time(function):
@@ -19,25 +21,28 @@ def print_time(function):
 
 @print_time
 def function():
-    print('ok')
+    tmp = mkdtemp()
+    print(tmp)
     pass
 
 
 def main():
     """docstring
     """
-    start_time = timer()
-    parser = argparse.ArgumentParser(description=main.__doc__)
-    parser.add_argument('--path', default='./',
-                        help='target path, default is "./"')
-    parser.print_help()
-    arg = parser.parse_args()
+    parameters = argparse.ArgumentParser(description=main.__doc__)
+    parameters.add_argument('--path', default='./',
+                            help='target path, default is "./"')
+    parameters.add_argument('-o', '--output', default='out',
+                            help='output directory')
+    parameters.print_help()
+    arg = parameters.parse_args()
     # start here
     print(vars(arg))
+    if not path.exists(arg.output):
+        mkdir(arg.output)
     function()
     # end
-    end_time = timer()
-    print('Cost {:.3f}s.\n'.format(end_time-start_time))
+
 
 if __name__ == '__main__':
     main()
