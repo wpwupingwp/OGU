@@ -57,3 +57,7 @@ where D was expanded from range(B, C) and E is related A.
 
 Rename fasta files in one directory according to gene info provided by the
 first record in each file
+
+## pick.py
+
+Pick fasta record according to id list
