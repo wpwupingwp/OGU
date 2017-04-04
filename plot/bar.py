@@ -5,10 +5,10 @@ from random import choice
 from matplotlib import pyplot as plt
 
 import matplotlib
-matplotlib.rcParams['lines.linewidth'] = 1.5
-matplotlib.rcParams['axes.linewidth'] = 1.5
+matplotlib.rcParams['lines.linewidth'] = 2
+matplotlib.rcParams['axes.linewidth'] = 2
 matplotlib.rcParams['axes.labelsize'] = 16
-matplotlib.rcParams['font.size'] = 10
+matplotlib.rcParams['font.size'] = 12
 
 
 def convert(line, target='float'):

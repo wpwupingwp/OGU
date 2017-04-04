@@ -53,26 +53,11 @@ It will generate a new table:
 
 where D was expanded from range(B, C) and E is related A.
 
-## divide.py
-
-Divide fastq file by gene and barcode.
-
-Make sure you don't miss the first line.
-Barcode file looks like this:
-
->    barcode,sample
-
->    ATACG,BOP00001
-
-Primer file looks like this:
-
->    gene,primer,sequence,direction
-
->    rbcL,rbcLF,ATCGATCGATCGA,f
-
->    rbcL,rbcLR,TACGTACGTACG,r
-
 ## add_gene_name.py
 
 Rename fasta files in one directory according to gene info provided by the
 first record in each file
+
+## pick.py
+
+Pick fasta record according to id list
