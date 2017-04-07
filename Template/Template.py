@@ -37,6 +37,8 @@ def main():
     parameters.print_help()
     arg = parameters.parse_args()
     # start here
+    global tmp
+    tmp = mkdtemp()
     print(vars(arg))
     if not path.exists(arg.output):
         mkdir(arg.output)
