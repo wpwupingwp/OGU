@@ -17,7 +17,7 @@ with open(arg.filename, 'r') as input_file:
 output_file = arg.filename + '.filtered'
 handle = open(output_file, 'a')
 
-pattern = re.compile(r'length_(\d+)_cov_(\d+.\d+)_')
+pattern = re.compile(r'length_(\d+)_cov_(\d+.\d+)')
 count = 0
 for i in raw:
     m = pattern.search(i.id)
