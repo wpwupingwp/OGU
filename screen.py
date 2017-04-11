@@ -1,15 +1,16 @@
 #!/usr/bin/python3
 
+import re
+import argparse
 from Bio import SeqIO
 from time import process_time
-import re
-import sys
-import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument('filename', help='fasta file')
-parser.add_argument('-l', '--length', type=int, dest='length', default=0, help='minimal sequence length')
-parser.add_argument('-c', '--cover', type=float, dest='cover', default=0, help='minimal coverage')
+parser.add_argument('-l', '--length', type=int, dest='length',
+                    default=0, help='minimal sequence length')
+parser.add_argument('-c', '--cover', type=float, dest='cover',
+                    default=0, help='minimal coverage')
 arg = parser.parse_args()
 
 with open(arg.filename, 'r') as input_file:
@@ -27,5 +28,6 @@ for i in raw:
         cover = float(m.group(2))
         if length > arg.length and cover > arg.cover:
             SeqIO.write(i, handle, 'fasta')
-            print('No.{0}\tlength: {1}\tCover: {2}'.format(count, length, cover))
+            print('No.{0}\tlength: {1}\tCover: {2}'.format(
+                count, length, cover))
 print('Finished within {:.3f}s.'.format(process_time()))

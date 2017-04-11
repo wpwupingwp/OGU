@@ -17,25 +17,33 @@ You can ask me any question about these programs via
 **wpwupingwp@outlook.com** .
 
 # Requirement
-* python3
 
-	3.5 or above
+1. [python3](https://www.python.org/downloads/)
 
-* Bioython
+    Be sure to install python3 rather than python 2.7. Besides, to use
+    subprocess.call(), you would better install python **3.5** or above.
 
-And notice that all scripts were just tested on Linux system, although it may works fine on Windows.
+2. [biopython](http://biopython.org/wiki/Download)
+
+3. [BLAST Suite](https://blast.ncbi.nlm.nih.gov/Blast.cgi?PAGE_TYPE=BlastDocs&DOC_TYPE=Download)
+
+And notice that all scripts were just tested on Linux system, although
+theoretically they may works fine on Windows.
 
 ## filter.py
 
-Use info in **wanted** to filter fasta file, the output sequences contain **wanted** in their id.
+Use info in **wanted** to filter fasta file, the output sequences contain
+**wanted** in their id.
 
 ## get_whole.py
 
-Give fragment sequence, return whole length of specific input fragment from given big fasta file via BLAST.
+Give fragment sequence, return whole length of specific input fragment from
+given big fasta file via BLAST.
 
 ## rename.py
 
-Generate fasta file with special id format from given genbank format file ID looks like this:
+Generate fasta file with special id format from given genbank format file ID
+looks like this:
 
 >organism|specimen_voucher|isolate|gene_name_series
 
@@ -61,3 +69,11 @@ first record in each file
 ## pick.py
 
 Pick fasta record according to id list
+
+## screen.py
+
+Screen sequence assembled by _spades_ according to sequence length and
+coverage info in sequence id.
+
+**Warning: This program use regular expression to recognize infomation, it may
+generate wrong output when it was used on other sequence if format.**
