@@ -23,4 +23,4 @@ for pair in file_list:
                 same += 1
             else:
                 handle.write(line[0].seq[:8]+','+line[1].seq[:8]+'\n')
-        print(','.join([pair+F_END, pair+R_END, str(total), str(same)]))
+        print('{0},{1}\n'.format(pair+F_END, pair+R_END, total, same))
