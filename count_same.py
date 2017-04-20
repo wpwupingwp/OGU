@@ -11,6 +11,7 @@ list_raw = glob('*.fastq')
 file_list = {i[:-8] for i in list_raw}
 print('Forward,Reverse,Total,Same')
 for pair in file_list:
+    handle = open(pair+'wrong.csv', 'w')
     with open(pair+F_END, 'r') as F, open(pair+R_END, 'r') as R:
         same = 0
         total = 0
@@ -21,6 +22,5 @@ for pair in file_list:
             if line[0].seq[:8] == line[1].seq[:8]:
                 same += 1
             else:
-                pass
-                # print(line[0].seq[:8], line[1].seq[:8])
+                handle.write(line[0].seq[:8]+','+line[1].seq[:8]+'\n')
         print(','.join([pair+F_END, pair+R_END, str(total), str(same)]))
