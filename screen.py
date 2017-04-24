@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+# Screen contigs according to coverage and length
 import re
 import argparse
 from Bio import SeqIO
