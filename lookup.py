@@ -1,23 +1,8 @@
 #!/usr/bin/python3
 
 import argparse
-from functools import wraps
-from timeit import default_timer as timer
 
 
-def print_time(function):
-    @wraps(function)
-    def wrapper(*args, **kargs):
-        start = timer()
-        result = function(*args, **kargs)
-        end = timer()
-        print('The function {0} Cost {1:3f}s.\n'.format(
-            function.__name__, end-start))
-        return result
-    return wrapper
-
-
-@print_time
 def reformat(want):
     if want[0].startswith('bop'):
         want = [i.upper() for i in want]
@@ -25,37 +10,46 @@ def reformat(want):
         pass
     else:
         want = ['BOP'+i for i in want]
-    return set(want)
+    return {i: 0 for i in want}
 
 
-@print_time
 def query():
     want = list()
     if arg.query_file is not None:
-        with open(arg.query_list, 'r') as raw:
+        with open(arg.query_file, 'r', encoding='utf-8') as raw:
             for item in raw.read().split(','):
                 want.append(item.strip())
-    if arg.query_list is not None:
-        for item in arg.query_list.split(','):
+    if arg.query_list:
+        raw = input('Input bop list, seperate by English comma:\n')
+        for item in raw.split(','):
             want.append(item.strip())
     want = reformat(want)
-    print(want)
 
-    handle = open(arg.output, 'w')
-    with open(DB, 'r') as data:
+    handle = open(arg.output, 'w', encoding='utf-8')
+    with open(DB, 'r', encoding='utf-8') as data:
         for n, line in enumerate(data):
             bop = line.split(',')[0].strip()
             if n == 0:
+                print(line)
                 handle.write(line)
             if bop in want:
+                print(line)
                 handle.write(line)
+                want[bop] += 1
     handle.close()
+    for name, n in want.items():
+        if n == 0:
+            print('{0} not found!'.format(name))
+        elif n > 1:
+            print('Found duplicate records for {0}!'.format(name))
+        else:
+            pass
 
 
 def main():
     global arg
     arg = argparse.ArgumentParser()
-    arg.add_argument('-q', dest='query_list',
+    arg.add_argument('-q', dest='query_list', action='store_true',
                      help='query id, seperate by English comma')
     arg.add_argument('-l', dest='query_file',
                      help='query id list file, csv format')
@@ -63,12 +57,14 @@ def main():
                      help='result file')
     arg.print_help()
     arg = arg.parse_args()
+    print(arg)
     global DB
-    DB = './DNABank-v3.csv'
+    DB = 'DNABank-v3.csv'
     # start here
     if arg.query_file is None and arg.query_list is None:
         raise Exception('Wrong input!')
     query()
+    print('Done. Output was written into {0}'.format(arg.output))
     # end
 
 
