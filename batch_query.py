@@ -13,14 +13,14 @@ def get_list(list_file):
     return down_list
 
 
-def down(taxon_name, min_len, max_len):
+def down(taxon_name):
     EMAIL = 'wpwupingwp@outlook.com'
     Entrez.email = EMAIL
     FILTER = 'plastid'
     # set 'noexp' to fetch only this level
     EXP = 'exp'
     query = '''{}[Organism:{}] AND ({}[filter] AND ("{}"[SLEN] :
-    "{}"[SLEN]))'''.format(taxon_name, EXP, FILTER, min_len, max_len)
+    "{}"[SLEN]))'''.format(taxon_name, EXP, FILTER, arg.min_len, arg.max_len)
     print(query)
     handle = Entrez.read(Entrez.esearch(db='nuccore', term=query,
                                         usehistory='y',))
@@ -29,23 +29,23 @@ def down(taxon_name, min_len, max_len):
                                    query_key=handle['QueryKey'],
                                    rettype='gb',
                                    retmode='text')
-    with open('test', 'w') as output_file:
+    file_name = os.path.join(arg.out, taxon_name+'.gb')
+    with open(file_name, 'w') as output_file:
             output_file.write(genome_content.read())
 
 
 def main():
+    global arg
     arg = argparse.ArgumentParser()
     arg.add_argument('-l', dest='list_file',
                      help='Taxonomy name list, seperate by line')
-    arg.add_argument('-o', dest='output', default='out', help='output path')
+    arg.add_argument('-o', dest='out', default='out', help='output path')
     arg.add_argument('-min_len', default=10, type=int, help='minium length')
-    arg.add_argument('-max_len', default=50000, type=int,
+    arg.add_argument('-max_len', default=200000, type=int,
                      help='maximum length')
     arg = arg.parse_args()
     down_list = get_list(arg.list_file)
-    print(1)
-    down(down_list[1], arg.min_len, arg.max_len)
-    print(2)
+    down(down_list[1])
 
 
 if __name__ == '__main__':
