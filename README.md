@@ -30,22 +30,7 @@ You can ask me any question about these programs via
 And notice that all scripts were just tested on Linux system, although
 theoretically they may works fine on Windows.
 
-## filter.py
-
-Use info in **wanted** to filter fasta file, the output sequences contain
-**wanted** in their id.
-
-## get_whole.py
-
-Give fragment sequence, return whole length of specific input fragment from
-given big fasta file via BLAST.
-
-## rename.py
-
-Generate fasta file with special id format from given genbank format file ID
-looks like this:
-
->organism|specimen_voucher|isolate|gene_name_series
+# This folder
 
 ## vlookup_assistant.py
 
@@ -77,3 +62,24 @@ coverage info in sequence id.
 
 **Warning: This program use regular expression to recognize infomation, it may
 generate wrong output when it was used on other sequence if format.**
+
+# old
+
+Some old code.
+
+# cp
+
+Some program to deal with genbank files, most of them belongs to chloroplast.
+
+# plot
+
+Use *matplotlib* to draw figures for my master thesis.
+
+# inhibitor
+
+Some code to analyze data from microreader. For Cystathionine beta-synthase
+inhibitor project.
+
+# Template
+
+Some useful code fragments.
