@@ -3,10 +3,7 @@
 with open('/usr/share/dict/words', 'r') as In:
     wordlist = In.read().split(sep='\n')
 vowel = set('aeiouAEIOU')
-under = set('underUNDER')
 all_vowel = list()
-all_under = list()
-
 
 def is_all_vowel(word, letters):
     for letter in word:
@@ -18,10 +15,8 @@ def is_all_vowel(word, letters):
 for word in wordlist:
     if is_all_vowel(word, vowel) is True:
         all_vowel.append(word)
-    if is_all_vowel(word, under) is True:
-        all_under.append(word)
 
-all_under.sort(key=lambda x: len(x))
-print('word length')
-for word in all_under:
+all_vowel.sort(key=lambda x: len(x))
+print('word\tlength')
+for word in all_vowel:
     print(word, len(word))
