@@ -7,5 +7,7 @@ from glob import glob
 for fasta in glob('*.fa*'):
     print(fasta)
     for record in SeqIO.parse(fasta, 'fasta'):
-        print(record.id, '\t', len(record.seq))
+        length = len(record)
+        if length > 10000:
+            print(record.id, '\t', length)
     print()
