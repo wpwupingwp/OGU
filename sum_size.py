@@ -2,16 +2,27 @@
 
 import re
 from glob import glob
-from os import rename
+from Bio import SeqIO
 
-file_list = glob('*.*')
-pattern = re.compile(r'size[-_](\d+)')
+file_list = list(glob('*.fasta'))
+pattern = re.compile(r'(\d+);$')
 for fasta in file_list:
-    total = 0
-    with open(fasta, 'r') as raw:
-        for line in raw:
-            if line.startswith('>'):
-                match = pattern.search(line)
-                if match is not None:
-                    total += int(match.group(1))
-    rename(fasta, '{}-sum-{}.fasta'.format(fasta, total))
+    new = list()
+    for record in SeqIO.parse(fasta, 'fasta'):
+        seqs = re.search(pattern, record.id).group(1)
+        seqs = int(seqs)
+        print(seqs)
+        new.append([seqs, record])
+    # descending
+    new.sort(key=lambda x: x[0], reverse=True)
+
+    for m, n in enumerate(new):
+        n[0] = m + 1
+    for i in new:
+        print(i)
+    for n in range(1, len(new)):
+        with open('{}.fasta'.format(n), 'a') as merge, open(
+                '{}.{}'.format(fasta, n), 'a') as split:
+            SeqIO.write(new[n][1], merge, 'fasta')
+            SeqIO.write(new[n][1], split, 'fasta')
+finish = input('Finish.')
