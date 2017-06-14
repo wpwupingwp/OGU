@@ -45,7 +45,6 @@ def main():
             print('\t'.join(id_list))
             print()
     with open(argv[1]+'.new', 'a') as output_file:
-        print(output)
         SeqIO.write(output, output_file, file_format)
     end = timer()
     print('Total {} sequences in {} format.'.format(before, file_format))
