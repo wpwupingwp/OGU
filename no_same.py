@@ -37,10 +37,9 @@ def main():
             hash_dict[hash_text] = [record, ]
     print('Duplicated sequences:')
     for record in hash_dict.values():
-        if len(record) == 1:
-            after += 1
-            output.extend(record)
-        else:
+        output.append(record[0])
+        after += 1
+        if len(record) != 1:
             id_list = [i.id for i in record]
             print('\t'.join(id_list))
             print()
