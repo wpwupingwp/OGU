@@ -2,6 +2,7 @@
 
 from Bio import SeqIO
 from sys import argv
+from timeit import default_timer as timer
 import hashlib
 
 
@@ -17,9 +18,11 @@ def test_format(file_name):
 
 
 def main():
+    start = timer()
     file_format = test_format(argv[1])
     raw = SeqIO.parse(argv[1], file_format)
     hash_dict = dict()
+    output = list()
     before = 0
     after = 0
     for record in raw:
@@ -32,17 +35,22 @@ def main():
             hash_dict[hash_text].append(record)
         else:
             hash_dict[hash_text] = [record, ]
+    print('Duplicated sequences:')
     for record in hash_dict.values():
         if len(record) == 1:
             after += 1
-            with open(argv[1]+'.new', 'a') as output:
-                SeqIO.write(record, output, file_format)
+            output.extend(record)
         else:
             id_list = [i.id for i in record]
-            print('Duplicated sequences:')
             print('\t'.join(id_list))
+            print()
+    with open(argv[1]+'.new', 'a') as output_file:
+        print(output)
+        SeqIO.write(output, output_file, file_format)
+    end = timer()
     print('Total {} sequences in {} format.'.format(before, file_format))
     print('{} sequences left in the file {}.new.'.format(after, argv[1]))
+    print('Cost {:.3f} seconds.'.format(end-start))
 
 
 if __name__ == '__main__':
