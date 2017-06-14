@@ -32,6 +32,17 @@ theoretically they may works fine on Windows.
 
 # This folder
 
+## no_same.py
+
+Remove identical sequence in give fasta/nexus file. New file will be write
+into ".new" with the same format of input file.
+
+Duplicated sequences will be printed on screen.
+
+Usage:
+
+> python3 no_same.py input_file
+
 ## vlookup_assistant.py
 
 Expand a given table according to range.
