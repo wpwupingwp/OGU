@@ -1,10 +1,11 @@
 #!/usr/bin/python3
 
 import argparse
+import os
+from collections import Counter
 from functools import wraps
 from timeit import default_timer as timer
-from tempfile import mkdtemp
-from os import path, mkdir
+from Bio import AlignIO
 
 
 def print_time(function):
@@ -20,30 +21,65 @@ def print_time(function):
 
 
 @print_time
-def function():
-    tmp = mkdtemp()
-    print(tmp)
-    pass
+def test_format(file_name):
+    with open(file_name, 'r') as _:
+        line = _.readline()
+        if line.startswith('>'):
+            return 'fasta'
+        elif line.startswith('#'):
+            return 'nexus'
+        else:
+            raise ValueError('Only support fasta and nexus! Quit now.')
+
+
+@print_time
+def read_alignment(input_file, file_format):
+    alignment = AlignIO.read(input_file, file_format)
+    return alignment, len(alignment), alignment.get_alignment_length()
+
+
+@print_time
+def remove_gap(alignment, length, width):
+    useful = 'ATCG'
+    empty = '-N'
+    # get alignment head
+    new = alignment[:, 0:0]
+    for index in range(width):
+        column = alignment[:, index:(index+1)]
+        string = column[:, 0]
+        string = string.upper()
+        count = Counter(string)
+        for letter in empty:
+            if count[letter] == length:
+                print('Empty in column {}'.format(index))
+                break
+            elif (count[letter] + 1) == length:
+                print('Only one in column {}'.format(index))
+                break
+            else:
+                new = new + column
+                break
+        for letter in useful:
+            if count[letter] == length:
+                print('All same in column {}'.format(index))
+                break
+    return new, new.get_alignment_length()
 
 
 def main():
     """docstring
     """
     parameters = argparse.ArgumentParser(description=main.__doc__)
-    parameters.add_argument('--path', default='./',
-                            help='target path, default is "./"')
-    parameters.add_argument('-o', '--output', default='out',
+    parameters.add_argument('input', help='input file')
+    parameters.add_argument('-o', '--output', default='new.fasta',
                             help='output directory')
-    parameters.print_help()
     arg = parameters.parse_args()
-    # start here
-    global tmp
-    tmp = mkdtemp()
-    print(vars(arg))
-    if not path.exists(arg.output):
-        mkdir(arg.output)
-    function()
-    # end
+
+    file_format = test_format(arg.input)
+    alignment, length, width = read_alignment(arg.input, file_format)
+    new_alignment, new_width = remove_gap(alignment, length, width)
+    AlignIO.write(new_alignment, arg.output, 'fasta')
+    print('Remove {} columns.'.format(width-new_width))
 
 
 if __name__ == '__main__':
