@@ -15,10 +15,11 @@ with open(argv[1], 'r') as input_file:
             for column in range(len(head)):
                 item = line[column]
                 if item not in sample_info:
-                    sample_info[item] = [[i, 0] for i in head]
-                sample_info[item][column][1] = 1
+                    sample_info[item] = [[i, '0'] for i in head]
+                sample_info[item][column][1] = '1'
 sample_info.pop('')
-print('Sample', '\t'.join(head))
-for i in sample_info.keys():
-    line = [j[1] for j in sample_info[i]]
-    print(i, line)
+with open('count-{}'.format(argv[1]), 'w') as output:
+    output.write('Sample,{}\n'.format(','.join(head)))
+    for i in sample_info.keys():
+        line = [j[1] for j in sample_info[i]]
+        output.write('{},{}\n'.format(i, ','.join(line)))
