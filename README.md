@@ -30,7 +30,32 @@ You can ask me any question about these programs via
 And notice that all scripts were just tested on Linux system, although
 theoretically they may works fine on Windows.
 
+# Batch
+
+Many of programs in this repository support batch mode. See examples below.
+Note that "\*.fasta" is files you want to process, and _i_ is variable you can
+use other name if you want. And parameters of program was omitted.
+
+## Microsoft Windows
+
+> for i in (\*.fasta) do python program.py %i
+
+## Linux
+
+> for i in \*.fasta;do python3 program.py $i
+
 # This folder
+
+## trim.py
+
+Trim fragment in given fasta file, replace trimmed bases with 'N'.
+
+Usage:
+
+> python3 trim.py input.fasta start-end
+
+Here _start_ and _end_ are integers, and end could larger than length of
+sequence if you want to cut off sequence's tail.
 
 ## no_same.py
 
