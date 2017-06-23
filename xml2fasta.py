@@ -2,10 +2,12 @@
 
 from Bio import SearchIO
 from Bio import SeqIO
+from timeit import default_timer as timer
 import argparse
 
 
 def main():
+    start = timer()
     arg = argparse.ArgumentParser()
     arg.add_argument('input', help='input BLAST result (xml format)')
     arg.add_argument('-s', '--simple', action='store_true',
@@ -16,7 +18,7 @@ def main():
 
     xml = SearchIO.parse(arg.input, 'blast-xml')
     handle_tsv = open('{}.tsv'.format(arg.input), 'w')
-    handle_tsv.write('Query id\tbitscore\tSpecies name\thit id\n')
+    handle_tsv.write('Query\tbitscore\tSpecies name\thit\n')
     for query in xml:
         if query.description != '':
             query.id = ''.join([query.id, query.description])
@@ -46,6 +48,8 @@ def main():
                     break
             if arg.very_simple:
                 break
+    end = timer()
+    print('Cost {:.3f} seconds.'.format(end-start))
 
 
 if __name__ == '__main__':

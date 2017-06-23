@@ -1,9 +1,11 @@
 from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
+from timeit import default_timer as timer
 import argparse
 
 
 def main():
+    start = timer()
     arg = argparse.ArgumentParser()
     arg.add_argument('input', help='input fasta file')
     arg.add_argument('location', help='fragment to cut, "x-y"')
@@ -22,6 +24,8 @@ def main():
             else:
                 new = record[0:start] + record[end:]
             SeqIO.write(new, output, 'fasta')
+    end = timer()
+    print('Cost {:.3f} seconds.'.format(end-start))
 
 
 if __name__ == '__main__':
