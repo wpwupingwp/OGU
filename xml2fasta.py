@@ -7,6 +7,7 @@ from sys import argv
 
 xml = SearchIO.parse(argv[1], 'blast-xml')
 handle_tsv = open('{}.tsv'.format(argv[1]), 'w')
+handle_tsv.write('Query id\tbitscore\tSpecies name\thit id\n')
 for query in xml:
     if query.description != '':
         query.id = ''.join([query.id, query.description])
