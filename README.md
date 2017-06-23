@@ -48,14 +48,16 @@ use other name if you want. And parameters of program was omitted.
 
 ## trim.py
 
-Trim fragment in given fasta file, replace trimmed bases with 'N'.
+Trim fragment in given fasta file, or replace trimmed bases with 'N'.
 
 Usage:
 
-> python3 trim.py input.fasta start-end
+> python3 trim.py input.fasta start-end -n
 
 Here _start_ and _end_ are integers, and end could larger than length of
 sequence if you want to cut off sequence's tail.
+
+If you set option "-n", then all bases you want to trim will become "N".
 
 ## no_same.py
 
