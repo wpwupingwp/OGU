@@ -4,6 +4,7 @@ from Bio import SearchIO
 from Bio import SeqIO
 from timeit import default_timer as timer
 import argparse
+import re
 
 
 def main():
@@ -16,6 +17,9 @@ def main():
                      help='only handle first hit')
     arg = arg.parse_args()
 
+    def safe(old):
+        return re.sub(r'\W', '_', old)
+
     xml = SearchIO.parse(arg.input, 'blast-xml')
     handle_tsv = open('{}.tsv'.format(arg.input), 'w')
     handle_tsv.write('Query\tbitscore\tSpecies name\thit\n')
@@ -26,7 +30,7 @@ def main():
             with open(arg.input+'_not_found.log', 'a') as not_found:
                 not_found.write('{} not found!\n'.format(query.id))
             continue
-        handle = open('{}.fasta'.format(query.id), 'w')
+        handle = open('{}.fasta'.format(safe(query.id)), 'w')
         SeqIO.write(query[0][0].query, handle, 'fasta')
         for hit in query:
             for hsp in hit:
