@@ -6,12 +6,13 @@ from sys import argv
 
 
 xml = SearchIO.parse(argv[1], 'blast-xml')
+handle_tsv = open('{}.tsv'.format(argv[1]), 'w')
 for query in xml:
     if query.description != '':
         query.id = ''.join([query.id, query.description])
-    handle_log = open('{}.log'.format(query.id), 'w')
     if len(query) == 0:
-        handle_log.write('{} not found!\n'.format(query.id))
+        with open(argv[1]+'_not_found.log', 'a') as not_found:
+            not_found.write('{} not found!\n'.format(query.id))
         continue
     handle = open('{}.fasta'.format(query.id), 'w')
     SeqIO.write(query[0][0].query, handle, 'fasta')
@@ -22,11 +23,11 @@ for query in xml:
                 species_name = '_'.join(species_name[:3])
             else:
                 species_name = '_'.join(species_name[:2])
-            info = '{}#{}#{}#{}_{}\n'.format(
+            info = '{}\t{}\t{}\t{}{}\n'.format(
                 query.id,
                 hsp.bitscore,
                 species_name,
-                hsp.hit.description, hsp.hit.id)
-            handle_log.write(info)
+                hsp.hit.id, hsp.hit.description)
+            handle_tsv.write(info)
             hsp.hit.id = '{}|{}'.format(hsp.bitscore, hsp.hit.id)
             SeqIO.write(hsp.hit, handle, 'fasta')
