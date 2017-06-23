@@ -21,7 +21,8 @@ for query in xml:
         for hsp in hit:
             species_name = hsp.hit.description.split(' ')
             if species_name[0].isupper():
-                species_name = '_'.join(species_name[:3])
+                species_name = '{}_{}_{}'.format(
+                    *species_name[1:3], species_name[0].replace(':', ''))
             else:
                 species_name = '_'.join(species_name[:2])
             info = '{}\t{}\t{}\t{}{}\n'.format(
