@@ -46,6 +46,41 @@ use other name if you want. And parameters of program was omitted.
 
 # This folder
 
+## xml2fasta.py
+
+Convert xml format BLAST result to fasta format and output result table.
+
+
+### Usage
+
+1. BLAST your sequences.
+2. Download *xml* format result.
+3. Run
+
+> python3 xml2fasta.py BlastResult.xml
+
+> python3 xml2fasta.py BlastResult.xml -s
+
+> python3 xml2fasta.py BlastResult.xml -ss
+
+*If you use option "-s", it will only proces first hsp for each hit in every
+query sequence.*
+
+*If you use option "-ss", it will only process first hsp of first hit for each
+query sequence.*
+
+Note that for Microsoft Windows user, maybe you should replace "python3" with
+"python".
+
+### Result
+
+- fasta file. The first sequence is your query sequence, and others are
+  matched fragment sequences of the query.
+- tsv file. Table for simple analyze.
+- NotFound.log Hint for those query sequences did not found match by BLAST.
+
+
+
 ## trim.py
 
 Trim fragment in given fasta file, or replace trimmed bases with 'N'.
