@@ -16,7 +16,9 @@ for fasta in file_list:
     new.sort(key=lambda x: x[0], reverse=True)
     for index, record in enumerate(new):
         with open('{}.fasta'.format(index+1), 'a') as merge, open(
-                '{}.{}'.format(fasta, index+1), 'a') as split:
+                '{}.{}'.format(fasta, index+1), 'a') as split, open(
+                    '{}.log'.format(fasta), 'a') as log:
             SeqIO.write(record[1], merge, 'fasta')
             SeqIO.write(record[1], split, 'fasta')
+            log.write('{}\t{}\t{}\n'.format(fasta, index+1, record[0]))
 finish = input('Finish.')
