@@ -9,17 +9,14 @@ pattern = re.compile(r'(\d+);$')
 for fasta in file_list:
     new = list()
     for record in SeqIO.parse(fasta, 'fasta'):
-        seqs = re.search(pattern, record.id).group(1)
-        seqs = int(seqs)
-        new.append([seqs, record])
+        n = re.search(pattern, record.id).group(1)
+        n = int(n)
+        new.append([n, record])
     # descending
     new.sort(key=lambda x: x[0], reverse=True)
-
-    for m, n in enumerate(new):
-        n[0] = m + 1
-    for n in range(len(new)):
-        with open('{}.fasta'.format(n+1), 'a') as merge, open(
-                '{}.{}'.format(fasta, n+1), 'a') as split:
-            SeqIO.write(new[n][1], merge, 'fasta')
-            SeqIO.write(new[n][1], split, 'fasta')
+    for index, record in enumerate(new):
+        with open('{}.fasta'.format(index+1), 'a') as merge, open(
+                '{}.{}'.format(fasta, index+1), 'a') as split:
+            SeqIO.write(record[1], merge, 'fasta')
+            SeqIO.write(record[1], split, 'fasta')
 finish = input('Finish.')
