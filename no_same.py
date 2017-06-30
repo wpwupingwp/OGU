@@ -36,13 +36,14 @@ def main():
         else:
             hash_dict[hash_text] = [record, ]
     print('Duplicated sequences:')
+    log = open(argv[1]+'.log', 'w')
     for record in hash_dict.values():
         output.append(record[0])
         after += 1
         if len(record) != 1:
             id_list = [i.id for i in record]
-            print('\t'.join(id_list))
-            print()
+            log.write('\t'.join(id_list)+'\n')
+    log.write('Before\t{}\tAfter\t{}\n'.format(before, after))
     with open(argv[1]+'.new', 'a') as output_file:
         SeqIO.write(output, output_file, file_format)
     end = timer()
