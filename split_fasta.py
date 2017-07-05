@@ -33,7 +33,7 @@ def split(fasta, size, out, file_format):
 
 
 def parse_args():
-    arg = argparse.ArgumentParser(description=main.__doc__)
+    arg = argparse.ArgumentParser()
     arg.add_argument('-i', '--input', required=True, help='input file')
     arg.add_argument('-s', '--size', type=int, default=100000,
                      help='how many sequences one file have')
@@ -43,8 +43,6 @@ def parse_args():
 
 
 def main():
-    """docstring
-    """
     start = timer()
     arg = parse_args()
 
