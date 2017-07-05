@@ -46,6 +46,18 @@ use other name if you want. And parameters of program was omitted.
 
 # This folder
 
+## split.py
+
+Split fasta or fastq files according to given "-s".
+
+### Usage
+
+> python3 split.py -i input_file -s 10000000 -o output_path
+
+It only support fasta or fastq file. The option "-s" means how many sequences
+you want in one file. The default value is 100000. You can change output
+folder by "-o".
+
 ## xml2fasta.py
 
 Convert xml format BLAST result to fasta format and output result table.
