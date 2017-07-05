@@ -1,10 +1,9 @@
 #!/usr/bin/python3
 
 import argparse
+import os
 from functools import wraps
 from timeit import default_timer as timer
-from tempfile import mkdtemp
-from os import path, mkdir
 
 
 def print_time(function):
@@ -21,27 +20,24 @@ def print_time(function):
 
 @print_time
 def function():
-    tmp = mkdtemp()
-    print(tmp)
     pass
+
+
+def parse_args():
+    arg = argparse.ArgumentParser(description=main.__doc__)
+    arg.add_argument('-o', '--out', default='out',
+                     help='output directory')
+    arg.print_help()
+    return arg.parse_args()
 
 
 def main():
     """docstring
     """
-    parameters = argparse.ArgumentParser(description=main.__doc__)
-    parameters.add_argument('--path', default='./',
-                            help='target path, default is "./"')
-    parameters.add_argument('-o', '--output', default='out',
-                            help='output directory')
-    parameters.print_help()
-    arg = parameters.parse_args()
+    arg = parse_args()
     # start here
-    global tmp
-    tmp = mkdtemp()
-    print(vars(arg))
-    if not path.exists(arg.output):
-        mkdir(arg.output)
+    if not os.path.exists(arg.out):
+        os.mkdir(arg.out)
     function()
     # end
 
