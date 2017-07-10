@@ -58,6 +58,14 @@ It only support fasta or fastq file. The option "-s" means how many sequences
 you want in one file. The default value is 100000. You can change output
 folder by "-o".
 
+## convert.py
+
+Convert file format.
+
+Usage:
+
+> python3 convert.py old_file_name old_format new_file_name new_format
+
 ## xml2fasta.py
 
 Convert xml format BLAST result to fasta format and output result table.
