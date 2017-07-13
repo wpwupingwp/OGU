@@ -21,7 +21,7 @@ You can ask me any question about these programs via
 1. [python3](https://www.python.org/downloads/)
 
     Be sure to install python3 rather than python 2.7. Besides, to use
-    subprocess.call(), you would better install python **3.5** or above.
+    subprocess.run(), you would better install python **3.5** or above.
 
 2. [biopython](http://biopython.org/wiki/Download)
 
@@ -45,6 +45,22 @@ use other name if you want. And parameters of program was omitted.
 > for i in \*.fasta;do python3 program.py $i
 
 # This folder
+
+## parallel.py
+
+Parallel run other programs.
+
+Usage:
+
+> python3 parallel.py "command %i" "file"
+
+Make sure you do not omit quotation mark.
+
+The "%i" in "command" is the filename. You can use glob pattern in "file".
+
+### example
+
+> python3 parallel.py "python3 gb2fasta.py %i" "*.gb" 
 
 ## split.py
 
