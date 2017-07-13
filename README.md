@@ -44,6 +44,12 @@ use other name if you want. And parameters of program was omitted.
 
 > for i in \*.fasta;do python3 program.py $i
 
+# help information
+
+Just type:
+
+> python3 program.py -h
+
 # This folder
 
 ## parallel.py
@@ -60,7 +66,7 @@ The "%i" in "command" is the filename. You can use glob pattern in "file".
 
 ### example
 
-> python3 parallel.py "python3 gb2fasta.py %i" "*.gb" 
+> python3 parallel.py "python3 gb2fasta.py %i" "\*.gb" 
 
 ## split.py
 
