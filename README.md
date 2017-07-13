@@ -44,7 +44,7 @@ use other name if you want. And parameters of program was omitted.
 
 > for i in \*.fasta;do python3 program.py $i
 
-# help information
+# Help information
 
 Just type:
 
@@ -56,7 +56,7 @@ Just type:
 
 Parallel run other programs.
 
-Usage:
+### Usage
 
 > python3 parallel.py "command %i" "file"
 
@@ -72,6 +72,7 @@ The "%i" in "command" is the filename. You can use glob pattern in "file".
 
 Split fasta or fastq files according to given "-s".
 
+
 ### Usage
 
 > python3 split.py -i input_file -s 10000000 -o output_path
@@ -80,18 +81,25 @@ It only support fasta or fastq file. The option "-s" means how many sequences
 you want in one file. The default value is 100000. You can change output
 folder by "-o".
 
+### Example
+
+> python3 split.py -i pe150.fastq -s 100000 -o pe150\_split
+
 ## convert.py
 
 Convert file format.
 
-Usage:
+### Usage
 
 > python3 convert.py old_file_name old_format new_file_name new_format
+
+### Example
+
+> python3 convert.py Zea.nex nexus Zea.fasta fasta
 
 ## xml2fasta.py
 
 Convert xml format BLAST result to fasta format and output result table.
-
 
 ### Usage
 
@@ -121,13 +129,11 @@ Note that for Microsoft Windows user, maybe you should replace "python3" with
 - tsv file. Table for simple analyze.
 - NotFound.log Hint for those query sequences did not found match by BLAST.
 
-
-
 ## trim.py
 
 Trim fragment in given fasta file, or replace trimmed bases with 'N'.
 
-Usage:
+### Usage
 
 > python3 trim.py input.fasta start-end -n
 
@@ -136,6 +142,10 @@ sequence if you want to cut off sequence's tail.
 
 If you set option "-n", then all bases you want to trim will become "N".
 
+### Example
+
+> python3 trim.py rbcL.fasta 200-250
+
 ## no_same.py
 
 Remove identical sequence in give fasta/nexus file. New file will be write
@@ -143,9 +153,13 @@ into ".new" with the same format of input file.
 
 Duplicated sequences will be printed on screen.
 
-Usage:
+## Usage
 
 > python3 no_same.py input_file
+
+### Example
+
+> python3 no_same.py cbs.fasta
 
 ## vlookup_assistant.py
 
