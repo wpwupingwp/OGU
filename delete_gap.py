@@ -1,11 +1,11 @@
 #!/usr/bin/python3
 
-import argparse
-import os
 from collections import Counter
 from functools import wraps
 from timeit import default_timer as timer
 from Bio import AlignIO
+import argparse
+import numpy as np
 
 
 def print_time(function):
@@ -30,6 +30,12 @@ def test_format(file_name):
             return 'nexus'
         else:
             raise ValueError('Only support fasta and nexus! Quit now.')
+
+
+@print_time
+def convert(old):
+    new = np.array([list(i) for i in old])
+    return new
 
 
 @print_time
