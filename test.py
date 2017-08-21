@@ -74,6 +74,14 @@ def read3():
     a = a[1:]
     return a
 
+@print_time
+def read4():
+    a = list()
+    with open('./aln', 'r') as raw:
+        for line in SeqIO.FastaIO.SimpleFastaParser(raw):
+            a.append(line[1])
+    return a
+
 
 @print_time
 def main():
@@ -83,6 +91,7 @@ def main():
     If not use Biopython's fasta reader, convert is 70x faster and numpy is
     17x faster than old. At that time, order 'F' and order 'C' have slight
     difference.
+    SeqIO.FastaIO.SimpleFastaParser is not helping.
     """
     # start here
     # a = read()
@@ -95,6 +104,9 @@ def main():
     a = convert(a, order='F')
     test_np(a)
     a = read3()
+    a = convert(a, order='F')
+    test_np(a)
+    a = read4()
     a = convert(a, order='F')
     test_np(a)
     # end
