@@ -66,13 +66,19 @@ def remove_gap(alignment, length, width):
     return new, new.get_alignment_length()
 
 
+def parse_args():
+    arg = argparse.ArgumentParser(description=main.__doc__)
+    arg.add_argument('input', help='input alignment file')
+    arg.add_argument('-o', '--out', default='out',
+                     help='output directory')
+    arg.print_help()
+    return arg.parse_args()
+
+
 def main():
     """docstring
     """
     parameters = argparse.ArgumentParser(description=main.__doc__)
-    parameters.add_argument('input', help='input file')
-    parameters.add_argument('-o', '--output', default='new.fasta',
-                            help='output directory')
     arg = parameters.parse_args()
 
     file_format = test_format(arg.input)
