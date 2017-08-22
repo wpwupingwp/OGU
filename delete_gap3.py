@@ -18,6 +18,28 @@ def print_time(function):
     return wrapper
 
 
+def str2int(old):
+    new = list()
+    for i in old.upper():
+        if i == 'A':
+            new.append(1)
+        if i == 'T':
+            new.append(2)
+        if i == 'C':
+            new.append(3)
+        if i == 'G':
+            new.append(4)
+        if i == 'N':
+            new.append(5)
+        if i == '-':
+            new.append(6)
+        if i == '?':
+            new.append(7)
+        else:
+            new.append(8)
+    return new
+
+
 @print_time
 def read(fasta):
     data = list()
@@ -29,7 +51,8 @@ def read(fasta):
                 data.append(record)
                 record = [line[1:-1], ]
             else:
-                record.append(line[:-1])
+                string = line[:-1]
+                record.append(string)
     data = data[1:]
     return data
 
@@ -37,8 +60,8 @@ def read(fasta):
 @print_time
 def convert(old):
     # order 'F' is a bit faster than 'C'
-    id = np.array([[i[0]] for i in old])
-    seq = np.array([list(i[1]) for i in old], dtype=np.unicode_)
+    id = np.array([[i[0]] for i in old], dtype=np.string_)
+    seq = np.array([list(i[1]) for i in old], dtype=np.string_)
     print(seq[0])
     new = np.hstack((id, seq))
     return new, new.shape
@@ -50,10 +73,10 @@ def remove_gap(alignment, length, width):
     keep = np.array(0)
     for index in range(1, width):
         column = alignment[:, [index]]
-        a = (column == 'A').sum()
-        t = (column == 'T').sum()
-        c = (column == 'C').sum()
-        g = (column == 'G').sum()
+        a = (column == b'A').sum()
+        t = (column == b'T').sum()
+        c = (column == b'C').sum()
+        g = (column == b'G').sum()
         gap = length - a - t - c - g
         if gap == length:
             print('Empty in column {}'.format(index))
