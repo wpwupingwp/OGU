@@ -94,7 +94,7 @@ def parse_args():
 
 @print_time
 def main():
-    """docstring
+    """Use ~8gb. Try to reduce.
     """
     arg = parse_args()
     alignment = read(arg.input)
