@@ -21,26 +21,26 @@ def print_time(function):
 @print_time
 def read(fasta):
     data = list()
-    record = ''
+    record = ['id', 'seq']
     with open(fasta, 'r') as raw:
         for line in raw:
             if line.startswith('>'):
-                data.append(record)
+                data.append([record[0], ''.join(record[1:])])
                 name = line[1:-1]
                 record = [name, ]
             else:
-                record.extend(line[:-1])
-        data.append(record)
+                record.append(line[:-1])
+        data.append([record[0], ''.join(record[1:])])
     data = data[1:]
-    print(data[-1])
     return data
 
 
 @print_time
 def convert(old):
     # order 'F' is a bit faster than 'C'
-    # new = np.array([i for i in old], dtype=np.string_)
-    new = np.array([i for i in old], dtype=np.bytes_)
+    name = np.array([[i[0]] for i in old], dtype=np.bytes_)
+    seq = np.array([list(i[1]) for i in old], dtype=np.bytes_)
+    new = np.hstack((name, seq))
     return new, new.shape
 
 
@@ -100,7 +100,6 @@ def main():
     new, shape = convert(alignment)
     after_delete, new_shape = remove_gap(new, *shape)
     write(after_delete, arg.output)
-    print(new_shape, shape)
     print('Remove {} columns.'.format(shape[1]-new_shape[1]))
 
 
