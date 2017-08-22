@@ -40,15 +40,15 @@ def convert(old):
     id = np.array([[i[0]] for i in old])
     seq = np.array([list(i[1]) for i in old], dtype=np.unicode_)
     print(seq[0])
-    # new = np.hstack((id, seq))
-    return id, seq, seq.shape
+    new = np.hstack((id, seq))
+    return new, new.shape
 
 
 @print_time
 def remove_gap(alignment, length, width):
     # get alignment head
-    keep = np.array(None)
-    for index in range(width):
+    keep = np.array(0)
+    for index in range(1, width):
         column = alignment[:, [index]]
         a = (column == 'A').sum()
         t = (column == 'T').sum()
@@ -72,10 +72,10 @@ def remove_gap(alignment, length, width):
 
 
 @print_time
-def write(id, data, output_file):
+def write(data, output_file):
     with open(output_file, 'w') as output:
-        for i in zip(id, data):
-            id, seq = i
+        for i in data:
+            id, seq = i[0], i[1:]
             output.write('>{}\n{}\n'.format(id, ''.join(seq)))
 
 
@@ -94,10 +94,10 @@ def main():
     """
     arg = parse_args()
     alignment = read(arg.input)
-    id, seq, shape = convert(alignment)
+    new, shape = convert(alignment)
     print(shape)
-    after_delete, new_shape = remove_gap(seq, *shape)
-    write(id, after_delete, arg.output)
+    after_delete, new_shape = remove_gap(new, *shape)
+    write(after_delete, arg.output)
     print(new_shape, shape)
     print('Remove {} columns.'.format(new_shape[1]-shape[1]))
 
