@@ -18,8 +18,6 @@ def print_time(function):
     return wrapper
 
 
-
-
 @print_time
 def read(fasta):
     data = list()
@@ -33,18 +31,16 @@ def read(fasta):
             else:
                 record.append(line[:-1])
     data = data[1:]
-    print(data[0])
-    print(data[-1])
     return data
 
 
 @print_time
 def convert(old):
     # order 'F' is a bit faster than 'C'
-    shape = (len(old), len(old[0]))
-    print(shape)
-    new = np.array([list(i) for i in old], order='F').reshape(shape)
-    return new, new.shape
+    id = np.array([i[0] for i in old])
+    seq = np.array([list(i[1]) for i in old], dtype=np.unicode_)
+    print(seq[0])
+    return id, seq, seq.shape
 
 
 @print_time
@@ -71,16 +67,15 @@ def remove_gap(alignment, length, width):
             continue
         else:
             short = np.hstack((short, column))
-            print(short.shape)
             continue
     return short, short.shape
 
 
 @print_time
-def write(data, output_file):
+def write(id, data, output_file):
     with open(output_file, 'w') as output:
-        for i in data:
-            id, *seq = i
+        for i in zip(id, data):
+            id, seq = i
             output.write('>{}\n{}\n'.format(id, ''.join(seq)))
 
 
@@ -99,9 +94,10 @@ def main():
     """
     arg = parse_args()
     alignment = read(arg.input)
-    new_alignment, shape = convert(alignment)
-    after_delete, new_shape = remove_gap(new_alignment, *shape)
-    write(after_delete, arg.output)
+    id, seq, shape = convert(alignment)
+    print(shape)
+    after_delete, new_shape = remove_gap(seq, *shape)
+    write(id, after_delete, arg.output)
     print(new_shape, shape)
     print('Remove {} columns.'.format(new_shape[1]-shape[1]))
 
