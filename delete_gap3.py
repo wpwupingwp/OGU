@@ -90,7 +90,7 @@ def remove_gap(alignment, length, width):
             keep = np.append(keep, index)
             # short = np.hstack((short, column))
     print(keep)
-    short = alignment[keep]
+    short = alignment[:,keep]
     return short, short.shape
 
 
@@ -99,7 +99,7 @@ def write(data, output_file):
     with open(output_file, 'w') as output:
         for i in data:
             id, seq = i[0], i[1:]
-            output.write('>{}\n{}\n'.format(id, ''.join(seq)))
+            output.write(b'>{}\n{}\n'.format(id, ''.join(seq)))
 
 
 @print_time
