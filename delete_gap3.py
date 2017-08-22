@@ -60,10 +60,10 @@ def read(fasta):
 @print_time
 def convert(old):
     # order 'F' is a bit faster than 'C'
-    id = np.array([[i[0]] for i in old], dtype=np.string_)
+    seq_id = np.array([[i[0]] for i in old], dtype=np.string_)
     seq = np.array([list(i[1]) for i in old], dtype=np.string_)
     print(seq[0])
-    new = np.hstack((id, seq))
+    new = np.hstack((seq_id, seq))
     return new, new.shape
 
 
@@ -90,16 +90,19 @@ def remove_gap(alignment, length, width):
             keep = np.append(keep, index)
             # short = np.hstack((short, column))
     print(keep)
-    short = alignment[:,keep]
-    return short, short.shape
+    short = alignment[:, keep]
+    shape = list(short.shape)
+    if len(shape) == 1:
+        shape.append(1)
+    return short, shape
 
 
 @print_time
 def write(data, output_file):
     with open(output_file, 'w') as output:
         for i in data:
-            id, seq = i[0], i[1:]
-            output.write(b'>{}\n{}\n'.format(id, ''.join(seq)))
+            seq_id, seq = i[0], i[1:]
+            output.write('>{}\n{}\n'.format(seq_id, ''.join(seq)))
 
 
 @print_time
