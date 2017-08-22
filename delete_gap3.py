@@ -47,7 +47,7 @@ def convert(old):
 @print_time
 def remove_gap(alignment, length, width):
     # get alignment head
-    keep = np.array(0)
+    keep = [0, ]
     for index in range(1, width):
         column = alignment[:, [index]]
         a = (column == b'A').sum()
@@ -64,8 +64,9 @@ def remove_gap(alignment, length, width):
         elif a == length or t == length or c == length or g == length:
             print('All same in column {}'.format(index))
         else:
-            keep = np.append(keep, index)
+            keep.append(index)
             # short = np.hstack((short, column))
+    keep = np.array(keep)
     short = alignment[:, keep]
     shape = list(short.shape)
     if len(shape) == 1:
