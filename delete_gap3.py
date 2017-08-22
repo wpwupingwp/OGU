@@ -18,28 +18,6 @@ def print_time(function):
     return wrapper
 
 
-def str2int(old):
-    new = list()
-    for i in old.upper():
-        if i == 'A':
-            new.append(1)
-        if i == 'T':
-            new.append(2)
-        if i == 'C':
-            new.append(3)
-        if i == 'G':
-            new.append(4)
-        if i == 'N':
-            new.append(5)
-        if i == '-':
-            new.append(6)
-        if i == '?':
-            new.append(7)
-        else:
-            new.append(8)
-    return new
-
-
 @print_time
 def read(fasta):
     data = list()
@@ -62,7 +40,6 @@ def convert(old):
     # order 'F' is a bit faster than 'C'
     seq_id = np.array([[i[0]] for i in old], dtype=np.string_)
     seq = np.array([list(i[1]) for i in old], dtype=np.string_)
-    print(seq[0])
     new = np.hstack((seq_id, seq))
     return new, new.shape
 
@@ -81,8 +58,8 @@ def remove_gap(alignment, length, width):
         if gap == length:
             print('Empty in column {}'.format(index))
             print(gap, a, t, c, g, length)
-        elif (a+1 == (length-1) or t+1 == (length-1) or c+1 == (length-1) or
-              g+1 == (length-1)):
+        elif (a+1 == (length) or t+1 == (length) or c+1 == (length) or
+              g+1 == (length)):
             print('Only one in column {}'.format(index))
         elif a == length or t == length or c == length or g == length:
             print('All same in column {}'.format(index))
@@ -99,10 +76,10 @@ def remove_gap(alignment, length, width):
 
 @print_time
 def write(data, output_file):
-    with open(output_file, 'w') as output:
+    with open(output_file, 'wb') as output:
         for i in data:
             seq_id, seq = i[0], i[1:]
-            output.write('>{}\n{}\n'.format(seq_id, ''.join(seq)))
+            output.write(b'>'+seq_id+b'\n'+b''.join(seq)+b'\n')
 
 
 @print_time
@@ -121,11 +98,10 @@ def main():
     arg = parse_args()
     alignment = read(arg.input)
     new, shape = convert(alignment)
-    print(shape)
     after_delete, new_shape = remove_gap(new, *shape)
     write(after_delete, arg.output)
     print(new_shape, shape)
-    print('Remove {} columns.'.format(new_shape[1]-shape[1]))
+    print('Remove {} columns.'.format(shape[1]-new_shape[1]))
 
 
 if __name__ == '__main__':
