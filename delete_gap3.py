@@ -46,9 +46,9 @@ def convert(old):
 @print_time
 def remove_gap(alignment, length, width):
     # get alignment head
-    short = alignment[:, 0]
+    short = alignment[:, [0]]
     for index in range(1, width):
-        column = alignment[:, index]
+        column = alignment[:, [index]]
         a = (column == 'A').sum()
         t = (column == 'T').sum()
         c = (column == 'C').sum()
@@ -67,6 +67,7 @@ def remove_gap(alignment, length, width):
             continue
         else:
             short = np.hstack((short, column))
+            print(short.shape)
             continue
     return short, short.shape
 
