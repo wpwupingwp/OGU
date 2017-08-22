@@ -21,27 +21,26 @@ def print_time(function):
 @print_time
 def read(fasta):
     data = list()
-    seq = list()
-    name = ''
+    record = ''
     with open(fasta, 'r') as raw:
         for line in raw:
             if line.startswith('>'):
-                data.append([name, ''.join(seq)])
+                data.append(record)
                 name = line[1:-1]
-                seq = list()
+                record = [name, ]
             else:
-                seq.append(line[:-1])
-        data.append([name, ''.join(seq)])
+                record.extend(line[:-1])
+        data.append(record)
     data = data[1:]
+    print(data[-1])
     return data
 
 
 @print_time
 def convert(old):
     # order 'F' is a bit faster than 'C'
-    seq_id = np.array([[i[0]] for i in old], dtype=np.string_)
-    seq = np.array([list(i[1]) for i in old], dtype=np.string_)
-    new = np.hstack((seq_id, seq))
+    # new = np.array([i for i in old], dtype=np.string_)
+    new = np.array([i for i in old], dtype=np.bytes_)
     return new, new.shape
 
 
@@ -67,7 +66,6 @@ def remove_gap(alignment, length, width):
         else:
             keep = np.append(keep, index)
             # short = np.hstack((short, column))
-    print(keep)
     short = alignment[:, keep]
     shape = list(short.shape)
     if len(shape) == 1:
@@ -80,7 +78,8 @@ def write(data, output_file):
     with open(output_file, 'wb') as output:
         for i in data:
             seq_id, seq = i[0], i[1:]
-            output.write(b'>'+seq_id+b'\n'+b''.join(seq)+b'\n')
+            seq = b''.join(seq)
+            output.write(b'>'+seq_id+b'\n'+seq+b'\n')
 
 
 @print_time
