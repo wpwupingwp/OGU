@@ -37,17 +37,18 @@ def read(fasta):
 @print_time
 def convert(old):
     # order 'F' is a bit faster than 'C'
-    id = np.array([i[0] for i in old])
+    id = np.array([[i[0]] for i in old])
     seq = np.array([list(i[1]) for i in old], dtype=np.unicode_)
     print(seq[0])
+    # new = np.hstack((id, seq))
     return id, seq, seq.shape
 
 
 @print_time
 def remove_gap(alignment, length, width):
     # get alignment head
-    short = alignment[:, [0]]
-    for index in range(1, width):
+    keep = np.array(None)
+    for index in range(width):
         column = alignment[:, [index]]
         a = (column == 'A').sum()
         t = (column == 'T').sum()
@@ -57,18 +58,16 @@ def remove_gap(alignment, length, width):
         if gap == length:
             print('Empty in column {}'.format(index))
             print(gap, a, t, c, g, length)
-            continue
         elif (a+1 == (length-1) or t+1 == (length-1) or c+1 == (length-1) or
               g+1 == (length-1)):
             print('Only one in column {}'.format(index))
-            continue
         elif a == length or t == length or c == length or g == length:
             print('All same in column {}'.format(index))
-            continue
         else:
-            short = np.hstack((short, column))
-            print(short.shape)
-            continue
+            keep = np.append(keep, index)
+            # short = np.hstack((short, column))
+    print(keep)
+    short = alignment[keep]
     return short, short.shape
 
 
