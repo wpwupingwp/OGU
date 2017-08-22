@@ -18,6 +18,35 @@ def print_time(function):
     return wrapper
 
 
+
+
+@print_time
+def read(fasta):
+    data = list()
+    record = ['ID', 'Sequence']
+    with open(fasta, 'r') as raw:
+        for line in raw:
+            if line.startswith('>'):
+                record = [record[0], ''.join(record[1:])]
+                data.append(record)
+                record = [line[1:-1], ]
+            else:
+                record.append(line[:-1])
+    data = data[1:]
+    print(data[0])
+    print(data[-1])
+    return data
+
+
+@print_time
+def convert(old):
+    # order 'F' is a bit faster than 'C'
+    shape = (len(old), len(old[0]))
+    print(shape)
+    new = np.array([list(i) for i in old], order='F').reshape(shape)
+    return new, new.shape
+
+
 @print_time
 def remove_gap(alignment, length, width):
     # get alignment head
@@ -48,29 +77,11 @@ def remove_gap(alignment, length, width):
 
 
 @print_time
-def read(fasta):
-    data = list()
-    record = ['ID', 'Sequence']
-    with open(fasta, 'r') as raw:
-        for line in raw:
-            if line.startswith('>'):
-                data.append(record)
-                record = [line[1:-1], ]
-            else:
-                record.append(line[:-1])
-    data = data[1:]
-    print(data[0])
-    print(data[-1])
-    return data
-
-
-@print_time
-def convert(old):
-    # order 'F' is a bit faster than 'C'
-    shape = (len(old), len(old[0]))
-    print(shape)
-    new = np.array([list(i) for i in old], order='F').reshape(shape)
-    return new, new.shape
+def write(data, output_file):
+    with open(output_file, 'w') as output:
+        for i in data:
+            id, *seq = i
+            output.write('>{}\n{}\n'.format(id, ''.join(seq)))
 
 
 @print_time
@@ -80,14 +91,6 @@ def parse_args():
     arg.add_argument('-o', '--output', default='new.fasta')
     arg.print_help()
     return arg.parse_args()
-
-
-@print_time
-def write(data, output_file):
-    with open(output_file, 'w') as output:
-        for i in data:
-            id, *seq = i
-            output.write('>{}\n{}\n'.format(id, ''.join(seq)))
 
 
 @print_time
