@@ -2,8 +2,8 @@
 
 from functools import wraps
 from timeit import default_timer as timer
-from Bio import AlignIO, SeqIO
 import numpy as np
+from Bio import SeqIO, AlignIO
 
 
 def print_time(function):
@@ -68,11 +68,12 @@ def read3():
         for line in raw:
             if line.startswith('>'):
                 a.append(i)
-                i = list()
+                i = [line[1:-1], ]
             else:
-                i.append(line.strip())
+                i.append(line[:-1])
     a = a[1:]
     return a
+
 
 @print_time
 def read4():
