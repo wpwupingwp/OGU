@@ -21,16 +21,17 @@ def print_time(function):
 @print_time
 def read(fasta):
     data = list()
-    record = ['ID', 'Sequence']
+    seq = list()
+    name = ''
     with open(fasta, 'r') as raw:
         for line in raw:
             if line.startswith('>'):
-                record = [record[0], ''.join(record[1:])]
-                data.append(record)
-                record = [line[1:-1], ]
+                data.append([name, ''.join(seq)])
+                name = line[1:-1]
+                seq = list()
             else:
-                string = line[:-1]
-                record.append(string)
+                seq.append(line[:-1])
+        data.append([name, ''.join(seq)])
     data = data[1:]
     return data
 
