@@ -18,7 +18,7 @@ def print_time(function):
     return wrapper
 
 
-@print_time
+# @print_time
 def read(fasta):
     data = list()
     record = ['id', 'seq']
@@ -35,32 +35,32 @@ def read(fasta):
     return data
 
 
-@print_time
+# @print_time
 def convert(old):
     # order 'F' is a bit faster than 'C'
     name = np.array([[i[0]] for i in old], dtype=np.bytes_)
     seq = np.array([list(i[1]) for i in old], dtype=np.bytes_)
     new = np.hstack((name, seq))
-    columns, rows = new.shape
-    return new, columns, rows
+    rows, columns = new.shape
+    return new, rows, columns
 
 
-@print_time
-def count(alignment, columns, rows):
+# @print_time
+def count(alignment, rows, columns):
     # skip sequence id column
-    data = [[columns, rows]]
-    for index in range(1, rows):
+    data = [[rows, columns]]
+    for index in range(1, columns):
         column = alignment[:, [index]]
         a = (column == b'A').sum()
         t = (column == b'T').sum()
         c = (column == b'C').sum()
         g = (column == b'G').sum()
-        gap = columns - a - t - c - g
+        gap = rows - a - t - c - g
         data.append([a, t, c, g, gap])
     return data
 
 
-@print_time
+# @print_time
 def find_most(data, cutoff, gap_cutoff):
     rows, columns = data[0]
     data = data[1:]
@@ -90,7 +90,7 @@ def find_most(data, cutoff, gap_cutoff):
     return most[1:]
 
 
-@print_time
+# @print_time
 def find_continuous(most, window):
     continuous = list()
     fragment = list()
@@ -110,26 +110,17 @@ def find_continuous(most, window):
     return continuous
 
 
-@print_time
+# @print_time
 def find_primer(continuous, most, window):
     for i in continuous:
         start = i[0][0]
         end = i[-1][0]
         seq = ''.join([j[1] for j in i])
         if end - start >= window:
-            print(start, end, seq, sep='\t')
+            print(start, end, end-start, seq, sep='\t')
 
 
-@print_time
-def write(data, output_file):
-    with open(output_file, 'wb') as output:
-        for i in data:
-            seq_id, seq = i[0], i[1:]
-            seq = b''.join(seq)
-            output.write(b'>'+seq_id+b'\n'+seq+b'\n')
-
-
-@print_time
+# @print_time
 def parse_args():
     arg = argparse.ArgumentParser(description=main.__doc__)
     arg.add_argument('input', help='input alignment file')
@@ -140,18 +131,20 @@ def parse_args():
     arg.add_argument('-o', '--output', default='new.fasta')
     arg.add_argument('-w', '--window', type=int, default=20,
                      help='swip window width')
-    arg.print_help()
+    # arg.print_help()
     return arg.parse_args()
 
 
-@print_time
+# @print_time
 def main():
     """Use ~4gb. Try to reduce.
     """
     arg = parse_args()
     alignment = read(arg.input)
-    new, columns, rows = convert(alignment)
-    count_data = count(new, columns, rows)
+    new, rows, columns = convert(alignment)
+    print('{} has {} sequences with {} width.'.format(arg.input, rows,
+                                                      columns))
+    count_data = count(new, rows, columns)
     most = find_most(count_data, arg.cutoff, arg.gap_cutoff)
     continuous = find_continuous(most, arg.window)
     find_primer(continuous, most, arg.window)
