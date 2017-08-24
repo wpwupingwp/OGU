@@ -41,7 +41,8 @@ def convert(old):
     name = np.array([[i[0]] for i in old], dtype=np.bytes_)
     seq = np.array([list(i[1]) for i in old], dtype=np.bytes_)
     new = np.hstack((name, seq))
-    return new, new.shape
+    columns, rows = new.shape
+    return new, columns, rows
 
 
 @print_time
@@ -106,13 +107,17 @@ def find_continuous(most, window):
         if step > 1:
             continuous.append(fragment)
             fragment = list()
+    return continuous
 
+
+@print_time
+def find_primer(continuous, most, window):
     for i in continuous:
         start = i[0][0]
         end = i[-1][0]
         seq = ''.join([j[1] for j in i])
-        print(start, end, seq, sep='\t')
-    return continuous
+        if end - start >= window:
+            print(start, end, seq, sep='\t')
 
 
 @print_time
@@ -145,10 +150,11 @@ def main():
     """
     arg = parse_args()
     alignment = read(arg.input)
-    new, shape = convert(alignment)
-    count_data = count(new, *shape)
+    new, columns, rows = convert(alignment)
+    count_data = count(new, columns, rows)
     most = find_most(count_data, arg.cutoff, arg.gap_cutoff)
-    primer = find_continuous(most, arg.window)
+    continuous = find_continuous(most, arg.window)
+    find_primer(continuous, most, arg.window)
 
 
 if __name__ == '__main__':
