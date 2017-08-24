@@ -45,23 +45,24 @@ def convert(old):
 
 
 @print_time
-def remove_gap(alignment, length, width):
+def remove_gap(alignment, rows, columns):
+    # alignment = rows(how many lines) * columns(how many columns)
     # get alignment head
     keep = [0, ]
-    for index in range(1, width):
+    for index in range(1, columns):
         column = alignment[:, [index]]
         a = (column == b'A').sum()
         t = (column == b'T').sum()
         c = (column == b'C').sum()
         g = (column == b'G').sum()
-        gap = length - a - t - c - g
-        if gap == length:
+        gap = columns - a - t - c - g
+        if gap == rows:
             print('Empty in column {}'.format(index))
-            print(gap, a, t, c, g, length)
-        elif (a+1 == (length) or t+1 == (length) or c+1 == (length) or
-              g+1 == (length)):
+            print(gap, a, t, c, g, columns)
+        elif (a+1 == (rows) or t+1 == (rows) or c+1 == rows or
+              g+1 == (rows)):
             print('Only one in column {}'.format(index))
-        elif a == length or t == length or c == length or g == length:
+        elif a == rows or t == rows or c == rows or g == rows:
             print('All same in column {}'.format(index))
         else:
             keep.append(index)
