@@ -38,9 +38,10 @@ def read(fasta):
 @print_time
 def convert(old):
     # order 'F' is a bit faster than 'C'
-    name = np.array([[i[0]] for i in old], dtype=np.bytes_)
-    seq = np.array([list(i[1]) for i in old], dtype=np.bytes_)
-    new = np.hstack((name, seq))
+    # name = np.array([[i[0]] for i in old], dtype=np.bytes_)
+    # seq = np.array([list(i[1]) for i in old], dtype=np.bytes_)
+    # new = np.hstack((name, seq))
+    new = np.array([list(i[1]) for i in old], dtype=np.bytes_)
     return new, new.shape
 
 
@@ -89,14 +90,12 @@ def parse_args():
     arg = argparse.ArgumentParser(description=main.__doc__)
     arg.add_argument('input', help='input alignment file')
     arg.add_argument('-o', '--output', default='new.fasta')
-    arg.print_help()
+    # arg.print_help()
     return arg.parse_args()
 
 
 @print_time
 def main():
-    """Use ~8gb. Try to reduce.
-    """
     arg = parse_args()
     alignment = read(arg.input)
     new, shape = convert(alignment)

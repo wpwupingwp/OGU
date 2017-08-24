@@ -38,9 +38,10 @@ def read(fasta):
 # @print_time
 def convert(old):
     # order 'F' is a bit faster than 'C'
-    name = np.array([[i[0]] for i in old], dtype=np.bytes_)
-    seq = np.array([list(i[1]) for i in old], dtype=np.bytes_)
-    new = np.hstack((name, seq))
+    # name = np.array([[i[0]] for i in old], dtype=np.bytes_)
+    # seq = np.array([list(i[1]) for i in old], dtype=np.bytes_)
+    # new = np.hstack((name, seq))
+    new = np.array([list(i[1]) for i in old], dtype=np.bytes_)
     rows, columns = new.shape
     return new, rows, columns
 
