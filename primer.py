@@ -133,7 +133,7 @@ def write(data, output_file):
 def parse_args():
     arg = argparse.ArgumentParser(description=main.__doc__)
     arg.add_argument('input', help='input alignment file')
-    arg.add_argument('-c', '--cutoff', type=float, default=0.99,
+    arg.add_argument('-c', '--cutoff', type=float, default=1.0,
                      help='minium percent to keep')
     arg.add_argument('-g', '--gap_cutoff', type=float, default=0.5,
                      help='maximum percent for gap to cutoff')
