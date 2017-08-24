@@ -47,6 +47,7 @@ def convert(old):
 @print_time
 def count(alignment, columns, rows):
     # skip sequence id column
+    data = [[columns, rows]]
     for index in range(1, rows):
         column = alignment[:, [index]]
         a = (column == b'A').sum()
@@ -54,14 +55,41 @@ def count(alignment, columns, rows):
         c = (column == b'C').sum()
         g = (column == b'G').sum()
         gap = columns - a - t - c - g
-        yield [a, t, c, g, gap]
-    del alignment
+        data.append([a, t, c, g, gap])
+    return data
 
 
-def find_conservative(data):
-    for index, column in data:
+def find_conservative(data, arg):
+    rows, columns = data[0]
+    data = data[1:]
+    gap_cutoff =  rows * arg.gap_cutoff
+    cutoff = rows * arg.cutoff
+    most = [['location', 'base', 'count']]
+    for index, column in enumerate(data, 1):
         a, t, c, g, gap = column
-    return
+        if gap >= gap_cutoff:
+            continue
+        if a >= cutoff:
+            base = 'A'
+            count = a
+        elif a >= cutoff:
+            base = 'T'
+            count = t
+        elif a >= cutoff:
+            base = 'C'
+            count = c
+        elif a >= cutoff:
+            base = 'G'
+            count = g
+        else:
+            base = '?'
+            count = gap
+        most.append([index, base, count])
+    for i in most:
+        print(*i)
+    print(data)
+
+
 
 
 @print_time
@@ -77,20 +105,26 @@ def write(data, output_file):
 def parse_args():
     arg = argparse.ArgumentParser(description=main.__doc__)
     arg.add_argument('input', help='input alignment file')
+    arg.add_argument('-c', '--cutoff', type=float, default=0.99,
+                     help='minium percent to keep')
+    arg.add_argument('-g', '--gap_cutoff', type=float, default=0.5,
+                     help='maximum percent for gap to cutoff')
     arg.add_argument('-o', '--output', default='new.fasta')
+    arg.add_argument('-w', '--window', type=int, default=20,
+                     help='swip window width')
     arg.print_help()
     return arg.parse_args()
 
 
 @print_time
 def main():
-    """Use ~8gb. Try to reduce.
+    """Use ~4gb. Try to reduce.
     """
     arg = parse_args()
     alignment = read(arg.input)
     new, shape = convert(alignment)
-    after_delete, new_shape = remove_gap(new, *shape)
-    write(after_delete, arg.output)
+    count_data = count(new, *shape)
+    find_conservative(count_data, arg)
 
 
 if __name__ == '__main__':
