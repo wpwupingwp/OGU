@@ -41,20 +41,27 @@ def convert(old):
     name = np.array([[i[0]] for i in old], dtype=np.bytes_)
     seq = np.array([list(i[1]) for i in old], dtype=np.bytes_)
     new = np.hstack((name, seq))
-    return new
+    return new, new.shape
 
 
 @print_time
-def count(alignment, length, width):
+def count(alignment, columns, rows):
     # skip sequence id column
-    for index in range(1, width):
+    for index in range(1, rows):
         column = alignment[:, [index]]
         a = (column == b'A').sum()
         t = (column == b'T').sum()
         c = (column == b'C').sum()
         g = (column == b'G').sum()
-        gap = length - a - t - c - g
+        gap = columns - a - t - c - g
         yield [a, t, c, g, gap]
+    del alignment
+
+
+def find_conservative(data):
+    for index, column in data:
+        a, t, c, g, gap = column
+    return
 
 
 @print_time
