@@ -29,7 +29,7 @@ def read(fasta):
                 name = line[1:-1]
                 record = [name, ]
             else:
-                record.append(line[:-1])
+                record.append(line[:-1].upper())
         data.append([record[0], ''.join(record[1:])])
     data = data[1:]
     return data

@@ -29,7 +29,7 @@ def read(fasta):
                 name = line[1:-1]
                 record = [name, ]
             else:
-                record.append(line[:-1])
+                record.append(line[:-1].upper())
         data.append([record[0], ''.join(record[1:])])
     data = data[1:]
     return data
@@ -59,11 +59,12 @@ def count(alignment, columns, rows):
     return data
 
 
-def find_conservative(data, arg):
+@print_time
+def find_most(data, cutoff, gap_cutoff):
     rows, columns = data[0]
     data = data[1:]
-    gap_cutoff =  rows * arg.gap_cutoff
-    cutoff = rows * arg.cutoff
+    gap_cutoff = rows * gap_cutoff
+    cutoff = rows * cutoff
     most = [['location', 'base', 'count']]
     for index, column in enumerate(data, 1):
         a, t, c, g, gap = column
@@ -72,24 +73,20 @@ def find_conservative(data, arg):
         if a >= cutoff:
             base = 'A'
             count = a
-        elif a >= cutoff:
+        elif t >= cutoff:
             base = 'T'
             count = t
-        elif a >= cutoff:
+        elif c >= cutoff:
             base = 'C'
             count = c
-        elif a >= cutoff:
+        elif g >= cutoff:
             base = 'G'
             count = g
         else:
             base = '?'
             count = gap
         most.append([index, base, count])
-    for i in most:
-        print(*i)
-    print(data)
-
-
+    return most
 
 
 @print_time
