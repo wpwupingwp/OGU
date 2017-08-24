@@ -66,7 +66,7 @@ def find_most(data, cutoff, gap_cutoff):
     gap_cutoff = rows * gap_cutoff
     cutoff = rows * cutoff
     most = [['location', 'base', 'count']]
-    for index, column in enumerate(data, 1):
+    for location, column in enumerate(data, 1):
         a, t, c, g, gap = column
         if gap >= gap_cutoff:
             continue
@@ -85,8 +85,34 @@ def find_most(data, cutoff, gap_cutoff):
         else:
             base = '?'
             count = gap
-        most.append([index, base, count])
-    return most
+        most.append([location, base, count])
+    return most[1:]
+
+
+@print_time
+def find_continuous(most, window):
+    continuous = list()
+    fragment = list()
+    most = [i for i in most if i[1] not in ('?', 'N')]
+    for index, value in enumerate(most):
+        fragment.append(value)
+        location, *_ = value
+        try:
+            location_next, *_ = most[index+1]
+        except:
+            fragment.append(value)
+            break
+        step = location_next - location
+        if step > 1:
+            continuous.append(fragment)
+            fragment = list()
+
+    for i in continuous:
+        start = i[0][0]
+        end = i[-1][0]
+        seq = ''.join([j[1] for j in i])
+        print(start, end, seq, sep='\t')
+    return continuous
 
 
 @print_time
@@ -121,7 +147,8 @@ def main():
     alignment = read(arg.input)
     new, shape = convert(alignment)
     count_data = count(new, *shape)
-    find_conservative(count_data, arg)
+    most = find_most(count_data, arg.cutoff, arg.gap_cutoff)
+    primer = find_continuous(most, arg.window)
 
 
 if __name__ == '__main__':
