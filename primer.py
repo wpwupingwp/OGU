@@ -53,7 +53,7 @@ def convert(old):
     # name = np.array([[i[0]] for i in old], dtype=np.bytes_)
     # seq = np.array([list(i[1]) for i in old], dtype=np.bytes_)
     # new = np.hstack((name, seq))
-    new = np.array([list(i[1]) for i in old], dtype=np.bytes_)
+    new = np.array([list(i[1]) for i in old], dtype=np.bytes_, order='F')
     rows, columns = new.shape
     return new, rows, columns
 
@@ -74,6 +74,7 @@ def count(alignment, rows, columns):
         # is it necessary to count 'N' '-' and '?' ?
         other = rows - a - t - c - g - n - question
         data.append([a, t, c, g, n, question, gap, other])
+    assert len(data) == rows + 1
     return data
 
 
@@ -169,8 +170,8 @@ def main():
     """Use ~4gb. Try to reduce.
     """
     arg = parse_args()
-    alignment = read(arg.input)
-    new, rows, columns = convert(alignment)
+    raw_alignment = read(arg.input)
+    new, rows, columns = convert(raw_alignment)
     print('{} has {} sequences with {} width.'.format(arg.input, rows,
                                                       columns))
     count_data = count(new, rows, columns)
