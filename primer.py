@@ -30,7 +30,7 @@ def get_ambiguous_dict():
     return data_with_len
 
 
-# @print_time
+@print_time
 def read(fasta):
     data = list()
     record = ['id', 'seq']
@@ -47,7 +47,7 @@ def read(fasta):
     return data
 
 
-# @print_time
+@print_time
 def convert(old):
     # order 'F' is a bit faster than 'C'
     # name = np.array([[i[0]] for i in old], dtype=np.bytes_)
@@ -58,7 +58,7 @@ def convert(old):
     return new, rows, columns
 
 
-# @print_time
+@print_time
 def count(alignment, rows, columns):
     # skip sequence id column
     data = [[rows, columns]]
@@ -72,14 +72,14 @@ def count(alignment, rows, columns):
         question = (column == b'?').sum()
         gap = (column == b'-').sum()
         # is it necessary to count 'N' '-' and '?' ?
-        other = rows - a - t - c - g - n - question
+        other = rows - a - t - c - g - n - question - gap
         data.append([a, t, c, g, n, question, gap, other])
-        print(len(data))
+    # make sure rows and columns does not mixed
     assert len(data) == columns + 1
     return data
 
 
-# @print_time
+@print_time
 def find_most(data, cutoff, gap_cutoff):
     most = [['location', 'base', 'count']]
     rows, columns = data[0]
@@ -92,6 +92,8 @@ def find_most(data, cutoff, gap_cutoff):
         for location, column in enumerate(data, 1):
             finish = False
             value = dict(zip(list('ATCGN?-X'), column))
+            base = 'N'
+
             sum_gap = sum([value['?'], value['-'], value['X']])
             if sum_gap >= gap_cutoff:
                 base = '-'
@@ -110,10 +112,8 @@ def find_most(data, cutoff, gap_cutoff):
                         if finish:
                             break
                         count += value[letter]
-                        # print(value[letter], letter)
                         if count >= cutoff:
                             base = ambiguous_dict[length][key]
-                            print(location,base,count)
                             finish = True
                             yield [location, base, count]
     for i in run():
@@ -121,11 +121,30 @@ def find_most(data, cutoff, gap_cutoff):
     return most[1:]
 
 
-# @print_time
+def print_consensus(data):
+    i = [i[0] for i in data]
+    seq = [i[1] for i in data]
+    num = [i[2] for i in data]
+    for _ in i:
+        print('{:>5}'.format(_), end='')
+    print()
+    for _ in seq:
+        print('{:>5}'.format(_), end='')
+    print()
+    for _ in seq:
+        print('{:>5}'.format('|'), end='')
+    print()
+    for _ in num:
+        print('{:>5}'.format(_), end='')
+    print()
+
+
+
+@print_time
 def find_continuous(most, window):
     continuous = list()
     fragment = list()
-    most = [i for i in most if i[1] not in ('?', 'N')]
+    most = [i for i in most if i[1] not in ('N', '-')]
     for index, value in enumerate(most):
         fragment.append(value)
         location, *_ = value
@@ -141,9 +160,11 @@ def find_continuous(most, window):
     return continuous
 
 
-# @print_time
+@print_time
 def find_primer(continuous, most, window):
     for i in continuous:
+        if len(i) >= window:
+            print_consensus(i)
         start = i[0][0]
         end = i[-1][0]
         seq = ''.join([j[1] for j in i])
@@ -151,7 +172,7 @@ def find_primer(continuous, most, window):
             print(start, end, end-start, seq, sep='\t')
 
 
-# @print_time
+@print_time
 def parse_args():
     arg = argparse.ArgumentParser(description=main.__doc__)
     arg.add_argument('input', help='input alignment file')
@@ -160,21 +181,17 @@ def parse_args():
     arg.add_argument('-g', '--gap_cutoff', type=float, default=0.5,
                      help='maximum percent for gap to cutoff')
     arg.add_argument('-o', '--output', default='new.fasta')
-    arg.add_argument('-w', '--window', type=int, default=20,
+    arg.add_argument('-w', '--window', type=int, default=18,
                      help='swip window width')
     # arg.print_help()
     return arg.parse_args()
 
 
-# @print_time
+@print_time
 def main():
-    """Use ~4gb. Try to reduce.
-    """
     arg = parse_args()
     raw_alignment = read(arg.input)
     new, rows, columns = convert(raw_alignment)
-    print('{} has {} sequences with {} width.'.format(arg.input, rows,
-                                                      columns))
     count_data = count(new, rows, columns)
     most = find_most(count_data, arg.cutoff, arg.gap_cutoff)
     continuous = find_continuous(most, arg.window)
