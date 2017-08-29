@@ -161,8 +161,19 @@ def find_continuous(most, window):
 @print_time
 def find_primer(continuous, most, window):
     for i in continuous:
-        if len(i) >= window:
-            print_consensus(i)
+        if not len(i) >= window:
+            break
+        seq = ''.join([j[1] for j in i])
+        # count = 0
+        for j in range(len(seq)-window):
+            subseq = seq[j:(j+30)]
+            for letter in 'ATCG':
+                # count += seq.count(letter)
+                # no AAAA TTTT CCCC GGGG
+                if subseq.find(letter*4) == -1:
+                    break
+                # no more 3 ambiguous base
+        print_consensus(i)
 
 
 @print_time
