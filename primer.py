@@ -62,7 +62,7 @@ def convert(old):
 def count(alignment, rows, columns):
     # skip sequence id column
     data = [[rows, columns]]
-    for index in range(1, columns):
+    for index in range(columns):
         column = alignment[:, [index]]
         a = (column == b'A').sum()
         t = (column == b'T').sum()
@@ -74,7 +74,8 @@ def count(alignment, rows, columns):
         # is it necessary to count 'N' '-' and '?' ?
         other = rows - a - t - c - g - n - question
         data.append([a, t, c, g, n, question, gap, other])
-    assert len(data) == rows + 1
+        print(len(data))
+    assert len(data) == columns + 1
     return data
 
 
