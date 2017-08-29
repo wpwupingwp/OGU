@@ -79,7 +79,7 @@ def count(alignment, rows, columns):
 
 # @print_time
 def find_most(data, cutoff, gap_cutoff):
-    # most = [['location', 'base', 'count']]
+    most = [['location', 'base', 'count']]
     rows, columns = data[0]
     data = data[1:]
     gap_cutoff = rows * gap_cutoff
@@ -88,21 +88,35 @@ def find_most(data, cutoff, gap_cutoff):
 
     def run():
         for location, column in enumerate(data, 1):
+            finish = False
             value = dict(zip(list('ATCGN?-X'), column))
             sum_gap = sum([value['?'], value['-'], value['X']])
             if sum_gap >= gap_cutoff:
                 base = '-'
                 count = sum_gap
-                return [location, base, count]
+                yield [location, base, count]
+                continue
+            # 1 2 3 4
             for length in ambiguous_dict:
+                if finish:
+                    break
                 for key in ambiguous_dict[length]:
+                    if finish:
+                        break
                     count = 0
                     for letter in list(key):
+                        if finish:
+                            break
                         count += value[letter]
-                    if value[letter] >= cutoff:
-                        base = ambiguous_dict[length][key]
-                        return [location, base, count]
-    yield from run()
+                        # print(value[letter], letter)
+                        if count >= cutoff:
+                            base = ambiguous_dict[length][key]
+                            print(location,base,count)
+                            finish = True
+                            yield [location, base, count]
+    for i in run():
+        most.append(i)
+    return most[1:]
 
 
 # @print_time
