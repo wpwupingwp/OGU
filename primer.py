@@ -27,7 +27,7 @@ def get_ambiguous_dict():
     data_with_len = defaultdict(lambda: dict())
     for key in data:
         data_with_len[len(key)][key] = data[key]
-    return data
+    return data_with_len
 
 
 # @print_time
@@ -79,33 +79,30 @@ def count(alignment, rows, columns):
 
 # @print_time
 def find_most(data, cutoff, gap_cutoff):
+    # most = [['location', 'base', 'count']]
     rows, columns = data[0]
     data = data[1:]
     gap_cutoff = rows * gap_cutoff
     cutoff = rows * cutoff
-    most = [['location', 'base', 'count']]
     ambiguous_dict = get_ambiguous_dict()
-    for location, column in enumerate(data, 1):
-        a, t, c, g, n, *gap = column
-        if gap >= gap_cutoff:
-            continue
-        if a >= cutoff:
-            base = 'A'
-            count = a
-        elif t >= cutoff:
-            base = 'T'
-            count = t
-        elif c >= cutoff:
-            base = 'C'
-            count = c
-        elif g >= cutoff:
-            base = 'G'
-            count = g
-        else:
-            base = '?'
-            count = gap
-        most.append([location, base, count])
-    return most[1:]
+
+    def run():
+        for location, column in enumerate(data, 1):
+            value = dict(zip(list('ATCGN?-X'), column))
+            sum_gap = sum([value['?'], value['-'], value['X']])
+            if sum_gap >= gap_cutoff:
+                base = '-'
+                count = sum_gap
+                return [location, base, count]
+            for length in ambiguous_dict:
+                for key in ambiguous_dict[length]:
+                    count = 0
+                    for letter in list(key):
+                        count += value[letter]
+                    if value[letter] >= cutoff:
+                        base = ambiguous_dict[length][key]
+                        return [location, base, count]
+    yield from run()
 
 
 # @print_time
