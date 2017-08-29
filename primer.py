@@ -4,6 +4,7 @@ from functools import wraps
 from timeit import default_timer as timer
 import argparse
 import numpy as np
+from Bio.Data. IUPACData import ambiguous_dna_values
 
 
 def print_time(function):
@@ -16,6 +17,14 @@ def print_time(function):
             function.__name__, end-start))
         return result
     return wrapper
+
+
+def get_ambiguous_dict():
+    data = ambiguous_dna_values
+    data = dict(zip(data.values(), data.keys()))
+    # 'AC': ['M', 2]
+    data = {i: [data[i], len(i)] for i in data}
+    return data
 
 
 # @print_time
@@ -56,6 +65,7 @@ def count(alignment, rows, columns):
         t = (column == b'T').sum()
         c = (column == b'C').sum()
         g = (column == b'G').sum()
+        # is it necessary to count 'N' '-' and '?' ?
         gap = rows - a - t - c - g
         data.append([a, t, c, g, gap])
     return data
@@ -68,6 +78,7 @@ def find_most(data, cutoff, gap_cutoff):
     gap_cutoff = rows * gap_cutoff
     cutoff = rows * cutoff
     most = [['location', 'base', 'count']]
+    ambiguous_dict = get_ambiguous_dict()
     for location, column in enumerate(data, 1):
         a, t, c, g, gap = column
         if gap >= gap_cutoff:
