@@ -125,9 +125,7 @@ def print_consensus(data):
     i = [i[0] for i in data]
     seq = [i[1] for i in data]
     num = [i[2] for i in data]
-    for _ in i:
-        print('{:>5}'.format(_), end='')
-    print()
+    print('{:>5} {}> {:<5}'.format(i[0], '-'*5*(len(i)-2), i[-1]))
     for _ in seq:
         print('{:>5}'.format(_), end='')
     print()
@@ -165,11 +163,6 @@ def find_primer(continuous, most, window):
     for i in continuous:
         if len(i) >= window:
             print_consensus(i)
-        start = i[0][0]
-        end = i[-1][0]
-        seq = ''.join([j[1] for j in i])
-        if end - start >= window:
-            print(start, end, end-start, seq, sep='\t')
 
 
 @print_time
