@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 from functools import wraps
+from collections import defaultdict
 from timeit import default_timer as timer
 import argparse
 import numpy as np
@@ -22,8 +23,10 @@ def print_time(function):
 def get_ambiguous_dict():
     data = ambiguous_dna_values
     data = dict(zip(data.values(), data.keys()))
-    # 'AC': ['M', 2]
-    data = {i: [data[i], len(i)] for i in data}
+    # 2:{'AC': ['M',}
+    data_with_len = defaultdict(lambda: dict())
+    for key in data:
+        data_with_len[len(key)][key] = data[key]
     return data
 
 
