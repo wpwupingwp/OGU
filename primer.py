@@ -68,9 +68,12 @@ def count(alignment, rows, columns):
         t = (column == b'T').sum()
         c = (column == b'C').sum()
         g = (column == b'G').sum()
+        n = (column == b'N').sum()
+        question = (column == b'?').sum()
+        gap = (column == b'-').sum()
         # is it necessary to count 'N' '-' and '?' ?
-        gap = rows - a - t - c - g
-        data.append([a, t, c, g, gap])
+        other = rows - a - t - c - g - n - question
+        data.append([a, t, c, g, n, question, gap, other])
     return data
 
 
@@ -83,7 +86,7 @@ def find_most(data, cutoff, gap_cutoff):
     most = [['location', 'base', 'count']]
     ambiguous_dict = get_ambiguous_dict()
     for location, column in enumerate(data, 1):
-        a, t, c, g, gap = column
+        a, t, c, g, n, *gap = column
         if gap >= gap_cutoff:
             continue
         if a >= cutoff:
