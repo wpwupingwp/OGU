@@ -4,6 +4,7 @@ from functools import wraps
 from collections import defaultdict
 from timeit import default_timer as timer
 import argparse
+import re
 import numpy as np
 from Bio.Data. IUPACData import ambiguous_dna_values
 
@@ -160,20 +161,30 @@ def find_continuous(most, window):
 
 @print_time
 def find_primer(continuous, most, window):
-    for i in continuous:
-        if not len(i) >= window:
-            break
-        seq = ''.join([j[1] for j in i])
-        # count = 0
-        for j in range(len(seq)-window):
-            subseq = seq[j:(j+30)]
-            for letter in 'ATCG':
-                # count += seq.count(letter)
-                # no AAAA TTTT CCCC GGGG
-                if subseq.find(letter*4) == -1:
-                    break
+    poly = re.compile(r'([ATCG])\1\1')
+    ambiguous_base = re.compile(r'[^ATCG]')
+    tandem = re.compile(r'([ATCG]{2})\1')
+    continuous = [i for i in continuous if len(i) >= window]
+    for fragment in continuous:
+        for j in range(len(fragment)-window):
+            partial = fragment[j:(j+window)]
+            seq = ''.join([i[1] for i in partial])
+            if re.search(poly, seq) is not None:
+                pass
+            elif re.search(tandem, seq) is not None:
+                pass
+            elif len(re.findall(ambiguous_base, seq)) >= 3:
+                pass
+            else:
+                print_consensus(partial)
                 # no more 3 ambiguous base
-        print_consensus(i)
+
+
+@print_time
+def generate_consesus(data, output):
+    with open(output, 'w') as out:
+        seq = [i[1] for i in data]
+        out.write('>Consensus\n{}\n'.format(''.join(seq)))
 
 
 @print_time
@@ -184,7 +195,7 @@ def parse_args():
                      help='minium percent to keep')
     arg.add_argument('-g', '--gap_cutoff', type=float, default=0.5,
                      help='maximum percent for gap to cutoff')
-    arg.add_argument('-o', '--output', default='new.fasta')
+    arg.add_argument('-o', '--output', default='consensus.fasta')
     arg.add_argument('-w', '--window', type=int, default=18,
                      help='swip window width')
     # arg.print_help()
@@ -198,6 +209,7 @@ def main():
     new, rows, columns = convert(raw_alignment)
     count_data = count(new, rows, columns)
     most = find_most(count_data, arg.cutoff, arg.gap_cutoff)
+    generate_consesus(most, arg.output)
     continuous = find_continuous(most, arg.window)
     find_primer(continuous, most, arg.window)
 
