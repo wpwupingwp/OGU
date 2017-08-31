@@ -122,21 +122,21 @@ def find_most(data, cutoff, gap_cutoff):
     return most[1:]
 
 
-def print_consensus(data):
+def print_primer(data):
     i = [i[0] for i in data]
     seq = [i[1] for i in data]
     num = [i[2] for i in data]
-    print('{:>5} {}> {:<5}'.format(i[0], '-'*5*(len(i)-2), i[-1]))
+    out = open('primer.txt', 'w')
+    out.write('{:>5} {}> {:<5}\n'.format(i[0], '-'*5*(len(i)-2), i[-1]))
     for _ in seq:
-        print('{:>5}'.format(_), end='')
-    print()
+        out.write('{:>5}'.format(_))
+    out.write('\n')
     for _ in seq:
-        print('{:>5}'.format('|'), end='')
-    print()
+        out.write('{:>5}'.format('|'))
+    out.write('\n')
     for _ in num:
-        print('{:>5}'.format(_), end='')
-    print()
-
+        out.write('{:>5}'.format(_))
+    out.write('\n')
 
 
 @print_time
@@ -176,7 +176,7 @@ def find_primer(continuous, most, window):
             elif len(re.findall(ambiguous_base, seq)) >= 3:
                 pass
             else:
-                print_consensus(partial)
+                print_primer(partial)
                 # no more 3 ambiguous base
 
 
