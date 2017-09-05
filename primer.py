@@ -6,7 +6,53 @@ from timeit import default_timer as timer
 import argparse
 import re
 import numpy as np
+import primer3
 from Bio.Data. IUPACData import ambiguous_dna_values
+
+
+class Primer:
+    global_arg = {
+        'PRIMER_OPT_SIZE': 20,
+        'PRIMER_PICK_INTERNAL_OLIGO': 1,
+        'PRIMER_INTERNAL_MAX_SELF_END': 8,
+        'PRIMER_MIN_SIZE': 18,
+        'PRIMER_MAX_SIZE': 25,
+        'PRIMER_OPT_TM': 60.0,
+        'PRIMER_MIN_TM': 57.0,
+        'PRIMER_MAX_TM': 63.0,
+        'PRIMER_MIN_GC': 20.0,
+        'PRIMER_MAX_GC': 80.0,
+        'PRIMER_MAX_POLY_X': 100,
+        'PRIMER_INTERNAL_MAX_POLY_X': 100,
+        'PRIMER_SALT_MONOVALENT': 50.0,
+        'PRIMER_DNA_CONC': 50.0,
+        'PRIMER_MAX_NS_ACCEPTED': 0,
+        'PRIMER_MAX_SELF_ANY': 12,
+        'PRIMER_MAX_SELF_END': 8,
+        'PRIMER_PAIR_MAX_COMPL_ANY': 12,
+        'PRIMER_PAIR_MAX_COMPL_END': 8,
+        'PRIMER_PRODUCT_SIZE_RANGE': [[250, 450], [450, 800]]
+    }
+
+    def __init__(self, name, seq, start, end):
+        if start is None:
+            start = 0
+        if end is None:
+            end = len(seq)
+        seq_arg = {
+            'SEQUENCE_ID': name,
+            'SEQUENCE_TEMPLATE': seq,
+            'SEQUENCE_INCLUDED_REGION': [start, end]
+                   }
+        self.seq_arg = seq_arg
+        self.global_arg = self.global_arg
+
+    def change(self, **kargs):
+        self.global_arg.update(kargs)
+
+    def design(self):
+        result = primer3.bindings.designPrimers(self.seq_arg, self.global_arg)
+        return result
 
 
 def print_time(function):
