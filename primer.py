@@ -12,6 +12,8 @@ from Bio.Data. IUPACData import ambiguous_dna_values
 
 class Primer:
     global_arg = {
+        'PRIMER_LIBERAL_BASE': 1,
+        'PRIMER_MAX_NS_ACCEPTED': 1,
         'PRIMER_OPT_SIZE': 20,
         'PRIMER_PICK_INTERNAL_OLIGO': 1,
         'PRIMER_INTERNAL_MAX_SELF_END': 8,
@@ -34,18 +36,17 @@ class Primer:
         'PRIMER_PRODUCT_SIZE_RANGE': [[250, 450], [450, 800]]
     }
 
-    def __init__(self, name, seq, start, end):
+    def __init__(self, name, seq, start=None, length=None):
         if start is None:
             start = 0
-        if end is None:
-            end = len(seq)
+        if length is None:
+            length = len(seq)
         seq_arg = {
             'SEQUENCE_ID': name,
             'SEQUENCE_TEMPLATE': seq,
-            'SEQUENCE_INCLUDED_REGION': [start, end]
+            'SEQUENCE_INCLUDED_REGION': [start, length]
                    }
         self.seq_arg = seq_arg
-        self.global_arg = self.global_arg
 
     def change(self, **kargs):
         self.global_arg.update(kargs)
