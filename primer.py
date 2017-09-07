@@ -207,28 +207,27 @@ def find_continuous(most):
     return continuous
 
 
-def is_good_primer(primer, template=None):
-    poly = re.compile(r'([ATCG])\1\1')
-    ambiguous_base = re.compile(r'[^ATCG]')
-    tandem = re.compile(r'([ATCG]{2})\1')
-    for j in range(len(fragment)-length):
-        partial = fragment[j:(j+length)]
-        seq = ''.join([i[1] for i in partial])
-        if re.search(poly, seq) is not None:
-            pass
-        elif re.search(tandem, seq) is not None:
-            pass
-        elif len(re.findall(ambiguous_base, seq)) >= 3:
-            pass
-        else:
-            print_primer(partial)
-            # no more 3 ambiguous base
-
-    return True
 
 
 @print_time
 def find_primer(continuous, most, length):
+    poly = re.compile(r'([ATCG])\1\1\1\1')
+    ambiguous_base = re.compile(r'[^ATCG]')
+    tandem = re.compile(r'([ATCG]{2})\1\1\1\1')
+
+    def is_good_primer(primer, template=None):
+        # ref1. http://www.premierbiosoft.com/tech_notes/PCR_Primer_Design.html
+        seq = ''.join([i[1] for i in primer])
+        if re.search(poly, seq) is not None:
+            return False, 'Poly structure'
+        if re.search(tandem, seq) is not None:
+            return False, 'Tandom(NN*4) exist'
+            # no more 3 ambiguous base
+        if len(re.findall(ambiguous_base, seq)) >= 3:
+            return False, 'More than 3 ambiguous base'
+        return True, 'Ok'
+
+    primer = list()
     min_len, max_len = length.split('-')
     min_len = int(min_len)
     max_len = int(max_len)
@@ -237,9 +236,14 @@ def find_primer(continuous, most, length):
         len_fragment = len(fragment)
         for start in range(len_fragment-min_len):
             for end in range(min_len, 1+min(len_fragment, max_len)):
-                print(start+1, end)
+                # print(start+1, end)
                 seq = fragment[start:end]
-                print(seq, len(seq))
+                good_primer, detail = is_good_primer(seq)
+                if good_primer:
+                    primer.append(seq)
+                else:
+                    print(seq, detail)
+    return primer
 
 
 @print_time
