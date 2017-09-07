@@ -198,6 +198,7 @@ def find_continuous(most):
             location_next, *_ = most[index+1]
         except:
             fragment.append(value)
+# to be continue
             break
         step = location_next - location
         if step > 1:
@@ -206,26 +207,39 @@ def find_continuous(most):
     return continuous
 
 
-@print_time
-def find_primer(continuous, most, length):
-    min_len, max_len = length.split('-')
+def is_good_primer(primer, template=None):
     poly = re.compile(r'([ATCG])\1\1')
     ambiguous_base = re.compile(r'[^ATCG]')
     tandem = re.compile(r'([ATCG]{2})\1')
-    continuous = [i for i in continuous if len(i) >= length]
+    for j in range(len(fragment)-length):
+        partial = fragment[j:(j+length)]
+        seq = ''.join([i[1] for i in partial])
+        if re.search(poly, seq) is not None:
+            pass
+        elif re.search(tandem, seq) is not None:
+            pass
+        elif len(re.findall(ambiguous_base, seq)) >= 3:
+            pass
+        else:
+            print_primer(partial)
+            # no more 3 ambiguous base
+
+    return True
+
+
+@print_time
+def find_primer(continuous, most, length):
+    min_len, max_len = length.split('-')
+    min_len = int(min_len)
+    max_len = int(max_len)
+    continuous = [i for i in continuous if len(i) >= min_len]
     for fragment in continuous:
-        for j in range(len(fragment)-length):
-            partial = fragment[j:(j+length)]
-            seq = ''.join([i[1] for i in partial])
-            if re.search(poly, seq) is not None:
-                pass
-            elif re.search(tandem, seq) is not None:
-                pass
-            elif len(re.findall(ambiguous_base, seq)) >= 3:
-                pass
-            else:
-                print_primer(partial)
-                # no more 3 ambiguous base
+        len_fragment = len(fragment)
+        for start in range(len_fragment-min_len):
+            for end in range(min_len, 1+min(len_fragment, max_len)):
+                print(start+1, end)
+                seq = fragment[start:end]
+                print(seq, len(seq))
 
 
 @print_time
@@ -259,7 +273,8 @@ def main():
     most = find_most(count_data, arg.cutoff, arg.gap_cutoff)
     generate_consesus(most, arg.output)
     continuous = find_continuous(most)
-    find_primer(continuous, most, arg.length)
+    primer = find_primer(continuous, most, arg.length)
+    print_primer(primer)
 
 
 if __name__ == '__main__':
