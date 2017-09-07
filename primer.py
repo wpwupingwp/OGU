@@ -33,7 +33,7 @@ class Primer:
         'PRIMER_MAX_SELF_END': 8,
         'PRIMER_PAIR_MAX_COMPL_ANY': 12,
         'PRIMER_PAIR_MAX_COMPL_END': 8,
-        'PRIMER_PRODUCT_SIZE_RANGE': [[250, 450], [450, 800]]
+        'PRIMER_PRODUCT_SIZE_RANGE': [[26, 100], [250, 450], [450, 800]]
     }
 
     def __init__(self, name, seq, start=None, length=None):
@@ -44,7 +44,7 @@ class Primer:
         seq_arg = {
             'SEQUENCE_ID': name,
             'SEQUENCE_TEMPLATE': seq,
-            'SEQUENCE_INCLUDED_REGION': [start, length]
+            #'SEQUENCE_INCLUDED_REGION': [start, length]
                    }
         self.seq_arg = seq_arg
 
