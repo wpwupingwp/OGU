@@ -187,7 +187,7 @@ def print_primer(data):
 
 
 @print_time
-def find_continuous(most, window):
+def find_continuous(most):
     continuous = list()
     fragment = list()
     most = [i for i in most if i[1] not in ('N', '-')]
@@ -207,14 +207,15 @@ def find_continuous(most, window):
 
 
 @print_time
-def find_primer(continuous, most, window):
+def find_primer(continuous, most, length):
+    min_len, max_len = length.split('-')
     poly = re.compile(r'([ATCG])\1\1')
     ambiguous_base = re.compile(r'[^ATCG]')
     tandem = re.compile(r'([ATCG]{2})\1')
-    continuous = [i for i in continuous if len(i) >= window]
+    continuous = [i for i in continuous if len(i) >= length]
     for fragment in continuous:
-        for j in range(len(fragment)-window):
-            partial = fragment[j:(j+window)]
+        for j in range(len(fragment)-length):
+            partial = fragment[j:(j+length)]
             seq = ''.join([i[1] for i in partial])
             if re.search(poly, seq) is not None:
                 pass
@@ -243,8 +244,8 @@ def parse_args():
     arg.add_argument('-g', '--gap_cutoff', type=float, default=0.5,
                      help='maximum percent for gap to cutoff')
     arg.add_argument('-o', '--output', default='consensus.fasta')
-    arg.add_argument('-w', '--window', type=int, default=18,
-                     help='swip window width')
+    arg.add_argument('-l', '--length', type=str, default='18-24',
+                     help='primer length range')
     # arg.print_help()
     return arg.parse_args()
 
@@ -257,8 +258,8 @@ def main():
     count_data = count(new, rows, columns)
     most = find_most(count_data, arg.cutoff, arg.gap_cutoff)
     generate_consesus(most, arg.output)
-    continuous = find_continuous(most, arg.window)
-    find_primer(continuous, most, arg.window)
+    continuous = find_continuous(most)
+    find_primer(continuous, most, arg.length)
 
 
 if __name__ == '__main__':
