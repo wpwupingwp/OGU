@@ -169,22 +169,24 @@ def find_most(data, cutoff, gap_cutoff):
     return most[1:]
 
 
-def print_primer(data):
-    out = open('primer.txt', 'w')
+def write_primer(data, rows):
+    # https://en.wikipedia.org/wiki/FASTQ_format
+    quality = ('''!"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ'''
+               '''[\]^_`abcdefghijklmnopqrstuvwxyz{|}~''')
+    l = len(quality)
+    output = open('primer.txt', 'w')
     for item in data:
         i = [i[0] for i in item]
-        seq = [i[1] for i in item]
-        num = [i[2] for i in item]
-        out.write('{:>5} {}> {:<5}\n'.format(i[0], '-'*5*(len(i)-2), i[-1]))
-        for _ in seq:
-            out.write('{:>5}'.format(_))
-        out.write('\n')
-        for _ in seq:
-            out.write('{:>5}'.format('|'))
-        out.write('\n')
-        for _ in num:
-            out.write('{:>5}'.format(_))
-        out.write('\n')
+        start = item[0][0]
+        end = item[-1][0]
+        length = end - start
+        seq = ''.join([i[1] for i in item])
+        qual = [round((i[2]/rows)*l)-1 for i in item]
+        qual = [quality[int(i)] for i in qual]
+        output.write('@{}-{}-{}\n'.format(start, end, length))
+        output.write(seq+'\n')
+        output.write('+\n')
+        output.write(''.join(qual)+'\n')
 
 
 @print_time
@@ -214,7 +216,7 @@ def find_primer(continuous, most, length):
     ambiguous_base = re.compile(r'[^ATCG]')
     tandem = re.compile(r'([ATCG]{2})\1\1\1\1')
 
-    def is_good_primer(primer, template=None):
+    def is_good_primer(primer):
         # ref1. http://www.premierbiosoft.com/tech_notes/PCR_Primer_Design.html
         seq = ''.join([i[1] for i in primer])
         if re.search(poly, seq) is not None:
@@ -225,6 +227,10 @@ def find_primer(continuous, most, length):
         if len(re.findall(ambiguous_base, seq)) >= 3:
             return False, 'More than 3 ambiguous base'
         return True, 'Ok'
+
+
+    def get_best_primer(primers, template=None):
+        return best
 
     primer = list()
     min_len, max_len = length.split('-')
@@ -276,7 +282,7 @@ def main():
     generate_consesus(most, arg.output)
     continuous = find_continuous(most)
     primer = find_primer(continuous, most, arg.length)
-    print_primer(primer)
+    write_primer(primer, rows)
 
 
 if __name__ == '__main__':
