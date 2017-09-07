@@ -170,20 +170,21 @@ def find_most(data, cutoff, gap_cutoff):
 
 
 def print_primer(data):
-    i = [i[0] for i in data]
-    seq = [i[1] for i in data]
-    num = [i[2] for i in data]
     out = open('primer.txt', 'w')
-    out.write('{:>5} {}> {:<5}\n'.format(i[0], '-'*5*(len(i)-2), i[-1]))
-    for _ in seq:
-        out.write('{:>5}'.format(_))
-    out.write('\n')
-    for _ in seq:
-        out.write('{:>5}'.format('|'))
-    out.write('\n')
-    for _ in num:
-        out.write('{:>5}'.format(_))
-    out.write('\n')
+    for item in data:
+        i = [i[0] for i in item]
+        seq = [i[1] for i in item]
+        num = [i[2] for i in item]
+        out.write('{:>5} {}> {:<5}\n'.format(i[0], '-'*5*(len(i)-2), i[-1]))
+        for _ in seq:
+            out.write('{:>5}'.format(_))
+        out.write('\n')
+        for _ in seq:
+            out.write('{:>5}'.format('|'))
+        out.write('\n')
+        for _ in num:
+            out.write('{:>5}'.format(_))
+        out.write('\n')
 
 
 @print_time
@@ -207,8 +208,6 @@ def find_continuous(most):
     return continuous
 
 
-
-
 @print_time
 def find_primer(continuous, most, length):
     poly = re.compile(r'([ATCG])\1\1\1\1')
@@ -219,9 +218,9 @@ def find_primer(continuous, most, length):
         # ref1. http://www.premierbiosoft.com/tech_notes/PCR_Primer_Design.html
         seq = ''.join([i[1] for i in primer])
         if re.search(poly, seq) is not None:
-            return False, 'Poly structure'
+            return False, 'Poly(NNNNN) structure found'
         if re.search(tandem, seq) is not None:
-            return False, 'Tandom(NN*4) exist'
+            return False, 'Tandom(NN*5) exist'
             # no more 3 ambiguous base
         if len(re.findall(ambiguous_base, seq)) >= 3:
             return False, 'More than 3 ambiguous base'
@@ -234,15 +233,14 @@ def find_primer(continuous, most, length):
     continuous = [i for i in continuous if len(i) >= min_len]
     for fragment in continuous:
         len_fragment = len(fragment)
-        for start in range(len_fragment-min_len):
-            for end in range(min_len, 1+min(len_fragment, max_len)):
-                # print(start+1, end)
-                seq = fragment[start:end]
+        for start in range(len_fragment-max_len):
+            for p_len in range(min_len, max_len):
+                seq = fragment[start:(start+p_len)]
                 good_primer, detail = is_good_primer(seq)
                 if good_primer:
                     primer.append(seq)
                 else:
-                    print(seq, detail)
+                    continue
     return primer
 
 
