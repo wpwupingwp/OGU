@@ -111,13 +111,17 @@ def count(alignment, rows, columns):
     data = [[rows, columns]]
     for index in range(columns):
         column = alignment[:, [index]]
-        a = (column == b'A').sum()
-        t = (column == b'T').sum()
-        c = (column == b'C').sum()
-        g = (column == b'G').sum()
-        n = (column == b'N').sum()
-        question = (column == b'?').sum()
-        gap = (column == b'-').sum()
+        unique, counts = np.unique(column, return_counts=True)
+        count_dict = {b'A': 0, b'T': 0, b'C': 0, b'G': 0, b'N': 0,
+                      b'-': 0, b'?': 0}
+        count_dict.update(dict(zip(unique, counts)))
+        a = count_dict[b'A']
+        t = count_dict[b'T']
+        c = count_dict[b'C']
+        g = count_dict[b'G']
+        n = count_dict[b'N']
+        gap = count_dict[b'-']
+        question = count_dict[b'?']
         # is it necessary to count 'N' '-' and '?' ?
         other = rows - a - t - c - g - n - question - gap
         data.append([a, t, c, g, n, question, gap, other])
