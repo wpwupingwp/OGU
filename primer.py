@@ -169,26 +169,6 @@ def find_most(data, cutoff, gap_cutoff):
     return most[1:]
 
 
-def write_primer(data, rows):
-    # https://en.wikipedia.org/wiki/FASTQ_format
-    quality = ('''!"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ'''
-               '''[\]^_`abcdefghijklmnopqrstuvwxyz{|}~''')
-    l = len(quality)
-    output = open('primer.txt', 'w')
-    for item in data:
-        i = [i[0] for i in item]
-        start = item[0][0]
-        end = item[-1][0]
-        length = end - start
-        seq = ''.join([i[1] for i in item])
-        qual = [round((i[2]/rows)*l)-1 for i in item]
-        qual = [quality[int(i)] for i in qual]
-        output.write('@{}-{}-{}\n'.format(start, end, length))
-        output.write(seq+'\n')
-        output.write('+\n')
-        output.write(''.join(qual)+'\n')
-
-
 @print_time
 def find_continuous(most):
     continuous = list()
@@ -228,8 +208,14 @@ def find_primer(continuous, most, length):
             return False, 'More than 3 ambiguous base'
         return True, 'Ok'
 
+    def get_Tm(primer):
+        tm = primer3.calcTm(primer)
+        hairpin_tm = primer3.calcHairpinTm(primer)
+        homodimer_tm = primer3.calcHomodimerTm(primer)
+        return tm, hairpin_tm, homodimer_tm
 
     def get_best_primer(primers, template=None):
+# to be continue
         return best
 
     primer = list()
@@ -248,6 +234,26 @@ def find_primer(continuous, most, length):
                 else:
                     continue
     return primer
+
+
+def write_primer(data, rows):
+    # https://en.wikipedia.org/wiki/FASTQ_format
+    quality = ('''!"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ'''
+               '''[\]^_`abcdefghijklmnopqrstuvwxyz{|}~''')
+    l = len(quality)
+    output = open('primer.fastq', 'w')
+    for item in data:
+        i = [i[0] for i in item]
+        start = item[0][0]
+        end = item[-1][0]
+        length = end - start
+        seq = ''.join([i[1] for i in item])
+        qual = [round((i[2]/rows)*l)-1 for i in item]
+        qual = [quality[int(i)] for i in qual]
+        output.write('@{}-{}-{}\n'.format(start, end, length))
+        output.write(seq+'\n')
+        output.write('+\n')
+        output.write(''.join(qual)+'\n')
 
 
 @print_time
