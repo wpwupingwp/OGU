@@ -132,6 +132,8 @@ def count(alignment, rows, columns):
 
 @print_time
 def find_most(data, cutoff, gap_cutoff):
+    # to be continue
+    # directly use np.unique result
     most = [['location', 'base', 'count']]
     rows, columns = data[0]
     data = data[1:]
@@ -203,20 +205,20 @@ def find_primer(continuous, most, length):
         # ref1. http://www.premierbiosoft.com/tech_notes/PCR_Primer_Design.html
         seq = ''.join([i[1] for i in primer])
         if re.search(poly, seq) is not None:
-            return False, 'Poly(NNNNN) structure found'
+            return False, 0, 'Poly(NNNNN) structure found'
         if re.search(tandem, seq) is not None:
-            return False, 'Tandom(NN*5) exist'
+            return False, 0, 'Tandom(NN*5) exist'
             # no more 3 ambiguous base
         if len(re.findall(ambiguous_base, seq)) >= 3:
-            return False, 'More than 3 ambiguous base'
+            return False, 0, 'More than 3 ambiguous base'
 
         tm = primer3.calcTm(seq)
         hairpin_tm = primer3.calcHairpinTm(seq)
         homodimer_tm = primer3.calcHomodimerTm(seq)
         if max(tm, hairpin_tm, homodimer_tm) != tm:
-            return False, 'Hairpin or homodimer found'
+            return False, 0, 'Hairpin or homodimer found'
 
-        return True, 'Ok'
+        return True, tm, 'Ok'
 
     def get_best_primer(primers, template=None):
     # to be continue
@@ -232,9 +234,9 @@ def find_primer(continuous, most, length):
         for start in range(len_fragment-max_len):
             for p_len in range(min_len, max_len):
                 seq = fragment[start:(start+p_len)]
-                good_primer, detail = is_good_primer(seq)
+                good_primer, tm, detail = is_good_primer(seq)
                 if good_primer:
-                    primer.append(seq)
+                    primer.append([seq, tm])
                 else:
                     continue
     return primer
@@ -246,15 +248,14 @@ def write_primer(data, rows):
                '''[\]^_`abcdefghijklmnopqrstuvwxyz{|}~''')
     l = len(quality)
     output = open('primer.fastq', 'w')
-    for item in data:
-        i = [i[0] for i in item]
+    for item, tm in data:
         start = item[0][0]
         end = item[-1][0]
-        length = end - start
+        length = end - start + 1
         seq = ''.join([i[1] for i in item])
         qual = [round((i[2]/rows)*l)-1 for i in item]
         qual = [quality[int(i)] for i in qual]
-        output.write('@{}-{}-{}\n'.format(start, end, length))
+        output.write('@{}-{}-{}bp-{:.2f}°C\n'.format(start, end, length, tm))
         output.write(seq+'\n')
         output.write('+\n')
         output.write(''.join(qual)+'\n')
