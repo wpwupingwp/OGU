@@ -28,7 +28,6 @@ class Primer:
         'PRIMER_INTERNAL_MAX_POLY_X': 100,
         'PRIMER_SALT_MONOVALENT': 50.0,
         'PRIMER_DNA_CONC': 50.0,
-        'PRIMER_MAX_NS_ACCEPTED': 0,
         'PRIMER_MAX_SELF_ANY': 12,
         'PRIMER_MAX_SELF_END': 8,
         'PRIMER_PAIR_MAX_COMPL_ANY': 12,
@@ -44,7 +43,7 @@ class Primer:
         seq_arg = {
             'SEQUENCE_ID': name,
             'SEQUENCE_TEMPLATE': seq,
-            #'SEQUENCE_INCLUDED_REGION': [start, length]
+            # 'SEQUENCE_INCLUDED_REGION': [start, length]
                    }
         self.seq_arg = seq_arg
 
@@ -206,16 +205,17 @@ def find_primer(continuous, most, length):
             # no more 3 ambiguous base
         if len(re.findall(ambiguous_base, seq)) >= 3:
             return False, 'More than 3 ambiguous base'
+
+        tm = primer3.calcTm(seq)
+        hairpin_tm = primer3.calcHairpinTm(seq)
+        homodimer_tm = primer3.calcHomodimerTm(seq)
+        if max(tm, hairpin_tm, homodimer_tm) != tm:
+            return False, 'Hairpin or homodimer found'
+
         return True, 'Ok'
 
-    def get_Tm(primer):
-        tm = primer3.calcTm(primer)
-        hairpin_tm = primer3.calcHairpinTm(primer)
-        homodimer_tm = primer3.calcHomodimerTm(primer)
-        return tm, hairpin_tm, homodimer_tm
-
     def get_best_primer(primers, template=None):
-# to be continue
+    # to be continue
         return best
 
     primer = list()
