@@ -212,10 +212,16 @@ def find_primer(continuous, most, length):
         if len(re.findall(ambiguous_base, seq)) >= 3:
             return False, 0, 'More than 3 ambiguous base'
 
-        tm = primer3.calcTm(seq)
-        hairpin_tm = primer3.calcHairpinTm(seq)
-        homodimer_tm = primer3.calcHomodimerTm(seq)
+# primer3.setGlobals seems have no effect on calcTm, so I have to replace all
+# ambiguous base to A to get an approximate value. Othervise calcTm() will
+# generate -99999 if there is ambiguous base.
+        pure_seq = re.sub(ambiguous_base, 'A', seq)
+        print(pure_seq)
+        tm = primer3.calcTm(pure_seq)
+        hairpin_tm = primer3.calcHairpinTm(pure_seq)
+        homodimer_tm = primer3.calcHomodimerTm(pure_seq)
         if max(tm, hairpin_tm, homodimer_tm) != tm:
+            print(seq, tm, hairpin_tm, homodimer_tm)
             return False, 0, 'Hairpin or homodimer found'
 
         return True, tm, 'Ok'
