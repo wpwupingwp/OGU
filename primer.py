@@ -10,63 +10,6 @@ import primer3
 from Bio.Data. IUPACData import ambiguous_dna_values
 
 
-class Primer:
-    global_arg = {
-        'PRIMER_LIBERAL_BASE': 1,
-        'PRIMER_MAX_NS_ACCEPTED': 1,
-        'PRIMER_OPT_SIZE': 20,
-        'PRIMER_PICK_INTERNAL_OLIGO': 1,
-        'PRIMER_INTERNAL_MAX_SELF_END': 8,
-        'PRIMER_MIN_SIZE': 18,
-        'PRIMER_MAX_SIZE': 25,
-        'PRIMER_OPT_TM': 60.0,
-        'PRIMER_MIN_TM': 57.0,
-        'PRIMER_MAX_TM': 63.0,
-        'PRIMER_MIN_GC': 20.0,
-        'PRIMER_MAX_GC': 80.0,
-        'PRIMER_MAX_POLY_X': 100,
-        'PRIMER_INTERNAL_MAX_POLY_X': 100,
-        'PRIMER_SALT_MONOVALENT': 50.0,
-        'PRIMER_DNA_CONC': 50.0,
-        'PRIMER_MAX_SELF_ANY': 12,
-        'PRIMER_MAX_SELF_END': 8,
-        'PRIMER_PAIR_MAX_COMPL_ANY': 12,
-        'PRIMER_PAIR_MAX_COMPL_END': 8,
-        'PRIMER_PRODUCT_SIZE_RANGE': [[26, 100], [250, 450], [450, 800]]
-    }
-
-    def __init__(self, name, seq, start=None, length=None):
-        if start is None:
-            start = 0
-        if length is None:
-            length = len(seq)
-        seq_arg = {
-            'SEQUENCE_ID': name,
-            'SEQUENCE_TEMPLATE': seq,
-            # 'SEQUENCE_INCLUDED_REGION': [start, length]
-                   }
-        self.seq_arg = seq_arg
-
-    def change(self, **kargs):
-        self.global_arg.update(kargs)
-
-    def design(self):
-        result = primer3.bindings.designPrimers(self.seq_arg, self.global_arg)
-        return result
-
-
-def print_time(function):
-    @wraps(function)
-    def wrapper(*args, **kargs):
-        start = timer()
-        result = function(*args, **kargs)
-        end = timer()
-        print('The function {0} Cost {1:3f}s.\n'.format(
-            function.__name__, end-start))
-        return result
-    return wrapper
-
-
 def get_ambiguous_dict():
     data = ambiguous_dna_values
     data = dict(zip(data.values(), data.keys()))
@@ -77,7 +20,6 @@ def get_ambiguous_dict():
     return data_with_len
 
 
-@print_time
 def read(fasta):
     data = list()
     record = ['id', 'seq']
@@ -94,7 +36,6 @@ def read(fasta):
     return data
 
 
-@print_time
 def convert(old):
     # order 'F' is a bit faster than 'C'
     # name = np.array([[i[0]] for i in old], dtype=np.bytes_)
@@ -105,7 +46,6 @@ def convert(old):
     return new, rows, columns
 
 
-@print_time
 def count(alignment, rows, columns):
     # skip sequence id column
     data = [[rows, columns]]
@@ -130,7 +70,6 @@ def count(alignment, rows, columns):
     return data
 
 
-@print_time
 def find_most(data, cutoff, gap_cutoff):
     # to be continue
     # directly use np.unique result
@@ -174,7 +113,6 @@ def find_most(data, cutoff, gap_cutoff):
     return most[1:]
 
 
-@print_time
 def find_continuous(most):
     continuous = list()
     fragment = list()
@@ -195,7 +133,6 @@ def find_continuous(most):
     return continuous
 
 
-@print_time
 def find_primer(continuous, most, length):
     poly = re.compile(r'([ATCG])\1\1\1\1')
     ambiguous_base = re.compile(r'[^ATCG]')
@@ -267,14 +204,12 @@ def write_primer(data, rows):
         output.write(''.join(qual)+'\n')
 
 
-@print_time
 def generate_consesus(data, output):
     with open(output, 'w') as out:
         seq = [i[1] for i in data]
         out.write('>Consensus\n{}\n'.format(''.join(seq)))
 
 
-@print_time
 def parse_args():
     arg = argparse.ArgumentParser(description=main.__doc__)
     arg.add_argument('input', help='input alignment file')
@@ -289,7 +224,6 @@ def parse_args():
     return arg.parse_args()
 
 
-@print_time
 def main():
     arg = parse_args()
     raw_alignment = read(arg.input)
@@ -299,6 +233,7 @@ def main():
     generate_consesus(most, arg.output)
     continuous = find_continuous(most)
     primer = find_primer(continuous, most, arg.length)
+    print('Found {} primers.'.format(len(primer)))
     write_primer(primer, rows)
 
 
