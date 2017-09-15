@@ -185,12 +185,13 @@ def find_primer(continuous, most, length):
     return primer
 
 
-def write_primer(data, rows):
+def write_fastq(data, rows, output):
     # https://en.wikipedia.org/wiki/FASTQ_format
     quality = ('''!"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ'''
                '''[\]^_`abcdefghijklmnopqrstuvwxyz{|}~''')
     l = len(quality)
-    output = open('primer.fastq', 'w')
+    output = open(output, 'w')
+
     for item, tm in data:
         start = item[0][0]
         end = item[-1][0]
@@ -204,12 +205,6 @@ def write_primer(data, rows):
         output.write(''.join(qual)+'\n')
 
 
-def generate_consesus(data, output):
-    with open(output, 'w') as out:
-        seq = [i[1] for i in data]
-        out.write('>Consensus\n{}\n'.format(''.join(seq)))
-
-
 def parse_args():
     arg = argparse.ArgumentParser(description=main.__doc__)
     arg.add_argument('input', help='input alignment file')
@@ -217,7 +212,7 @@ def parse_args():
                      help='minium percent to keep')
     arg.add_argument('-g', '--gap_cutoff', type=float, default=0.5,
                      help='maximum percent for gap to cutoff')
-    arg.add_argument('-o', '--output', default='consensus.fasta')
+    arg.add_argument('-o', '--output', default='primer.fastq')
     arg.add_argument('-l', '--length', type=str, default='18-26',
                      help='primer length range')
     # arg.print_help()
@@ -230,11 +225,12 @@ def main():
     new, rows, columns = convert(raw_alignment)
     count_data = count(new, rows, columns)
     most = find_most(count_data, arg.cutoff, arg.gap_cutoff)
-    generate_consesus(most, arg.output)
+    # write consensus
+    write_fastq([[most, 0]], rows, 'consensus.fastq')
     continuous = find_continuous(most)
     primer = find_primer(continuous, most, arg.length)
     print('Found {} primers.'.format(len(primer)))
-    write_primer(primer, rows)
+    write_fastq(primer, rows, arg.output)
 
 
 if __name__ == '__main__':
