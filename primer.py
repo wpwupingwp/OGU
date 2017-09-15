@@ -216,7 +216,6 @@ def find_primer(continuous, most, length):
 # ambiguous base to A to get an approximate value. Othervise calcTm() will
 # generate -99999 if there is ambiguous base.
         pure_seq = re.sub(ambiguous_base, 'A', seq)
-        print(pure_seq)
         tm = primer3.calcTm(pure_seq)
         hairpin_tm = primer3.calcHairpinTm(pure_seq)
         homodimer_tm = primer3.calcHomodimerTm(pure_seq)
@@ -245,6 +244,7 @@ def find_primer(continuous, most, length):
                     primer.append([seq, tm])
                 else:
                     continue
+    primer.sort(key=lambda x: x[1], reverse=True)
     return primer
 
 
@@ -283,7 +283,7 @@ def parse_args():
     arg.add_argument('-g', '--gap_cutoff', type=float, default=0.5,
                      help='maximum percent for gap to cutoff')
     arg.add_argument('-o', '--output', default='consensus.fasta')
-    arg.add_argument('-l', '--length', type=str, default='18-24',
+    arg.add_argument('-l', '--length', type=str, default='18-26',
                      help='primer length range')
     # arg.print_help()
     return arg.parse_args()
