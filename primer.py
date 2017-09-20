@@ -185,8 +185,9 @@ def find_primer(continuous, most, length):
 
 def write_fastq(data, rows, output, cutoff):
     # https://en.wikipedia.org/wiki/FASTQ_format
-    quality = ('''!"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ'''
-               '''[\]^_`abcdefghijklmnopqrstuvwxyz{|}~''')
+    quality = '''!"#$%&'()*+,-./0123456789:;<=>?@ABCDEFG'''
+    # HIJKLMNOPQRSTUVWXYZ'''
+    # '''[\]^_`abcdefghijklmnopqrstuvwxyz{|}~''')
     l = len(quality)
     output = open(output, 'w')
 
