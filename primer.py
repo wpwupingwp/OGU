@@ -228,7 +228,7 @@ def main():
     count_data = count(new, rows, columns)
     most = find_most(count_data, arg.cutoff, arg.gap_cutoff)
     # write consensus
-    write_fastq([[most, 0]], rows, 'consensus.fastq', arg.cutoff)
+    write_fastq([[most, 0]], rows, arg.input+'.consensus.fastq', arg.cutoff)
     continuous = find_continuous(most)
     primer = find_primer(continuous, most, arg.length)
     print('Found {} primers.'.format(len(primer)))
