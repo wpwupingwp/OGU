@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 
-from functools import wraps
 from collections import defaultdict
 from timeit import default_timer as timer
 import argparse
@@ -221,6 +220,7 @@ def parse_args():
 
 
 def main():
+    start = timer()
     arg = parse_args()
     raw_alignment = read(arg.input)
     new, rows, columns = convert(raw_alignment)
@@ -232,6 +232,8 @@ def main():
     primer = find_primer(continuous, most, arg.length)
     print('Found {} primers.'.format(len(primer)))
     write_fastq(primer, rows, arg.output, arg.cutoff)
+    end = timer()
+    print('Cost {:.3f} seconds.'.format(end-start))
 
 
 if __name__ == '__main__':
