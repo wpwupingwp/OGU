@@ -157,7 +157,6 @@ def find_primer(continuous, most, length):
         hairpin_tm = primer3.calcHairpinTm(pure_seq)
         homodimer_tm = primer3.calcHomodimerTm(pure_seq)
         if max(tm, hairpin_tm, homodimer_tm) != tm:
-            print(seq, tm, hairpin_tm, homodimer_tm)
             return False, 0, 'Hairpin or homodimer found'
 
         return True, tm, 'Ok'
@@ -185,7 +184,7 @@ def find_primer(continuous, most, length):
     return primer
 
 
-def write_fastq(data, rows, output):
+def write_fastq(data, rows, output, cutoff):
     # https://en.wikipedia.org/wiki/FASTQ_format
     quality = ('''!"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ'''
                '''[\]^_`abcdefghijklmnopqrstuvwxyz{|}~''')
@@ -199,7 +198,8 @@ def write_fastq(data, rows, output):
         seq = ''.join([i[1] for i in item])
         qual = [round((i[2]/rows)*l)-1 for i in item]
         qual = [quality[int(i)] for i in qual]
-        output.write('@{}-{}-{}bp-{:.2f}°C\n'.format(start, end, length, tm))
+        output.write('@{}-{}-{}bp-{:.2f}°C-{:.0%}\n'.format(
+            start, end, length, tm, cutoff))
         output.write(seq+'\n')
         output.write('+\n')
         output.write(''.join(qual)+'\n')
@@ -226,11 +226,11 @@ def main():
     count_data = count(new, rows, columns)
     most = find_most(count_data, arg.cutoff, arg.gap_cutoff)
     # write consensus
-    write_fastq([[most, 0]], rows, 'consensus.fastq')
+    write_fastq([[most, 0]], rows, 'consensus.fastq', arg.cutoff)
     continuous = find_continuous(most)
     primer = find_primer(continuous, most, arg.length)
     print('Found {} primers.'.format(len(primer)))
-    write_fastq(primer, rows, arg.output)
+    write_fastq(primer, rows, arg.output, arg.cutoff)
 
 
 if __name__ == '__main__':
