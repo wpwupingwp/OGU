@@ -191,6 +191,7 @@ def write_fastq(data, rows, output, cutoff):
     l = len(quality)
     output = open(output, 'w')
 
+    data.sort(key=lambda x: int(x[-1]), reverse=True)
     for item, tm in data:
         start = item[0][0]
         end = item[-1][0]
