@@ -132,7 +132,7 @@ def find_continuous(most):
     return continuous
 
 
-def find_primer(continuous, most, length):
+def find_primer(continuous, most, length, ambiguous_base_n):
     poly = re.compile(r'([ATCG])\1\1\1\1')
     ambiguous_base = re.compile(r'[^ATCG]')
     tandem = re.compile(r'([ATCG]{2})\1\1\1\1')
@@ -145,7 +145,7 @@ def find_primer(continuous, most, length):
         if re.search(tandem, seq) is not None:
             return False, 0, 'Tandom(NN*5) exist'
             # no more 3 ambiguous base
-        if len(re.findall(ambiguous_base, seq)) >= 3:
+        if len(re.findall(ambiguous_base, seq)) >= ambiguous_base_n:
             return False, 0, 'More than 3 ambiguous base'
 
 # primer3.setGlobals seems have no effect on calcTm, so I have to replace all
@@ -208,12 +208,14 @@ def write_fastq(data, rows, output, cutoff):
 def parse_args():
     arg = argparse.ArgumentParser(description=main.__doc__)
     arg.add_argument('input', help='input alignment file')
+    arg.add_argument('-a', '--ambiguous_base_n', type=int, default=2,
+                     help='number of ambiguous bases')
     arg.add_argument('-c', '--cutoff', type=float, default=1.0,
                      help='minium percent to keep')
     arg.add_argument('-g', '--gap_cutoff', type=float, default=0.5,
                      help='maximum percent for gap to cutoff')
     arg.add_argument('-o', '--output', default='primer.fastq')
-    arg.add_argument('-l', '--length', type=str, default='18-26',
+    arg.add_argument('-l', '--length', type=str, default='24-25',
                      help='primer length range')
     # arg.print_help()
     return arg.parse_args()
@@ -229,7 +231,7 @@ def main():
     # write consensus
     write_fastq([[most, 0]], rows, arg.input+'.consensus.fastq', arg.cutoff)
     continuous = find_continuous(most)
-    primer = find_primer(continuous, most, arg.length)
+    primer = find_primer(continuous, most, arg.length, arg.ambiguous_base_n)
     print('Found {} primers.'.format(len(primer)))
     write_fastq(primer, rows, arg.output, arg.cutoff)
     end = timer()
