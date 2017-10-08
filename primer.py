@@ -216,7 +216,6 @@ def parse_args():
     arg.add_argument('-g', '--gap_cutoff', type=float, default=0.5,
                      help='maximum percent for gap to cutoff')
     arg.add_argument('-n', '--name', help='name prefix')
-    arg.add_argument('-o', '--output', default='primer.fastq')
     arg.add_argument('-l', '--length', type=str, default='24-25',
                      help='primer length range')
     # arg.print_help()
@@ -234,12 +233,12 @@ def main():
     count_data = count(new, rows, columns)
     most = find_most(count_data, arg.cutoff, arg.gap_cutoff)
     # write consensus
-    write_fastq([[most, 0]], rows, arg.input+'.consensus.fastq', arg.cutoff,
+    write_fastq([[most, 0]], rows, arg.name+'.consensus.fastq', arg.cutoff,
                 arg.name)
     continuous = find_continuous(most)
     primer = find_primer(continuous, most, arg.length, arg.ambiguous_base_n)
     print('Found {} primers.'.format(len(primer)))
-    write_fastq(primer, rows, arg.output, arg.cutoff, arg.name)
+    write_fastq(primer, rows, arg.name+'.primer.fastq', arg.cutoff, arg.name)
     end = timer()
     print('Cost {:.3f} seconds.'.format(end-start))
 
