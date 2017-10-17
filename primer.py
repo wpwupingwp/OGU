@@ -158,12 +158,7 @@ def find_primer(continuous, most, length, ambiguous_base_n):
         homodimer_tm = primer3.calcHomodimerTm(pure_seq)
         if max(tm, hairpin_tm, homodimer_tm) != tm:
             return False, 0, 'Hairpin or homodimer found'
-
         return True, tm, 'Ok'
-
-    def get_best_primer(primers, template=None):
-    # to be continue
-        return best
 
     primer = list()
     min_len, max_len = length.split('-')
@@ -182,6 +177,10 @@ def find_primer(continuous, most, length, ambiguous_base_n):
                     continue
     primer.sort(key=lambda x: x[1], reverse=True)
     return primer
+
+
+def validate(candidate, input_file):
+    pass
 
 
 def write_fastq(data, rows, output, cutoff, name):
@@ -236,8 +235,9 @@ def main():
     write_fastq([[most, 0]], rows, arg.name+'.consensus.fastq', arg.cutoff,
                 arg.name)
     continuous = find_continuous(most)
-    primer = find_primer(continuous, most, arg.length, arg.ambiguous_base_n)
-    print('Found {} primers.'.format(len(primer)))
+    primer_candidate = find_primer(continuous, most, arg.length, arg.ambiguous_base_n)
+    print('Found {} primers.'.format(len(primer_candidate)))
+    primer = validate(primer_candidate, arg.input)
     write_fastq(primer, rows, arg.name+'.primer.fastq', arg.cutoff, arg.name)
     end = timer()
     print('Cost {:.3f} seconds.'.format(end-start))
