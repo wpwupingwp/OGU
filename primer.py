@@ -263,7 +263,7 @@ def write_fastq(data, rows, output, name):
     quality = ('''!"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ'''
                '''[\]^_`abcdefghijklmnopqrstuvwxyz{|}~''')
     l = len(quality)
-    output = open(output, 'w')
+    out = open(output, 'w')
 
     for item, tm in data:
         start = item[0][0]
@@ -272,10 +272,10 @@ def write_fastq(data, rows, output, name):
         # generate quality score
         qual = [round((i[2]/rows)*l)-1 for i in item]
         qual = [quality[int(i)] for i in qual]
-        output.write('@{}-{}-{}\n'.format(name, start, end))
-        output.write(seq+'\n')
-        output.write('+\n')
-        output.write(''.join(qual)+'\n')
+        out.write('@{}-{}-{}\n'.format(name, start, end))
+        out.write(seq+'\n')
+        out.write('+\n')
+        out.write(''.join(qual)+'\n')
     return output
 
 
@@ -324,8 +324,7 @@ def main():
     primer_candidate = find_primer(continuous, most, min_len, max_len,
                                    arg.ambiguous_base_n)
     candidate_file = write_fastq(
-        primer_candidate, rows, arg.name+'.candidate.fastq',
-        arg.cutoff, arg.name)
+        primer_candidate, rows, arg.name+'.candidate.fastq', arg.name)
     primer = validate(candidate_file, arg.input, rows, min_len, arg.cutoff,
                       arg.mismatch)
     write_fasta(primer)
