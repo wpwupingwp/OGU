@@ -250,10 +250,13 @@ def validate(candidate_file, input_file, n_seqs, min_len, min_covrage,
                 good_hits += 1
         blast_result.append([query.id, good_hits, sum_bitscore_raw, seq])
     # validate
-    validate_result = [blast_result[:2], ]
-    for record in blast_result:
+    # validate_result = [['ID', 'Hits', 'Sum_Bitscore_raw', 'Seq'], ]
+    validate_result = [blast_result[1], ]
+    for record in blast_result[2:]:
         if record[1] / n_seqs >= min_covrage:
             validate_result.append(record)
+    for i in validate_result:
+        print(len(i), i)
     validate_result.sort(key=lambda x: x[2])
     return validate_result
 
@@ -282,8 +285,9 @@ def write_fastq(data, rows, output, name):
 def write_fasta(data, output):
     with open(output, 'w') as out:
         for i in data:
-            *name, seq = i
-            out.write('>{}\n{}\n'.format('-'.join(name), seq))
+            name, hits, sum_bitscore_raw, seq = i
+            out.write('>{}-{}-{}\n{}\n'.format(
+                name, hits, sum_bitscore_raw, seq))
 
 
 def parse_args():
@@ -327,7 +331,8 @@ def main():
         primer_candidate, rows, arg.name+'.candidate.fastq', arg.name)
     primer = validate(candidate_file, arg.input, rows, min_len, arg.cutoff,
                       arg.mismatch)
-    write_fasta(primer)
+    write_fasta(primer, '{}-{}_covrage-{}bp_mismatch.fasta'.format(
+        arg.name, arg.cutoff, arg.mismatch))
     print('Found {} primers.'.format(len(primer)))
     end = timer()
     print('Cost {:.3f} seconds.'.format(end-start))
