@@ -258,27 +258,32 @@ def validate(candidate_file, input_file, n_seqs, min_len, min_covrage,
     return validate_result
 
 
-def write_fastq(data, rows, output, cutoff, name):
+def write_fastq(data, rows, output, name):
     # https://en.wikipedia.org/wiki/FASTQ_format
     quality = ('''!"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ'''
                '''[\]^_`abcdefghijklmnopqrstuvwxyz{|}~''')
     l = len(quality)
     output = open(output, 'w')
 
-    data.sort(key=lambda x: int(x[-1]), reverse=True)
     for item, tm in data:
         start = item[0][0]
         end = item[-1][0]
-        length = end - start + 1
         seq = ''.join([i[1] for i in item])
+        # generate quality score
         qual = [round((i[2]/rows)*l)-1 for i in item]
         qual = [quality[int(i)] for i in qual]
-        output.write('@{}-{}-{}-{}bp-{:.2f}°C-{:.0%}\n'.format(
-            name, start, end, length, tm, cutoff))
+        output.write('@{}-{}-{}\n'.format(name, start, end))
         output.write(seq+'\n')
         output.write('+\n')
         output.write(''.join(qual)+'\n')
     return output
+
+
+def write_fasta(data, output):
+    with open(output, 'w') as out:
+        for i in data:
+            *name, seq = i
+            out.write('>{}\n{}\n'.format('-'.join(name), seq))
 
 
 def parse_args():
@@ -314,8 +319,7 @@ def main():
     count_data = count(new, rows, columns)
     most = find_most(count_data, arg.cutoff, arg.gap_cutoff)
     # write consensus
-    write_fastq([[most, 0]], rows, arg.name+'.consensus.fastq', arg.cutoff,
-                arg.name)
+    write_fastq([[most, 0]], rows, arg.name+'.consensus.fastq', arg.name)
     continuous = find_continuous(most)
     primer_candidate = find_primer(continuous, most, min_len, max_len,
                                    arg.ambiguous_base_n)
@@ -324,8 +328,8 @@ def main():
         arg.cutoff, arg.name)
     primer = validate(candidate_file, arg.input, rows, min_len, arg.cutoff,
                       arg.mismatch)
+    write_fasta(primer)
     print('Found {} primers.'.format(len(primer)))
-    write_fastq(primer, rows, arg.name+'.primer.fastq', arg.cutoff, arg.name)
     end = timer()
     print('Cost {:.3f} seconds.'.format(end-start))
 
