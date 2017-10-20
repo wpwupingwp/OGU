@@ -234,13 +234,12 @@ def validate(candidate_file, input_file, n_seqs, min_len, min_covrage,
     stdout, stderr = cmd()
     # parse
     min_bitscore_raw = min_len - max_mismatch
-    blast_result = [['ID', 'Hits', 'Sum_Bitscore_raw', 'Seq'], ]
-    blast_result.append(['All', n_seqs, min_len, 'N'*min_len])
+    blast_result = [['ID', 'Hits', 'Sum_Bitscore_raw'], ]
+    blast_result.append(['All', n_seqs, min_len])
     for query in SearchIO.parse(blast_result_file, 'blast-xml'):
         if len(query) == 0:
             blast_result.append([query.id, 0, 0])
             continue
-        seq = str(query[0][0].query.seq)
         sum_bitscore_raw = 0
         good_hits = 0
         for hit in query:
@@ -248,14 +247,13 @@ def validate(candidate_file, input_file, n_seqs, min_len, min_covrage,
             if hsp_bitscore_raw >= min_bitscore_raw:
                 sum_bitscore_raw += hsp_bitscore_raw
                 good_hits += 1
-        blast_result.append([query.id, good_hits, sum_bitscore_raw, seq])
+        blast_result.append([query.id, good_hits, sum_bitscore_raw])
     # validate
     # validate_result = [['ID', 'Hits', 'Sum_Bitscore_raw', 'Seq'], ]
     validate_result = list()
     for record in blast_result[2:]:
         if record[1] / n_seqs >= min_covrage:
             validate_result.append(record)
-    validate_result.sort(key=lambda x: x[2])
     return validate_result
 
 
@@ -326,11 +324,18 @@ def main():
                                    arg.ambiguous_base_n)
     candidate_file = write_fastq(
         primer_candidate, rows, arg.name+'.candidate.fastq', arg.name)
-    primer = validate(candidate_file, arg.input, rows, arg.min_len, arg.cutoff,
-                      arg.mismatch)
-    write_fasta(primer, '{}-{}_covrage-{}bp_mismatch.fasta'.format(
-        arg.name, arg.cutoff, arg.mismatch))
-    print('Found {} primers.'.format(len(primer)))
+    primer_info = validate(candidate_file, arg.input, rows, arg.min_len,
+                           arg.cutoff, arg.mismatch)
+    primer_info_dict = {i[0]: [i[1], i[2]] for i in primer_info}
+    primer_file = '{}-{}_covrage-{}bp_mismatch.fastq'.format(
+        arg.name, arg.cutoff, arg.mismatch)
+    with open(primer_file, 'w') as out:
+        for seq in SeqIO.parse(candidate_file, 'fastq'):
+            if seq.id in primer_info_dict:
+                seq.id = '{}-{}-{}'.format(seq.id, *primer_info_dict[seq.id])
+                seq.description = ''
+                SeqIO.write(seq, out, 'fastq')
+    print('Found {} primers.'.format(len(primer_info)))
     end = timer()
     print('Cost {:.3f} seconds.'.format(end-start))
 
