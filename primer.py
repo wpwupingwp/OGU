@@ -251,12 +251,10 @@ def validate(candidate_file, input_file, n_seqs, min_len, min_covrage,
         blast_result.append([query.id, good_hits, sum_bitscore_raw, seq])
     # validate
     # validate_result = [['ID', 'Hits', 'Sum_Bitscore_raw', 'Seq'], ]
-    validate_result = [blast_result[1], ]
+    validate_result = list()
     for record in blast_result[2:]:
         if record[1] / n_seqs >= min_covrage:
             validate_result.append(record)
-    for i in validate_result:
-        print(len(i), i)
     validate_result.sort(key=lambda x: x[2])
     return validate_result
 
@@ -275,7 +273,7 @@ def write_fastq(data, rows, output, name):
         # generate quality score
         qual = [round((i[2]/rows)*l)-1 for i in item]
         qual = [quality[int(i)] for i in qual]
-        out.write('@{}-{}-{}\n'.format(name, start, end))
+        out.write('@{}-{}-{}-{:.3f}\n'.format(name, start, end, tm))
         out.write(seq+'\n')
         out.write('+\n')
         out.write(''.join(qual)+'\n')
