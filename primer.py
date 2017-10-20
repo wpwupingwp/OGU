@@ -205,7 +205,8 @@ def parse(blast_result_file):
         yield best_hsp
 
 
-def validate(candidate_file, input_file, n_seqs, min_len):
+def validate(candidate_file, input_file, n_seqs, min_len, min_covrage,
+             max_mismatch):
     # remove gap in old alignment file
     no_gap = 'validate.fasta'
     with open(no_gap, 'w') as new, open(input_file, 'r') as old:
@@ -220,7 +221,7 @@ def validate(candidate_file, input_file, n_seqs, min_len):
     SeqIO.convert(candidate_file, 'fastq', candidate_fasta, 'fasta')
     run('makeblastdb -in {} -dbtype nucl'.format(no_gap), shell=True)
     # blast
-    blast_result = 'BlastResult.xml'
+    blast_result_file = 'BlastResult.xml'
     cmd = nb(num_threads=cpu_count(),
              query=candidate_fasta,
              db=no_gap,
@@ -229,18 +230,32 @@ def validate(candidate_file, input_file, n_seqs, min_len):
              max_hsps=1,
              max_target_seqs=n_seqs,
              outfmt=5,
-             out=blast_result)
+             out=blast_result_file)
     stdout, stderr = cmd()
     # parse
-    validate_result = [['ID', 'Hits', 'Sum_Bitscore_raw'], ]
-    validate_result.append(['All', n_seqs, min_len])
-    for query in SearchIO.parse(blast_result, 'blast-xml'):
+    min_bitscore_raw = min_len - max_mismatch
+    blast_result = [['ID', 'Hits', 'Sum_Bitscore_raw', 'Seq'], ]
+    blast_result.append(['All', n_seqs, min_len, 'N'*min_len])
+    for query in SearchIO.parse(blast_result_file, 'blast-xml'):
         if len(query) == 0:
-            validate_result.append([query.id, 0, 0])
+            blast_result.append([query.id, 0, 0])
             continue
-        bitscore_raw = [hit[0].bitscore_raw for hit in query]
-        validate_result.append([query.id, len(query), sum(bitscore_raw)])
-
+        seq = str(query[0][0].query.seq)
+        sum_bitscore_raw = 0
+        good_hit = 0
+        for hit in query:
+            hsp_bitscore_raw = hit[0].bitscore_raw
+            if hsp_bitscore_raw >= min_bitscore_raw:
+                sum_bitscore_raw += hsp_bitscore_raw
+                good_hit += 1
+        blast_result.append([query.id, good_hit, sum_bitscore_raw, seq])
+    # validate
+    min_sum_bitscore_raw = n_seqs * min_len * min_covrage
+    validate_result = [blast_result[:2], ]
+    for record in blast_result:
+        if (record[1] / n_seqs >= min_covrage and
+                record[2] >= :
+            validate_result.append(record)
 
 
 def write_fastq(data, rows, output, cutoff, name):
@@ -278,6 +293,8 @@ def parse_args():
     arg.add_argument('-n', '--name', help='name prefix')
     arg.add_argument('-l', '--length', type=str, default='24-25',
                      help='primer length range')
+    arg.add_argument('-m', '--mismatch', type=int, default=2,
+                     help='maximum mismatch bases in primer')
     # arg.print_help()
     return arg.parse_args()
 
@@ -288,7 +305,7 @@ def main():
     if arg.name is None:
         arg.name = os.path.basename(arg.input)
         arg.name = arg.name.split('.')[0]
-    min_len, max_len = length.split('-')
+    min_len, max_len = arg.length.split('-')
     min_len = int(min_len)
     max_len = int(max_len)
 
@@ -305,7 +322,8 @@ def main():
     candidate_file = write_fastq(
         primer_candidate, rows, arg.name+'.candidate.fastq',
         arg.cutoff, arg.name)
-    primer = validate(candidate_file, arg.input, rows, min_len)
+    primer = validate(candidate_file, arg.input, rows, min_len, arg.cutoff,
+                      arg.mismatch)
     print('Found {} primers.'.format(len(primer)))
     write_fastq(primer, rows, arg.name+'.primer.fastq', arg.cutoff, arg.name)
     end = timer()
