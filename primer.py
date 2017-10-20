@@ -293,7 +293,7 @@ def parse_args():
     arg.add_argument('input', help='input alignment file')
     arg.add_argument('-a', '--ambiguous_base_n', type=int, default=2,
                      help='number of ambiguous bases')
-    arg.add_argument('-c', '--cutoff', type=float, default=1.0,
+    arg.add_argument('-c', '--cutoff', type=float, default=0.95,
                      help='minium percent to keep')
     arg.add_argument('-g', '--gap_cutoff', type=float, default=0.5,
                      help='maximum percent for gap to cutoff')
