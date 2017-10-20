@@ -242,20 +242,20 @@ def validate(candidate_file, input_file, n_seqs, min_len, min_covrage,
             continue
         seq = str(query[0][0].query.seq)
         sum_bitscore_raw = 0
-        good_hit = 0
+        good_hits = 0
         for hit in query:
             hsp_bitscore_raw = hit[0].bitscore_raw
             if hsp_bitscore_raw >= min_bitscore_raw:
                 sum_bitscore_raw += hsp_bitscore_raw
-                good_hit += 1
-        blast_result.append([query.id, good_hit, sum_bitscore_raw, seq])
+                good_hits += 1
+        blast_result.append([query.id, good_hits, sum_bitscore_raw, seq])
     # validate
-    min_sum_bitscore_raw = n_seqs * min_len * min_covrage
     validate_result = [blast_result[:2], ]
     for record in blast_result:
-        if (record[1] / n_seqs >= min_covrage and
-                record[2] >= :
+        if record[1] / n_seqs >= min_covrage:
             validate_result.append(record)
+    validate_result.sort(key=lambda x: x[2])
+    return validate_result
 
 
 def write_fastq(data, rows, output, cutoff, name):
