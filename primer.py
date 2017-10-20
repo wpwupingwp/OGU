@@ -185,28 +185,6 @@ def find_primer(continuous, most, length, ambiguous_base_n):
     return primer
 
 
-def blast(ref_file, query_file):
-    """
-    max_target_seqs was reported to having bug."""
-    # MAX_TARGET_SEQS = 2
-    db_file = os.path.join(args.out, ref_file)
-    # hide output
-    with open(os.path.join(args.out, 'log.txt'), 'w') as log:
-        run('makeblastdb -in {0} -out {1} -dbtype nucl'.format(
-            ref_file, db_file), stdout=log, shell=True)
-    result = os.path.join(args.out, 'BlastResult.xml')
-    cmd = nb(num_threads=cpu_count(),
-             query=query_file,
-             db=db_file,
-             task='blastn',
-             evalue=args.evalue,
-             max_hsps=1,
-             # max_target_seqs=MAX_TARGET_SEQS,
-             outfmt=5,
-             out=result)
-    stdout, stderr = cmd()
-
-
 def parse(blast_result_file):
     sep = '~'*80
     blast_result = SearchIO.parse(blast_result_file, 'blast-xml')
@@ -230,7 +208,7 @@ def parse(blast_result_file):
         yield best_hsp
 
 
-def validate(candidate_file, input_file):
+def validate(candidate_file, input_file, n_seqs):
     # remove gap in old alignment file
     no_gap = 'validate.fasta'
     with open(no_gap, 'w') as new, open(input_file, 'r') as old:
@@ -245,16 +223,19 @@ def validate(candidate_file, input_file):
     SeqIO.convert(candidate_file, 'fastq', candidate_fasta, 'fasta')
     run('makeblastdb -in {} -dbtype nucl'.format(no_gap), shell=True)
     # blast
-    result = 'BlastResult.xml'
+    blast_result = 'BlastResult.xml'
     cmd = nb(num_threads=cpu_count(),
              query=candidate_fasta,
              db=no_gap,
              task='blastn',
              evalue=1e-5,
              max_hsps=1,
+             max_target_seqs=n_seqs,
              outfmt=5,
-             out=result)
+             out=blast_result)
     stdout, stderr = cmd()
+    # parse
+    for query in SearchIO.parse(result, 'blast-xml'):
 
 
 def write_fastq(data, rows, output, cutoff, name):
@@ -315,7 +296,7 @@ def main():
     candidate_file = write_fastq(
         primer_candidate, rows, arg.name+'.candidate.fastq',
         arg.cutoff, arg.name)
-    primer = validate(candidate_file, arg.input)
+    primer = validate(candidate_file, arg.input, rows)
     print('Found {} primers.'.format(len(primer)))
     write_fastq(primer, rows, arg.name+'.primer.fastq', arg.cutoff, arg.name)
     end = timer()
