@@ -300,8 +300,10 @@ def parse_args():
     arg.add_argument('-g', '--gap_cutoff', type=float, default=0.5,
                      help='maximum percent for gap to cutoff')
     arg.add_argument('-n', '--name', help='name prefix')
-    arg.add_argument('-l', '--length', type=str, default='24-25',
-                     help='primer length range')
+    arg.add_argument('-lmin', '--min_len', type=int, default=24,
+                     help='minimum primer length range')
+    arg.add_argument('-lmax', '--max_len', type=int, default=25,
+                     help='maximum primer length range')
     arg.add_argument('-m', '--mismatch', type=int, default=2,
                      help='maximum mismatch bases in primer')
     # arg.print_help()
@@ -314,9 +316,6 @@ def main():
     if arg.name is None:
         arg.name = os.path.basename(arg.input)
         arg.name = arg.name.split('.')[0]
-    min_len, max_len = arg.length.split('-')
-    min_len = int(min_len)
-    max_len = int(max_len)
 
     raw_alignment = read(arg.input)
     new, rows, columns = convert(raw_alignment)
@@ -325,11 +324,11 @@ def main():
     # write consensus
     write_fastq([[most, 0]], rows, arg.name+'.consensus.fastq', arg.name)
     continuous = find_continuous(most)
-    primer_candidate = find_primer(continuous, most, min_len, max_len,
+    primer_candidate = find_primer(continuous, most, arg.min_len, arg.max_len,
                                    arg.ambiguous_base_n)
     candidate_file = write_fastq(
         primer_candidate, rows, arg.name+'.candidate.fastq', arg.name)
-    primer = validate(candidate_file, arg.input, rows, min_len, arg.cutoff,
+    primer = validate(candidate_file, arg.input, rows, arg.min_len, arg.cutoff,
                       arg.mismatch)
     write_fasta(primer, '{}-{}_covrage-{}bp_mismatch.fasta'.format(
         arg.name, arg.cutoff, arg.mismatch))
