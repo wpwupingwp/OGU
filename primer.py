@@ -139,7 +139,7 @@ def find_continuous(most):
     return continuous
 
 
-def find_primer(continuous, most, length, ambiguous_base_n):
+def find_primer(continuous, most, min_len, max_len, ambiguous_base_n):
     poly = re.compile(r'([ATCG])\1\1\1\1')
     ambiguous_base = re.compile(r'[^ATCG]')
     tandem = re.compile(r'([ATCG]{2})\1\1\1\1')
@@ -167,9 +167,6 @@ def find_primer(continuous, most, length, ambiguous_base_n):
         return True, tm, 'Ok'
 
     primer = list()
-    min_len, max_len = length.split('-')
-    min_len = int(min_len)
-    max_len = int(max_len)
     continuous = [i for i in continuous if len(i) >= min_len]
     for fragment in continuous:
         len_fragment = len(fragment)
@@ -208,7 +205,7 @@ def parse(blast_result_file):
         yield best_hsp
 
 
-def validate(candidate_file, input_file, n_seqs):
+def validate(candidate_file, input_file, n_seqs, min_len):
     # remove gap in old alignment file
     no_gap = 'validate.fasta'
     with open(no_gap, 'w') as new, open(input_file, 'r') as old:
@@ -235,7 +232,15 @@ def validate(candidate_file, input_file, n_seqs):
              out=blast_result)
     stdout, stderr = cmd()
     # parse
-    for query in SearchIO.parse(result, 'blast-xml'):
+    validate_result = [['ID', 'Hits', 'Sum_Bitscore_raw'], ]
+    validate_result.append(['All', n_seqs, min_len])
+    for query in SearchIO.parse(blast_result, 'blast-xml'):
+        if len(query) == 0:
+            validate_result.append([query.id, 0, 0])
+            continue
+        bitscore_raw = [hit[0].bitscore_raw for hit in query]
+        validate_result.append([query.id, len(query), sum(bitscore_raw)])
+
 
 
 def write_fastq(data, rows, output, cutoff, name):
@@ -283,6 +288,10 @@ def main():
     if arg.name is None:
         arg.name = os.path.basename(arg.input)
         arg.name = arg.name.split('.')[0]
+    min_len, max_len = length.split('-')
+    min_len = int(min_len)
+    max_len = int(max_len)
+
     raw_alignment = read(arg.input)
     new, rows, columns = convert(raw_alignment)
     count_data = count(new, rows, columns)
@@ -291,12 +300,12 @@ def main():
     write_fastq([[most, 0]], rows, arg.name+'.consensus.fastq', arg.cutoff,
                 arg.name)
     continuous = find_continuous(most)
-    primer_candidate = find_primer(continuous, most, arg.length,
+    primer_candidate = find_primer(continuous, most, min_len, max_len,
                                    arg.ambiguous_base_n)
     candidate_file = write_fastq(
         primer_candidate, rows, arg.name+'.candidate.fastq',
         arg.cutoff, arg.name)
-    primer = validate(candidate_file, arg.input, rows)
+    primer = validate(candidate_file, arg.input, rows, min_len)
     print('Found {} primers.'.format(len(primer)))
     write_fastq(primer, rows, arg.name+'.primer.fastq', arg.cutoff, arg.name)
     end = timer()
