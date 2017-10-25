@@ -247,12 +247,12 @@ def validate(candidate_file, input_file, n_seqs, min_len, min_covrage,
             if hsp_bitscore_raw >= min_bitscore_raw:
                 sum_bitscore_raw += hsp_bitscore_raw
                 good_hits += 1
-        blast_result.append([query.id, good_hits, sum_bitscore_raw])
+        blast_result.append([query.id, good_hits/n_seqs, sum_bitscore_raw])
     # validate
     # validate_result = [['ID', 'Hits', 'Sum_Bitscore_raw', 'Seq'], ]
     validate_result = list()
     for record in blast_result[2:]:
-        if record[1] / n_seqs >= min_covrage:
+        if record[1] >= min_covrage:
             validate_result.append(record)
     return validate_result
 
@@ -276,14 +276,6 @@ def write_fastq(data, rows, output, name):
         out.write('+\n')
         out.write(''.join(qual)+'\n')
     return output
-
-
-def write_fasta(data, output):
-    with open(output, 'w') as out:
-        for i in data:
-            name, hits, sum_bitscore_raw, seq = i
-            out.write('>{}-{}-{}\n{}\n'.format(
-                name, hits, sum_bitscore_raw, seq))
 
 
 def parse_args():
@@ -332,7 +324,7 @@ def main():
     with open(primer_file, 'w') as out:
         for seq in SeqIO.parse(candidate_file, 'fastq'):
             if seq.id in primer_info_dict:
-                seq.id = '{}-{}-{}'.format(seq.id, *primer_info_dict[seq.id])
+                seq.id = '{}-{:.3f}-{}'.format(seq.id, *primer_info_dict[seq.id])
                 seq.description = ''
                 SeqIO.write(seq, out, 'fastq')
     print('Found {} primers.'.format(len(primer_info)))
