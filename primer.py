@@ -181,29 +181,6 @@ def find_primer(continuous, most, min_len, max_len, ambiguous_base_n):
     return primer
 
 
-def parse(blast_result_file):
-    sep = '~'*80
-    blast_result = SearchIO.parse(blast_result_file, 'blast-xml')
-    for query in blast_result:
-        if len(query) == 0:
-            continue
-        # Blast Result
-        #   |_query
-        #       |_hit
-        #           |_hsp
-        hits = list(query)
-        hits.sort(key=lambda x: x[0].bitscore_raw, reverse=True)
-        best_hsp = hits[0][0]
-        for hsp in hits[1:]:
-            if hsp[0].bitscore_raw == best_hsp.bitscore_raw:
-                print('Same BLAST score:\n{}\n{}\n{}'.format(best_hsp, hsp[0],
-                                                             sep))
-                yield hsp[0]
-            else:
-                break
-        yield best_hsp
-
-
 def validate(candidate_file, input_file, n_seqs, min_len, min_covrage,
              max_mismatch):
     # remove gap in old alignment file
