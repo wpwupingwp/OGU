@@ -265,13 +265,11 @@ def write_fastq(data, rows, output, name):
     out = open(output, 'w')
 
     for item, tm in data:
-        start = item[0][0]
-        end = item[-1][0]
         seq = ''.join([i[1] for i in item])
         # generate quality score
         qual = [round((i[2]/rows)*l)-1 for i in item]
         qual = [quality[int(i)] for i in qual]
-        out.write('@{}-{}-{}-{:.3f}\n'.format(name, start, end, tm))
+        out.write('@{}-{:.3f}\n'.format(name, tm))
         out.write(seq+'\n')
         out.write('+\n')
         out.write(''.join(qual)+'\n')
@@ -324,7 +322,8 @@ def main():
     with open(primer_file, 'w') as out:
         for seq in SeqIO.parse(candidate_file, 'fastq'):
             if seq.id in primer_info_dict:
-                seq.id = '{}-{:.3f}-{}'.format(seq.id, *primer_info_dict[seq.id])
+                seq.id = '{}-{:.3f}-{}'.format(
+                    seq.id, *primer_info_dict[seq.id])
                 seq.description = ''
                 SeqIO.write(seq, out, 'fastq')
     print('Found {} primers.'.format(len(primer_info)))
