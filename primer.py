@@ -257,6 +257,7 @@ def validate(candidate_file, input_file, n_seqs, min_len, min_covrage,
     for record in blast_result[2:]:
         if record[1] >= min_covrage:
             validate_result.append(record)
+    validate_result.sort(key=lambda x: x[1], reverse=True)
     return validate_result
 
 
@@ -270,9 +271,11 @@ def write_fastq(data, rows, output, name):
     for item, tm in data:
         seq = ''.join([i[1] for i in item])
         # generate quality score
+        start = item[0][0]
+        end = item[-1][0]
         qual = [round((i[2]/rows)*l)-1 for i in item]
         qual = [quality[int(i)] for i in qual]
-        out.write('@{}-{:.3f}\n'.format(name, tm))
+        out.write('@{}-{}-{}-{:.3f}\n'.format(name, start, end, tm))
         out.write(seq+'\n')
         out.write('+\n')
         out.write(''.join(qual)+'\n')
