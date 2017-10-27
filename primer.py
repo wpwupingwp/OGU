@@ -178,7 +178,6 @@ def find_primer(continuous, most, min_len, max_len, ambiguous_base_n):
                     primer.append([seq, tm])
                 else:
                     continue
-    primer.sort(key=lambda x: x[1], reverse=True)
     return primer
 
 
@@ -328,8 +327,10 @@ def main():
     with open(primer_file, 'w') as out:
         for seq in SeqIO.parse(candidate_file, 'fastq'):
             if seq.id in primer_info_dict:
+                short_id = seq.id.split('-')
+                short_id = '-'.join([short_id[0], short_id[3]])
                 seq.id = '{}-{:.2%}-{}-{:.2f}'.format(
-                    seq.id, *primer_info_dict[seq.id])
+                    short_id, *primer_info_dict[seq.id])
                 seq.description = ''
                 SeqIO.write(seq, out, 'fastq')
     print('Found {} primers.'.format(len(primer_info)))
