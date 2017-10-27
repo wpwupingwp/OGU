@@ -248,7 +248,7 @@ def validate(candidate_file, input_file, n_seqs, min_len, min_covrage,
             if hsp_bitscore_raw >= min_bitscore_raw:
                 sum_bitscore_raw += hsp_bitscore_raw
                 good_hits += 1
-                start += hit[0].hit_start
+                start += sum(hit[0].hit_range) / 2
         blast_result.append([query.id, good_hits/n_seqs, sum_bitscore_raw,
                              start/n_seqs])
     # validate
