@@ -305,7 +305,7 @@ def main():
         for seq in SeqIO.parse(candidate_file, 'fastq'):
             if seq.id in primer_info_dict:
                 short_id = seq.id.split('-')
-                short_id = '-'.join([short_id[0], short_id[4]])
+                short_id = '-'.join([short_id[0], short_id[-2], short_id[-1]])
                 seq.id = '{}-{:.2%}-{}-{:.2f}'.format(
                     short_id, *primer_info_dict[seq.id])
                 seq.description = ''
