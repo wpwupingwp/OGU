@@ -251,7 +251,7 @@ def write_fastq(data, rows, output, name):
         end = item[-1][0]
         qual = [round((i[2]/rows)*l)-1 for i in item]
         qual = [quality[int(i)] for i in qual]
-        out.write('@{}-{}-{}-{:.3f}\n'.format(name, start, end, tm))
+        out.write('@{}-{}-{}-{:.3f}-{}\n'.format(name, start, end, tm, rows))
         out.write(seq+'\n')
         out.write('+\n')
         out.write(''.join(qual)+'\n')
