@@ -41,6 +41,7 @@ def main():
             info.write('\t'.join([name, forward_info[0], str(consensus_len),
                                   str(product_len_without_primer), str(coverage),
                                   forward_seq, reverse_seq]))
+            info.write('\n')
 
 
 if __name__ == '__main__':
