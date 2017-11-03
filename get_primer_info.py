@@ -24,24 +24,27 @@ def main():
     primers = list(SeqIO.parse(fastq_file, 'fastq'))
     consensus_len = len(primers[0])
     name = argv[1].split('.')[0]
-    have_mid_primer = False
     if len(primers) == 3:
-        have_mid_primer = True
-        forward = primers[1]
-        forward_info = get_id_info(forward)
-        forward_seq = str(forward.seq).replace('-', '')
         reverse = primers[2].reverse_complement(id=primers[2].id)
-        reverse_info = get_id_info(reverse)
-        reverse_seq = str(reverse.seq).replace('-', '')
-        product_len_without_primer = abs(reverse_info[-1] - forward_info[-1])
-        coverage = min(forward_info[2], reverse_info[2])
-        with open('primer_info.tsv', 'a') as info:
-            info.write('Name\tType\tLen_Alignment(with_up/downstream400bp)\t'
-                       'Product_Len\tcov\tForward\tReverse\n')
-            info.write('\t'.join([name, forward_info[0], str(consensus_len),
-                                  str(product_len_without_primer), str(coverage),
-                                  forward_seq, reverse_seq]))
-            info.write('\n')
+        have_mid_primer = False
+    else:
+        reverse = primers[-1].reverse_complement(id=primers[-1].id)
+        have_mid_primer = True
+    forward = primers[1]
+    forward_info = get_id_info(forward)
+    forward_seq = str(forward.seq).replace('-', '')
+    reverse_info = get_id_info(reverse)
+    reverse_seq = str(reverse.seq).replace('-', '')
+    product_len_without_primer = abs(reverse_info[-1] - forward_info[-1])
+    coverage = min(forward_info[2], reverse_info[2])
+    with open('primer_info.tsv', 'a') as info:
+        info.write('Name\tType\tLen_Alignment(with_up/downstream400bp)\t'
+                   'Product_Len\tcov\tForward\tReverse\t\Have_mid_primer\n')
+        info.write('\t'.join([name, forward_info[0], str(consensus_len),
+                              str(product_len_without_primer), str(coverage),
+                              forward_seq, reverse_seq,
+                              str(have_mid_primer)]))
+        info.write('\n')
 
 
 if __name__ == '__main__':
