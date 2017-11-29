@@ -76,6 +76,10 @@ def count(alignment, rows, columns):
     return data
 
 
+def shannon_diversity_index(data):
+    pass
+
+
 def find_most(data, cutoff, gap_cutoff):
     # to be continue
     # directly use np.unique result
