@@ -16,6 +16,8 @@ from Bio import SearchIO, SeqIO
 from Bio.Data.IUPACData import ambiguous_dna_values
 from Bio.Blast.Applications import NcbiblastnCommandline as nb
 
+from matplotlib import pyplot as plt
+
 
 def get_ambiguous_dict():
     data = ambiguous_dna_values
@@ -85,15 +87,35 @@ def count(alignment, rows, columns):
     return data
 
 
-def shannon_diversity_index(data):
+def shannon_diversity_index(data, only_atcg=True, with_n=False,
+                            with_gap=False):
+    # only_atcg: only consider ATCG 4 kinds of bases
+    # with_n: consider N as the fifth kind of base
+    # with_gap: consider N as the fifth kind of base and gap as the sixth kind
+    # of base
+
     rows, columns = data[0]
     data = data[1:]
+    if with_gap:
+        new_data = [i[0:6] for i in data]
+    elif with_n:
+        new_data = [i[0:5] for i in data]
+    elif only_atcg:
+        new_data = [i[0:4] for i in data]
     H = list()
-    for column in data:
+    max_h = -1*((1/len(new_data[0]))*log2(1/(len(new_data[0]))))*len(new_data[0])
+    for column in new_data:
         h = 0
         for i in column:
-            pass
-    pass
+            if i == 0:
+                continue
+            p_i = i / rows
+            log2_p_i = log2(p_i)
+            h += log2_p_i*p_i
+        H.append(-1*h)
+    print("max", max_h)
+    plt.scatter(x=range(columns), y=H)
+    plt.show()
 
 
 def find_most(data, cutoff, gap_cutoff):
@@ -330,6 +352,7 @@ def main():
                     short_id, *primer_info_dict[seq.id])
                 seq.description = ''
                 SeqIO.write(seq, out, 'fastq')
+    shannon_diversity_index(count_data)
     print('Found {} primers.'.format(len(primer_info)))
     end = timer()
     print('Cost {:.3f} seconds.'.format(end-start))
