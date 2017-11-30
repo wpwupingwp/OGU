@@ -7,6 +7,7 @@ import re
 import numpy as np
 import primer3
 from collections import defaultdict
+from math import log2
 from multiprocessing import cpu_count
 from timeit import default_timer as timer
 from subprocess import run
@@ -58,25 +59,44 @@ def count(alignment, rows, columns):
     for index in range(columns):
         column = alignment[:, [index]]
         unique, counts = np.unique(column, return_counts=True)
-        count_dict = {b'A': 0, b'T': 0, b'C': 0, b'G': 0, b'N': 0,
-                      b'-': 0, b'?': 0}
+        count_dict = {b'A': 0, b'C': 0, b'G': 0, b'T': 0, b'M': 0, b'R': 0,
+                      b'W': 0, b'S': 0, b'Y': 0, b'K': 0, b'V': 0, b'H': 0,
+                      b'D': 0, b'B': 0, b'X': 0, b'N': 0, b'-': 0, b'?': 0}
         count_dict.update(dict(zip(unique, counts)))
-        a = count_dict[b'A']
-        t = count_dict[b'T']
-        c = count_dict[b'C']
-        g = count_dict[b'G']
-        n = count_dict[b'N']
-        gap = count_dict[b'-']
-        question = count_dict[b'?']
+        a = (count_dict[b'A'] +
+             (count_dict[b'D']+count_dict[b'H']+count_dict[b'V'])/3 +
+             (count_dict[b'M']+count_dict[b'R'] + count_dict[b'W'])/2 +
+             (count_dict[b'X']+count_dict[b'N'])/4)
+        t = (count_dict[b'T'] +
+             (count_dict[b'B']+count_dict[b'H']+count_dict[b'D'])/3 +
+             (count_dict[b'K']+count_dict[b'W'] + count_dict[b'Y'])/2 +
+             (count_dict[b'X']+count_dict[b'N'])/4)
+        c = (count_dict[b'C'] +
+             (count_dict[b'B']+count_dict[b'H']+count_dict[b'V'])/3 +
+             (count_dict[b'M']+count_dict[b'S'] + count_dict[b'Y'])/2 +
+             (count_dict[b'X']+count_dict[b'N'])/4)
+        g = (count_dict[b'G'] +
+             (count_dict[b'B']+count_dict[b'D']+count_dict[b'V'])/3 +
+             (count_dict[b'K']+count_dict[b'R'] + count_dict[b'S'])/2 +
+             (count_dict[b'X']+count_dict[b'N'])/4)
+        gap = count_dict[b'-'] + count_dict[b'?']
+        n = count_dict[b'N'] + count_dict[b'X']
         # is it necessary to count 'N' '-' and '?' ?
-        other = rows - a - t - c - g - n - question - gap
-        data.append([a, t, c, g, n, question, gap, other])
+        other = rows - a - t - c - g - gap
+        data.append([a, t, c, g, n, gap, other])
     # make sure rows and columns does not mixed
     assert len(data) == columns + 1
     return data
 
 
 def shannon_diversity_index(data):
+    rows, columns = data[0]
+    data = data[1:]
+    H = list()
+    for column in data:
+        h = 0
+        for i in column:
+            pass
     pass
 
 
@@ -93,10 +113,10 @@ def find_most(data, cutoff, gap_cutoff):
     def run():
         for location, column in enumerate(data, 1):
             finish = False
-            value = dict(zip(list('ATCGN?-X'), column))
+            value = dict(zip(list('ATCGN-X'), column))
             base = 'N'
 
-            sum_gap = sum([value['?'], value['-'], value['X']])
+            sum_gap = sum([value['N'], value['-'], value['X']])
             if sum_gap >= gap_cutoff:
                 base = '-'
                 count = sum_gap
