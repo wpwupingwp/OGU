@@ -109,10 +109,10 @@ def find_most(data, cutoff, gap_cutoff):
     def run():
         for location, column in enumerate(data, 1):
             finish = False
-            value = dict(zip(list('ATCGN-X'), column))
+            value = dict(zip(list('ATCGN-O'), column))
             base = 'N'
 
-            sum_gap = sum([value['N'], value['-'], value['X']])
+            sum_gap = sum([value['N'], value['-'], value['O']])
             if sum_gap >= gap_cutoff:
                 base = '-'
                 count = sum_gap
