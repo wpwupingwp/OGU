@@ -65,20 +65,16 @@ def count(alignment, rows, columns):
         count_dict.update(dict(zip(unique, counts)))
         a = (count_dict[b'A'] +
              (count_dict[b'D']+count_dict[b'H']+count_dict[b'V'])/3 +
-             (count_dict[b'M']+count_dict[b'R'] + count_dict[b'W'])/2 +
-             (count_dict[b'X']+count_dict[b'N'])/4)
+             (count_dict[b'M']+count_dict[b'R'] + count_dict[b'W'])/2)
         t = (count_dict[b'T'] +
              (count_dict[b'B']+count_dict[b'H']+count_dict[b'D'])/3 +
-             (count_dict[b'K']+count_dict[b'W'] + count_dict[b'Y'])/2 +
-             (count_dict[b'X']+count_dict[b'N'])/4)
+             (count_dict[b'K']+count_dict[b'W'] + count_dict[b'Y'])/2)
         c = (count_dict[b'C'] +
              (count_dict[b'B']+count_dict[b'H']+count_dict[b'V'])/3 +
-             (count_dict[b'M']+count_dict[b'S'] + count_dict[b'Y'])/2 +
-             (count_dict[b'X']+count_dict[b'N'])/4)
+             (count_dict[b'M']+count_dict[b'S'] + count_dict[b'Y'])/2)
         g = (count_dict[b'G'] +
              (count_dict[b'B']+count_dict[b'D']+count_dict[b'V'])/3 +
-             (count_dict[b'K']+count_dict[b'R'] + count_dict[b'S'])/2 +
-             (count_dict[b'X']+count_dict[b'N'])/4)
+             (count_dict[b'K']+count_dict[b'R'] + count_dict[b'S'])/2)
         gap = count_dict[b'-'] + count_dict[b'?']
         n = count_dict[b'N'] + count_dict[b'X']
         # is it necessary to count 'N' '-' and '?' ?
