@@ -89,6 +89,8 @@ def count(alignment, rows, columns):
 
 def shannon_diversity_index(data, only_atcg=True, with_n=False,
                             with_gap=False):
+    """http://www.tiem.utk.edu/~gross/bioed/bealsmodules/shannonDI.html
+    """
     # only_atcg: only consider ATCG 4 kinds of bases
     # with_n: consider N as the fifth kind of base
     # with_gap: consider N as the fifth kind of base and gap as the sixth kind
@@ -114,6 +116,7 @@ def shannon_diversity_index(data, only_atcg=True, with_n=False,
             h += log2_p_i*p_i
         H.append(-1*h)
     print("max", max_h)
+    plt.plot((0, columns), (max_h, max_h), 'r-')
     plt.scatter(x=range(columns), y=H)
     plt.show()
 
