@@ -24,6 +24,7 @@ matplotlib.rcParams['axes.labelsize'] = 16
 matplotlib.rcParams['axes.titlesize'] = 25
 matplotlib.rcParams['font.size'] = 16
 matplotlib.rcParams['axes.facecolor'] = '#bbbbbb'
+matplotlib.rcParams['figure.figsize'] = 16, 9
 
 
 def get_ambiguous_dict():
@@ -95,7 +96,7 @@ def count(alignment, rows, columns):
 
 
 def shannon_diversity_index(data, window, step, only_atcg=True, with_n=False,
-                            with_gap=False):
+                            with_gap=False, out='out.png'):
     """http://www.tiem.utk.edu/~gross/bioed/bealsmodules/shannonDI.html
     """
     # only_atcg: only consider ATCG 4 kinds of bases
@@ -139,6 +140,10 @@ def shannon_diversity_index(data, window, step, only_atcg=True, with_n=False,
     plt.ylabel('H')
     plt.title('Shannon Diversity Index of Alignment')
     plt.legend(loc=1, frameon=False)
+    out = os.path.basename(out)
+    out = os.path.splitext(out)[0]
+    out = '{}.png'.format(out)
+    plt.savefig(out)
     plt.show()
 
 
@@ -381,7 +386,7 @@ def main():
                 seq.description = ''
                 SeqIO.write(seq, out, 'fastq')
     shannon_diversity_index(count_data, window=arg.window, step=arg.step,
-                            only_atcg=True)
+                            only_atcg=True, out=arg.input)
     print('Found {} primers.'.format(len(primer_info)))
     end = timer()
     print('Cost {:.3f} seconds.'.format(end-start))
