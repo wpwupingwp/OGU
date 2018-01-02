@@ -17,6 +17,11 @@ from Bio.Data.IUPACData import ambiguous_dna_values
 from Bio.Blast.Applications import NcbiblastnCommandline as nb
 
 from matplotlib import pyplot as plt
+import matplotlib
+matplotlib.rcParams['lines.linewidth'] = 1.5
+matplotlib.rcParams['axes.linewidth'] = 1.5
+matplotlib.rcParams['axes.labelsize'] = 20
+matplotlib.rcParams['font.size'] = 16
 
 
 def get_ambiguous_dict():
@@ -122,13 +127,33 @@ def shannon_diversity_index(data, window, step, only_atcg=True, with_n=False,
             log2_p_i = log2(p_i)
             h += log2_p_i*p_i
         H.append(-1*h)
+    plt.style.use('ggplot')
     fig, ax1 = plt.subplots()
     plt.plot((0, columns), (max_h, max_h), 'r--')
-    plt.scatter(range(columns), H)
+    # change scatter size
+    size = list()
+    for i in H:
+        if i == 0:
+            size.append(5)
+        elif 0 < i <= 0.5*max_h:
+            size.append(20)
+        else:
+            size.append(50)
+    # c=List for different color, s=S for different size
+    plt.scatter(range(columns), H, c=H, cmap='GnBu', s=size)
     ax2 = ax1.twinx()
+    max_s = max(S)
+    size = list()
+    for i in H:
+        if i == 0:
+            size.append(10)
+        elif 0 < i <= 0.5*max_h:
+            size.append(20)
+        else:
+            size.append(50)
+    # c=List for different color, s=S for different size
     plt.plot((0, columns), (rows, rows), 'r--')
-    plt.scatter(range(columns), S)
-    # plt.yscale('log')
+    plt.scatter(range(columns), S, c=S, marker='+', cmap='rainbow', s=size)
     plt.legend()
     plt.show()
 
