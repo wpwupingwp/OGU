@@ -23,7 +23,7 @@ matplotlib.rcParams['axes.linewidth'] = 1.5
 matplotlib.rcParams['axes.labelsize'] = 16
 matplotlib.rcParams['axes.titlesize'] = 25
 matplotlib.rcParams['font.size'] = 16
-matplotlib.rcParams['axes.facecolor'] = '#bbbbbb'
+matplotlib.rcParams['axes.facecolor'] = '#999999'
 matplotlib.rcParams['figure.figsize'] = 16, 9
 
 
@@ -115,13 +115,14 @@ def shannon_diversity_index(data, window, step, only_atcg=True, with_n=False,
     # Shannon Index
     H = list()
     # Sum_all/max_h
-    S = list()
+    size = list()
     max_h = -1*((1/len(new_data[0]))*log2(1/(len(new_data[0]))))*len(
         new_data[0])
+    max_size = 50
     for column in new_data:
         # sum_all equals sum of letters considered rather than original rows
         sum_all = sum(column)
-        S.append(sum_all/rows*50)
+        size.append(sum_all/rows*max_size)
         h = 0
         for i in column:
             if i == 0:
@@ -132,10 +133,9 @@ def shannon_diversity_index(data, window, step, only_atcg=True, with_n=False,
         H.append(-1*h)
     # plt.style.use('ggplot')
     plt.plot((0, columns), (max_h, max_h), 'r--', label='Max H')
-    # c=List for different color, s=S for different size
-    plt.scatter(range(columns), H, label='Shannon Diversity Index(H)',
-                c=H, cmap='GnBu', s=S)
-    plt.xlabel('No. Base')
+    # c=List for different color, s=size for different size
+    plt.scatter(range(columns), H, c=H, cmap='GnBu', s=size)
+    plt.xlabel('Base')
     plt.xticks(range(0, columns, int(columns/10)))
     plt.ylabel('H')
     plt.title('Shannon Diversity Index of Alignment')
