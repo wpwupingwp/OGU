@@ -118,7 +118,7 @@ def shannon_diversity_index(data, window, step, only_atcg=True, with_n=False,
     for column in new_data:
         # sum_all equals sum of letters considered rather than original rows
         sum_all = sum(column)
-        S.append(sum_all)
+        S.append(sum_all/rows*50)
         h = 0
         for i in column:
             if i == 0:
@@ -127,33 +127,10 @@ def shannon_diversity_index(data, window, step, only_atcg=True, with_n=False,
             log2_p_i = log2(p_i)
             h += log2_p_i*p_i
         H.append(-1*h)
-    plt.style.use('ggplot')
-    fig, ax1 = plt.subplots()
+    # plt.style.use('ggplot')
     plt.plot((0, columns), (max_h, max_h), 'r--')
-    # change scatter size
-    size = list()
-    for i in H:
-        if i == 0:
-            size.append(5)
-        elif 0 < i <= 0.5*max_h:
-            size.append(20)
-        else:
-            size.append(50)
     # c=List for different color, s=S for different size
-    plt.scatter(range(columns), H, c=H, cmap='GnBu', s=size)
-    ax2 = ax1.twinx()
-    max_s = max(S)
-    size = list()
-    for i in H:
-        if i == 0:
-            size.append(10)
-        elif 0 < i <= 0.5*max_h:
-            size.append(20)
-        else:
-            size.append(50)
-    # c=List for different color, s=S for different size
-    plt.plot((0, columns), (rows, rows), 'r--')
-    plt.scatter(range(columns), S, c=S, marker='+', cmap='rainbow', s=size)
+    plt.scatter(range(columns), H, c=H, cmap='GnBu', s=S)
     plt.legend()
     plt.show()
 
