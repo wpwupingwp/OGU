@@ -104,12 +104,16 @@ def shannon_diversity_index(data, window, step, only_atcg=True, with_n=False,
         new_data = [i[0:5] for i in data]
     elif only_atcg:
         new_data = [i[0:4] for i in data]
+    # Shannon Index
     H = list()
+    # Sum_all/max_h
+    S = list()
     max_h = -1*((1/len(new_data[0]))*log2(1/(len(new_data[0]))))*len(
         new_data[0])
     for column in new_data:
         # sum_all equals sum of letters considered rather than original rows
         sum_all = sum(column)
+        S.append(sum_all)
         h = 0
         for i in column:
             if i == 0:
@@ -118,9 +122,14 @@ def shannon_diversity_index(data, window, step, only_atcg=True, with_n=False,
             log2_p_i = log2(p_i)
             h += log2_p_i*p_i
         H.append(-1*h)
-    print("max", max_h)
-    plt.plot((0, columns), (max_h, max_h), 'r-')
-    plt.scatter(x=range(columns), y=H)
+    fig, ax1 = plt.subplots()
+    plt.plot((0, columns), (max_h, max_h), 'r--')
+    plt.scatter(range(columns), H)
+    ax2 = ax1.twinx()
+    plt.plot((0, columns), (rows, rows), 'r--')
+    plt.scatter(range(columns), S)
+    # plt.yscale('log')
+    plt.legend()
     plt.show()
 
 
