@@ -20,8 +20,10 @@ from matplotlib import pyplot as plt
 import matplotlib
 matplotlib.rcParams['lines.linewidth'] = 1.5
 matplotlib.rcParams['axes.linewidth'] = 1.5
-matplotlib.rcParams['axes.labelsize'] = 20
+matplotlib.rcParams['axes.labelsize'] = 16
+matplotlib.rcParams['axes.titlesize'] = 25
 matplotlib.rcParams['font.size'] = 16
+matplotlib.rcParams['axes.facecolor'] = '#bbbbbb'
 
 
 def get_ambiguous_dict():
@@ -128,10 +130,16 @@ def shannon_diversity_index(data, window, step, only_atcg=True, with_n=False,
             h += log2_p_i*p_i
         H.append(-1*h)
     # plt.style.use('ggplot')
-    plt.plot((0, columns), (max_h, max_h), 'r--')
+    plt.plot((0, columns), (max_h, max_h), 'r--', label='Max H')
     # c=List for different color, s=S for different size
-    plt.scatter(range(columns), H, c=H, cmap='GnBu', s=S)
-    plt.legend()
+    plt.scatter(range(columns), H, label='Shannon Diversity Index(H)',
+                c=H, cmap='GnBu', s=S)
+    plt.xlabel('No. Base')
+    plt.xticks(range(0, columns, 100))
+    plt.ylabel('H')
+    plt.title('Shannon Diversity Index of Alignment'
+              ' (size formatted by number of samples)')
+    plt.legend(loc=1, frameon=False)
     plt.show()
 
 
