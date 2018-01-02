@@ -87,7 +87,7 @@ def count(alignment, rows, columns):
     return data
 
 
-def shannon_diversity_index(data, only_atcg=True, with_n=False,
+def shannon_diversity_index(data, window, step, only_atcg=True, with_n=False,
                             with_gap=False):
     """http://www.tiem.utk.edu/~gross/bioed/bealsmodules/shannonDI.html
     """
@@ -105,13 +105,16 @@ def shannon_diversity_index(data, only_atcg=True, with_n=False,
     elif only_atcg:
         new_data = [i[0:4] for i in data]
     H = list()
-    max_h = -1*((1/len(new_data[0]))*log2(1/(len(new_data[0]))))*len(new_data[0])
+    max_h = -1*((1/len(new_data[0]))*log2(1/(len(new_data[0]))))*len(
+        new_data[0])
     for column in new_data:
+        # sum_all equals sum of letters considered rather than original rows
+        sum_all = sum(column)
         h = 0
         for i in column:
             if i == 0:
                 continue
-            p_i = i / rows
+            p_i = i / sum_all
             log2_p_i = log2(p_i)
             h += log2_p_i*p_i
         H.append(-1*h)
@@ -319,6 +322,10 @@ def parse_args():
                      help='maximum primer length range')
     arg.add_argument('-m', '--mismatch', type=int, default=2,
                      help='maximum mismatch bases in primer')
+    arg.add_argument('-w', '--window', type=int, default=1,
+                     help='sliding window width')
+    arg.add_argument('-s', '--step', type=int, default=1,
+                     help='sliding window step')
     # arg.print_help()
     return arg.parse_args()
 
@@ -355,7 +362,8 @@ def main():
                     short_id, *primer_info_dict[seq.id])
                 seq.description = ''
                 SeqIO.write(seq, out, 'fastq')
-    shannon_diversity_index(count_data)
+    shannon_diversity_index(count_data, window=arg.window, step=arg.step,
+                            only_atcg=True)
     print('Found {} primers.'.format(len(primer_info)))
     end = timer()
     print('Cost {:.3f} seconds.'.format(end-start))
