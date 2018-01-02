@@ -135,10 +135,9 @@ def shannon_diversity_index(data, window, step, only_atcg=True, with_n=False,
     plt.scatter(range(columns), H, label='Shannon Diversity Index(H)',
                 c=H, cmap='GnBu', s=S)
     plt.xlabel('No. Base')
-    plt.xticks(range(0, columns, 100))
+    plt.xticks(range(0, columns, int(columns/10)))
     plt.ylabel('H')
-    plt.title('Shannon Diversity Index of Alignment'
-              ' (size formatted by number of samples)')
+    plt.title('Shannon Diversity Index of Alignment')
     plt.legend(loc=1, frameon=False)
     plt.show()
 
