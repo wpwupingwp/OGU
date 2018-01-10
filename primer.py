@@ -144,7 +144,7 @@ def shannon_diversity_index(data, window, step, only_atcg=True, with_n=False,
     out = os.path.splitext(out)[0]
     out = '{}.png'.format(out)
     plt.savefig(out)
-    plt.show()
+    # plt.show()
 
 
 def find_most(data, cutoff, gap_cutoff):
