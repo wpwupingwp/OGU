@@ -369,6 +369,8 @@ def main():
     continuous = find_continuous(most)
     primer_candidate = find_primer(continuous, most, arg.min_len, arg.max_len,
                                    arg.ambiguous_base_n)
+    if len(primer_candidate) == 0:
+        raise ValueError('Primer not found! Try to loose restrict.')
     candidate_file = write_fastq(
         primer_candidate, rows, arg.name+'.candidate.fastq', arg.name)
     primer_info = validate(candidate_file, arg.input, rows, arg.min_len,
