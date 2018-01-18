@@ -17,6 +17,7 @@ from Bio.Data.IUPACData import ambiguous_dna_values
 from Bio.Blast.Applications import NcbiblastnCommandline as nb
 
 from matplotlib import pyplot as plt
+from matplotlib import ticker as mtick
 import matplotlib
 matplotlib.rcParams['lines.linewidth'] = 1.5
 matplotlib.rcParams['axes.linewidth'] = 1.5
@@ -95,19 +96,21 @@ def count(alignment, rows, columns):
     return data
 
 
-def unique_count(data, window, step):
+def unique_sequence_count(data, window, step):
     rows, columns = data.shape
     # Different count
     C = list()
+    factor = 100/rows
     for i in range(columns-window):
         cut = data[:, i:(i+step)]
         # uniqe array, count line*times
         _, count = np.unique(cut, return_counts=True, axis=0)
+        C.append(len(count)*factor)
+    return C
 
 
-
-
-def shannon_diversity_index(data, only_atcg=True, with_n=False, with_gap=False,
+def shannon_diversity_index(data, sequence_count_result, window,
+                            only_atcg=True, with_n=False, with_gap=False,
                             out='out.png'):
     """http://www.tiem.utk.edu/~gross/bioed/bealsmodules/shannonDI.html
     """
@@ -116,7 +119,7 @@ def shannon_diversity_index(data, only_atcg=True, with_n=False, with_gap=False,
     # with_gap: consider N as the fifth kind of base and gap as the sixth kind
     # of base
 
-    #split shape and data
+    # split shape and data
     rows, columns = data[0]
     data = data[1:]
     data = np.array(data)
@@ -147,17 +150,19 @@ def shannon_diversity_index(data, only_atcg=True, with_n=False, with_gap=False,
             h += log2_p_i*p_i
         H.append(-1*h)
     # plt.style.use('ggplot')
-    plt.plot((0, columns), (max_h, max_h), 'r--', label='Max H')
+    fig, ax1 = plt.subplots()
+    ax1.plot((0, columns), (max_h, max_h), 'r--', label='Max H')
     # c=List for different color, s=size for different size
-    plt.scatter(range(columns), H, c=H, cmap='GnBu', s=size)
+    ax1.scatter(range(columns), H, c=H, cmap='GnBu', s=size)
     plt.xlabel('Base')
     plt.xticks(range(0, columns, int(columns/10)))
-    plt.ylabel('H')
-    plt.title('Shannon Diversity Index of Alignment')
-    plt.legend(loc=1, frameon=False)
-    out = os.path.basename(out)
-    out = os.path.splitext(out)[0]
+    ax1.set_ylabel('H')
+    plt.title('Shannon Diversity Index & Resolution(window={})'.format(window))
+    ax2 = ax1.twinx()
+    ax2.plot(sequence_count_result, 'b-', label='Resolution(%)', alpha=0.8)
+    ax2.yaxis.set_major_formatter(mtick.PercentFormatter())
     out = '{}.png'.format(out)
+    plt.legend(loc=1, frameon=False)
     plt.savefig(out)
     # plt.show()
 
@@ -360,7 +365,7 @@ def parse_args():
                      help='maximum primer length range')
     arg.add_argument('-m', '--mismatch', type=int, default=2,
                      help='maximum mismatch bases in primer')
-    arg.add_argument('-w', '--window', type=int, default=200,
+    arg.add_argument('-w', '--window', type=int, default=400,
                      help='sliding window width')
     arg.add_argument('-s', '--step', type=int, default=10,
                      help='sliding window step')
@@ -403,8 +408,10 @@ def main():
                     short_id, *primer_info_dict[seq.id])
                 seq.description = ''
                 SeqIO.write(seq, out, 'fastq')
-    shannon_diversity_index(count_data, only_atcg=True, out=arg.input)
-    unique_count(new, window=arg.window, step=arg.step)
+    sequence_count_result = unique_sequence_count(new, window=arg.window,
+                                                  step=arg.step)
+    shannon_diversity_index(count_data, sequence_count_result,
+                            window=arg.window, only_atcg=True, out=arg.name)
     print('Found {} primers.'.format(len(primer_info)))
     end = timer()
     print('Cost {:.3f} seconds.'.format(end-start))
