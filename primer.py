@@ -104,14 +104,32 @@ def shannon_diversity_index(data, window, step, only_atcg=True, with_n=False,
     # with_gap: consider N as the fifth kind of base and gap as the sixth kind
     # of base
 
+    #split shape and data
     rows, columns = data[0]
     data = data[1:]
+    data = np.array(data)
     if with_gap:
-        new_data = [i[0:6] for i in data]
+        new_data = data[:, 0:6]
     elif with_n:
-        new_data = [i[0:5] for i in data]
+        new_data = data[:, 0:5]
     elif only_atcg:
-        new_data = [i[0:4] for i in data]
+        new_data = data[:, 0:4]
+    # Different count
+    C = list()
+    for i in range(columns-window):
+       pass 
+
+
+
+
+
+
+
+
+
+
+
+
     # Shannon Index
     H = list()
     # Sum_all/max_h
@@ -345,9 +363,9 @@ def parse_args():
                      help='maximum primer length range')
     arg.add_argument('-m', '--mismatch', type=int, default=2,
                      help='maximum mismatch bases in primer')
-    arg.add_argument('-w', '--window', type=int, default=1,
+    arg.add_argument('-w', '--window', type=int, default=200,
                      help='sliding window width')
-    arg.add_argument('-s', '--step', type=int, default=1,
+    arg.add_argument('-s', '--step', type=int, default=10,
                      help='sliding window step')
     # arg.print_help()
     return arg.parse_args()
