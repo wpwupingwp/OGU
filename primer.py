@@ -95,8 +95,20 @@ def count(alignment, rows, columns):
     return data
 
 
-def shannon_diversity_index(data, window, step, only_atcg=True, with_n=False,
-                            with_gap=False, out='out.png'):
+def unique_count(data, window, step):
+    rows, columns = data.shape
+    # Different count
+    C = list()
+    for i in range(columns-window):
+        cut = data[:, i:(i+step)]
+        # uniqe array, count line*times
+        _, count = np.unique(cut, return_counts=True, axis=0)
+
+
+
+
+def shannon_diversity_index(data, only_atcg=True, with_n=False, with_gap=False,
+                            out='out.png'):
     """http://www.tiem.utk.edu/~gross/bioed/bealsmodules/shannonDI.html
     """
     # only_atcg: only consider ATCG 4 kinds of bases
@@ -114,28 +126,13 @@ def shannon_diversity_index(data, window, step, only_atcg=True, with_n=False,
         new_data = data[:, 0:5]
     elif only_atcg:
         new_data = data[:, 0:4]
-    # Different count
-    C = list()
-    for i in range(columns-window):
-       pass 
-
-
-
-
-
-
-
-
-
-
-
-
     # Shannon Index
     H = list()
     # Sum_all/max_h
     size = list()
     max_h = -1*((1/len(new_data[0]))*log2(1/(len(new_data[0]))))*len(
         new_data[0])
+    # dot size
     max_size = 50
     for column in new_data:
         # sum_all equals sum of letters considered rather than original rows
@@ -378,6 +375,7 @@ def main():
         arg.name = os.path.basename(arg.input)
         arg.name = arg.name.split('.')[0]
 
+    # read from fasta
     raw_alignment = read(arg.input)
     new, rows, columns = convert(raw_alignment)
     count_data = count(new, rows, columns)
@@ -405,8 +403,8 @@ def main():
                     short_id, *primer_info_dict[seq.id])
                 seq.description = ''
                 SeqIO.write(seq, out, 'fastq')
-    shannon_diversity_index(count_data, window=arg.window, step=arg.step,
-                            only_atcg=True, out=arg.input)
+    shannon_diversity_index(count_data, only_atcg=True, out=arg.input)
+    unique_count(new, window=arg.window, step=arg.step)
     print('Found {} primers.'.format(len(primer_info)))
     end = timer()
     print('Cost {:.3f} seconds.'.format(end-start))
