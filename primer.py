@@ -96,15 +96,17 @@ def count(alignment, rows, columns):
     return data
 
 
-def unique_sequence_count(data, window, step):
+def unique_sequence_count(data, window):
     rows, columns = data.shape
     # Different count
     C = list()
     factor = 100/rows
     for i in range(columns-window):
-        cut = data[:, i:(i+step)]
+        cut = data[:, i:(i+window)]
         # uniqe array, count line*times
         _, count = np.unique(cut, return_counts=True, axis=0)
+        print(_)
+        print(count)
         C.append(len(count)*factor)
     return C
 
@@ -367,8 +369,6 @@ def parse_args():
                      help='maximum mismatch bases in primer')
     arg.add_argument('-w', '--window', type=int, default=400,
                      help='sliding window width')
-    arg.add_argument('-s', '--step', type=int, default=10,
-                     help='sliding window step')
     # arg.print_help()
     return arg.parse_args()
 
@@ -408,8 +408,7 @@ def main():
                     short_id, *primer_info_dict[seq.id])
                 seq.description = ''
                 SeqIO.write(seq, out, 'fastq')
-    sequence_count_result = unique_sequence_count(new, window=arg.window,
-                                                  step=arg.step)
+    sequence_count_result = unique_sequence_count(new, window=arg.window)
     shannon_diversity_index(count_data, sequence_count_result,
                             window=arg.window, only_atcg=True, out=arg.name)
     print('Found {} primers.'.format(len(primer_info)))
