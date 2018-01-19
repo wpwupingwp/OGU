@@ -133,8 +133,8 @@ def shannon_diversity_index(data, sequence_count_result, window,
     H = list()
     # Sum_all/max_h
     size = list()
-    max_h = -1*((1/len(new_data[0]))*log2(1/(len(new_data[0]))))*len(
-        new_data[0])
+    # max_h = -1*((1/len(new_data[0]))*log2(1/(len(new_data[0]))))*len(
+    #     new_data[0])
     # dot size
     max_size = 50
     for column in new_data:
@@ -162,7 +162,7 @@ def shannon_diversity_index(data, sequence_count_result, window,
     ax2 = ax1.twinx()
     ax2.plot(sequence_count_result, 'r-', alpha=0.8)
     ax2.yaxis.set_major_formatter(mtick.PercentFormatter())
-    ax2.set_ylabel('Resolution(%)')
+    ax2.set_ylabel('Resolution(% of {})'.format(rows))
     ax2.grid(True)
     # plt.legend(loc=1, frameon=False)
     plt.savefig(out+'.pdf')
