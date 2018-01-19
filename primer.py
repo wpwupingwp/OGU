@@ -151,7 +151,7 @@ def shannon_diversity_index(data, sequence_count_result, window,
         H.append(-1*h)
     # plt.style.use('ggplot')
     fig, ax1 = plt.subplots()
-    ax1.plot((0, columns), (max_h, max_h), 'r--', label='Max H')
+    # ax1.plot((0, columns), (max_h, max_h), 'r--', label='Max H')
     # c=List for different color, s=size for different size
     ax1.scatter(range(columns), H, c=H, cmap='GnBu', s=size)
     plt.xlabel('Base')
@@ -159,7 +159,7 @@ def shannon_diversity_index(data, sequence_count_result, window,
     ax1.set_ylabel('H')
     plt.title('Shannon Diversity Index & Resolution(window={})'.format(window))
     ax2 = ax1.twinx()
-    ax2.plot(sequence_count_result, 'b-', label='Resolution(%)', alpha=0.8)
+    ax2.plot(sequence_count_result, 'r-', label='Resolution(%)', alpha=0.5)
     ax2.yaxis.set_major_formatter(mtick.PercentFormatter())
     out = '{}.png'.format(out)
     plt.legend(loc=1, frameon=False)
