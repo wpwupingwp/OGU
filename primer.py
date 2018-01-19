@@ -151,7 +151,7 @@ def shannon_diversity_index(data, sequence_count_result, window,
             log2_p_i = log2(p_i)
             h += log2_p_i*p_i
         H.append(-1*h)
-    # plt.style.use('ggplot')
+    plt.style.use('ggplot')
     fig, ax1 = plt.subplots()
     # ax1.plot((0, columns), (max_h, max_h), 'r--', label='Max H')
     # c=List for different color, s=size for different size
@@ -367,7 +367,7 @@ def parse_args():
                      help='maximum primer length range')
     arg.add_argument('-m', '--mismatch', type=int, default=2,
                      help='maximum mismatch bases in primer')
-    arg.add_argument('-w', '--window', type=int, default=400,
+    arg.add_argument('-w', '--window', type=int, default=450,
                      help='sliding window width')
     # arg.print_help()
     return arg.parse_args()
