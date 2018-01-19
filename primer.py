@@ -222,7 +222,7 @@ def find_continuous(most):
         location, *_ = value
         try:
             location_next, *_ = most[index+1]
-        except:
+        except IndexError:
             fragment.append(value)
 # to be continue
             break
@@ -335,20 +335,24 @@ def write_fastq(data, rows, output, name):
     # https://en.wikipedia.org/wiki/FASTQ_format
     quality = ('''!"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ'''
                '''[\]^_`abcdefghijklmnopqrstuvwxyz{|}~''')
-    l = len(quality)
+    quality_dict = {i: j for i, j in enumerate(quality)}
+    max_q = len(quality)
+    factor = max_q/rows
     out = open(output, 'w')
 
+    # item: [id, seq, qual]
     for item, tm in data:
         seq = ''.join([i[1] for i in item])
         # generate quality score
         start = item[0][0]
         end = item[-1][0]
-        qual = [round((i[2]/rows)*l)-1 for i in item]
-        qual = [quality[int(i)] for i in qual]
+        # -1 for index
+        qual_value = [int(i[2]*factor)-1 for i in item]
+        qual_character = [quality_dict[i] for i in qual_value]
         out.write('@{}-{}-{}-{:.3f}-{}\n'.format(name, start, end, tm, rows))
         out.write(seq+'\n')
         out.write('+\n')
-        out.write(''.join(qual)+'\n')
+        out.write(''.join(qual_character)+'\n')
     return output
 
 
