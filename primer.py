@@ -24,7 +24,7 @@ matplotlib.rcParams['axes.linewidth'] = 1.5
 matplotlib.rcParams['axes.labelsize'] = 16
 matplotlib.rcParams['axes.titlesize'] = 25
 matplotlib.rcParams['font.size'] = 16
-matplotlib.rcParams['axes.facecolor'] = '#999999'
+matplotlib.rcParams['axes.facecolor'] = '#888888'
 matplotlib.rcParams['figure.figsize'] = 16, 9
 
 
@@ -105,8 +105,6 @@ def unique_sequence_count(data, window):
         cut = data[:, i:(i+window)]
         # uniqe array, count line*times
         _, count = np.unique(cut, return_counts=True, axis=0)
-        print(_)
-        print(count)
         C.append(len(count)*factor)
     return C
 
@@ -151,21 +149,24 @@ def shannon_diversity_index(data, sequence_count_result, window,
             log2_p_i = log2(p_i)
             h += log2_p_i*p_i
         H.append(-1*h)
-    plt.style.use('ggplot')
+    # plt.style.use('ggplot')
     fig, ax1 = plt.subplots()
+    plt.title('Shannon Diversity Index & Resolution(window={})'.format(window))
+    plt.xlabel('Base')
+    plt.xticks(range(0, columns, int(columns/10)))
     # ax1.plot((0, columns), (max_h, max_h), 'r--', label='Max H')
     # c=List for different color, s=size for different size
     ax1.scatter(range(columns), H, c=H, cmap='GnBu', s=size)
-    plt.xlabel('Base')
-    plt.xticks(range(0, columns, int(columns/10)))
     ax1.set_ylabel('H')
-    plt.title('Shannon Diversity Index & Resolution(window={})'.format(window))
+    ax1.grid(True)
     ax2 = ax1.twinx()
-    ax2.plot(sequence_count_result, 'r-', label='Resolution(%)', alpha=0.5)
+    ax2.plot(sequence_count_result, 'r-', alpha=0.8)
     ax2.yaxis.set_major_formatter(mtick.PercentFormatter())
-    out = '{}.png'.format(out)
-    plt.legend(loc=1, frameon=False)
-    plt.savefig(out)
+    ax2.set_ylabel('Resolution(%)')
+    ax2.grid(True)
+    # plt.legend(loc=1, frameon=False)
+    plt.savefig(out+'.pdf')
+    plt.savefig(out+'.png')
     # plt.show()
 
 
