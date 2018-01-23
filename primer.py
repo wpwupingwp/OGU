@@ -168,7 +168,7 @@ def shannon_diversity_index(data, sequence_count_result, window,
     plt.savefig(out+'.pdf')
     plt.savefig(out+'.png')
     # plt.show()
-    with open(out+'resolution.tsv', 'w') as _:
+    with open(out+'-Resolution.tsv', 'w') as _:
         _.write('Base\tResolution(window={})\n'.format(window))
         for base, resolution in enumerate(sequence_count_result):
             _.write('{}\t{}\n'.format(base, resolution))
@@ -414,6 +414,7 @@ def main():
             if seq.id in primer_info_dict:
                 short_id = seq.id.split('-')
                 short_id = '-'.join([short_id[0], short_id[-2], short_id[-1]])
+                # name-Tm-Samples-BLAST_Coverage-Bitscore-AvgMidLocation
                 seq.id = '{}-{:.2%}-{}-{:.2f}'.format(
                     short_id, *primer_info_dict[seq.id])
                 seq.description = ''
@@ -422,6 +423,8 @@ def main():
     shannon_diversity_index(count_data, sequence_count_result,
                             window=arg.window, only_atcg=True, out=arg.name)
     print('Found {} primers.'.format(len(primer_info)))
+    print('Primer ID format:')
+    print('name-Tm-Samples-BLAST_Coverage-Bitscore-AvgMidLocation')
     end = timer()
     print('Cost {:.3f} seconds.'.format(end-start))
 
