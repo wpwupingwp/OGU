@@ -168,6 +168,10 @@ def shannon_diversity_index(data, sequence_count_result, window,
     plt.savefig(out+'.pdf')
     plt.savefig(out+'.png')
     # plt.show()
+    with open(out+'resolution.tsv', 'w') as _:
+        _.write('Base\tResolution(window={})\n'.format(window))
+        for base, resolution in enumerate(sequence_count_result):
+            _.write('{}\t{}\n'.format(base, resolution))
 
 
 def find_most(data, cutoff, gap_cutoff):
@@ -347,7 +351,8 @@ def write_fastq(data, rows, output, name):
         start = item[0][0]
         end = item[-1][0]
         # -1 for index
-        qual_value = [int(i[2]*factor)-1 for i in item]
+        # use min to avoid KeyError
+        qual_value = [min(max_q, int(i[2]*factor))-1 for i in item]
         qual_character = [quality_dict[i] for i in qual_value]
         out.write('@{}-{}-{}-{:.3f}-{}\n'.format(name, start, end, tm, rows))
         out.write(seq+'\n')
