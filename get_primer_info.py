@@ -5,7 +5,7 @@ from sys import argv
 
 
 def generate_fastq():
-    seq_file, qual_file, fastq_file = argv[1:]
+    seq_file, qual_file, fastq_file = argv[1:4]
     with open(seq_file, 'r') as seq, open(qual_file, 'r') as qual:
         fastq = SeqIO.QualityIO.PairedFastaQualIterator(seq, qual)
         SeqIO.write(fastq, fastq_file, 'fastq')
@@ -16,34 +16,48 @@ def get_id_info(record):
     raw_id = record.id
     print(raw_id)
     name2, tm, cov, sum_bitscore_raw, location = raw_id.split('-')
-    return [name2, tm, float(cov[:-2])/100, sum_bitscore_raw, float(location)]
+    return [name2, tm, float(cov), sum_bitscore_raw, int(location)]
+
+
+def get_resolution(start, end):
+    with open(argv[4], 'r') as resolution_file:
+        raw = resolution_file.readlines()
+        resolution = [i.split('\t')[1] for i in raw]
+        if start > end:
+            start, end = end, start
+        fragment = resolution[start:end]
+    return max(fragment)
 
 
 def main():
+    print('Usage:')
+    print('python3 get_primer_info.py SeqFile QualFile'
+          ' OutFastqFile ResolutionTsv')
     fastq_file = generate_fastq()
     primers = list(SeqIO.parse(fastq_file, 'fastq'))
     consensus_len = len(primers[0])
     name = argv[1].split('.')[0]
-    if len(primers) == 3:
-        reverse = primers[2].reverse_complement(id=primers[2].id)
-        have_mid_primer = False
-    else:
-        reverse = primers[-1].reverse_complement(id=primers[-1].id)
-        have_mid_primer = True
+    reverse = primers[2].reverse_complement(id=primers[2].id)
     forward = primers[1]
     forward_info = get_id_info(forward)
+    forward_location = forward_info[-1]
     forward_seq = str(forward.seq).replace('-', '')
     reverse_info = get_id_info(reverse)
+    reverse_location = reverse_info[-1]
     reverse_seq = str(reverse.seq).replace('-', '')
-    product_len_without_primer = abs(reverse_info[-1] - forward_info[-1])
+    average_primer_length = (len(forward_seq) + len(reverse_seq)) / 2
+    product_len_without_primer = abs(reverse_location -
+                                     forward_location) - average_primer_length
+    resolution = get_resolution(forward_location, reverse_location)
     coverage = min(forward_info[2], reverse_info[2])
     with open('primer_info.tsv', 'a') as info:
-        info.write('Name\tType\tLen_Alignment(with_up/downstream400bp)\t'
-                   'Product_Len\tcov\tForward\tReverse\t\Have_mid_primer\n')
-        info.write('\t'.join([name, forward_info[0], str(consensus_len),
-                              str(product_len_without_primer), str(coverage),
-                              forward_seq, reverse_seq,
-                              str(have_mid_primer)]))
+        info.write('Name\tType\t\Resolution\tAlignmentLength\t'
+                   'ProductLength\tPrimerCoverage\t'
+                   'Forward\tReverse\n')
+        info.write('{}\t{}\t{:.2%}\t{}\t{}\t{:.2%}\t{}\t{}\n'.format(
+            name, forward_info[0], resolution, str(consensus_len),
+            str(product_len_without_primer), str(coverage),
+            forward_seq, reverse_seq))
         info.write('\n')
 
 

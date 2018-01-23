@@ -307,8 +307,8 @@ def validate(candidate_file, input_file, n_seqs, min_len, min_covrage,
              outfmt=5,
              out=blast_result_file)
     stdout, stderr = cmd()
-    # parse
-    min_bitscore_raw = min_len - max_mismatch
+    # minium match bases * score per base(2)
+    min_bitscore_raw = (min_len - max_mismatch)*2
     blast_result = [['ID', 'Hits', 'Sum_Bitscore_raw'], ]
     blast_result.append(['All', n_seqs, min_len])
     for query in SearchIO.parse(blast_result_file, 'blast-xml'):
