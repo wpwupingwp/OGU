@@ -171,7 +171,7 @@ def shannon_diversity_index(data, sequence_count_result, window,
     with open(out+'-Resolution.tsv', 'w') as _:
         _.write('Base\tResolution(window={})\n'.format(window))
         for base, resolution in enumerate(sequence_count_result):
-            _.write('{}\t{}\n'.format(base, resolution))
+            _.write('{}\t{:.2f}\n'.format(base, resolution))
 
 
 def find_most(data, cutoff, gap_cutoff):
