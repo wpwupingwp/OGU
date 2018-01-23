@@ -293,7 +293,8 @@ def validate(candidate_file, input_file, n_seqs, min_len, min_covrage,
     # build blast db
     candidate_fasta = 'primer_candidate.fasta'
     SeqIO.convert(candidate_file, 'fastq', candidate_fasta, 'fasta')
-    run('makeblastdb -in {} -dbtype nucl'.format(no_gap), shell=True)
+    run('makeblastdb -in {} -dbtype nucl'.format(no_gap), shell=True,
+        stdout=open('blast.log', 'w'))
     # blast
     blast_result_file = 'BlastResult.xml'
     cmd = nb(num_threads=cpu_count(),
