@@ -5,6 +5,7 @@ from sys import argv
 
 
 def generate_fastq():
+    # for Sequencher contig output
     seq_file, qual_file, fastq_file = argv[1:4]
     with open(seq_file, 'r') as seq, open(qual_file, 'r') as qual:
         fastq = SeqIO.QualityIO.PairedFastaQualIterator(seq, qual)
@@ -25,8 +26,8 @@ def get_resolution(start, end):
         resolution = [i.split('\t')[1] for i in raw]
         if start > end:
             start, end = end, start
-        fragment = resolution[start:end]
-    return max(fragment)
+        fragment = resolution[start]
+    return fragment
 
 
 def main():
