@@ -29,7 +29,7 @@ def get_resolution(start, end):
         if start > end:
             start, end = end, start
         fragment = resolution[start]
-    return float(fragment)
+    return float(fragment)/100
 
 
 def main():
