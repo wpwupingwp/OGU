@@ -16,8 +16,10 @@ def generate_fastq():
 def get_id_info(record):
     raw_id = record.id
     print(raw_id)
-    name2, tm, cov, sum_bitscore_raw, location = raw_id.split('-')
-    return [name2, tm, float(cov), sum_bitscore_raw, int(location)]
+    name2, tm, sample, cov, sum_bitscore_raw, location = raw_id.split('-')
+    cov = cov.strip('%')
+    return [name2, tm, sample, float(cov)/100, sum_bitscore_raw,
+            int(float(location))]
 
 
 def get_resolution(start, end):
@@ -27,7 +29,7 @@ def get_resolution(start, end):
         if start > end:
             start, end = end, start
         fragment = resolution[start]
-    return fragment
+    return float(fragment)
 
 
 def main():
@@ -50,15 +52,14 @@ def main():
     product_len_without_primer = abs(reverse_location -
                                      forward_location) - average_primer_length
     resolution = get_resolution(forward_location, reverse_location)
-    coverage = min(forward_info[2], reverse_info[2])
+    coverage = min(forward_info[3], reverse_info[3])
     with open('primer_info.tsv', 'a') as info:
-        info.write('Name\tType\t\Resolution\tAlignmentLength\t'
+        info.write('Name\tType\tResolution\tAlignmentLength\t'
                    'ProductLength\tPrimerCoverage\t'
                    'Forward\tReverse\n')
         info.write('{}\t{}\t{:.2%}\t{}\t{}\t{:.2%}\t{}\t{}\n'.format(
-            name, forward_info[0], resolution, str(consensus_len),
-            str(product_len_without_primer), str(coverage),
-            forward_seq, reverse_seq))
+            name, forward_info[0], resolution, consensus_len,
+            product_len_without_primer, coverage, forward_seq, reverse_seq))
         info.write('\n')
 
 
