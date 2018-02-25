@@ -51,7 +51,7 @@ def prepare(fasta):
                 data.append([record[0], ''.join(record[1:])])
                 # remove ">" and CRLF
                 name = line.strip('>\r\n')
-                record = [name, ]
+                record = [name, '']
             else:
                 record.append(line.strip().upper())
         # add last sequence
@@ -73,15 +73,18 @@ def prepare(fasta):
 
 
 def count(alignment, rows, columns):
-    # skip sequence id column
-    data = [[rows, columns]]
+    """
+    Given alignment numpy array, count cumulative frequency of base in each
+    column (consider ambiguous base and "N", "-" and "?", otherwise omit).
+    """
+    frequency: List[List[float, float, float, float, float, float, float]] = []
     for index in range(columns):
         column = alignment[:, [index]]
-        unique, counts = np.unique(column, return_counts=True)
+        base, counts = np.unique(column, return_counts=True)
         count_dict = {b'A': 0, b'C': 0, b'G': 0, b'T': 0, b'M': 0, b'R': 0,
                       b'W': 0, b'S': 0, b'Y': 0, b'K': 0, b'V': 0, b'H': 0,
                       b'D': 0, b'B': 0, b'X': 0, b'N': 0, b'-': 0, b'?': 0}
-        count_dict.update(dict(zip(unique, counts)))
+        count_dict.update(dict(zip(base, counts)))
         a = (count_dict[b'A'] +
              (count_dict[b'D']+count_dict[b'H']+count_dict[b'V'])/3 +
              (count_dict[b'M']+count_dict[b'R'] + count_dict[b'W'])/2)
@@ -94,14 +97,11 @@ def count(alignment, rows, columns):
         g = (count_dict[b'G'] +
              (count_dict[b'B']+count_dict[b'D']+count_dict[b'V'])/3 +
              (count_dict[b'K']+count_dict[b'R'] + count_dict[b'S'])/2)
-        gap = count_dict[b'-'] + count_dict[b'?']
-        n = count_dict[b'N'] + count_dict[b'X']
-        # is it necessary to count 'N' '-' and '?' ?
-        other = rows - a - t - c - g - gap
-        data.append([a, t, c, g, n, gap, other])
-    # make sure rows and columns does not mixed
-    assert len(data) == columns + 1
-    return data
+        gap = count_dict[b'-']
+        n = count_dict[b'N'] + count_dict[b'X'] + count_dict[b'?']
+        other = rows - a - t - c - g - gap - n
+        frequency.append([a, t, c, g, n, gap, other])
+    return frequency
 
 
 def unique_sequence_count(data, window):
@@ -409,9 +409,10 @@ def main():
     # read from fasta
     alignment = prepare(arg.input)
     rows, columns = alignment.shape
+    print(rows, columns)
 
-    count_data = count(new, rows, columns)
-    most = find_most(count_data, arg.cutoff, arg.gap_cutoff)
+    base_cumulative_frequency = count(alignment, rows, columns)
+    most = find_most(base_cumulative_frequency , arg.cutoff, arg.gap_cutoff)
 
     # write consensus
     write_fastq([[most, 0]], rows, arg.name+'.consensus.fastq', arg.name)
