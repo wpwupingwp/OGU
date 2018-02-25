@@ -38,11 +38,12 @@ def get_ambiguous_dict():
     return data_with_len
 
 
-def read_alignment(fasta):
+def prepare(fasta):
     """
-    Given fasta format alignment filename, return a List[ID, Sequence].
+    Given fasta format alignment filename, return a numpy array for sequence.
+    List[ID, Sequence].
     """
-    data = list()
+    data: List[List[str, str]] = []
     record = ['id', 'sequence']
     with open(fasta, 'r') as raw:
         for line in raw:
@@ -62,17 +63,13 @@ def read_alignment(fasta):
     if len(set(length_check)) != 1:
         raise ValueError(
             'Alignment does not have uniform width, please check again !')
-    return data
 
-
-def convert(old):
+    # Convert List to numpy array.
     # order 'F' is a bit faster than 'C'
     # name = np.array([[i[0]] for i in old], dtype=np.bytes_)
-    # seq = np.array([list(i[1]) for i in old], dtype=np.bytes_)
-    # new = np.hstack((name, seq))
-    new = np.array([list(i[1]) for i in old], dtype=np.bytes_, order='F')
-    rows, columns = new.shape
-    return new, rows, columns
+    # new = np.hstack((name, seq)) -> is slower
+    new = np.array([list(i[1]) for i in data], dtype=np.bytes_, order='F')
+    return new
 
 
 def count(alignment, rows, columns):
@@ -407,11 +404,12 @@ def main():
     arg = parse_args()
     if arg.out is None:
         arg.out = os.path.basename(arg.input)
-        arg.out = arg.name.split('.')[0]
+        arg.out = arg.out.split('.')[0]
 
     # read from fasta
-    raw_alignment = read_alignment(arg.input)
-    new, rows, columns = convert(raw_alignment)
+    alignment = prepare(arg.input)
+    rows, columns = alignment.shape
+
     count_data = count(new, rows, columns)
     most = find_most(count_data, arg.cutoff, arg.gap_cutoff)
 
