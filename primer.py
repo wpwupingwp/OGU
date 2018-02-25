@@ -114,14 +114,15 @@ def generate_consensus(base_cumulative_frequency, cutoff, gap_cutoff,
 
     for location, column in enumerate(base_cumulative_frequency, 1):
         finish = False
-        value = dict(zip(list('ATCGN-O'), column))
+        # "*" for others
+        value = dict(zip(list('ATCGN-*'), column))
 
         base = 'N'
         if value['N'] >= gap_cutoff:
             count = value['N']
             most.append([location, base, count])
             continue
-        sum_gap = sum([value['-'], value['O']])
+        sum_gap = sum([value['-'], value['*']])
         if sum_gap >= gap_cutoff:
             base = '-'
             count = sum_gap
@@ -141,6 +142,28 @@ def generate_consensus(base_cumulative_frequency, cutoff, gap_cutoff,
                         finish = True
                         most.append([location, base, count])
     return most
+
+
+# to be continued
+def find_continuous(consensus, min_len):
+    """
+    Given List[location, base, count], return continuous fragments list.
+    """
+    continuous: List[List[int, str, float]] = list()
+    fragment = list()
+    skip = ('N', '-', '*')
+    for base in consensus:
+        if base[1] in skip:
+            if len(fragment) >= min_len:
+                continuous.append(fragment)
+                fragment = list()
+            continue
+        fragment.append(base)
+    for i in continuous:
+        for j in i:
+            print(j[1], end='')
+        print()
+    return continuous
 
 
 def unique_sequence_count(data, window):
@@ -219,26 +242,6 @@ def shannon_diversity_index(data, sequence_count_result, window,
         _.write('Base\tResolution(window={})\n'.format(window))
         for base, resolution in enumerate(sequence_count_result):
             _.write('{}\t{:.2f}\n'.format(base, resolution))
-
-
-def find_continuous(most):
-    continuous = list()
-    fragment = list()
-    most = [i for i in most if i[1] not in ('N', '-')]
-    for index, value in enumerate(most):
-        fragment.append(value)
-        location, *_ = value
-        try:
-            location_next, *_ = most[index+1]
-        except IndexError:
-            fragment.append(value)
-# to be continue
-            break
-        step = location_next - location
-        if step > 1:
-            continuous.append(fragment)
-            fragment = list()
-    return continuous
 
 
 def find_primer(continuous, most, min_len, max_len, ambiguous_base_n):
@@ -412,25 +415,24 @@ def main():
     consensus = generate_consensus(base_cumulative_frequency, arg.cutoff,
                                    arg.gap_cutoff, rows, columns)
 
-    # write consensus
-    write_fastq([[consensus, 0]], rows, arg.name+'.consensus.fastq', arg.name)
-
     # find candidate
-    continuous = find_continuous(consensus)
-    primer_candidate = find_primer(continuous, consensus, arg.min_len,
-                                   arg.max_len, arg.ambiguous_base_n)
+    continuous = find_continuous(consensus, arg.min_primer)
+    primer_candidate = find_primer(continuous, consensus, arg.min_primer,
+                                   arg.max_primer, arg.ambiguous_base_n)
     if len(primer_candidate) == 0:
         raise ValueError('Primer not found! Try to loose restriction.')
     candidate_file = write_fastq(
         primer_candidate, rows, arg.name+'.candidate.fastq', arg.name)
 
     # validate
-    primer_info = validate(candidate_file, arg.input, rows, arg.min_len,
+    primer_info = validate(candidate_file, arg.input, rows, arg.min_primer,
                            arg.cutoff, arg.mismatch)
     primer_info_dict = {i[0]: i[1:] for i in primer_info}
     primer_file = '{}-{}_covrage-{}bp_mismatch.fastq'.format(
         arg.name, arg.cutoff, arg.mismatch)
 
+    # write consensus
+    write_fastq([[consensus, 0]], rows, arg.name+'.consensus.fastq', arg.name)
     # write
     with open(primer_file, 'w') as out:
         for seq in SeqIO.parse(candidate_file, 'fastq'):
