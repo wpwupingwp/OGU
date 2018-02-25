@@ -38,19 +38,30 @@ def get_ambiguous_dict():
     return data_with_len
 
 
-def read(fasta):
+def read_alignment(fasta):
+    """
+    Given fasta format alignment filename, return a List[ID, Sequence].
+    """
     data = list()
-    record = ['id', 'seq']
+    record = ['id', 'sequence']
     with open(fasta, 'r') as raw:
         for line in raw:
             if line.startswith('>'):
                 data.append([record[0], ''.join(record[1:])])
-                name = line[1:-1]
+                # remove ">" and CRLF
+                name = line.strip('>\r\n')
                 record = [name, ]
             else:
-                record.append(line[:-1].upper())
+                record.append(line.strip().upper())
+        # add last sequence
         data.append([record[0], ''.join(record[1:])])
+    # skip head['id', 'seq']
     data = data[1:]
+    # check sequence length
+    length_check = [len(i[1]) for i in data]
+    if len(set(length_check)) != 1:
+        raise ValueError(
+            'Alignment does not have uniform width, please check again !')
     return data
 
 
@@ -377,7 +388,7 @@ def parse_args():
                      help='maximum primer length')
     arg.add_argument('-m', '--mismatch', type=int, default=2,
                      help='maximum mismatch bases in primer')
-    arg.add_argument('-n', '--name', help='name prefix')
+    arg.add_argument('-o', '--out', help='output name prefix')
     # todo
     arg.add_argument('-r', '--resolution', help='minium resolution')
     arg.add_argument('-tmin', '--min_template', type=int, default=350,
@@ -394,17 +405,20 @@ def main():
     """
     start = timer()
     arg = parse_args()
-    if arg.name is None:
-        arg.name = os.path.basename(arg.input)
-        arg.name = arg.name.split('.')[0]
+    if arg.out is None:
+        arg.out = os.path.basename(arg.input)
+        arg.out = arg.name.split('.')[0]
 
     # read from fasta
-    raw_alignment = read(arg.input)
+    raw_alignment = read_alignment(arg.input)
     new, rows, columns = convert(raw_alignment)
     count_data = count(new, rows, columns)
     most = find_most(count_data, arg.cutoff, arg.gap_cutoff)
+
     # write consensus
     write_fastq([[most, 0]], rows, arg.name+'.consensus.fastq', arg.name)
+
+    # find candidate
     continuous = find_continuous(most)
     primer_candidate = find_primer(continuous, most, arg.min_len, arg.max_len,
                                    arg.ambiguous_base_n)
@@ -412,11 +426,15 @@ def main():
         raise ValueError('Primer not found! Try to loose restriction.')
     candidate_file = write_fastq(
         primer_candidate, rows, arg.name+'.candidate.fastq', arg.name)
+
+    # validate
     primer_info = validate(candidate_file, arg.input, rows, arg.min_len,
                            arg.cutoff, arg.mismatch)
     primer_info_dict = {i[0]: i[1:] for i in primer_info}
     primer_file = '{}-{}_covrage-{}bp_mismatch.fastq'.format(
         arg.name, arg.cutoff, arg.mismatch)
+
+    # write
     with open(primer_file, 'w') as out:
         for seq in SeqIO.parse(candidate_file, 'fastq'):
             if seq.id in primer_info_dict:
@@ -430,6 +448,7 @@ def main():
     sequence_count_result = unique_sequence_count(new, window=arg.window)
     shannon_diversity_index(count_data, sequence_count_result,
                             window=arg.window, only_atcg=True, out=arg.name)
+
     print('Found {} primers.'.format(len(primer_info)))
     print('Primer ID format:')
     print('name-Tm-Samples-BLAST_Coverage-Bitscore-AvgMidLocation')
