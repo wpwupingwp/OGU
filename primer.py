@@ -93,7 +93,8 @@ def count(alignment, rows, columns):
     return frequency
 
 
-def find_most(base_cumulative_frequency, cutoff, gap_cutoff, rows, columns):
+def generate_consensus(base_cumulative_frequency, cutoff, gap_cutoff,
+                       rows, columns):
     # directly use np.unique result
     def get_ambiguous_dict():
         from Bio.Data.IUPACData import ambiguous_dna_values
@@ -107,16 +108,20 @@ def find_most(base_cumulative_frequency, cutoff, gap_cutoff, rows, columns):
 
     ambiguous_dict = get_ambiguous_dict()
 
-    most = [['location', 'base', 'count']]
+    most: List[List[int, str, float]] = []
     gap_cutoff = rows * gap_cutoff
     cutoff = rows * cutoff
 
     for location, column in enumerate(base_cumulative_frequency, 1):
         finish = False
         value = dict(zip(list('ATCGN-O'), column))
-        base = 'N'
 
-        sum_gap = sum([value['N'], value['-'], value['O']])
+        base = 'N'
+        if value['N'] >= gap_cutoff:
+            count = value['N']
+            most.append([location, base, count])
+            continue
+        sum_gap = sum([value['-'], value['O']])
         if sum_gap >= gap_cutoff:
             base = '-'
             count = sum_gap
@@ -124,11 +129,8 @@ def find_most(base_cumulative_frequency, cutoff, gap_cutoff, rows, columns):
             continue
         # 1 2 3 4
         for length in ambiguous_dict:
-            if finish:
-                break
+            # A T CG CT ACG CTG ATCG
             for key in ambiguous_dict[length]:
-                if finish:
-                    break
                 count = 0
                 for letter in list(key):
                     if finish:
@@ -138,7 +140,7 @@ def find_most(base_cumulative_frequency, cutoff, gap_cutoff, rows, columns):
                         base = ambiguous_dict[length][key]
                         finish = True
                         most.append([location, base, count])
-    return most[1:]
+    return most
 
 
 def unique_sequence_count(data, window):
@@ -405,17 +407,18 @@ def main():
     rows, columns = alignment.shape
     print(rows, columns)
 
+    # generate consensus
     base_cumulative_frequency = count(alignment, rows, columns)
-    most = find_most(base_cumulative_frequency, arg.cutoff, arg.gap_cutoff,
-                     rows, columns)
+    consensus = generate_consensus(base_cumulative_frequency, arg.cutoff,
+                                   arg.gap_cutoff, rows, columns)
 
     # write consensus
-    write_fastq([[most, 0]], rows, arg.name+'.consensus.fastq', arg.name)
+    write_fastq([[consensus, 0]], rows, arg.name+'.consensus.fastq', arg.name)
 
     # find candidate
-    continuous = find_continuous(most)
-    primer_candidate = find_primer(continuous, most, arg.min_len, arg.max_len,
-                                   arg.ambiguous_base_n)
+    continuous = find_continuous(consensus)
+    primer_candidate = find_primer(continuous, consensus, arg.min_len,
+                                   arg.max_len, arg.ambiguous_base_n)
     if len(primer_candidate) == 0:
         raise ValueError('Primer not found! Try to loose restriction.')
     candidate_file = write_fastq(
