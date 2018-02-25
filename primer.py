@@ -389,6 +389,9 @@ def parse_args():
 
 
 def main():
+    """
+    Automatic design primer for DNA barcode.
+    """
     start = timer()
     arg = parse_args()
     if arg.name is None:
