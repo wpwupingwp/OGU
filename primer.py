@@ -13,7 +13,6 @@ from timeit import default_timer as timer
 from subprocess import run
 
 from Bio import SearchIO, SeqIO
-from Bio.Data.IUPACData import ambiguous_dna_values
 from Bio.Blast.Applications import NcbiblastnCommandline as nb
 
 from matplotlib import pyplot as plt
@@ -26,16 +25,6 @@ matplotlib.rcParams['axes.titlesize'] = 25
 matplotlib.rcParams['font.size'] = 16
 matplotlib.rcParams['axes.facecolor'] = '#888888'
 matplotlib.rcParams['figure.figsize'] = 16, 9
-
-
-def get_ambiguous_dict():
-    data = ambiguous_dna_values
-    data = dict(zip(data.values(), data.keys()))
-    # 2:{'AC': ['M',}
-    data_with_len = defaultdict(lambda: dict())
-    for key in data:
-        data_with_len[len(key)][key] = data[key]
-    return data_with_len
 
 
 def prepare(fasta):
@@ -102,6 +91,54 @@ def count(alignment, rows, columns):
         other = rows - a - t - c - g - gap - n
         frequency.append([a, t, c, g, n, gap, other])
     return frequency
+
+
+def find_most(base_cumulative_frequency, cutoff, gap_cutoff, rows, columns):
+    # directly use np.unique result
+    def get_ambiguous_dict():
+        from Bio.Data.IUPACData import ambiguous_dna_values
+        data = ambiguous_dna_values
+        data = dict(zip(data.values(), data.keys()))
+        # 2:{'AC': 'M',}
+        data_with_len = defaultdict(lambda: dict())
+        for key in data:
+            data_with_len[len(key)][key] = data[key]
+        return data_with_len
+
+    ambiguous_dict = get_ambiguous_dict()
+
+    most = [['location', 'base', 'count']]
+    gap_cutoff = rows * gap_cutoff
+    cutoff = rows * cutoff
+
+    for location, column in enumerate(base_cumulative_frequency, 1):
+        finish = False
+        value = dict(zip(list('ATCGN-O'), column))
+        base = 'N'
+
+        sum_gap = sum([value['N'], value['-'], value['O']])
+        if sum_gap >= gap_cutoff:
+            base = '-'
+            count = sum_gap
+            most.append([location, base, count])
+            continue
+        # 1 2 3 4
+        for length in ambiguous_dict:
+            if finish:
+                break
+            for key in ambiguous_dict[length]:
+                if finish:
+                    break
+                count = 0
+                for letter in list(key):
+                    if finish:
+                        break
+                    count += value[letter]
+                    if count >= cutoff:
+                        base = ambiguous_dict[length][key]
+                        finish = True
+                        most.append([location, base, count])
+    return most[1:]
 
 
 def unique_sequence_count(data, window):
@@ -180,49 +217,6 @@ def shannon_diversity_index(data, sequence_count_result, window,
         _.write('Base\tResolution(window={})\n'.format(window))
         for base, resolution in enumerate(sequence_count_result):
             _.write('{}\t{:.2f}\n'.format(base, resolution))
-
-
-def find_most(data, cutoff, gap_cutoff):
-    # to be continue
-    # directly use np.unique result
-    most = [['location', 'base', 'count']]
-    rows, columns = data[0]
-    data = data[1:]
-    gap_cutoff = rows * gap_cutoff
-    cutoff = rows * cutoff
-    ambiguous_dict = get_ambiguous_dict()
-
-    def run():
-        for location, column in enumerate(data, 1):
-            finish = False
-            value = dict(zip(list('ATCGN-O'), column))
-            base = 'N'
-
-            sum_gap = sum([value['N'], value['-'], value['O']])
-            if sum_gap >= gap_cutoff:
-                base = '-'
-                count = sum_gap
-                yield [location, base, count]
-                continue
-            # 1 2 3 4
-            for length in ambiguous_dict:
-                if finish:
-                    break
-                for key in ambiguous_dict[length]:
-                    if finish:
-                        break
-                    count = 0
-                    for letter in list(key):
-                        if finish:
-                            break
-                        count += value[letter]
-                        if count >= cutoff:
-                            base = ambiguous_dict[length][key]
-                            finish = True
-                            yield [location, base, count]
-    for i in run():
-        most.append(i)
-    return most[1:]
 
 
 def find_continuous(most):
@@ -412,7 +406,8 @@ def main():
     print(rows, columns)
 
     base_cumulative_frequency = count(alignment, rows, columns)
-    most = find_most(base_cumulative_frequency, arg.cutoff, arg.gap_cutoff)
+    most = find_most(base_cumulative_frequency, arg.cutoff, arg.gap_cutoff,
+                     rows, columns)
 
     # write consensus
     write_fastq([[most, 0]], rows, arg.name+'.consensus.fastq', arg.name)
