@@ -368,18 +368,22 @@ def parse_args():
     arg.add_argument('-a', '--ambiguous_base_n', type=int, default=2,
                      help='number of ambiguous bases')
     arg.add_argument('-c', '--cutoff', type=float, default=0.95,
-                     help='minium percent to keep')
+                     help='minium percent to keep base')
     arg.add_argument('-g', '--gap_cutoff', type=float, default=0.5,
                      help='maximum percent for gap to cutoff')
-    arg.add_argument('-n', '--name', help='name prefix')
-    arg.add_argument('-lmin', '--min_len', type=int, default=24,
-                     help='minimum primer length range')
-    arg.add_argument('-lmax', '--max_len', type=int, default=25,
-                     help='maximum primer length range')
+    arg.add_argument('-pmin', '--min_primer', type=int, default=24,
+                     help='minimum primer length')
+    arg.add_argument('-pmax', '--max_primer', type=int, default=25,
+                     help='maximum primer length')
     arg.add_argument('-m', '--mismatch', type=int, default=2,
                      help='maximum mismatch bases in primer')
-    arg.add_argument('-w', '--window', type=int, default=450,
-                     help='sliding window width')
+    arg.add_argument('-n', '--name', help='name prefix')
+    # todo
+    arg.add_argument('-r', '--resolution', help='minium resolution')
+    arg.add_argument('-tmin', '--min_template', type=int, default=350,
+                     help='minimum template length')
+    arg.add_argument('-tmax', '--max_template', type=int, default=450,
+                     help='maximum template length')
     # arg.print_help()
     return arg.parse_args()
 
