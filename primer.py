@@ -375,7 +375,7 @@ def parse_args():
     arg.add_argument('input', help='input alignment file')
     arg.add_argument('-a', '--ambiguous_base_n', type=int, default=2,
                      help='number of ambiguous bases')
-    arg.add_argument('-c', '--cutoff', type=float, default=0.95,
+    arg.add_argument('-c', '--cutoff', type=float, default=0.9,
                      help='minium percent to keep base')
     arg.add_argument('-g', '--gap_cutoff', type=float, default=0.5,
                      help='maximum percent for gap to cutoff')
@@ -412,7 +412,7 @@ def main():
     print(rows, columns)
 
     base_cumulative_frequency = count(alignment, rows, columns)
-    most = find_most(base_cumulative_frequency , arg.cutoff, arg.gap_cutoff)
+    most = find_most(base_cumulative_frequency, arg.cutoff, arg.gap_cutoff)
 
     # write consensus
     write_fastq([[most, 0]], rows, arg.name+'.consensus.fastq', arg.name)
@@ -444,8 +444,8 @@ def main():
                     short_id, *primer_info_dict[seq.id])
                 seq.description = ''
                 SeqIO.write(seq, out, 'fastq')
-    sequence_count_result = unique_sequence_count(new, window=arg.window)
-    shannon_diversity_index(count_data, sequence_count_result,
+    sequence_count_result = unique_sequence_count(alignment, window=arg.window)
+    shannon_diversity_index(base_cumulative_frequency, sequence_count_result,
                             window=arg.window, only_atcg=True, out=arg.name)
 
     print('Found {} primers.'.format(len(primer_info)))
