@@ -221,7 +221,7 @@ def unique_sequence_count(data, window):
     return C
 
 
-def shannon_diversity_index(data, sequence_count_result, window,
+def shannon_diversity_index(data, rows, columns, sequence_count_result, window,
                             only_atcg=True, with_n=False, with_gap=False,
                             out='out.png'):
     """http://www.tiem.utk.edu/~gross/bioed/bealsmodules/shannonDI.html
@@ -232,8 +232,6 @@ def shannon_diversity_index(data, sequence_count_result, window,
     # of base
 
     # split shape and data
-    rows, columns = data[0]
-    data = data[1:]
     data = np.array(data)
     if with_gap:
         new_data = data[:, 0:6]
@@ -300,14 +298,12 @@ def validate(candidate_file, input_file, n_seqs, min_len, min_covrage,
                 new.write(line.replace('-', ''))
 
     # build blast db
-    candidate_fasta = 'primer_candidate.fasta'
-    SeqIO.convert(candidate_file, 'fastq', candidate_fasta, 'fasta')
     run('makeblastdb -in {} -dbtype nucl'.format(no_gap), shell=True,
-        stdout=open('blast.log', 'w'))
+        stdout=open('makeblastdb.log', 'w'))
     # blast
     blast_result_file = 'BlastResult.xml'
     cmd = nb(num_threads=cpu_count(),
-             query=candidate_fasta,
+             query=candidate_file,
              db=no_gap,
              task='blastn',
              evalue=1e-5,
@@ -377,7 +373,7 @@ def write_to_file(data, rows, output, name, file_format):
         if file_format == 'fastq':
             write_fastq(out, name, start, end, tm, rows, seq, qual_character)
         elif file_format == 'fasta':
-            write_fastq(out, name, start, end, tm, rows, seq)
+            write_fasta(out, name, start, end, tm, rows, seq)
     return output
 
 
@@ -434,8 +430,11 @@ def main():
     if len(primer_candidate) == 0:
         raise ValueError('Primer not found! Try to loose restriction.')
     candidate_file = write_to_file(primer_candidate, rows,
-                                   arg.out+'.candidate.fastq', arg.out,
-                                   'fastq')
+                                   arg.out+'.candidate.fasta', arg.out,
+                                   'fasta')
+    candidate_file_fastq = write_to_file(primer_candidate, rows,
+                                         arg.out+'.candidate.fastq', arg.out,
+                                         'fastq')
 
     # validate
     primer_info = validate(candidate_file, arg.input, rows, arg.min_primer,
@@ -443,13 +442,12 @@ def main():
     primer_info_dict = {i[0]: i[1:] for i in primer_info}
     primer_file = '{}-{}_covrage-{}bp_mismatch.fastq'.format(
         arg.out, arg.cutoff, arg.mismatch)
-
     # write consensus
     write_to_file([[consensus, 0]], rows, arg.out+'.consensus.fastq', arg.out,
                   'fastq')
     # write
     with open(primer_file, 'w') as out:
-        for seq in SeqIO.parse(candidate_file, 'fastq'):
+        for seq in SeqIO.parse(candidate_file_fastq, 'fastq'):
             if seq.id in primer_info_dict:
                 short_id = seq.id.split('-')
                 short_id = '-'.join([short_id[0], short_id[-2], short_id[-1]])
@@ -458,9 +456,11 @@ def main():
                     short_id, *primer_info_dict[seq.id])
                 seq.description = ''
                 SeqIO.write(seq, out, 'fastq')
-    sequence_count_result = unique_sequence_count(alignment, window=arg.window)
-    shannon_diversity_index(base_cumulative_frequency, sequence_count_result,
-                            window=arg.window, only_atcg=True, out=arg.out)
+    sequence_count_result = unique_sequence_count(alignment,
+                                                  window=arg.min_template)
+    shannon_diversity_index(base_cumulative_frequency, rows, columns,
+                            sequence_count_result, window=arg.min_template,
+                            only_atcg=True, out=arg.out)
 
     print('Found {} primers.'.format(len(primer_info)))
     print('Primer ID format:')
