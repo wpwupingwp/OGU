@@ -166,6 +166,48 @@ def find_continuous(consensus, min_len):
     return continuous
 
 
+def find_primer(continuous, most, min_len, max_len, ambiguous_base_n):
+    poly = re.compile(r'([ATCG])\1\1\1\1')
+    ambiguous_base = re.compile(r'[^ATCG]')
+    tandem = re.compile(r'([ATCG]{2})\1\1\1\1')
+
+    def is_good_primer(primer):
+        # ref1. http://www.premierbiosoft.com/tech_notes/PCR_Primer_Design.html
+        seq = ''.join([i[1] for i in primer])
+        if re.search(poly, seq) is not None:
+            return False, 0, 'Poly(NNNNN) structure found'
+        if re.search(tandem, seq) is not None:
+            return False, 0, 'Tandom(NN*5) exist'
+            # no more 3 ambiguous base
+        if len(re.findall(ambiguous_base, seq)) >= ambiguous_base_n:
+            return False, 0, 'More than 3 ambiguous base'
+
+# primer3.setGlobals seems have no effect on calcTm, so I have to replace all
+# ambiguous base to A to get an approximate value. Othervise calcTm() will
+# generate -99999 if there is ambiguous base.
+        pure_seq = re.sub(ambiguous_base, 'A', seq)
+        tm = primer3.calcTm(pure_seq)
+        hairpin_tm = primer3.calcHairpinTm(pure_seq)
+        homodimer_tm = primer3.calcHomodimerTm(pure_seq)
+        if max(tm, hairpin_tm, homodimer_tm) != tm:
+            return False, 0, 'Hairpin or homodimer found'
+        return True, tm, 'Ok'
+
+    primer = list()
+    continuous = [i for i in continuous if len(i) >= min_len]
+    for fragment in continuous:
+        len_fragment = len(fragment)
+        for start in range(len_fragment-max_len):
+            for p_len in range(min_len, max_len):
+                seq = fragment[start:(start+p_len)]
+                good_primer, tm, detail = is_good_primer(seq)
+                if good_primer:
+                    primer.append([seq, tm])
+                else:
+                    continue
+    return primer
+
+
 def unique_sequence_count(data, window):
     rows, columns = data.shape
     # Different count
@@ -244,46 +286,6 @@ def shannon_diversity_index(data, sequence_count_result, window,
             _.write('{}\t{:.2f}\n'.format(base, resolution))
 
 
-def find_primer(continuous, most, min_len, max_len, ambiguous_base_n):
-    poly = re.compile(r'([ATCG])\1\1\1\1')
-    ambiguous_base = re.compile(r'[^ATCG]')
-    tandem = re.compile(r'([ATCG]{2})\1\1\1\1')
-
-    def is_good_primer(primer):
-        # ref1. http://www.premierbiosoft.com/tech_notes/PCR_Primer_Design.html
-        seq = ''.join([i[1] for i in primer])
-        if re.search(poly, seq) is not None:
-            return False, 0, 'Poly(NNNNN) structure found'
-        if re.search(tandem, seq) is not None:
-            return False, 0, 'Tandom(NN*5) exist'
-            # no more 3 ambiguous base
-        if len(re.findall(ambiguous_base, seq)) >= ambiguous_base_n:
-            return False, 0, 'More than 3 ambiguous base'
-
-# primer3.setGlobals seems have no effect on calcTm, so I have to replace all
-# ambiguous base to A to get an approximate value. Othervise calcTm() will
-# generate -99999 if there is ambiguous base.
-        pure_seq = re.sub(ambiguous_base, 'A', seq)
-        tm = primer3.calcTm(pure_seq)
-        hairpin_tm = primer3.calcHairpinTm(pure_seq)
-        homodimer_tm = primer3.calcHomodimerTm(pure_seq)
-        if max(tm, hairpin_tm, homodimer_tm) != tm:
-            return False, 0, 'Hairpin or homodimer found'
-        return True, tm, 'Ok'
-
-    primer = list()
-    continuous = [i for i in continuous if len(i) >= min_len]
-    for fragment in continuous:
-        len_fragment = len(fragment)
-        for start in range(len_fragment-max_len):
-            for p_len in range(min_len, max_len):
-                seq = fragment[start:(start+p_len)]
-                good_primer, tm, detail = is_good_primer(seq)
-                if good_primer:
-                    primer.append([seq, tm])
-                else:
-                    continue
-    return primer
 
 
 def validate(candidate_file, input_file, n_seqs, min_len, min_covrage,
@@ -343,7 +345,7 @@ def validate(candidate_file, input_file, n_seqs, min_len, min_covrage,
     return validate_result
 
 
-def write_fastq(data, rows, output, name):
+def write_to_file(data, rows, output, name, file_format):
     # https://en.wikipedia.org/wiki/FASTQ_format
     quality = ('''!"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ'''
                '''[\]^_`abcdefghijklmnopqrstuvwxyz{|}~''')
@@ -351,6 +353,16 @@ def write_fastq(data, rows, output, name):
     max_q = len(quality)
     factor = max_q/rows
     out = open(output, 'w')
+
+    def write_fastq(out, name, start, end, tm, rows, seq, qual_character):
+        out.write('@{}-{}-{}-{:.3f}-{}\n'.format(name, start, end, tm, rows))
+        out.write(seq+'\n')
+        out.write('+\n')
+        out.write(''.join(qual_character)+'\n')
+
+    def write_fasta(out, name, start, end, tm, rows, seq):
+        out.write('>{}-{}-{}-{:.3f}-{}\n'.format(name, start, end, tm, rows))
+        out.write(seq+'\n')
 
     # item: [id, seq, qual]
     for item, tm in data:
@@ -362,10 +374,10 @@ def write_fastq(data, rows, output, name):
         # use min to avoid KeyError
         qual_value = [min(max_q, int(i[2]*factor))-1 for i in item]
         qual_character = [quality_dict[i] for i in qual_value]
-        out.write('@{}-{}-{}-{:.3f}-{}\n'.format(name, start, end, tm, rows))
-        out.write(seq+'\n')
-        out.write('+\n')
-        out.write(''.join(qual_character)+'\n')
+        if file_format == 'fastq':
+            write_fastq(out, name, start, end, tm, rows, seq, qual_character)
+        elif file_format == 'fasta':
+            write_fastq(out, name, start, end, tm, rows, seq)
     return output
 
 
@@ -421,18 +433,20 @@ def main():
                                    arg.max_primer, arg.ambiguous_base_n)
     if len(primer_candidate) == 0:
         raise ValueError('Primer not found! Try to loose restriction.')
-    candidate_file = write_fastq(
-        primer_candidate, rows, arg.name+'.candidate.fastq', arg.name)
+    candidate_file = write_to_file(primer_candidate, rows,
+                                   arg.out+'.candidate.fastq', arg.out,
+                                   'fastq')
 
     # validate
     primer_info = validate(candidate_file, arg.input, rows, arg.min_primer,
                            arg.cutoff, arg.mismatch)
     primer_info_dict = {i[0]: i[1:] for i in primer_info}
     primer_file = '{}-{}_covrage-{}bp_mismatch.fastq'.format(
-        arg.name, arg.cutoff, arg.mismatch)
+        arg.out, arg.cutoff, arg.mismatch)
 
     # write consensus
-    write_fastq([[consensus, 0]], rows, arg.name+'.consensus.fastq', arg.name)
+    write_to_file([[consensus, 0]], rows, arg.out+'.consensus.fastq', arg.out,
+                  'fastq')
     # write
     with open(primer_file, 'w') as out:
         for seq in SeqIO.parse(candidate_file, 'fastq'):
@@ -446,7 +460,7 @@ def main():
                 SeqIO.write(seq, out, 'fastq')
     sequence_count_result = unique_sequence_count(alignment, window=arg.window)
     shannon_diversity_index(base_cumulative_frequency, sequence_count_result,
-                            window=arg.window, only_atcg=True, out=arg.name)
+                            window=arg.window, only_atcg=True, out=arg.out)
 
     print('Found {} primers.'.format(len(primer_info)))
     print('Primer ID format:')
