@@ -46,17 +46,18 @@ class PrimerWithInfo:
         self.name = ('{}-Start({})-End({})-Tm({:.2f})-Coverage({:.2%})-'
                      'SumBitScore({})-AvgMidLocation({})'.format(
                       self.index, self.start, self.end, self.tm, self.coverage,
-                      self.sum_bitscore_raw, self.avg_mid_location))
+                      self.sum_bitscore, self.avg_mid_location))
 
     def write(self, filename, file_format):
-        if file_format == 'fastq':
-            out.write('@{}\n'.format(self.name))
-            out.write(self.sequence+'\n')
-            out.write('+\n')
-            out.write('{}\n'.format(self.quality))
-        elif file_format == 'fasta':
-            out.write('>{}\n'.format(self.name))
-            out.write(self.sequence+'\n')
+        with open(filename, 'a') as out:
+            if file_format == 'fastq':
+                out.write('@{}\n'.format(self.name))
+                out.write(self.sequence+'\n')
+                out.write('+\n')
+                out.write('{}\n'.format(self.quality))
+            elif file_format == 'fasta':
+                out.write('>{}\n'.format(self.name))
+                out.write(self.sequence+'\n')
 
 
 def prepare(fasta):
@@ -96,7 +97,7 @@ def prepare(fasta):
     return name, sequence, no_gap
 
 
-def count(alignment, rows, columns):
+def count_base(alignment, rows, columns):
     """
     Given alignment numpy array, count cumulative frequency of base in each
     column (consider ambiguous base and "N", "-" and "?", otherwise omit).
@@ -144,7 +145,7 @@ def get_quality_string(data: List[float], rows: int):
 
 
 def generate_consensus(base_cumulative_frequency, cutoff, gap_cutoff,
-                       rows, columns):
+                       rows, columns, output):
     """
     Given base count info, return List[index, base, quality]
     and List[List[str, str, str, PrimerInfo]] for writing conesensus.
@@ -200,7 +201,8 @@ def generate_consensus(base_cumulative_frequency, cutoff, gap_cutoff,
     consensus.sequence = ''.join([i[1] for i in most])
     quality = [i[2] for i in most]
     consensus.quality = get_quality_string(quality, rows)
-    return most, consensus
+    consensus.write(output, 'fastq')
+    return most
 
 
 def find_continuous(consensus, min_len):
@@ -267,14 +269,14 @@ def find_primer(continuous, most, rows, min_len, max_len, ambiguous_base_n):
                     end = seq[-1][0]
                     sequence = ''.join([i[1] for i in seq])
                     quality = [i[2] for i in seq]
-                    primer.append(PrimerWithInfo(index=n, start=start, end=end,
+                    primers.append(PrimerWithInfo(index=n, start=start, end=end,
                                                  tm=tm, sequence=sequence,
                                                  quality=get_quality_string(
                                                      quality, rows)))
                     n += 1
                 else:
                     continue
-    return primer
+    return primers
 
 
 def unique_sequence_count(data, window):
@@ -441,48 +443,42 @@ def main():
     rows, columns = alignment.shape
 
     # generate consensus
-    base_cumulative_frequency = count(alignment, rows, columns)
-    consensus_for_find, consensus_for_write = generate_consensus(
-        base_cumulative_frequency, arg.cutoff, arg.gap_cutoff, rows, columns)
-    consensus_for_write.write(arg.out+'.consensus.fastq', 'fastq')
+    base_cumulative_frequency = count_base(alignment, rows, columns)
+    consensus = generate_consensus(base_cumulative_frequency, arg.cutoff,
+                                   arg.gap_cutoff, rows, columns,
+                                   arg.out+'.consensus.fastq')
 
     # find candidate
-    continuous = find_continuous(consensus_for_find, arg.min_primer)
-    primer_candidate = find_primer(continuous, consensus_for_find, rows, arg.min_primer,
+    continuous = find_continuous(consensus, arg.min_primer)
+    primer_candidate = find_primer(continuous, consensus, rows, arg.min_primer,
                                    arg.max_primer, arg.ambiguous_base_n)
     if len(primer_candidate) == 0:
         raise ValueError('Primer not found! Try to loose restriction.')
-    candidate_file = open(arg.out + '.candidate.fastq', 'a')
+    candidate_file = arg.out + '.candidate.fasta'
     for item in primer_candidate:
         item.write(candidate_file, 'fasta')
 
     # validate
-    primer_info = validate(candidate_file, db_file, rows, arg.min_primer,
-                           arg.cutoff, arg.mismatch)
-    primer_info_dict = {i[0]: i[1:] for i in primer_info}
+    result = validate(candidate_file, db_file, rows, arg.min_primer,
+                      arg.cutoff, arg.mismatch)
     primer_file = '{}-{}_covrage-{}bp_mismatch.fastq'.format(
         arg.out, arg.cutoff, arg.mismatch)
-    # write
-            blast_result[index] = {'coverage': coverage,
-                                   'sum_bitscore': sum_bitscore_raw,
-                                   'avg_mid_location': start/n_seqs}
-    with open(primer_file, 'w') as out:
-        for seq in SeqIO.parse(candidate_file_fastq, 'fastq'):
-            if seq.id in primer_info_dict:
-                short_id = seq.id.split('-')
-                short_id = '-'.join([short_id[0], short_id[-2], short_id[-1]])
-                # name-Tm-Samples-BLAST_Coverage-Bitscore-AvgMidLocation
-                seq.id = '{}-{:.2%}-{}-{:.2f}'.format(
-                    short_id, *primer_info_dict[seq.id])
-                seq.description = ''
-                SeqIO.write(seq, out, 'fastq')
+    count = 0
+    for primer in primer_candidate:
+        if primer.index in result:
+            count += 1
+            primer.coverage = result[primer.index]['coverage']
+            primer.sum_bitscore = result[primer.index]['sum_bitscore']
+            primer.avg_mid_location = result[primer.index]['avg_mid_location']
+            primer.write(primer_file, 'fastq')
+
     sequence_count_result = unique_sequence_count(alignment,
                                                   window=arg.min_template)
     shannon_diversity_index(base_cumulative_frequency, rows, columns,
                             sequence_count_result, window=arg.min_template,
                             only_atcg=True, out=arg.out)
 
-    print('Found {} primers.'.format(len(primer_info)))
+    print('Found {} primers.'.format(count))
     print('Primer ID format:')
     print('name-Tm-Samples-BLAST_Coverage-Bitscore-AvgMidLocation')
     end = timer()
