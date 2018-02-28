@@ -11,6 +11,7 @@ from math import log2
 from multiprocessing import cpu_count
 from timeit import default_timer as timer
 from subprocess import run
+from typing import List, Dict, Any
 
 from Bio import SearchIO, SeqIO
 from Bio.Blast.Applications import NcbiblastnCommandline as nb
@@ -25,6 +26,24 @@ matplotlib.rcParams['axes.titlesize'] = 25
 matplotlib.rcParams['font.size'] = 16
 matplotlib.rcParams['axes.facecolor'] = '#888888'
 matplotlib.rcParams['figure.figsize'] = 16, 9
+
+
+class PrimerInfo:
+    def __init__(self, index=None, start=None, end=None, tm=None,
+                 coverage=None, bitscore=None, avg_mid_location=None,
+                 detail=None):
+        self.id = index
+        self.start = start
+        self.end = end
+        self.tm = tm
+        self.coverage = coverage
+        selft.bitscore = bitscore
+        self.avg_mid_location = avg_mid_location
+        self.detail = detail
+
+    def __str__(self):
+        return ('No.{}-Start:{}-End:{}-Tm:{}℃-Coverage:{:.2%}-Bitscore'
+                ':{}-AvgMidLocation:{}')
 
 
 def prepare(fasta):
@@ -59,16 +78,18 @@ def prepare(fasta):
 
     # Convert List to numpy array.
     # order 'F' is a bit faster than 'C'
-    # name = np.array([[i[0]] for i in old], dtype=np.bytes_)
     # new = np.hstack((name, seq)) -> is slower
-    new = np.array([list(i[1]) for i in data], dtype=np.bytes_, order='F')
-    return new, no_gap
+    name = np.array([[i[0]] for i in data], dtype=np.bytes_)
+    sequence = np.array([list(i[1]) for i in data], dtype=np.bytes_, order='F')
+    return name, sequence, no_gap
 
 
 def count(alignment, rows, columns):
     """
     Given alignment numpy array, count cumulative frequency of base in each
     column (consider ambiguous base and "N", "-" and "?", otherwise omit).
+    Return List[List[float, float, float, float, float, float, float]] for
+    [A, T, C, G, N, GAP, OTHER].
     """
     frequency: List[List[float, float, float, float, float, float, float]] = []
     for index in range(columns):
@@ -97,8 +118,25 @@ def count(alignment, rows, columns):
     return frequency
 
 
+def get_quality_string(data: List[float], rows: int):
+    # https://en.wikipedia.org/wiki/FASTQ_format
+    quality = ('''!"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ'''
+               '''[\]^_`abcdefghijklmnopqrstuvwxyz{|}~''')
+    quality_dict = {i: j for i, j in enumerate(quality)}
+    max_q = len(quality)
+    factor = max_q/rows
+    # use min to avoid KeyError
+    quality_value = [min(max_q, int(i*factor))-1 for i in data]
+    quality_string = [quality_dict[i] for i in quality_value]
+    return  ''.join(quality_string)
+
+
 def generate_consensus(base_cumulative_frequency, cutoff, gap_cutoff,
                        rows, columns):
+    """
+    Given base count info, return List[index, base, quality]
+    and List[List[str, str, str]] for writing conesensus.
+    """
     # directly use np.unique result
     def get_ambiguous_dict():
         from Bio.Data.IUPACData import ambiguous_dna_values
@@ -145,13 +183,23 @@ def generate_consensus(base_cumulative_frequency, cutoff, gap_cutoff,
                         base = ambiguous_dict[length][key]
                         finish = True
                         most.append([location, base, count])
-    return most
+    consensus = [0, ]
+    consensus.append(''.join([i[1] for i in most]))
+    quality = [i[2] for i in most]
+    consensus.append(get_quality_string(quality))
+    # try to use class
+    consensus.append(PrimerInfo(start=1, end=len(most), coverage=cutoff,
+                                avg_mid_location=len(most)/2)
+    # write require List[List[]]
+    return most, [consensus, ]
 
 
 # to be continued
 def find_continuous(consensus, min_len):
     """
-    Given List[location, base, count], return continuous fragments list.
+    Given List[location, base, count]
+    Return continuous fragments list:
+    List[List[location, base, count]]
     """
     continuous: List[List[int, str, float]] = list()
     fragment = list()
@@ -163,14 +211,14 @@ def find_continuous(consensus, min_len):
                 fragment = list()
             continue
         fragment.append(base)
-    for i in continuous:
-        for j in i:
-            print(j[1], end='')
-        print()
     return continuous
 
 
 def find_primer(continuous, most, min_len, max_len, ambiguous_base_n):
+    """
+    Find suitable primer in given List[List[int, str, float]]
+    return List[List[int, str, List[float], Dict[str, Any]]]
+    """
     poly = re.compile(r'([ATCG])\1\1\1\1')
     ambiguous_base = re.compile(r'[^ATCG]')
     tandem = re.compile(r'([ATCG]{2})\1\1\1\1')
@@ -197,16 +245,23 @@ def find_primer(continuous, most, min_len, max_len, ambiguous_base_n):
             return False, 0, 'Hairpin or homodimer found'
         return True, tm, 'Ok'
 
-    primer = list()
+    primer: List[List[int, str, Dict[str, Any]]] = list()
     continuous = [i for i in continuous if len(i) >= min_len]
+    n = 1
     for fragment in continuous:
         len_fragment = len(fragment)
-        for start in range(len_fragment-max_len):
+        for begin in range(len_fragment-max_len):
             for p_len in range(min_len, max_len):
-                seq = fragment[start:(start+p_len)]
+                seq = fragment[begin:(begin+p_len)]
                 good_primer, tm, detail = is_good_primer(seq)
                 if good_primer:
-                    primer.append([seq, tm])
+                    start = seq[0][0]
+                    end = seq[-1][0]
+                    sequence = ''.join([i[1] for i in seq])
+                    quality = [i[2] for i in seq]
+                    primer.append([n, sequence, get_quality_string(quality),
+                                   PrimerInfo(start=start, end=end, tm=tm,])
+                    n += 1
                 else:
                     continue
     return primer
@@ -335,38 +390,22 @@ def validate(query_file, db_file, n_seqs, min_len, min_covrage,
 
 
 def write_to_file(data, rows, output, name, file_format):
-    # https://en.wikipedia.org/wiki/FASTQ_format
-    quality = ('''!"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ'''
-               '''[\]^_`abcdefghijklmnopqrstuvwxyz{|}~''')
-    quality_dict = {i: j for i, j in enumerate(quality)}
-    max_q = len(quality)
-    factor = max_q/rows
+    """
+    Given List[List[int, str, str, Dict[str, Any]]
+    Write fasta or fastq format file.
+    """
     out = open(output, 'w')
-
-    def write_fastq(out, name, start, end, tm, rows, seq, qual_character):
-        out.write('@{}-{}-{}-{:.3f}-{}\n'.format(name, start, end, tm, rows))
-        out.write(seq+'\n')
-        out.write('+\n')
-        out.write(''.join(qual_character)+'\n')
-
-    def write_fasta(out, name, start, end, tm, rows, seq):
-        out.write('>{}-{}-{}-{:.3f}-{}\n'.format(name, start, end, tm, rows))
-        out.write(seq+'\n')
-
-    # item: [id, seq, qual]
-    for item, tm in data:
-        seq = ''.join([i[1] for i in item])
-        # generate quality score
-        start = item[0][0]
-        end = item[-1][0]
-        # -1 for index
-        # use min to avoid KeyError
-        qual_value = [min(max_q, int(i[2]*factor))-1 for i in item]
-        qual_character = [quality_dict[i] for i in qual_value]
+    for item in data:
+        for key, value in data[-1].items():
+        sequence_id = 'No.{}-{}'.format(item[0], 
         if file_format == 'fastq':
-            write_fastq(out, name, start, end, tm, rows, seq, qual_character)
+            out.write('@{}-{}-{}-{:.3f}-{}\n'.format(name, start, end, tm, rows))
+            out.write(seq+'\n')
+            out.write('+\n')
+            out.write(''.join(qual_character)+'\n')
         elif file_format == 'fasta':
-            write_fasta(out, name, start, end, tm, rows, seq)
+            out.write('>{}-{}-{}-{:.3f}-{}\n'.format(name, start, end, tm, rows))
+            out.write(seq+'\n')
     return output
 
 
@@ -407,14 +446,14 @@ def main():
         arg.out = arg.out.split('.')[0]
 
     # read from fasta, generate new fasta for makeblastdb
-    alignment, db_file = prepare(arg.input)
+    name, alignment, db_file = prepare(arg.input)
     rows, columns = alignment.shape
     print(rows, columns)
 
     # generate consensus
     base_cumulative_frequency = count(alignment, rows, columns)
-    consensus = generate_consensus(base_cumulative_frequency, arg.cutoff,
-                                   arg.gap_cutoff, rows, columns)
+    consensus, consensus_for_write = generate_consensus(
+        base_cumulative_frequency, arg.cutoff, arg.gap_cutoff, rows, columns)
 
     # find candidate
     continuous = find_continuous(consensus, arg.min_primer)
@@ -435,9 +474,6 @@ def main():
     primer_info_dict = {i[0]: i[1:] for i in primer_info}
     primer_file = '{}-{}_covrage-{}bp_mismatch.fastq'.format(
         arg.out, arg.cutoff, arg.mismatch)
-    # write consensus
-    write_to_file([[consensus, 0]], rows, arg.out+'.consensus.fastq', arg.out,
-                  'fastq')
     # write
     with open(primer_file, 'w') as out:
         for seq in SeqIO.parse(candidate_file_fastq, 'fastq'):
@@ -455,6 +491,9 @@ def main():
                             sequence_count_result, window=arg.min_template,
                             only_atcg=True, out=arg.out)
 
+    # write consensus
+    write_to_file(consensus_for_write, rows, arg.out+'.consensus.fastq',
+                  arg.out, 'fastq')
     print('Found {} primers.'.format(len(primer_info)))
     print('Primer ID format:')
     print('name-Tm-Samples-BLAST_Coverage-Bitscore-AvgMidLocation')
