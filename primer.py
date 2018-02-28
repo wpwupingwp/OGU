@@ -29,27 +29,28 @@ matplotlib.rcParams['figure.figsize'] = 16, 9
 
 
 class PrimerInfo:
-    def __init__(self, index=None, start=None, end=None, tm=None,
-                 coverage=None, bitscore=None, avg_mid_location=None,
-                 detail=None):
-        self.id = index
+    def __init__(self, index=0, start=0, end=0, tm=0,
+                 coverage=0, bitscore=0, avg_mid_location=0,
+                 detail=0):
+        self.index = index
         self.start = start
         self.end = end
         self.tm = tm
         self.coverage = coverage
-        selft.bitscore = bitscore
+        self.bitscore = bitscore
         self.avg_mid_location = avg_mid_location
         self.detail = detail
 
     def __str__(self):
-        return ('No.{}-Start:{}-End:{}-Tm:{}℃-Coverage:{:.2%}-Bitscore'
-                ':{}-AvgMidLocation:{}')
+        return ('No.{}-Start({})-End({})-Tm({:.2f})-Coverage({:.2%})-Bitscore'
+                '({})-AvgMidLocation({})'.format(
+                    self.index, self.start, self.end, self.tm, self.coverage,
+                    self.bitscore, self.avg_mid_location))
 
 
 def prepare(fasta):
     """
     Given fasta format alignment filename, return a numpy array for sequence:
-    List[ID, Sequence].
     Generate fasta file without gap for makeblastdb, return file name.
     """
     no_gap = fasta + '.no_gap'
@@ -128,14 +129,14 @@ def get_quality_string(data: List[float], rows: int):
     # use min to avoid KeyError
     quality_value = [min(max_q, int(i*factor))-1 for i in data]
     quality_string = [quality_dict[i] for i in quality_value]
-    return  ''.join(quality_string)
+    return ''.join(quality_string)
 
 
 def generate_consensus(base_cumulative_frequency, cutoff, gap_cutoff,
                        rows, columns):
     """
     Given base count info, return List[index, base, quality]
-    and List[List[str, str, str]] for writing conesensus.
+    and List[List[str, str, str, PrimerInfo]] for writing conesensus.
     """
     # directly use np.unique result
     def get_ambiguous_dict():
@@ -183,18 +184,17 @@ def generate_consensus(base_cumulative_frequency, cutoff, gap_cutoff,
                         base = ambiguous_dict[length][key]
                         finish = True
                         most.append([location, base, count])
-    consensus = [0, ]
+    consensus = list()
     consensus.append(''.join([i[1] for i in most]))
     quality = [i[2] for i in most]
-    consensus.append(get_quality_string(quality))
+    consensus.append(get_quality_string(quality, rows))
     # try to use class
     consensus.append(PrimerInfo(start=1, end=len(most), coverage=cutoff,
-                                avg_mid_location=len(most)/2)
+                                avg_mid_location=len(most)/2))
     # write require List[List[]]
     return most, [consensus, ]
 
 
-# to be continued
 def find_continuous(consensus, min_len):
     """
     Given List[location, base, count]
@@ -214,10 +214,10 @@ def find_continuous(consensus, min_len):
     return continuous
 
 
-def find_primer(continuous, most, min_len, max_len, ambiguous_base_n):
+def find_primer(continuous, most, rows, min_len, max_len, ambiguous_base_n):
     """
     Find suitable primer in given List[List[int, str, float]]
-    return List[List[int, str, List[float], Dict[str, Any]]]
+    return List[List[str, str, PrimerInfo]]
     """
     poly = re.compile(r'([ATCG])\1\1\1\1')
     ambiguous_base = re.compile(r'[^ATCG]')
@@ -259,8 +259,9 @@ def find_primer(continuous, most, min_len, max_len, ambiguous_base_n):
                     end = seq[-1][0]
                     sequence = ''.join([i[1] for i in seq])
                     quality = [i[2] for i in seq]
-                    primer.append([n, sequence, get_quality_string(quality),
-                                   PrimerInfo(start=start, end=end, tm=tm,])
+                    primer.append([sequence, get_quality_string(quality, rows),
+                                   PrimerInfo(index=n, start=start, end=end,
+                                              tm=tm)])
                     n += 1
                 else:
                     continue
@@ -389,23 +390,21 @@ def validate(query_file, db_file, n_seqs, min_len, min_covrage,
     return validate_result
 
 
-def write_to_file(data, rows, output, name, file_format):
+def write_to_file(data, output, name, file_format):
     """
-    Given List[List[int, str, str, Dict[str, Any]]
+    Given List[List[str, str, PrimerInfo]
     Write fasta or fastq format file.
     """
     out = open(output, 'w')
     for item in data:
-        for key, value in data[-1].items():
-        sequence_id = 'No.{}-{}'.format(item[0], 
         if file_format == 'fastq':
-            out.write('@{}-{}-{}-{:.3f}-{}\n'.format(name, start, end, tm, rows))
-            out.write(seq+'\n')
+            out.write('@{}\n'.format(str(item[-1])))
+            out.write(item[0]+'\n')
             out.write('+\n')
-            out.write(''.join(qual_character)+'\n')
+            out.write('{}\n'.format(item[1]))
         elif file_format == 'fasta':
-            out.write('>{}-{}-{}-{:.3f}-{}\n'.format(name, start, end, tm, rows))
-            out.write(seq+'\n')
+            out.write('>{}\n'.format(str(item[-1])))
+            out.write(item[0]+'\n')
     return output
 
 
@@ -448,7 +447,6 @@ def main():
     # read from fasta, generate new fasta for makeblastdb
     name, alignment, db_file = prepare(arg.input)
     rows, columns = alignment.shape
-    print(rows, columns)
 
     # generate consensus
     base_cumulative_frequency = count(alignment, rows, columns)
@@ -457,14 +455,14 @@ def main():
 
     # find candidate
     continuous = find_continuous(consensus, arg.min_primer)
-    primer_candidate = find_primer(continuous, consensus, arg.min_primer,
+    primer_candidate = find_primer(continuous, consensus, rows, arg.min_primer,
                                    arg.max_primer, arg.ambiguous_base_n)
     if len(primer_candidate) == 0:
         raise ValueError('Primer not found! Try to loose restriction.')
-    candidate_file = write_to_file(primer_candidate, rows,
+    candidate_file = write_to_file(primer_candidate, 
                                    arg.out+'.candidate.fasta', arg.out,
                                    'fasta')
-    candidate_file_fastq = write_to_file(primer_candidate, rows,
+    candidate_file_fastq = write_to_file(primer_candidate,
                                          arg.out+'.candidate.fastq', arg.out,
                                          'fastq')
 
@@ -492,7 +490,7 @@ def main():
                             only_atcg=True, out=arg.out)
 
     # write consensus
-    write_to_file(consensus_for_write, rows, arg.out+'.consensus.fastq',
+    write_to_file(consensus_for_write, arg.out+'.consensus.fastq',
                   arg.out, 'fastq')
     print('Found {} primers.'.format(len(primer_info)))
     print('Primer ID format:')
