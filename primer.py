@@ -28,24 +28,36 @@ matplotlib.rcParams['axes.facecolor'] = '#888888'
 matplotlib.rcParams['figure.figsize'] = 16, 9
 
 
-class PrimerInfo:
-    def __init__(self, index=0, start=0, end=0, tm=0,
-                 coverage=0, bitscore=0, avg_mid_location=0,
-                 detail=0):
+class PrimerWithInfo:
+    def __init__(self, sequence='', quality='', index=0, start=0, end=0, tm=0,
+                 coverage=0, sum_bitscore=0, avg_mid_location=0, detail=0):
         self.index = index
         self.start = start
         self.end = end
         self.tm = tm
         self.coverage = coverage
-        self.bitscore = bitscore
+        self.sum_bitscore = sum_bitscore
         self.avg_mid_location = avg_mid_location
         self.detail = detail
 
-    def __str__(self):
-        return ('No.{}-Start({})-End({})-Tm({:.2f})-Coverage({:.2%})-'
-                'SumBitScore({})-AvgMidLocation({})'.format(
-                    self.index, self.start, self.end, self.tm, self.coverage,
-                    self.bitscore, self.avg_mid_location))
+        self.sequence = sequence
+        self.quality = quality
+
+        self.name = ('{}-Start({})-End({})-Tm({:.2f})-Coverage({:.2%})-'
+                     'SumBitScore({})-AvgMidLocation({})'.format(
+                      self.index, self.start, self.end, self.tm, self.coverage,
+                      self.sum_bitscore_raw, self.avg_mid_location))
+
+    def write(self, filename, file_format):
+        with open(filename, 'w') as out:
+            if file_format == 'fastq':
+                out.write('@{}\n'.format(self.name))
+                out.write(self.sequence+'\n')
+                out.write('+\n')
+                out.write('{}\n'.format(self.quality))
+            elif file_format == 'fasta':
+                out.write('>{}\n'.format(self.name))
+                out.write(self.sequence+'\n')
 
 
 def prepare(fasta):
@@ -184,15 +196,12 @@ def generate_consensus(base_cumulative_frequency, cutoff, gap_cutoff,
                         base = ambiguous_dict[length][key]
                         finish = True
                         most.append([location, base, count])
-    consensus = list()
-    consensus.append(''.join([i[1] for i in most]))
+    consensus = PrimerWithInfo(start=1, end=len(most), coverage=cutoff,
+                               avg_mid_location=len(most)/2)
+    consensus.sequence = ''.join([i[1] for i in most])
     quality = [i[2] for i in most]
-    consensus.append(get_quality_string(quality, rows))
-    # try to use class
-    consensus.append(PrimerInfo(start=1, end=len(most), coverage=cutoff,
-                                avg_mid_location=len(most)/2))
-    # write require List[List[]]
-    return most, [consensus, ]
+    consensus.quality = get_quality_string(quality, rows)
+    return most, consensus
 
 
 def find_continuous(consensus, min_len):
@@ -245,7 +254,7 @@ def find_primer(continuous, most, rows, min_len, max_len, ambiguous_base_n):
             return False, 0, 'Hairpin or homodimer found'
         return True, tm, 'Ok'
 
-    primer: List[List[int, str, Dict[str, Any]]] = list()
+    primers: List[PrimerWithInfo] = list()
     continuous = [i for i in continuous if len(i) >= min_len]
     n = 1
     for fragment in continuous:
@@ -259,9 +268,10 @@ def find_primer(continuous, most, rows, min_len, max_len, ambiguous_base_n):
                     end = seq[-1][0]
                     sequence = ''.join([i[1] for i in seq])
                     quality = [i[2] for i in seq]
-                    primer.append([sequence, get_quality_string(quality, rows),
-                                   PrimerInfo(index=n, start=start, end=end,
-                                              tm=tm)])
+                    primer.append(PrimerWithInfo(index=n, start=start, end=end,
+                                                 tm=tm, sequence=sequence,
+                                                 quality=get_quality_string(
+                                                     quality, rows)))
                     n += 1
                 else:
                     continue
@@ -366,8 +376,7 @@ def validate(query_file, db_file, n_seqs, min_len, min_covrage,
     stdout, stderr = cmd()
     # minium match bases * score per base(2)
     min_bitscore_raw = (min_len - max_mismatch)*2
-    blast_result = [['ID', 'Hits', 'Sum_Bitscore_raw'], ]
-    blast_result.append(['All', n_seqs, min_len])
+    blast_result: Dict[int, Dict[str, Any]] = dict()
     for query in SearchIO.parse(blast_result_file, 'blast-xml'):
         if len(query) == 0:
             blast_result.append([query.id, 0, 0])
@@ -381,34 +390,15 @@ def validate(query_file, db_file, n_seqs, min_len, min_covrage,
                 sum_bitscore_raw += hsp_bitscore_raw
                 good_hits += 1
                 start += sum(hit[0].hit_range) / 2
-        print(query.id)
-        blast_result.append([query.id, good_hits/n_seqs, sum_bitscore_raw,
-                             start/n_seqs])
-    # validate_result = [['ID', 'Hits', 'Sum_Bitscore_raw', 'Seq'], ]
-    validate_result = list()
-    for record in blast_result[2:]:
-        if record[1] >= min_covrage:
-            validate_result.append(record)
-    validate_result.sort(key=lambda x: x[1], reverse=True)
-    return validate_result
-
-
-def write_to_file(data, output, name, file_format):
-    """
-    Given List[List[str, str, PrimerInfo]
-    Write fasta or fastq format file.
-    """
-    out = open(output, 'w')
-    for item in data:
-        if file_format == 'fastq':
-            out.write('@{}\n'.format(str(item[-1])))
-            out.write(item[0]+'\n')
-            out.write('+\n')
-            out.write('{}\n'.format(item[1]))
-        elif file_format == 'fasta':
-            out.write('>{}\n'.format(str(item[-1])))
-            out.write(item[0]+'\n')
-    return output
+        coverage = good_hits/n_seqs
+        if coverage >= min_covrage:
+            # get sequence unique index for choose
+            index = int(query.id.split('-')[0])
+            # Notice that here it use bitscore_raw instead of bitscore
+            blast_result[index] = {'coverage': coverage,
+                                   'sum_bitscore': sum_bitscore_raw,
+                                   'avg_mid_location': start/n_seqs}
+    return blast_result
 
 
 def parse_args():
@@ -453,21 +443,19 @@ def main():
 
     # generate consensus
     base_cumulative_frequency = count(alignment, rows, columns)
-    consensus, consensus_for_write = generate_consensus(
+    consensus_for_find, consensus_for_write = generate_consensus(
         base_cumulative_frequency, arg.cutoff, arg.gap_cutoff, rows, columns)
 
     # find candidate
-    continuous = find_continuous(consensus, arg.min_primer)
-    primer_candidate = find_primer(continuous, consensus, rows, arg.min_primer,
+    continuous = find_continuous(consensus_for_find, arg.min_primer)
+    primer_candidate = find_primer(continuous, consensus_for_find, rows, arg.min_primer,
                                    arg.max_primer, arg.ambiguous_base_n)
     if len(primer_candidate) == 0:
         raise ValueError('Primer not found! Try to loose restriction.')
     candidate_file = write_to_file(primer_candidate, 
-                                   arg.out+'.candidate.fasta', arg.out,
-                                   'fasta')
+                                   arg.out+'.candidate.fasta', 'fasta')
     candidate_file_fastq = write_to_file(primer_candidate,
-                                         arg.out+'.candidate.fastq', arg.out,
-                                         'fastq')
+                                         arg.out+'.candidate.fastq', 'fastq')
 
     # validate
     primer_info = validate(candidate_file, db_file, rows, arg.min_primer,
@@ -476,6 +464,9 @@ def main():
     primer_file = '{}-{}_covrage-{}bp_mismatch.fastq'.format(
         arg.out, arg.cutoff, arg.mismatch)
     # write
+            blast_result[index] = {'coverage': coverage,
+                                   'sum_bitscore': sum_bitscore_raw,
+                                   'avg_mid_location': start/n_seqs}
     with open(primer_file, 'w') as out:
         for seq in SeqIO.parse(candidate_file_fastq, 'fastq'):
             if seq.id in primer_info_dict:
