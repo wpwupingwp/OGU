@@ -29,13 +29,16 @@ matplotlib.rcParams['figure.figsize'] = 16, 9
 
 def prepare(fasta):
     """
-    Given fasta format alignment filename, return a numpy array for sequence.
+    Given fasta format alignment filename, return a numpy array for sequence:
     List[ID, Sequence].
+    Generate fasta file without gap for makeblastdb, return file name.
     """
+    no_gap = fasta + '.no_gap'
     data: List[List[str, str]] = []
     record = ['id', 'sequence']
-    with open(fasta, 'r') as raw:
+    with open(fasta, 'r') as raw, open(no_gap, 'w') as out:
         for line in raw:
+            out.write(line.replace('-', ''))
             if line.startswith('>'):
                 data.append([record[0], ''.join(record[1:])])
                 # remove ">" and CRLF
@@ -45,6 +48,7 @@ def prepare(fasta):
                 record.append(line.strip().upper())
         # add last sequence
         data.append([record[0], ''.join(record[1:])])
+        # generate no-gap fasta
     # skip head['id', 'seq']
     data = data[1:]
     # check sequence length
@@ -58,7 +62,7 @@ def prepare(fasta):
     # name = np.array([[i[0]] for i in old], dtype=np.bytes_)
     # new = np.hstack((name, seq)) -> is slower
     new = np.array([list(i[1]) for i in data], dtype=np.bytes_, order='F')
-    return new
+    return new, no_gap
 
 
 def count(alignment, rows, columns):
@@ -284,27 +288,16 @@ def shannon_diversity_index(data, rows, columns, sequence_count_result, window,
             _.write('{}\t{:.2f}\n'.format(base, resolution))
 
 
-
-
-def validate(candidate_file, input_file, n_seqs, min_len, min_covrage,
+def validate(query_file, db_file, n_seqs, min_len, min_covrage,
              max_mismatch):
-    # remove gap in old alignment file
-    no_gap = 'validate.fasta'
-    with open(no_gap, 'w') as new, open(input_file, 'r') as old:
-        for line in old:
-            if line.startswith('>'):
-                new.write(line)
-            else:
-                new.write(line.replace('-', ''))
-
     # build blast db
-    run('makeblastdb -in {} -dbtype nucl'.format(no_gap), shell=True,
+    run('makeblastdb -in {} -dbtype nucl'.format(db_file), shell=True,
         stdout=open('makeblastdb.log', 'w'))
     # blast
     blast_result_file = 'BlastResult.xml'
     cmd = nb(num_threads=cpu_count(),
-             query=candidate_file,
-             db=no_gap,
+             query=query_file,
+             db=db_file,
              task='blastn',
              evalue=1e-5,
              max_hsps=1,
@@ -413,8 +406,8 @@ def main():
         arg.out = os.path.basename(arg.input)
         arg.out = arg.out.split('.')[0]
 
-    # read from fasta
-    alignment = prepare(arg.input)
+    # read from fasta, generate new fasta for makeblastdb
+    alignment, db_file = prepare(arg.input)
     rows, columns = alignment.shape
     print(rows, columns)
 
@@ -437,7 +430,7 @@ def main():
                                          'fastq')
 
     # validate
-    primer_info = validate(candidate_file, arg.input, rows, arg.min_primer,
+    primer_info = validate(candidate_file, db_file, rows, arg.min_primer,
                            arg.cutoff, arg.mismatch)
     primer_info_dict = {i[0]: i[1:] for i in primer_info}
     primer_file = '{}-{}_covrage-{}bp_mismatch.fastq'.format(
