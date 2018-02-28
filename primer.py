@@ -49,15 +49,14 @@ class PrimerWithInfo:
                       self.sum_bitscore_raw, self.avg_mid_location))
 
     def write(self, filename, file_format):
-        with open(filename, 'w') as out:
-            if file_format == 'fastq':
-                out.write('@{}\n'.format(self.name))
-                out.write(self.sequence+'\n')
-                out.write('+\n')
-                out.write('{}\n'.format(self.quality))
-            elif file_format == 'fasta':
-                out.write('>{}\n'.format(self.name))
-                out.write(self.sequence+'\n')
+        if file_format == 'fastq':
+            out.write('@{}\n'.format(self.name))
+            out.write(self.sequence+'\n')
+            out.write('+\n')
+            out.write('{}\n'.format(self.quality))
+        elif file_format == 'fasta':
+            out.write('>{}\n'.format(self.name))
+            out.write(self.sequence+'\n')
 
 
 def prepare(fasta):
@@ -445,6 +444,7 @@ def main():
     base_cumulative_frequency = count(alignment, rows, columns)
     consensus_for_find, consensus_for_write = generate_consensus(
         base_cumulative_frequency, arg.cutoff, arg.gap_cutoff, rows, columns)
+    consensus_for_write.write(arg.out+'.consensus.fastq', 'fastq')
 
     # find candidate
     continuous = find_continuous(consensus_for_find, arg.min_primer)
@@ -452,10 +452,9 @@ def main():
                                    arg.max_primer, arg.ambiguous_base_n)
     if len(primer_candidate) == 0:
         raise ValueError('Primer not found! Try to loose restriction.')
-    candidate_file = write_to_file(primer_candidate, 
-                                   arg.out+'.candidate.fasta', 'fasta')
-    candidate_file_fastq = write_to_file(primer_candidate,
-                                         arg.out+'.candidate.fastq', 'fastq')
+    candidate_file = open(arg.out + '.candidate.fastq', 'a')
+    for item in primer_candidate:
+        item.write(candidate_file, 'fasta')
 
     # validate
     primer_info = validate(candidate_file, db_file, rows, arg.min_primer,
@@ -483,9 +482,6 @@ def main():
                             sequence_count_result, window=arg.min_template,
                             only_atcg=True, out=arg.out)
 
-    # write consensus
-    write_to_file(consensus_for_write, arg.out+'.consensus.fastq',
-                  arg.out, 'fastq')
     print('Found {} primers.'.format(len(primer_info)))
     print('Primer ID format:')
     print('name-Tm-Samples-BLAST_Coverage-Bitscore-AvgMidLocation')
