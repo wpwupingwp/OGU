@@ -42,8 +42,8 @@ class PrimerInfo:
         self.detail = detail
 
     def __str__(self):
-        return ('No.{}-Start({})-End({})-Tm({:.2f})-Coverage({:.2%})-Bitscore'
-                '({})-AvgMidLocation({})'.format(
+        return ('No.{}-Start({})-End({})-Tm({:.2f})-Coverage({:.2%})-'
+                'SumBitScore({})-AvgMidLocation({})'.format(
                     self.index, self.start, self.end, self.tm, self.coverage,
                     self.bitscore, self.avg_mid_location))
 
@@ -346,6 +346,9 @@ def shannon_diversity_index(data, rows, columns, sequence_count_result, window,
 
 def validate(query_file, db_file, n_seqs, min_len, min_covrage,
              max_mismatch):
+    """
+    Do BLAST. Parse BLAST result. Return Dict[str, Dict[str, Any]].
+    """
     # build blast db
     run('makeblastdb -in {} -dbtype nucl'.format(db_file), shell=True,
         stdout=open('makeblastdb.log', 'w'))
@@ -378,9 +381,9 @@ def validate(query_file, db_file, n_seqs, min_len, min_covrage,
                 sum_bitscore_raw += hsp_bitscore_raw
                 good_hits += 1
                 start += sum(hit[0].hit_range) / 2
+        print(query.id)
         blast_result.append([query.id, good_hits/n_seqs, sum_bitscore_raw,
                              start/n_seqs])
-    # validate
     # validate_result = [['ID', 'Hits', 'Sum_Bitscore_raw', 'Seq'], ]
     validate_result = list()
     for record in blast_result[2:]:
