@@ -43,23 +43,24 @@ class PrimerWithInfo:
         self.sequence = sequence
         self.quality = quality
 
+    def write(self, handle, file_format):
         self.name = ('{}-Start({})-End({})-Tm({:.2f})-Coverage({:.2%})-'
-                     'SumBitScore({})-AvgMidLocation({})'.format(
+                     'SumBitScore({})-AvgMidLocation({:.0f})'.format(
                       self.index, self.start, self.end, self.tm, self.coverage,
                       self.sum_bitscore, self.avg_mid_location))
+        if type(handle) == str:
+            handle = open(handle, 'a')
+        if file_format == 'fastq':
+            handle.write('@{}\n'.format(self.name))
+            handle.write(self.sequence+'\n')
+            handle.write('+\n')
+            handle.write('{}\n'.format(self.quality))
+        elif file_format == 'fasta':
+            handle.write('>{}\n'.format(self.name))
+            handle.write(self.sequence+'\n')
 
-    def write(self, filename, file_format):
-        with open(filename, 'a') as out:
-            if file_format == 'fastq':
-                out.write('@{}\n'.format(self.name))
-                out.write(self.sequence+'\n')
-                out.write('+\n')
-                out.write('{}\n'.format(self.quality))
-            elif file_format == 'fasta':
-                out.write('>{}\n'.format(self.name))
-                out.write(self.sequence+'\n')
 
-
+#@profile
 def prepare(fasta):
     """
     Given fasta format alignment filename, return a numpy array for sequence:
@@ -97,6 +98,7 @@ def prepare(fasta):
     return name, sequence, no_gap
 
 
+#@profile
 def count_base(alignment, rows, columns):
     """
     Given alignment numpy array, count cumulative frequency of base in each
@@ -131,6 +133,7 @@ def count_base(alignment, rows, columns):
     return frequency
 
 
+#@profile
 def get_quality_string(data: List[float], rows: int):
     # https://en.wikipedia.org/wiki/FASTQ_format
     quality = ('''!"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ'''
@@ -144,6 +147,7 @@ def get_quality_string(data: List[float], rows: int):
     return ''.join(quality_string)
 
 
+#@profile
 def generate_consensus(base_cumulative_frequency, cutoff, gap_cutoff,
                        rows, columns, output):
     """
@@ -201,10 +205,12 @@ def generate_consensus(base_cumulative_frequency, cutoff, gap_cutoff,
     consensus.sequence = ''.join([i[1] for i in most])
     quality = [i[2] for i in most]
     consensus.quality = get_quality_string(quality, rows)
-    consensus.write(output, 'fastq')
+    with open(output, 'w') as out:
+        consensus.write(out, 'fastq')
     return most
 
 
+#@profile
 def find_continuous(consensus, min_len):
     """
     Given List[location, base, count]
@@ -224,6 +230,7 @@ def find_continuous(consensus, min_len):
     return continuous
 
 
+#@profile
 def find_primer(continuous, most, rows, min_len, max_len, ambiguous_base_n):
     """
     Find suitable primer in given List[List[int, str, float]]
@@ -269,16 +276,17 @@ def find_primer(continuous, most, rows, min_len, max_len, ambiguous_base_n):
                     end = seq[-1][0]
                     sequence = ''.join([i[1] for i in seq])
                     quality = [i[2] for i in seq]
-                    primers.append(PrimerWithInfo(index=n, start=start, end=end,
-                                                 tm=tm, sequence=sequence,
-                                                 quality=get_quality_string(
-                                                     quality, rows)))
+                    primers.append(PrimerWithInfo(
+                        index=n, start=start, end=end, tm=tm,
+                        sequence=sequence,
+                        quality=get_quality_string(quality, rows)))
                     n += 1
                 else:
                     continue
     return primers
 
 
+#@profile
 def unique_sequence_count(data, window):
     rows, columns = data.shape
     # Different count
@@ -292,6 +300,7 @@ def unique_sequence_count(data, window):
     return C
 
 
+#@profile
 def shannon_diversity_index(data, rows, columns, sequence_count_result, window,
                             only_atcg=True, with_n=False, with_gap=False,
                             out='out.png'):
@@ -355,6 +364,7 @@ def shannon_diversity_index(data, rows, columns, sequence_count_result, window,
             _.write('{}\t{:.2f}\n'.format(base, resolution))
 
 
+#@profile
 def validate(query_file, db_file, n_seqs, min_len, min_covrage,
              max_mismatch):
     """
@@ -399,9 +409,11 @@ def validate(query_file, db_file, n_seqs, min_len, min_covrage,
             blast_result[index] = {'coverage': coverage,
                                    'sum_bitscore': sum_bitscore_raw,
                                    'avg_mid_location': start/n_seqs}
+    print(blast_result)
     return blast_result
 
 
+#@profile
 def parse_args():
     arg = argparse.ArgumentParser(description=main.__doc__)
     arg.add_argument('input', help='input alignment file')
@@ -428,6 +440,7 @@ def parse_args():
     return arg.parse_args()
 
 
+#@profile
 def main():
     """
     Automatic design primer for DNA barcode.
@@ -455,8 +468,9 @@ def main():
     if len(primer_candidate) == 0:
         raise ValueError('Primer not found! Try to loose restriction.')
     candidate_file = arg.out + '.candidate.fasta'
-    for item in primer_candidate:
-        item.write(candidate_file, 'fasta')
+    with open(candidate_file, 'w') as _:
+        for item in primer_candidate:
+            item.write(_, 'fasta')
 
     # validate
     result = validate(candidate_file, db_file, rows, arg.min_primer,
@@ -464,13 +478,15 @@ def main():
     primer_file = '{}-{}_covrage-{}bp_mismatch.fastq'.format(
         arg.out, arg.cutoff, arg.mismatch)
     count = 0
-    for primer in primer_candidate:
-        if primer.index in result:
-            count += 1
-            primer.coverage = result[primer.index]['coverage']
-            primer.sum_bitscore = result[primer.index]['sum_bitscore']
-            primer.avg_mid_location = result[primer.index]['avg_mid_location']
-            primer.write(primer_file, 'fastq')
+    with open(primer_file, 'w') as out:
+        for primer in primer_candidate:
+            i = primer.index
+            if i in result:
+                count += 1
+                primer.coverage = result[i]['coverage']
+                primer.sum_bitscore = result[i]['sum_bitscore']
+                primer.avg_mid_location = result[i]['avg_mid_location']
+                primer.write(out, 'fastq')
 
     sequence_count_result = unique_sequence_count(alignment,
                                                   window=arg.min_template)
