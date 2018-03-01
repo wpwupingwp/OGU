@@ -6,6 +6,7 @@ import re
 
 import numpy as np
 import primer3
+
 from collections import defaultdict
 from math import log2
 from multiprocessing import cpu_count
@@ -13,12 +14,12 @@ from timeit import default_timer as timer
 from subprocess import run
 from typing import List, Dict, Any
 
-from Bio import SearchIO, SeqIO
+from Bio import SearchIO
 from Bio.Blast.Applications import NcbiblastnCommandline as nb
 
+import matplotlib
 from matplotlib import pyplot as plt
 from matplotlib import ticker as mtick
-import matplotlib
 matplotlib.rcParams['lines.linewidth'] = 1.5
 matplotlib.rcParams['axes.linewidth'] = 1.5
 matplotlib.rcParams['axes.labelsize'] = 16
@@ -409,7 +410,6 @@ def validate(query_file, db_file, n_seqs, min_len, min_covrage,
             blast_result[index] = {'coverage': coverage,
                                    'sum_bitscore': sum_bitscore_raw,
                                    'avg_mid_location': start/n_seqs}
-    print(blast_result)
     return blast_result
 
 
