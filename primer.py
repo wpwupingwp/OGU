@@ -297,6 +297,9 @@ def unique_sequence_count(data, min_len, max_len):
     # Different count
     count_min_len: List[List[float]] = list()
     count_max_len: List[List[float]] = list()
+    shannon_index1: List[float] = list()
+    shannon_index2: List[float] = list()
+    max_shannon_index = -1*((1/rows)*log2(1/rows)*rows)
     factor = 100/rows
     for i in range(columns-min_len):
         split_1 = data[:, i:(i+min_len)]
@@ -306,14 +309,25 @@ def unique_sequence_count(data, min_len, max_len):
         _, count2 = np.unique(split_2, return_counts=True, axis=0)
         count_min_len.append(len(count1)*factor)
         count_max_len.append(len(count2)*factor)
-    return count_min_len, count_max_len
+        # Shannon Index
+        h = 0
+        for j in count1:
+            p_j = j / rows
+            log2_p_j = log2(p_j)
+            h += log2_p_j * p_j
+        shannon_index1.append(-1*h)
+        h = 0
+        for j in count2:
+            p_j = j / rows
+            log2_p_j = log2(p_j)
+            h += log2_p_j * p_j
+        shannon_index2.append(-1*h)
+    return (count_min_len, count_max_len, shannon_index1, shannon_index2,
+            max_shannon_index)
 
 
 @profile
-def shannon_diversity_index(data, rows, columns, sequence_count_min_len,
-                            sequence_count_max_len, min_len, max_len,
-                            only_atcg=True, with_n=False,
-                            with_gap=False, out='out.png'):
+def draw(data, rows, columns, min_len, max_len, out='out.png'):
     """http://www.tiem.utk.edu/~gross/bioed/bealsmodules/shannonDI.html
     """
     # only_atcg: only consider ATCG 4 kinds of bases
@@ -321,34 +335,8 @@ def shannon_diversity_index(data, rows, columns, sequence_count_min_len,
     # with_gap: consider N as the fifth kind of base and gap as the sixth kind
     # of base
 
-    # split shape and data
-    data = np.array(data)
-    if with_gap:
-        new_data = data[:, 0:6]
-    elif with_n:
-        new_data = data[:, 0:5]
-    elif only_atcg:
-        new_data = data[:, 0:4]
-    # Shannon Index
-    H = list()
-    # Sum_all/max_h
-    size = list()
-    # max_h = -1*((1/len(new_data[0]))*log2(1/(len(new_data[0]))))*len(
-    #     new_data[0])
     # dot size
     max_size = 50
-    for column in new_data:
-        # sum_all equals sum of letters considered rather than original rows
-        sum_all = sum(column)
-        size.append(sum_all/rows*max_size)
-        h = 0
-        for i in column:
-            if i == 0:
-                continue
-            p_i = i / sum_all
-            log2_p_i = log2(p_i)
-            h += log2_p_i*p_i
-        H.append(-1*h)
     # plt.style.use('ggplot')
     fig, ax1 = plt.subplots()
     plt.title('Shannon Diversity Index & Resolution({}-{}bp)'.format(min_len,
@@ -467,7 +455,8 @@ def main():
     rows, columns = alignment.shape
 
     # count resolution
-    sequence_count_min_len, sequence_count_max_len = unique_sequence_count(
+    (seq_count_min_len, seq_count_max_len,
+     shannon_index1, shannon_index2) = unique_sequence_count(
         alignment, min_len=arg.min_template, max_len=arg.max_template)
 
     # generate consensus
