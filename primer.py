@@ -61,7 +61,7 @@ class PrimerWithInfo:
             handle.write(self.sequence+'\n')
 
 
-#@profile
+@profile
 def prepare(fasta):
     """
     Given fasta format alignment filename, return a numpy array for sequence:
@@ -99,7 +99,7 @@ def prepare(fasta):
     return name, sequence, no_gap
 
 
-#@profile
+@profile
 def count_base(alignment, rows, columns):
     """
     Given alignment numpy array, count cumulative frequency of base in each
@@ -134,7 +134,7 @@ def count_base(alignment, rows, columns):
     return frequency
 
 
-#@profile
+@profile
 def get_quality_string(data: List[float], rows: int):
     # https://en.wikipedia.org/wiki/FASTQ_format
     quality = ('''!"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ'''
@@ -148,7 +148,7 @@ def get_quality_string(data: List[float], rows: int):
     return ''.join(quality_string)
 
 
-#@profile
+@profile
 def generate_consensus(base_cumulative_frequency, cutoff, gap_cutoff,
                        rows, columns, output):
     """
@@ -211,7 +211,7 @@ def generate_consensus(base_cumulative_frequency, cutoff, gap_cutoff,
     return most
 
 
-#@profile
+@profile
 def find_continuous(consensus, min_len):
     """
     Given List[location, base, count]
@@ -231,7 +231,7 @@ def find_continuous(consensus, min_len):
     return continuous
 
 
-#@profile
+@profile
 def find_primer(continuous, most, rows, min_len, max_len, ambiguous_base_n):
     """
     Find suitable primer in given List[List[int, str, float]]
@@ -287,24 +287,33 @@ def find_primer(continuous, most, rows, min_len, max_len, ambiguous_base_n):
     return primers
 
 
-#@profile
-def unique_sequence_count(data, window):
+@profile
+def unique_sequence_count(data, min_len, max_len):
+    """
+    Given alignment(numpy array), return unique sequence count with
+    min_len/max_len(List[float]) as window.
+    """
     rows, columns = data.shape
     # Different count
-    C = list()
+    count_min_len: List[List[float]] = list()
+    count_max_len: List[List[float]] = list()
     factor = 100/rows
-    for i in range(columns-window):
-        cut = data[:, i:(i+window)]
+    for i in range(columns-min_len):
+        split_1 = data[:, i:(i+min_len)]
+        split_2 = data[:, i:(i+max_len)]
         # uniqe array, count line*times
-        _, count = np.unique(cut, return_counts=True, axis=0)
-        C.append(len(count)*factor)
-    return C
+        _, count1 = np.unique(split_1, return_counts=True, axis=0)
+        _, count2 = np.unique(split_2, return_counts=True, axis=0)
+        count_min_len.append(len(count1)*factor)
+        count_max_len.append(len(count2)*factor)
+    return count_min_len, count_max_len
 
 
-#@profile
-def shannon_diversity_index(data, rows, columns, sequence_count_result, window,
-                            only_atcg=True, with_n=False, with_gap=False,
-                            out='out.png'):
+@profile
+def shannon_diversity_index(data, rows, columns, sequence_count_min_len,
+                            sequence_count_max_len, min_len, max_len,
+                            only_atcg=True, with_n=False,
+                            with_gap=False, out='out.png'):
     """http://www.tiem.utk.edu/~gross/bioed/bealsmodules/shannonDI.html
     """
     # only_atcg: only consider ATCG 4 kinds of bases
@@ -342,7 +351,8 @@ def shannon_diversity_index(data, rows, columns, sequence_count_result, window,
         H.append(-1*h)
     # plt.style.use('ggplot')
     fig, ax1 = plt.subplots()
-    plt.title('Shannon Diversity Index & Resolution(window={})'.format(window))
+    plt.title('Shannon Diversity Index & Resolution({}-{}bp)'.format(min_len,
+                                                                     max_len))
     plt.xlabel('Base')
     plt.xticks(range(0, columns, int(columns/10)))
     # ax1.plot((0, columns), (max_h, max_h), 'r--', label='Max H')
@@ -351,7 +361,8 @@ def shannon_diversity_index(data, rows, columns, sequence_count_result, window,
     ax1.set_ylabel('H')
     ax1.grid(True)
     ax2 = ax1.twinx()
-    ax2.plot(sequence_count_result, 'r-', alpha=0.8)
+    ax2.plot(sequence_count_min_len, 'r-', alpha=0.8)
+    ax2.plot(sequence_count_max_len, 'b-', alpha=0.8)
     ax2.yaxis.set_major_formatter(mtick.PercentFormatter())
     ax2.set_ylabel('Resolution(% of {})'.format(rows))
     ax2.grid(True)
@@ -360,12 +371,12 @@ def shannon_diversity_index(data, rows, columns, sequence_count_result, window,
     plt.savefig(out+'.png')
     # plt.show()
     with open(out+'-Resolution.tsv', 'w') as _:
-        _.write('Base\tResolution(window={})\n'.format(window))
-        for base, resolution in enumerate(sequence_count_result):
+        _.write('Base\tResolution(window={})\n'.format(min_len))
+        for base, resolution in enumerate(sequence_count_min_len):
             _.write('{}\t{:.2f}\n'.format(base, resolution))
 
 
-#@profile
+@profile
 def validate(query_file, db_file, n_seqs, min_len, min_covrage,
              max_mismatch):
     """
@@ -413,7 +424,7 @@ def validate(query_file, db_file, n_seqs, min_len, min_covrage,
     return blast_result
 
 
-#@profile
+@profile
 def parse_args():
     arg = argparse.ArgumentParser(description=main.__doc__)
     arg.add_argument('input', help='input alignment file')
@@ -440,7 +451,7 @@ def parse_args():
     return arg.parse_args()
 
 
-#@profile
+@profile
 def main():
     """
     Automatic design primer for DNA barcode.
@@ -454,6 +465,10 @@ def main():
     # read from fasta, generate new fasta for makeblastdb
     name, alignment, db_file = prepare(arg.input)
     rows, columns = alignment.shape
+
+    # count resolution
+    sequence_count_min_len, sequence_count_max_len = unique_sequence_count(
+        alignment, min_len=arg.min_template, max_len=arg.max_template)
 
     # generate consensus
     base_cumulative_frequency = count_base(alignment, rows, columns)
@@ -488,10 +503,10 @@ def main():
                 primer.avg_mid_location = result[i]['avg_mid_location']
                 primer.write(out, 'fastq')
 
-    sequence_count_result = unique_sequence_count(alignment,
-                                                  window=arg.min_template)
     shannon_diversity_index(base_cumulative_frequency, rows, columns,
-                            sequence_count_result, window=arg.min_template,
+                            sequence_count_min_len, sequence_count_max_len,
+                            min_len=arg.min_template,
+                            max_len=arg.max_template,
                             only_atcg=True, out=arg.out)
 
     print('Found {} primers.'.format(count))
