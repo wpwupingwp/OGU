@@ -155,7 +155,6 @@ def generate_consensus(base_cumulative_frequency, cutoff, gap_cutoff,
     Given base count info, return List[index, base, quality]
     and List[List[str, str, str, PrimerInfo]] for writing conesensus.
     """
-    # directly use np.unique result
     def get_ambiguous_dict():
         from Bio.Data.IUPACData import ambiguous_dna_values
         data = ambiguous_dna_values
@@ -331,7 +330,6 @@ def count_and_draw(data, min_len, max_len, window, out):
     plt.title('Shannon Index & Resolution({}-{}bp)'.format(min_len, max_len))
     plt.xlabel('Base')
     plt.xticks(range(0, columns, int(columns/10)))
-    # ax1.plot((0, columns), (max_h, max_h), 'r--', label='Max H')
     # c=List for different color, s=size for different size
     ax1.scatter(range(len(shannon_index1)), shannon_index1, c=shannon_index1,
                 cmap='GnBu', alpha=0.8, s=10, label='{}bp'.format(min_len))
@@ -350,7 +348,6 @@ def count_and_draw(data, min_len, max_len, window, out):
     ax2.set_ylabel('Resolution(% of {})'.format(rows))
     ax2.grid(True)
     ax2.legend(loc='upper left')
-    # plt.legend(loc=1, frameon=False)
     plt.savefig(out+'.pdf')
     plt.savefig(out+'.png')
     # plt.show()
@@ -428,7 +425,6 @@ def parse_args():
     arg.add_argument('-m', '--mismatch', type=int, default=2,
                      help='maximum mismatch bases in primer')
     arg.add_argument('-o', '--out', help='output name prefix')
-    # todo
     arg.add_argument('-r', '--resolution', help='minium resolution')
     arg.add_argument('-tmin', '--min_template', type=int, default=350,
                      help='minimum template length')
