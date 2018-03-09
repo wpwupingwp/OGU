@@ -334,12 +334,15 @@ def count_and_draw(data, min_len, max_len, out):
     # ax1.plot((0, columns), (max_h, max_h), 'r--', label='Max H')
     # c=List for different color, s=size for different size
     ax1.scatter(range(columns-min_len), shannon_index1, c=shannon_index1,
-                cmap='GnBu', alpha=0.8, s=15, label='{}bp'.format(min_len))
+                cmap='GnBu', alpha=0.8, s=10, label='{}bp'.format(min_len))
     ax1.scatter(range(columns-min_len), shannon_index2, c=shannon_index2,
-                cmap='OrRd', alpha=0.8, s=15, label='{}bp'.format(max_len))
+                cmap='OrRd', alpha=0.8, s=10, label='{}bp'.format(max_len))
     ax1.set_ylabel('H')
     ax1.grid(True)
     ax1.legend(loc='upper right')
+    legends = ax1.get_legend()
+    legends.legendHandles[0].set_color('blue')
+    legends.legendHandles[1].set_color('red')
     ax2 = ax1.twinx()
     ax2.plot(count_min_len, 'b-', label='{}bp'.format(min_len))
     ax2.plot(count_max_len, 'r-', label='{}bp'.format(max_len))
