@@ -300,6 +300,7 @@ def count_and_draw(data, min_len, max_len, window, out):
     shannon_index1: List[float] = list()
     shannon_index2: List[float] = list()
     max_shannon_index = -1*((1/rows)*log2(1/rows)*rows)
+    index: List[int] = list()
     for i in range(0, columns-min_len, window):
         split_1 = data[:, i:(i+min_len)]
         split_2 = data[:, i:(i+max_len)]
@@ -321,19 +322,21 @@ def count_and_draw(data, min_len, max_len, window, out):
             log2_p_j = log2(p_j)
             h += log2_p_j * p_j
         shannon_index2.append(-1*h)
+        index.append(i)
 
     # convert value to (0,1)
     count_min_len = [i/rows for i in count_min_len]
     count_max_len = [i/rows for i in count_max_len]
     # plt.style.use('ggplot')
     fig, ax1 = plt.subplots()
-    plt.title('Shannon Index & Resolution({}-{}bp)'.format(min_len, max_len))
+    plt.title('Shannon Index & Resolution({}-{}bp, window={})'.format(
+        min_len, max_len, window))
     plt.xlabel('Base')
     plt.xticks(range(0, columns, int(columns/10)))
     # c=List for different color, s=size for different size
-    ax1.scatter(range(len(shannon_index1)), shannon_index1, c=shannon_index1,
+    ax1.scatter(index, shannon_index1, c=shannon_index1,
                 cmap='GnBu', alpha=0.8, s=10, label='{}bp'.format(min_len))
-    ax1.scatter(range(len(shannon_index2)), shannon_index2, c=shannon_index2,
+    ax1.scatter(index, shannon_index2, c=shannon_index2,
                 cmap='OrRd', alpha=0.8, s=10, label='{}bp'.format(max_len))
     ax1.set_ylabel('H')
     ax1.grid(True)
@@ -357,7 +360,7 @@ def count_and_draw(data, min_len, max_len, window, out):
             _.write('{}\t{:.2f}\n'.format(base, resolution))
 
     return (count_min_len, count_max_len, shannon_index1, shannon_index2,
-            max_shannon_index)
+            max_shannon_index, index)
 
 
 @profile
@@ -454,7 +457,7 @@ def main():
 
     # count resolution
     (seq_count_min_len, seq_count_max_len,
-     shannon_index1, shannon_index2, max_shannon_index) = count_and_draw(
+     shannon_index1, shannon_index2, max_shannon, index) = count_and_draw(
         alignment, min_len=arg.min_template, max_len=arg.max_template,
          window=arg.window, out=arg.out)
 
