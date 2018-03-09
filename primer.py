@@ -430,10 +430,10 @@ def parse_args():
     arg.add_argument('-o', '--out', help='output name prefix')
     arg.add_argument('-r', '--resolution', type=float, default=0.6,
                      help='minium resolution')
-    arg.add_argument('-tmin', '--min_template', type=int, default=350,
-                     help='minimum template length')
-    arg.add_argument('-tmax', '--max_template', type=int, default=450,
-                     help='maximum template length')
+    arg.add_argument('-tmin', '--min_template', type=int, default=380,
+                     help='minimum template length(include primer)')
+    arg.add_argument('-tmax', '--max_template', type=int, default=480,
+                     help='maximum template length(include primer)')
     arg.add_argument('-w', '--window', type=int, default=1,
                      help='window size')
     # arg.print_help()
@@ -468,6 +468,11 @@ The highest resolution of given fragment is {:.2f}, which is lower than
 given resolution threshold({:.2f}). Please try to use longer fragment or
 lower resolution options.
 """.format(max(seq_count_max_len), arg.resolution))
+    # generate region info dict index:(min_resolution, max_)
+    good_region: Dict(int, List[float, float]) = dict()
+    for i, j, k in zip(index, seq_count_min_len, seq_count_max_len):
+        if j >= arg.resolution or k >= arg.resolution:
+            good_region[i] = (j, k)
 
     # generate consensus
     base_cumulative_frequency = count_base(alignment, rows, columns)
