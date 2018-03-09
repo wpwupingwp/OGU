@@ -87,9 +87,8 @@ def prepare(fasta):
     data = data[1:]
     # check sequence length
     length_check = [len(i[1]) for i in data]
-    if len(set(length_check)) != 1:
-        raise ValueError(
-            'Alignment does not have uniform width, please check again !')
+    assert len(set(length_check)) == 1, (
+        'Alignment does not have uniform width, please check again !')
 
     # Convert List to numpy array.
     # order 'F' is a bit faster than 'C'
@@ -289,8 +288,7 @@ def find_primer(continuous, most, rows, min_len, max_len, ambiguous_base_n):
 @profile
 def count_and_draw(data, min_len, max_len, window, out):
     """
-    Given alignment(numpy array), return unique sequence count with
-    min_len/max_len(List[float]) as window.
+    Given alignment(numpy array), return unique sequence count List[float].
     Calculate Shannon Index based on
     http://www.tiem.utk.edu/~gross/bioed/bealsmodules/shannonDI.html
     return List[float]
@@ -302,15 +300,14 @@ def count_and_draw(data, min_len, max_len, window, out):
     shannon_index1: List[float] = list()
     shannon_index2: List[float] = list()
     max_shannon_index = -1*((1/rows)*log2(1/rows)*rows)
-    factor = 100/rows
     for i in range(0, columns-min_len, window):
         split_1 = data[:, i:(i+min_len)]
         split_2 = data[:, i:(i+max_len)]
         # uniqe array, count line*times
         _, count1 = np.unique(split_1, return_counts=True, axis=0)
         _, count2 = np.unique(split_2, return_counts=True, axis=0)
-        count_min_len.append(len(count1)*factor)
-        count_max_len.append(len(count2)*factor)
+        count_min_len.append(len(count1))
+        count_max_len.append(len(count2))
         # Shannon Index
         h = 0
         for j in count1:
@@ -325,6 +322,9 @@ def count_and_draw(data, min_len, max_len, window, out):
             h += log2_p_j * p_j
         shannon_index2.append(-1*h)
 
+    # convert value to (0,1)
+    count_min_len = [i/rows for i in count_min_len]
+    count_max_len = [i/rows for i in count_max_len]
     # plt.style.use('ggplot')
     fig, ax1 = plt.subplots()
     plt.title('Shannon Index & Resolution({}-{}bp)'.format(min_len, max_len))
@@ -344,7 +344,7 @@ def count_and_draw(data, min_len, max_len, window, out):
     ax2 = ax1.twinx()
     ax2.plot(count_min_len, 'b-', label='{}bp'.format(min_len))
     ax2.plot(count_max_len, 'r-', label='{}bp'.format(max_len))
-    ax2.yaxis.set_major_formatter(mtick.PercentFormatter())
+    ax2.yaxis.set_major_formatter(mtick.PercentFormatter(xmax=1.0))
     ax2.set_ylabel('Resolution(% of {})'.format(rows))
     ax2.grid(True)
     ax2.legend(loc='upper left')
@@ -414,7 +414,7 @@ def parse_args():
     arg.add_argument('input', help='input alignment file')
     arg.add_argument('-a', '--ambiguous_base_n', type=int, default=2,
                      help='number of ambiguous bases')
-    arg.add_argument('-c', '--cutoff', type=float, default=0.9,
+    arg.add_argument('-c', '--cutoff', type=float, default=0.8,
                      help='minium percent to keep base')
     arg.add_argument('-g', '--gap_cutoff', type=float, default=0.5,
                      help='maximum percent for gap to cutoff')
@@ -425,7 +425,8 @@ def parse_args():
     arg.add_argument('-m', '--mismatch', type=int, default=2,
                      help='maximum mismatch bases in primer')
     arg.add_argument('-o', '--out', help='output name prefix')
-    arg.add_argument('-r', '--resolution', help='minium resolution')
+    arg.add_argument('-r', '--resolution', type=float, default=0.6,
+                     help='minium resolution')
     arg.add_argument('-tmin', '--min_template', type=int, default=350,
                      help='minimum template length')
     arg.add_argument('-tmax', '--max_template', type=int, default=450,
@@ -457,6 +458,14 @@ def main():
         alignment, min_len=arg.min_template, max_len=arg.max_template,
          window=arg.window, out=arg.out)
 
+    # exit if resolution lower than given threshold.
+    assert max(seq_count_max_len) > arg.resolution, (
+        """
+The highest resolution of given fragment is {:.2f}, which is lower than
+given resolution threshold({:.2f}). Please try to use longer fragment or
+lower resolution options.
+""".format(max(seq_count_max_len), arg.resolution))
+
     # generate consensus
     base_cumulative_frequency = count_base(alignment, rows, columns)
     consensus = generate_consensus(base_cumulative_frequency, arg.cutoff,
@@ -467,8 +476,8 @@ def main():
     continuous = find_continuous(consensus, arg.min_primer)
     primer_candidate = find_primer(continuous, consensus, rows, arg.min_primer,
                                    arg.max_primer, arg.ambiguous_base_n)
-    if len(primer_candidate) == 0:
-        raise ValueError('Primer not found! Try to loose restriction.')
+    assert len(primer_candidate) != 0, (
+        'Primer not found! Try to loose options.')
     candidate_file = arg.out + '.candidate.fasta'
     with open(candidate_file, 'w') as _:
         for item in primer_candidate:
