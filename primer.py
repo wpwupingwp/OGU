@@ -25,7 +25,7 @@ matplotlib.rcParams['axes.linewidth'] = 1.5
 matplotlib.rcParams['axes.labelsize'] = 16
 matplotlib.rcParams['axes.titlesize'] = 25
 matplotlib.rcParams['font.size'] = 16
-matplotlib.rcParams['axes.facecolor'] = '#888888'
+matplotlib.rcParams['axes.facecolor'] = '#666666'
 matplotlib.rcParams['figure.figsize'] = 16, 9
 
 
@@ -288,10 +288,13 @@ def find_primer(continuous, most, rows, min_len, max_len, ambiguous_base_n):
 
 
 @profile
-def unique_sequence_count(data, min_len, max_len):
+def count_and_draw(data, min_len, max_len, out):
     """
     Given alignment(numpy array), return unique sequence count with
     min_len/max_len(List[float]) as window.
+    Calculate Shannon Index based on
+    http://www.tiem.utk.edu/~gross/bioed/bealsmodules/shannonDI.html
+    return List[float]
     """
     rows, columns = data.shape
     # Different count
@@ -322,46 +325,39 @@ def unique_sequence_count(data, min_len, max_len):
             log2_p_j = log2(p_j)
             h += log2_p_j * p_j
         shannon_index2.append(-1*h)
-    return (count_min_len, count_max_len, shannon_index1, shannon_index2,
-            max_shannon_index)
 
-
-@profile
-def draw(data, rows, columns, min_len, max_len, out='out.png'):
-    """http://www.tiem.utk.edu/~gross/bioed/bealsmodules/shannonDI.html
-    """
-    # only_atcg: only consider ATCG 4 kinds of bases
-    # with_n: consider N as the fifth kind of base
-    # with_gap: consider N as the fifth kind of base and gap as the sixth kind
-    # of base
-
-    # dot size
-    max_size = 50
     # plt.style.use('ggplot')
     fig, ax1 = plt.subplots()
-    plt.title('Shannon Diversity Index & Resolution({}-{}bp)'.format(min_len,
-                                                                     max_len))
+    plt.title('Shannon Index & Resolution({}-{}bp)'.format(min_len, max_len))
     plt.xlabel('Base')
     plt.xticks(range(0, columns, int(columns/10)))
     # ax1.plot((0, columns), (max_h, max_h), 'r--', label='Max H')
     # c=List for different color, s=size for different size
-    ax1.scatter(range(columns), H, c=H, cmap='GnBu', s=size)
+    ax1.scatter(range(columns-min_len), shannon_index1, c=shannon_index1,
+                cmap='GnBu', alpha=0.8, s=15, label='{}bp'.format(min_len))
+    ax1.scatter(range(columns-min_len), shannon_index2, c=shannon_index2,
+                cmap='OrRd', alpha=0.8, s=15, label='{}bp'.format(max_len))
     ax1.set_ylabel('H')
     ax1.grid(True)
+    ax1.legend(loc='upper right')
     ax2 = ax1.twinx()
-    ax2.plot(sequence_count_min_len, 'r-', alpha=0.8)
-    ax2.plot(sequence_count_max_len, 'b-', alpha=0.8)
+    ax2.plot(count_min_len, 'b-', label='{}bp'.format(min_len))
+    ax2.plot(count_max_len, 'r-', label='{}bp'.format(max_len))
     ax2.yaxis.set_major_formatter(mtick.PercentFormatter())
     ax2.set_ylabel('Resolution(% of {})'.format(rows))
     ax2.grid(True)
+    ax2.legend(loc='upper left')
     # plt.legend(loc=1, frameon=False)
     plt.savefig(out+'.pdf')
     plt.savefig(out+'.png')
     # plt.show()
     with open(out+'-Resolution.tsv', 'w') as _:
         _.write('Base\tResolution(window={})\n'.format(min_len))
-        for base, resolution in enumerate(sequence_count_min_len):
+        for base, resolution in enumerate(count_min_len):
             _.write('{}\t{:.2f}\n'.format(base, resolution))
+
+    return (count_min_len, count_max_len, shannon_index1, shannon_index2,
+            max_shannon_index)
 
 
 @profile
@@ -456,8 +452,9 @@ def main():
 
     # count resolution
     (seq_count_min_len, seq_count_max_len,
-     shannon_index1, shannon_index2) = unique_sequence_count(
-        alignment, min_len=arg.min_template, max_len=arg.max_template)
+     shannon_index1, shannon_index2, max_shannon_index) = count_and_draw(
+        alignment, min_len=arg.min_template, max_len=arg.max_template,
+         out=arg.out)
 
     # generate consensus
     base_cumulative_frequency = count_base(alignment, rows, columns)
@@ -491,12 +488,6 @@ def main():
                 primer.sum_bitscore = result[i]['sum_bitscore']
                 primer.avg_mid_location = result[i]['avg_mid_location']
                 primer.write(out, 'fastq')
-
-    shannon_diversity_index(base_cumulative_frequency, rows, columns,
-                            sequence_count_min_len, sequence_count_max_len,
-                            min_len=arg.min_template,
-                            max_len=arg.max_template,
-                            only_atcg=True, out=arg.out)
 
     print('Found {} primers.'.format(count))
     print('Primer ID format:')
