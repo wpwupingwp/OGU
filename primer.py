@@ -288,7 +288,7 @@ def find_primer(continuous, most, rows, min_len, max_len, ambiguous_base_n):
 
 
 @profile
-def count_and_draw(data, min_len, max_len, out):
+def count_and_draw(data, min_len, max_len, window, out):
     """
     Given alignment(numpy array), return unique sequence count with
     min_len/max_len(List[float]) as window.
@@ -304,7 +304,7 @@ def count_and_draw(data, min_len, max_len, out):
     shannon_index2: List[float] = list()
     max_shannon_index = -1*((1/rows)*log2(1/rows)*rows)
     factor = 100/rows
-    for i in range(columns-min_len):
+    for i in range(0, columns-min_len, window):
         split_1 = data[:, i:(i+min_len)]
         split_2 = data[:, i:(i+max_len)]
         # uniqe array, count line*times
@@ -333,9 +333,9 @@ def count_and_draw(data, min_len, max_len, out):
     plt.xticks(range(0, columns, int(columns/10)))
     # ax1.plot((0, columns), (max_h, max_h), 'r--', label='Max H')
     # c=List for different color, s=size for different size
-    ax1.scatter(range(columns-min_len), shannon_index1, c=shannon_index1,
+    ax1.scatter(range(len(shannon_index1)), shannon_index1, c=shannon_index1,
                 cmap='GnBu', alpha=0.8, s=10, label='{}bp'.format(min_len))
-    ax1.scatter(range(columns-min_len), shannon_index2, c=shannon_index2,
+    ax1.scatter(range(len(shannon_index2)), shannon_index2, c=shannon_index2,
                 cmap='OrRd', alpha=0.8, s=10, label='{}bp'.format(max_len))
     ax1.set_ylabel('H')
     ax1.grid(True)
@@ -434,6 +434,8 @@ def parse_args():
                      help='minimum template length')
     arg.add_argument('-tmax', '--max_template', type=int, default=450,
                      help='maximum template length')
+    arg.add_argument('-w', '--window', type=int, default=1,
+                     help='window size')
     # arg.print_help()
     return arg.parse_args()
 
@@ -457,7 +459,7 @@ def main():
     (seq_count_min_len, seq_count_max_len,
      shannon_index1, shannon_index2, max_shannon_index) = count_and_draw(
         alignment, min_len=arg.min_template, max_len=arg.max_template,
-         out=arg.out)
+         window=arg.window, out=arg.out)
 
     # generate consensus
     base_cumulative_frequency = count_base(alignment, rows, columns)
