@@ -210,7 +210,7 @@ def generate_consensus(base_cumulative_frequency, cutoff, gap_cutoff,
 
 
 @profile
-def find_continuous(consensus, min_len):
+def find_continuous(consensus, good_region, min_len):
     """
     Given List[location, base, count]
     Return continuous fragments list:
@@ -219,7 +219,10 @@ def find_continuous(consensus, min_len):
     continuous: List[List[int, str, float]] = list()
     fragment = list()
     skip = ('N', '-', '*')
-    for base in consensus:
+    for good, base in zip(good_region, consensus):
+        if not good:
+            print(good, base)
+            continue
         if base[1] in skip:
             if len(fragment) >= min_len:
                 continuous.append(fragment)
@@ -286,12 +289,14 @@ def find_primer(continuous, most, rows, min_len, max_len, ambiguous_base_n):
 
 
 @profile
-def count_and_draw(data, min_len, max_len, window, out):
+def count_and_draw(data, min_primer, max_primer,
+                   min_product, max_product, window, out):
     """
     Given alignment(numpy array), return unique sequence count List[float].
     Calculate Shannon Index based on
     http://www.tiem.utk.edu/~gross/bioed/bealsmodules/shannonDI.html
     return List[float]
+    All calculation excludes primer sequence.
     """
     rows, columns = data.shape
     # Different count
@@ -301,9 +306,12 @@ def count_and_draw(data, min_len, max_len, window, out):
     shannon_index2: List[float] = list()
     max_shannon_index = -1*((1/rows)*log2(1/rows)*rows)
     index: List[int] = list()
-    for i in range(0, columns-min_len, window):
-        split_1 = data[:, i:(i+min_len)]
-        split_2 = data[:, i:(i+max_len)]
+    min_plus = min_product - max_primer * 2
+    max_plus = max_product - min_primer * 2
+    for i in range(0, columns-min_product, window):
+        # exclude primer sequence
+        split_1 = data[:, i:(i+min_plus)]
+        split_2 = data[:, i:(i+max_plus)]
         # uniqe array, count line*times
         _, count1 = np.unique(split_1, return_counts=True, axis=0)
         _, count2 = np.unique(split_2, return_counts=True, axis=0)
@@ -330,14 +338,14 @@ def count_and_draw(data, min_len, max_len, window, out):
     # plt.style.use('ggplot')
     fig, ax1 = plt.subplots()
     plt.title('Shannon Index & Resolution({}-{}bp, window={})'.format(
-        min_len, max_len, window))
+        min_product, max_product, window))
     plt.xlabel('Base')
     plt.xticks(range(0, columns, int(columns/10)))
     # c=List for different color, s=size for different size
     ax1.scatter(index, shannon_index1, c=shannon_index1,
-                cmap='GnBu', alpha=0.8, s=10, label='{}bp'.format(min_len))
+                cmap='GnBu', alpha=0.8, s=10, label='{}bp'.format(min_product))
     ax1.scatter(index, shannon_index2, c=shannon_index2,
-                cmap='OrRd', alpha=0.8, s=10, label='{}bp'.format(max_len))
+                cmap='OrRd', alpha=0.8, s=10, label='{}bp'.format(max_product))
     ax1.set_ylabel('H')
     ax1.grid(True)
     ax1.legend(loc='upper right')
@@ -345,8 +353,8 @@ def count_and_draw(data, min_len, max_len, window, out):
     legends.legendHandles[0].set_color('xkcd:azure')
     legends.legendHandles[1].set_color('xkcd:orangered')
     ax2 = ax1.twinx()
-    ax2.plot(count_min_len, 'b-', label='{}bp'.format(min_len))
-    ax2.plot(count_max_len, 'r-', label='{}bp'.format(max_len))
+    ax2.plot(count_min_len, 'b-', label='{}bp'.format(min_product))
+    ax2.plot(count_max_len, 'r-', label='{}bp'.format(max_product))
     ax2.yaxis.set_major_formatter(mtick.PercentFormatter(xmax=1.0))
     ax2.set_ylabel('Resolution(% of {})'.format(rows))
     ax2.grid(True)
@@ -355,7 +363,7 @@ def count_and_draw(data, min_len, max_len, window, out):
     plt.savefig(out+'.png')
     # plt.show()
     with open(out+'-Resolution.tsv', 'w') as _:
-        _.write('Base\tResolution(window={})\n'.format(min_len))
+        _.write('Base\tResolution(window={})\n'.format(min_product))
         for base, resolution in enumerate(count_min_len):
             _.write('{}\t{:.2f}\n'.format(base, resolution))
 
@@ -388,8 +396,10 @@ def validate(query_file, db_file, n_seqs, min_len, min_covrage,
     min_bitscore_raw = (min_len - max_mismatch)*2
     blast_result: Dict[int, Dict[str, Any]] = dict()
     for query in SearchIO.parse(blast_result_file, 'blast-xml'):
+        index = int(query.id.split('-')[0])
         if len(query) == 0:
-            blast_result.append([query.id, 0, 0])
+            blast_result[index] = {'coverage': 0, 'sum_bitscore': 0,
+                                   'avg_mid_location': 0}
             continue
         sum_bitscore_raw = 0
         good_hits = 0
@@ -403,7 +413,6 @@ def validate(query_file, db_file, n_seqs, min_len, min_covrage,
         coverage = good_hits/n_seqs
         if coverage >= min_covrage:
             # get sequence unique index for choose
-            index = int(query.id.split('-')[0])
             # Notice that here it use bitscore_raw instead of bitscore
             blast_result[index] = {'coverage': coverage,
                                    'sum_bitscore': sum_bitscore_raw,
@@ -430,10 +439,10 @@ def parse_args():
     arg.add_argument('-o', '--out', help='output name prefix')
     arg.add_argument('-r', '--resolution', type=float, default=0.6,
                      help='minium resolution')
-    arg.add_argument('-tmin', '--min_template', type=int, default=380,
-                     help='minimum template length(include primer)')
-    arg.add_argument('-tmax', '--max_template', type=int, default=480,
-                     help='maximum template length(include primer)')
+    arg.add_argument('-tmin', '--min_product', type=int, default=380,
+                     help='minimum product length(include primer)')
+    arg.add_argument('-tmax', '--max_product', type=int, default=480,
+                     help='maximum product length(include primer)')
     arg.add_argument('-w', '--window', type=int, default=1,
                      help='window size')
     # arg.print_help()
@@ -458,7 +467,8 @@ def main():
     # count resolution
     (seq_count_min_len, seq_count_max_len,
      shannon_index1, shannon_index2, max_shannon, index) = count_and_draw(
-        alignment, min_len=arg.min_template, max_len=arg.max_template,
+        alignment, min_primer=arg.min_primer, max_primer=arg.max_primer,
+         min_product=arg.min_product, max_product=arg.max_product,
          window=arg.window, out=arg.out)
 
     # exit if resolution lower than given threshold.
@@ -468,11 +478,24 @@ The highest resolution of given fragment is {:.2f}, which is lower than
 given resolution threshold({:.2f}). Please try to use longer fragment or
 lower resolution options.
 """.format(max(seq_count_max_len), arg.resolution))
-    # generate region info dict index:(min_resolution, max_)
-    good_region: Dict(int, List[float, float]) = dict()
+
+    good_region = [False] * columns
+    n = arg.max_product - arg.min_product + arg.max_primer
+    # lower bound, min_prodcut with max_primer
+    # upper bound, max_prodcut with min_primer
+    n2 = arg.max_product + arg.min_primer
     for i, j, k in zip(index, seq_count_min_len, seq_count_max_len):
-        if j >= arg.resolution or k >= arg.resolution:
-            good_region[i] = (j, k)
+        if j >= arg.resolution:
+            for _ in range(i-n, i):
+                good_region[_] = True
+            for _ in range(i+arg.min_product, i+arg.min_product+arg.max_primer):
+                good_region[_] = True
+        elif k >= arg.resolution:
+            for _ in range(i-arg.min_primer, i):
+                good_region[_] = True
+            for _ in range(i+arg.max_product, i+n2):
+                good_region[_] = True
+                # +1 or not???????
 
     # generate consensus
     base_cumulative_frequency = count_base(alignment, rows, columns)
@@ -481,7 +504,7 @@ lower resolution options.
                                    arg.out+'.consensus.fastq')
 
     # find candidate
-    continuous = find_continuous(consensus, arg.min_primer)
+    continuous = find_continuous(consensus, good_region, arg.min_primer)
     primer_candidate = find_primer(continuous, consensus, rows, arg.min_primer,
                                    arg.max_primer, arg.ambiguous_base_n)
     assert len(primer_candidate) != 0, (
