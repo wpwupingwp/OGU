@@ -206,7 +206,7 @@ def generate_consensus(base_cumulative_frequency, cutoff, gap_cutoff,
     consensus.quality = get_quality_string(quality, rows)
     with open(output, 'w') as out:
         consensus.write(out, 'fastq')
-    return most
+    return most, consensus
 
 
 @profile
@@ -289,7 +289,7 @@ def find_primer(continuous, most, rows, min_len, max_len, ambiguous_base_n):
 
 
 @profile
-def count_and_draw(data, arg):
+def count_and_draw(alignment, consensus_seq, arg):
     """
     Given alignment(numpy array), return unique sequence count List[float].
     Calculate Shannon Index based on
@@ -297,14 +297,13 @@ def count_and_draw(data, arg):
     return List[float]
     All calculation excludes primer sequence.
     """
-    rows, columns = data.shape
+    rows, columns = alignment.shape
     min_primer = arg.min_primer
     max_primer = arg.max_primer
     min_product = arg.min_product
     max_product = arg.max_product
     window = arg.window
     out = arg.out
-    gap_cutoff = arg.gap_cutoff * rows
     # Different count
     count_min_len: List[List[float]] = list()
     count_max_len: List[List[float]] = list()
@@ -315,12 +314,13 @@ def count_and_draw(data, arg):
     min_plus = min_product - max_primer * 2
     max_plus = max_product - min_primer * 2
     for i in range(0, columns-min_product, window):
-        to be continue
-        if (data[:, i] == '-').sum() >= gap_cutoff:
+        # skip gap
+        if consensus_seq[i] in ('-', 'N'):
+            print(i)
             continue
         # exclude primer sequence
-        split_1 = data[:, i:(i+min_plus)]
-        split_2 = data[:, i:(i+max_plus)]
+        split_1 = alignment[:, i:(i+min_plus)]
+        split_2 = alignment[:, i:(i+max_plus)]
         # uniqe array, count line*times
         _, count1 = np.unique(split_1, return_counts=True, axis=0)
         _, count2 = np.unique(split_2, return_counts=True, axis=0)
@@ -473,9 +473,16 @@ def main():
     name, alignment, db_file = prepare(arg.input)
     rows, columns = alignment.shape
 
+
+    # generate consensus
+    base_cumulative_frequency = count_base(alignment, rows, columns)
+    consensus_info, consensus = generate_consensus(base_cumulative_frequency, arg.cutoff,
+                                   arg.gap_cutoff, rows, columns,
+                                   arg.out+'.consensus.fastq')
+
     # count resolution
     (seq_count_min_len, seq_count_max_len,
-     H1, H2, max_H, index) = count_and_draw(alignment, arg)
+     H1, H2, max_H, index) = count_and_draw(alignment, consensus.sequence, arg)
 
     # exit if resolution lower than given threshold.
     assert max(seq_count_max_len) > arg.resolution, (
@@ -502,16 +509,9 @@ lower resolution options.
             for _ in range(i+arg.max_product, i+n2):
                 good_region[_] = True
                 # +1 or not???????
-
-    # generate consensus
-    base_cumulative_frequency = count_base(alignment, rows, columns)
-    consensus = generate_consensus(base_cumulative_frequency, arg.cutoff,
-                                   arg.gap_cutoff, rows, columns,
-                                   arg.out+'.consensus.fastq')
-
     # find candidate
-    continuous = find_continuous(consensus, good_region, arg.min_primer)
-    primer_candidate = find_primer(continuous, consensus, rows, arg.min_primer,
+    continuous = find_continuous(consensus_info, good_region, arg.min_primer)
+    primer_candidate = find_primer(continuous, consensus_info, rows, arg.min_primer,
                                    arg.max_primer, arg.ambiguous_base_n)
     assert len(primer_candidate) != 0, (
         'Primer not found! Try to loose options.')
