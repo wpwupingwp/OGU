@@ -289,8 +289,7 @@ def find_primer(continuous, most, rows, min_len, max_len, ambiguous_base_n):
 
 
 @profile
-def count_and_draw(data, min_primer, max_primer,
-                   min_product, max_product, window, out):
+def count_and_draw(data, arg):
     """
     Given alignment(numpy array), return unique sequence count List[float].
     Calculate Shannon Index based on
@@ -299,6 +298,13 @@ def count_and_draw(data, min_primer, max_primer,
     All calculation excludes primer sequence.
     """
     rows, columns = data.shape
+    min_primer = arg.min_primer
+    max_primer = arg.max_primer
+    min_product = arg.min_product
+    max_product = arg.max_product
+    window = arg.window
+    out = arg.out
+    gap_cutoff = arg.gap_cutoff * rows
     # Different count
     count_min_len: List[List[float]] = list()
     count_max_len: List[List[float]] = list()
@@ -309,6 +315,9 @@ def count_and_draw(data, min_primer, max_primer,
     min_plus = min_product - max_primer * 2
     max_plus = max_product - min_primer * 2
     for i in range(0, columns-min_product, window):
+        to be continue
+        if (data[:, i] == '-').sum() >= gap_cutoff:
+            continue
         # exclude primer sequence
         split_1 = data[:, i:(i+min_plus)]
         split_2 = data[:, i:(i+max_plus)]
@@ -466,10 +475,7 @@ def main():
 
     # count resolution
     (seq_count_min_len, seq_count_max_len,
-     shannon_index1, shannon_index2, max_shannon, index) = count_and_draw(
-        alignment, min_primer=arg.min_primer, max_primer=arg.max_primer,
-         min_product=arg.min_product, max_product=arg.max_product,
-         window=arg.window, out=arg.out)
+     H1, H2, max_H, index) = count_and_draw(alignment, arg)
 
     # exit if resolution lower than given threshold.
     assert max(seq_count_max_len) > arg.resolution, (
