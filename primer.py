@@ -526,14 +526,15 @@ lower resolution options.
     with open(primer_file, 'w') as out:
         for primer in primer_candidate:
             i = primer.id
-            print(i)
             if i in result:
                 count += 1
                 primer.coverage = result[i]['coverage']
                 primer.sum_bitscore = result[i]['sum_bitscore']
                 primer.avg_mid_loc = result[i]['avg_mid_loc']
+                primer.update_id()
         SeqIO.write(primer_candidate, out, 'fastq')
 
+    print(*consensus.features, sep='\n')
     print('Found {} primers.'.format(count))
     print('Primer ID format:')
     print('name-Tm-Samples-BLAST_Coverage-Bitscore-AvgMidLocation')
