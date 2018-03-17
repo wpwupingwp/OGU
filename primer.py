@@ -14,9 +14,10 @@ from timeit import default_timer as timer
 from subprocess import run
 from typing import List, Dict, Any
 
-from Bio import SearchIO
+from Bio import SearchIO, SeqIO
 from Bio.Blast.Applications import NcbiblastnCommandline as nb
 from Bio.SeqRecord import SeqRecord
+from Bio.SeqFeature import SeqFeature, FeatureLocation
 
 import matplotlib
 from matplotlib import pyplot as plt
@@ -35,7 +36,7 @@ class PrimerWithInfo(SeqRecord):
                  coverage=0, sum_bitscore=0, avg_mid_loc=0, detail=0):
         super().__init__(seq=seq)
 
-        self.quality = self.letter_annotations['quality'] = quality
+        self.quality = self.letter_annotations['fastq-illumina'] = quality
         self.index = self.annotations['index'] = index
         self.start = self.annotations['start'] = start
         self.tm = self.annotations['tm'] = tm
@@ -205,8 +206,7 @@ def generate_consensus(base_cumulative_frequency, cutoff, gap_cutoff,
     consensus.sequence = ''.join([i[1] for i in most])
     quality = [i[2] for i in most]
     consensus.quality = get_quality_string(quality, rows)
-    with open(output, 'w') as out:
-        consensus.write(out, 'fastq')
+    SeqIO.write(consensus, output, 'fastq')
     return consensus
 
 
@@ -214,19 +214,19 @@ def generate_consensus(base_cumulative_frequency, cutoff, gap_cutoff,
 def find_continuous(consensus, good_region, min_len):
     """
     Given PrimerWithInfo, good_region: List[bool], min_len
-    Return continuous fragments list:
-    List[PrimerWithInfo]
+    Return consensus with features.
     """
-    continuous: List[PrimerWithInfo] = list()
     skip = ('N', '-')
     start = 0
     for index, base in enumerate(consensus.sequence[-min_len:]):
         if not good_region[index] or base in skip:
             if (index-start) >= min_len:
-                continuous.append(consensus[start:index])
+                consensus.features.append(SeqFeature( FeatureLocation(
+                    start, index), strand=1))
             start = index
-    print(*continuous)
-    return continuous
+    for i in consensus.features:
+        print(i)
+    return consensus
 
 
 #@profile
