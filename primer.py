@@ -214,14 +214,15 @@ def find_continuous(consensus, min_len):
     """
     skip = ('N', '-')
     start = 0
-
-    for index, base in enumerate(consensus.sequence[-min_len:]):
-        if not good_region[index] or base in skip:
+    good_region = consensus.features[0]
+    for index, base in enumerate(consensus.sequence[:-min_len]):
+        print(start, index, base)
+        if index not in good_region or base in skip:
             if (index-start) >= min_len:
                 consensus.features.append(SeqFeature(FeatureLocation(
-                    start, index), strand=1))
+                    start, index), type='continuous', strand=1))
             start = index
-    print(consensus.features)
+    print(consensus.features[1:])
     return consensus
 
 
@@ -371,6 +372,26 @@ def count_and_draw(alignment, consensus, arg):
             max_shannon_index, index)
 
 
+def set_good_region(consensus, index, seq_count_min_len,
+                    seq_count_max_len, arg):
+    n = arg.max_product - arg.min_product + arg.max_primer
+    # lower bound, min_prodcut with max_primer
+    # upper bound, max_prodcut with min_primer
+    n2 = arg.max_product + arg.min_primer
+    good_region = list()
+    for i, j, k in zip(index, seq_count_min_len, seq_count_max_len):
+        if j >= arg.resolution:
+            good_region.append(FeatureLocation(i-n, i))
+            good_region.append(FeatureLocation(
+                i+arg.min_product, i+arg.min_product+arg.max_primer))
+        elif k >= arg.resolution:
+            good_region.append(FeatureLocation(i-arg.min_primer, i))
+            good_region.append(FeatureLocation(i+arg.max_product, i+n2))
+    consensus.features.append(SeqFeature(CompoundLocation(good_region),
+                              type='good_region', strand=1))
+    return consensus
+
+
 #@profile
 def validate(query_file, db_file, n_seqs, min_len, min_covrage,
              max_mismatch):
@@ -464,7 +485,6 @@ def main():
     name, alignment, db_file = prepare(arg.input)
     rows, columns = alignment.shape
 
-
     # generate consensus
     base_cumulative_frequency = count_base(alignment, rows, columns)
     consensus = generate_consensus(base_cumulative_frequency, arg.cutoff,
@@ -483,27 +503,9 @@ given resolution threshold({:.2f}). Please try to use longer fragment or
 lower resolution options.
 """.format(max(seq_count_max_len), arg.resolution))
 
-    # set good region
-    n = arg.max_product - arg.min_product + arg.max_primer
-    # lower bound, min_prodcut with max_primer
-    # upper bound, max_prodcut with min_primer
-    n2 = arg.max_product + arg.min_primer
-    good_region = list()
-    for i, j, k in zip(index, seq_count_min_len, seq_count_max_len):
-        if j >= arg.resolution:
-            good_region.append(FeatureLocation(i-n, i))
-            good_region.append(FeatureLocation(
-                i+arg.min_product, i+arg.min_product+arg.max_primer))
-        elif k >= arg.resolution:
-            good_region.append(FeatureLocation(i-arg.min_primer, i))
-            good_region.append(FeatureLocation(i+arg.max_product, i+n2))
-    consensus.features.append(SeqFeature(CompoundLocation(good_region),
-                              type='good_region', strand=1))
-    print(consensus.features)
-    print(30 in consensus.features[0])
-    print(3000 in consensus.features[0])
-
     # find candidate
+    consensus = set_good_region(consensus, index, seq_count_min_len,
+                                seq_count_max_len, arg)
     continuous = find_continuous(consensus, arg.min_primer)
     primer_candidate = find_primer(continuous, rows, arg.min_primer,
                                    arg.max_primer, arg.ambiguous_base_n)
