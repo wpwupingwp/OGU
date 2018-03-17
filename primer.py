@@ -49,6 +49,7 @@ class PrimerWithInfo(SeqRecord):
         self.update_id()
 
     def update_id(self):
+        self.end = self.annotations['end'] = self.start + self.__len__() - 1
         self.id = ('Start({})-End({})-Tm({:.2f})-Coverage({:.2%})-'
                    'SumBitScore({})-AvgMidLocation({:.0f})'.format(
                       self.start, self.end, self.tm, self.coverage,
@@ -143,7 +144,7 @@ def get_quality(data: List[float], rows: int):
     factor = max_q/rows
     # use min to avoid KeyError
     quality_value = [min(max_q, int(i*factor))-1 for i in data]
-    return quality_value 
+    return quality_value
 
 
 #@profile
@@ -203,6 +204,26 @@ def generate_consensus(base_cumulative_frequency, cutoff, gap_cutoff,
     consensus = PrimerWithInfo(start=1, seq=''.join([i[1] for i in most]),
                                quality=get_quality(quality, rows))
     SeqIO.write(consensus, output, 'fastq')
+    return consensus
+
+
+def set_good_region(consensus, index, seq_count_min_len,
+                    seq_count_max_len, arg):
+    # lower bound, min_prodcut with max_primer
+    # upper bound, max_prodcut with min_primer
+    n = arg.max_product - arg.min_product
+    good_region = list()
+    for i, j, k in zip(index, seq_count_min_len, seq_count_max_len):
+        if j >= arg.resolution:
+            good_region.append(FeatureLocation(i-n+arg.max_primer, i))
+            good_region.append(FeatureLocation(
+                i+arg.min_product, i+arg.min_product+arg.max_primer))
+        elif k >= arg.resolution:
+            good_region.append(FeatureLocation(i-arg.min_primer, i))
+            good_region.append(FeatureLocation(
+                i+arg.max_product, i+arg.max_product+arg.min_primer))
+    consensus.features.append(SeqFeature(CompoundLocation(good_region),
+                              type='good_region', strand=1))
     return consensus
 
 
@@ -370,26 +391,6 @@ def count_and_draw(alignment, consensus, arg):
             max_shannon_index, index)
 
 
-def set_good_region(consensus, index, seq_count_min_len,
-                    seq_count_max_len, arg):
-    # lower bound, min_prodcut with max_primer
-    # upper bound, max_prodcut with min_primer
-    n = arg.max_product - arg.min_product
-    good_region = list()
-    for i, j, k in zip(index, seq_count_min_len, seq_count_max_len):
-        if j >= arg.resolution:
-            good_region.append(FeatureLocation(i-n+arg.max_primer, i))
-            good_region.append(FeatureLocation(
-                i+arg.min_product, i+arg.min_product+arg.max_primer))
-        elif k >= arg.resolution:
-            good_region.append(FeatureLocation(i-arg.min_primer, i))
-            good_region.append(FeatureLocation(
-                i+arg.max_product, i+arg.max_product+arg.min_primer))
-    consensus.features.append(SeqFeature(CompoundLocation(good_region),
-                              type='good_region', strand=1))
-    return consensus
-
-
 #@profile
 def validate(query_file, db_file, n_seqs, min_len, min_covrage,
              max_mismatch):
@@ -519,7 +520,6 @@ lower resolution options.
     # validate
     result = validate(candidate_file, db_file, rows, arg.min_primer,
                       arg.cutoff, arg.mismatch)
-    print(result)
     primer_file = '{}-{}_covrage-{}bp_mismatch.fastq'.format(
         arg.out, arg.cutoff, arg.mismatch)
     count = 0
@@ -532,7 +532,7 @@ lower resolution options.
                 primer.sum_bitscore = result[i]['sum_bitscore']
                 primer.avg_mid_loc = result[i]['avg_mid_loc']
                 primer.update_id()
-        SeqIO.write(primer_candidate, out, 'fastq')
+                SeqIO.write(primer, out, 'fastq')
 
     print(*consensus.features, sep='\n')
     print('Found {} primers.'.format(count))
