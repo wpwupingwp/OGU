@@ -17,7 +17,7 @@ from typing import List, Dict, Any
 from Bio import SearchIO, SeqIO
 from Bio.Blast.Applications import NcbiblastnCommandline as nb
 from Bio.SeqRecord import SeqRecord
-from Bio.SeqFeature import SeqFeature, FeatureLocation
+from Bio.SeqFeature import SeqFeature, FeatureLocation, CompoundLocation
 
 import matplotlib
 from matplotlib import pyplot as plt
@@ -137,7 +137,7 @@ def count_base(alignment, rows, columns):
 
 
 #@profile
-def get_quality_string(data: List[float], rows: int):
+def get_quality(data: List[float], rows: int):
     # use fastq-illumina format
     max_q = 62
     factor = max_q/rows
@@ -152,6 +152,7 @@ def generate_consensus(base_cumulative_frequency, cutoff, gap_cutoff,
     """
     Given base count info, return List[index, base, quality]
     and List[List[str, str, str, PrimerInfo]] for writing conesensus.
+    return PrimerWithInfo
     """
     def get_ambiguous_dict():
         from Bio.Data.IUPACData import ambiguous_dna_values
@@ -200,28 +201,27 @@ def generate_consensus(base_cumulative_frequency, cutoff, gap_cutoff,
                         most.append([location, base, count])
     quality = [i[2] for i in most]
     consensus = PrimerWithInfo(start=1, seq=''.join([i[1] for i in most]),
-                               quality=get_quality_string(quality, rows))
-    print(len(consensus), len(quality))
+                               quality=get_quality(quality, rows))
     SeqIO.write(consensus, output, 'fastq')
     return consensus
 
 
 #@profile
-def find_continuous(consensus, good_region, min_len):
+def find_continuous(consensus, min_len):
     """
     Given PrimerWithInfo, good_region: List[bool], min_len
     Return consensus with features.
     """
     skip = ('N', '-')
     start = 0
+
     for index, base in enumerate(consensus.sequence[-min_len:]):
         if not good_region[index] or base in skip:
             if (index-start) >= min_len:
-                consensus.features.append(SeqFeature( FeatureLocation(
+                consensus.features.append(SeqFeature(FeatureLocation(
                     start, index), strand=1))
             start = index
-    for i in consensus.features:
-        print(i)
+    print(consensus.features)
     return consensus
 
 
@@ -273,7 +273,7 @@ def find_primer(continuous, rows, min_len, max_len, ambiguous_base_n):
                     quality = [i[2] for i in seqs]
                     primers.append(PrimerWithInfo(
                         index=n, start=start, tm=tm, sequence=sequence,
-                        quality=get_quality_string(quality, rows)))
+                        quality=get_quality(quality, rows)))
                     n += 1
                 else:
                     continue
@@ -483,25 +483,28 @@ given resolution threshold({:.2f}). Please try to use longer fragment or
 lower resolution options.
 """.format(max(seq_count_max_len), arg.resolution))
 
-    good_region = [False] * columns
+    # set good region
     n = arg.max_product - arg.min_product + arg.max_primer
     # lower bound, min_prodcut with max_primer
     # upper bound, max_prodcut with min_primer
     n2 = arg.max_product + arg.min_primer
+    good_region = list()
     for i, j, k in zip(index, seq_count_min_len, seq_count_max_len):
         if j >= arg.resolution:
-            for _ in range(i-n, i):
-                good_region[_] = True
-            for _ in range(i+arg.min_product, i+arg.min_product+arg.max_primer):
-                good_region[_] = True
+            good_region.append(FeatureLocation(i-n, i))
+            good_region.append(FeatureLocation(
+                i+arg.min_product, i+arg.min_product+arg.max_primer))
         elif k >= arg.resolution:
-            for _ in range(i-arg.min_primer, i):
-                good_region[_] = True
-            for _ in range(i+arg.max_product, i+n2):
-                good_region[_] = True
-                # +1 or not???????
+            good_region.append(FeatureLocation(i-arg.min_primer, i))
+            good_region.append(FeatureLocation(i+arg.max_product, i+n2))
+    consensus.features.append(SeqFeature(CompoundLocation(good_region),
+                              type='good_region', strand=1))
+    print(consensus.features)
+    print(30 in consensus.features[0])
+    print(3000 in consensus.features[0])
+
     # find candidate
-    continuous = find_continuous(consensus, good_region, arg.min_primer)
+    continuous = find_continuous(consensus, arg.min_primer)
     primer_candidate = find_primer(continuous, rows, arg.min_primer,
                                    arg.max_primer, arg.ambiguous_base_n)
     assert len(primer_candidate) != 0, (
