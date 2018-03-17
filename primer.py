@@ -16,6 +16,7 @@ from typing import List, Dict, Any
 
 from Bio import SearchIO, SeqIO
 from Bio.Blast.Applications import NcbiblastnCommandline as nb
+from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from Bio.SeqFeature import SeqFeature, FeatureLocation, CompoundLocation
 
@@ -32,13 +33,12 @@ matplotlib.rcParams['figure.figsize'] = 16, 9
 
 
 class PrimerWithInfo(SeqRecord):
-    def __init__(self, seq='', quality='', index=0, start=0, tm=0,
+    def __init__(self, seq='', quality='', start=0, tm=0,
                  coverage=0, sum_bitscore=0, avg_mid_loc=0, detail=0):
-        super().__init__(seq=seq)
+        super().__init__(seq)
 
         self.sequence = self.seq
         self.quality = self.letter_annotations['solexa_quality'] = quality
-        self.index = self.annotations['index'] = index
         self.start = self.annotations['start'] = start
         self.tm = self.annotations['tm'] = tm
         self.coverage = self.annotations['coverage'] = coverage
@@ -49,9 +49,9 @@ class PrimerWithInfo(SeqRecord):
         self.update_id()
 
     def update_id(self):
-        self.id = ('{}-Start({})-End({})-Tm({:.2f})-Coverage({:.2%})-'
+        self.id = ('Start({})-End({})-Tm({:.2f})-Coverage({:.2%})-'
                    'SumBitScore({})-AvgMidLocation({:.0f})'.format(
-                      self.index, self.start, self.end, self.tm, self.coverage,
+                      self.start, self.end, self.tm, self.coverage,
                       self.sum_bitscore, self.avg_mid_loc))
 
     def __getitem__(self, i):
@@ -216,13 +216,11 @@ def find_continuous(consensus, min_len):
     start = 0
     good_region = consensus.features[0]
     for index, base in enumerate(consensus.sequence[:-min_len]):
-        print(start, index, base)
         if index not in good_region or base in skip:
             if (index-start) >= min_len:
                 consensus.features.append(SeqFeature(FeatureLocation(
                     start, index), type='continuous', strand=1))
             start = index + 1
-    print(consensus.features[1:])
     return consensus
 
 
@@ -230,7 +228,7 @@ def find_continuous(consensus, min_len):
 def find_primer(consensus, rows, min_len, max_len, ambiguous_base_n):
     """
     Find suitable primer in given List[List[int, str, float]]
-    return List[List[str, str, PrimerInfo]]
+    return List[FeatureLocation]
     """
     poly = re.compile(r'([ATCG])\1\1\1\1')
     ambiguous_base = re.compile(r'[^ATCG]')
@@ -258,28 +256,19 @@ def find_primer(consensus, rows, min_len, max_len, ambiguous_base_n):
             return False, 0, 'Hairpin or homodimer found'
         return True, tm, 'Ok'
 
-    primers: List[PrimerWithInfo] = list()
+    primers: List[SeqFeature] = list()
     # skip good_region
     continuous = consensus.features[1:]
-    n = 1
     for feature in continuous:
         fragment = feature.extract(consensus)
-        print(fragment)
         len_fragment = len(fragment)
         for begin in range(len_fragment-max_len):
             for p_len in range(min_len, max_len):
                 seqs = fragment[begin:(begin+p_len)]
                 good_primer, tm, detail = is_good_primer(seqs)
                 if good_primer:
-                    start = seqs[0][0]
-                    sequence = ''.join([i[1] for i in seqs])
-                    quality = [i[2] for i in seqs]
-                    primers.append(PrimerWithInfo(
-                        index=n, start=start, tm=tm, sequence=sequence,
-                        quality=get_quality(quality, rows)))
-                    n += 1
-                else:
-                    continue
+                    primers.append(FeatureLocation(feature.location.start+begin,
+                                                   feature.location.start+begin+p_len))
     return primers
 
 
@@ -419,10 +408,9 @@ def validate(query_file, db_file, n_seqs, min_len, min_covrage,
     min_bitscore_raw = (min_len - max_mismatch)*2
     blast_result: Dict[int, Dict[str, Any]] = dict()
     for query in SearchIO.parse(blast_result_file, 'blast-xml'):
-        index = int(query.id.split('-')[0])
         if len(query) == 0:
-            blast_result[index] = {'coverage': 0, 'sum_bitscore': 0,
-                                   'avg_mid_loc': 0}
+            blast_result[query.id] = {'coverage': 0, 'sum_bitscore': 0,
+                                      'avg_mid_loc': 0}
             continue
         sum_bitscore_raw = 0
         good_hits = 0
@@ -437,9 +425,9 @@ def validate(query_file, db_file, n_seqs, min_len, min_covrage,
         if coverage >= min_covrage:
             # get sequence unique index for choose
             # Notice that here it use bitscore_raw instead of bitscore
-            blast_result[index] = {'coverage': coverage,
-                                   'sum_bitscore': sum_bitscore_raw,
-                                   'avg_mid_loc': start/n_seqs}
+            blast_result[query.id] = {'coverage': coverage,
+                                      'sum_bitscore': sum_bitscore_raw,
+                                      'avg_mid_loc': start/n_seqs}
     return blast_result
 
 
@@ -509,14 +497,20 @@ lower resolution options.
     consensus = set_good_region(consensus, index, seq_count_min_len,
                                 seq_count_max_len, arg)
     consensus = find_continuous(consensus, arg.min_primer)
-    primer_candidate = find_primer(consensus, rows, arg.min_primer,
-                                   arg.max_primer, arg.ambiguous_base_n)
-    assert len(primer_candidate) != 0, (
+    primer_candidate_feature = find_primer(consensus, rows, arg.min_primer,
+                                           arg.max_primer, arg.ambiguous_base_n)
+    assert len(primer_candidate_feature) != 0, (
         'Primer not found! Try to loose options.')
+    primer_candidate = [consensus[i.start:i.end] for i in
+                        primer_candidate_feature]
     candidate_file = arg.out + '.candidate.fasta'
-    with open(candidate_file, 'w') as _:
-        for item in primer_candidate:
-            item.write(_, 'fasta')
+    with open(candidate_file+'.fastq', 'w') as _:
+        for feature in primer_candidate:
+            primer = consensus[feature.start:feature.end]
+            SeqIO.write(primer, _, 'fastq')
+    # SeqIO.write fasta file directly is prohibited. have to write fastq at
+    # first
+    SeqIO.convert(candidate_file+'.fastq', 'fastq', candidate_file, 'fasta')
 
     # validate
     result = validate(candidate_file, db_file, rows, arg.min_primer,
@@ -526,7 +520,8 @@ lower resolution options.
     count = 0
     with open(primer_file, 'w') as out:
         for primer in primer_candidate:
-            i = primer.index
+            i = primer.id
+            print(i)
             if i in result:
                 count += 1
                 primer.coverage = result[i]['coverage']
