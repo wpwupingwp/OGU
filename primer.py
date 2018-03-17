@@ -41,10 +41,12 @@ class PrimerWithInfo(SeqRecord):
         self.tm = self.annotations['tm'] = tm
         self.coverage = self.annotations['coverage'] = coverage
         self.sum_bitscore = self.annotations['sum_bitscore'] = sum_bitscore
-        self.avg_mid_loc = self.annotations['avg_mid_locn'] = avg_mid_loc
+        self.avg_mid_loc = self.annotations['avg_mid_loc'] = avg_mid_loc
         self.detail = self.annotations['detail'] = detail
         self.end = self.annotations['end'] = start + self.__len__() - 1
+        self.update_id()
 
+    def update_id(self):
         self.id = ('{}-Start({})-End({})-Tm({:.2f})-Coverage({:.2%})-'
                    'SumBitScore({})-AvgMidLocation({:.0f})'.format(
                       self.index, self.start, self.end, self.tm, self.coverage,
@@ -55,7 +57,7 @@ class PrimerWithInfo(SeqRecord):
             i = slice(i, i+1)
         if isinstance(i, slice):
             if self.seq is None:
-                raise ValueError("If the sequence is None, we cannot slice it.")
+                raise ValueError('Empty sequence')
             answer = PrimerWithInfo(seq=self.seq[i], quality=self.quality[i])
             answer.annotations = dict(self.annotations.items())
             return answer
