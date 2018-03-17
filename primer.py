@@ -64,7 +64,7 @@ class PrimerWithInfo(SeqRecord):
             answer.annotations = dict(self.annotations.items())
             return answer
 
-@profile
+#@profile
 def prepare(fasta):
     """
     Given fasta format alignment filename, return a numpy array for sequence:
@@ -101,7 +101,7 @@ def prepare(fasta):
     return name, sequence, no_gap
 
 
-@profile
+#@profile
 def count_base(alignment, rows, columns):
     """
     Given alignment numpy array, count cumulative frequency of base in each
@@ -136,7 +136,7 @@ def count_base(alignment, rows, columns):
     return frequency
 
 
-@profile
+#@profile
 def get_quality(data: List[float], rows: int):
     # use fastq-illumina format
     max_q = 62
@@ -146,7 +146,7 @@ def get_quality(data: List[float], rows: int):
     return quality_value 
 
 
-@profile
+#@profile
 def generate_consensus(base_cumulative_frequency, cutoff, gap_cutoff,
                        rows, columns, output):
     """
@@ -206,7 +206,7 @@ def generate_consensus(base_cumulative_frequency, cutoff, gap_cutoff,
     return consensus
 
 
-@profile
+#@profile
 def find_continuous(consensus, min_len):
     """
     Given PrimerWithInfo, good_region: List[bool], min_len
@@ -224,7 +224,7 @@ def find_continuous(consensus, min_len):
     return consensus
 
 
-@profile
+#@profile
 def find_primer(consensus, rows, min_len, max_len, ambiguous_base_n):
     """
     Find suitable primer in given List[List[int, str, float]]
@@ -266,13 +266,20 @@ def find_primer(consensus, rows, min_len, max_len, ambiguous_base_n):
             for p_len in range(min_len, max_len):
                 seqs = fragment[begin:(begin+p_len)]
                 good_primer, tm, detail = is_good_primer(seqs)
+                start = feature.location.start + begin
                 if good_primer:
-                    primers.append(FeatureLocation(feature.location.start+begin,
-                                                   feature.location.start+begin+p_len))
-    return primers
+                    consensus.features.append(SeqFeature(
+                        FeatureLocation(start, start+p_len),
+                        type='primer', strand=1))
+                    primer = consensus[start:start+p_len]
+                    primer.tm = tm
+                    primer.start = start
+                    primer.update_id()
+                    primers.append(primer)
+    return primers, consensus
 
 
-@profile
+#@profile
 def count_and_draw(alignment, consensus, arg):
     """
     Given alignment(numpy array), return unique sequence count List[float].
@@ -383,7 +390,7 @@ def set_good_region(consensus, index, seq_count_min_len,
     return consensus
 
 
-@profile
+#@profile
 def validate(query_file, db_file, n_seqs, min_len, min_covrage,
              max_mismatch):
     """
@@ -409,8 +416,8 @@ def validate(query_file, db_file, n_seqs, min_len, min_covrage,
     blast_result: Dict[int, Dict[str, Any]] = dict()
     for query in SearchIO.parse(blast_result_file, 'blast-xml'):
         if len(query) == 0:
-            blast_result[query.id] = {'coverage': 0, 'sum_bitscore': 0,
-                                      'avg_mid_loc': 0}
+            blast_result[query.id] = {
+                'coverage': 0, 'sum_bitscore': 0, 'avg_mid_loc': 0}
             continue
         sum_bitscore_raw = 0
         good_hits = 0
@@ -425,13 +432,13 @@ def validate(query_file, db_file, n_seqs, min_len, min_covrage,
         if coverage >= min_covrage:
             # get sequence unique index for choose
             # Notice that here it use bitscore_raw instead of bitscore
-            blast_result[query.id] = {'coverage': coverage,
-                                      'sum_bitscore': sum_bitscore_raw,
-                                      'avg_mid_loc': start/n_seqs}
+            blast_result[query.id] = {
+                'coverage': coverage, 'sum_bitscore': sum_bitscore_raw,
+                'avg_mid_loc': start/n_seqs}
     return blast_result
 
 
-@profile
+#@profile
 def parse_args():
     arg = argparse.ArgumentParser(description=main.__doc__)
     arg.add_argument('input', help='input alignment file')
@@ -460,7 +467,7 @@ def parse_args():
     return arg.parse_args()
 
 
-@profile
+#@profile
 def main():
     """
     Automatic design primer for DNA barcode.
@@ -497,12 +504,10 @@ lower resolution options.
     consensus = set_good_region(consensus, index, seq_count_min_len,
                                 seq_count_max_len, arg)
     consensus = find_continuous(consensus, arg.min_primer)
-    primer_candidate_feature = find_primer(consensus, rows, arg.min_primer,
-                                           arg.max_primer, arg.ambiguous_base_n)
-    assert len(primer_candidate_feature) != 0, (
+    primer_candidate, consensus_with_features = find_primer(
+        consensus, rows, arg.min_primer, arg.max_primer, arg.ambiguous_base_n)
+    assert len(primer_candidate) != 0, (
         'Primer not found! Try to loose options.')
-    primer_candidate = [consensus[i.start:i.end] for i in
-                        primer_candidate_feature]
     candidate_file = arg.out + '.candidate.fasta'
     with open(candidate_file+'.fastq', 'w') as _:
         for primer in primer_candidate:
@@ -514,6 +519,7 @@ lower resolution options.
     # validate
     result = validate(candidate_file, db_file, rows, arg.min_primer,
                       arg.cutoff, arg.mismatch)
+    print(result)
     primer_file = '{}-{}_covrage-{}bp_mismatch.fastq'.format(
         arg.out, arg.cutoff, arg.mismatch)
     count = 0
