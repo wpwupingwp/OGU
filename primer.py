@@ -36,7 +36,8 @@ class PrimerWithInfo(SeqRecord):
                  coverage=0, sum_bitscore=0, avg_mid_loc=0, detail=0):
         super().__init__(seq=seq)
 
-        self.quality = self.letter_annotations['fastq-illumina'] = quality
+        self.sequence = self.seq
+        self.quality = self.letter_annotations['solexa_quality'] = quality
         self.index = self.annotations['index'] = index
         self.start = self.annotations['start'] = start
         self.tm = self.annotations['tm'] = tm
@@ -137,16 +138,12 @@ def count_base(alignment, rows, columns):
 
 #@profile
 def get_quality_string(data: List[float], rows: int):
-    # https://en.wikipedia.org/wiki/FASTQ_format
-    quality = ('''!"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ'''
-               '''[\]^_`abcdefghijklmnopqrstuvwxyz{|}~''')
-    quality_dict = {i: j for i, j in enumerate(quality)}
-    max_q = len(quality)
+    # use fastq-illumina format
+    max_q = 62
     factor = max_q/rows
     # use min to avoid KeyError
     quality_value = [min(max_q, int(i*factor))-1 for i in data]
-    quality_string = [quality_dict[i] for i in quality_value]
-    return ''.join(quality_string)
+    return quality_value 
 
 
 #@profile
@@ -201,11 +198,10 @@ def generate_consensus(base_cumulative_frequency, cutoff, gap_cutoff,
                         base = ambiguous_dict[length][key]
                         finish = True
                         most.append([location, base, count])
-    consensus = PrimerWithInfo(start=1, coverage=cutoff,
-                               avg_mid_loc=len(most)/2)
-    consensus.sequence = ''.join([i[1] for i in most])
     quality = [i[2] for i in most]
-    consensus.quality = get_quality_string(quality, rows)
+    consensus = PrimerWithInfo(start=1, seq=''.join([i[1] for i in most]),
+                               quality=get_quality_string(quality, rows))
+    print(len(consensus), len(quality))
     SeqIO.write(consensus, output, 'fastq')
     return consensus
 
