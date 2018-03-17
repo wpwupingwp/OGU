@@ -30,19 +30,35 @@ matplotlib.rcParams['figure.figsize'] = 16, 9
 
 
 class PrimerWithInfo:
-    def __init__(self, sequence='', quality='', index=0, start=0, end=0, tm=0,
+    def __init__(self, sequence='', quality='', index=0, start=0, tm=0,
                  coverage=0, sum_bitscore=0, avg_mid_location=0, detail=0):
         self.index = index
         self.start = start
-        self.end = end
         self.tm = tm
         self.coverage = coverage
         self.sum_bitscore = sum_bitscore
         self.avg_mid_location = avg_mid_location
         self.detail = detail
-
         self.sequence = sequence
         self.quality = quality
+        self.end = self.start + self.__len__() - 1
+
+    def __getitem__(self, i):
+        if type(i) is int:
+            return PrimerWithInfo(sequence=self.sequence[i],
+                                  quality=self.quality[i],
+                                  start=self.start+i)
+        elif type(i) is slice:
+            return PrimerWithInfo(sequence=self.sequence[i],
+                                  quality=self.quality[i],
+                                  start=self.start+i.start)
+
+    def __len__(self):
+        return len(self.sequence)
+
+    def __str__(self):
+        return 'Start {}\tEnd {}\t\nSequence {}\nQuality {}\n'.format(
+            self.start, self.end, self.sequence, self.quality)
 
     def write(self, handle, file_format):
         self.name = ('{}-Start({})-End({})-Tm({:.2f})-Coverage({:.2%})-'
@@ -199,31 +215,30 @@ def generate_consensus(base_cumulative_frequency, cutoff, gap_cutoff,
                         base = ambiguous_dict[length][key]
                         finish = True
                         most.append([location, base, count])
-    consensus = PrimerWithInfo(start=1, end=len(most), coverage=cutoff,
+    consensus = PrimerWithInfo(start=1, coverage=cutoff,
                                avg_mid_location=len(most)/2)
     consensus.sequence = ''.join([i[1] for i in most])
     quality = [i[2] for i in most]
     consensus.quality = get_quality_string(quality, rows)
     with open(output, 'w') as out:
         consensus.write(out, 'fastq')
-    return most, consensus
+    return consensus
 
 
 @profile
 def find_continuous(consensus, good_region, min_len):
     """
-    Given List[location, base, count]
+    Given PrimerWithInfo, good_region: List[bool], min_len
     Return continuous fragments list:
-    List[List[location, base, count]]
+    List[PrimerWithInfo]
     """
-    continuous: List[List[int, str, float]] = list()
-    fragment = list()
-    skip = ('N', '-', '*')
-    for good, base in zip(good_region, consensus):
+    continuous: List[PrimerWithInfo] = list()
+    fragment = PrimerWithInfo()
+    skip = ('N', '-')
+    for good, base in zip(good_region, consensus.sequence):
         if not good:
-            print(good, base)
             continue
-        if base[1] in skip:
+        if base in skip:
             if len(fragment) >= min_len:
                 continuous.append(fragment)
                 fragment = list()
@@ -233,7 +248,7 @@ def find_continuous(consensus, good_region, min_len):
 
 
 @profile
-def find_primer(continuous, most, rows, min_len, max_len, ambiguous_base_n):
+def find_primer(continuous, rows, min_len, max_len, ambiguous_base_n):
     """
     Find suitable primer in given List[List[int, str, float]]
     return List[List[str, str, PrimerInfo]]
@@ -244,7 +259,7 @@ def find_primer(continuous, most, rows, min_len, max_len, ambiguous_base_n):
 
     def is_good_primer(primer):
         # ref1. http://www.premierbiosoft.com/tech_notes/PCR_Primer_Design.html
-        seq = ''.join([i[1] for i in primer])
+        seq = ''.join(primer)
         if re.search(poly, seq) is not None:
             return False, 0, 'Poly(NNNNN) structure found'
         if re.search(tandem, seq) is not None:
@@ -268,6 +283,7 @@ def find_primer(continuous, most, rows, min_len, max_len, ambiguous_base_n):
     continuous = [i for i in continuous if len(i) >= min_len]
     n = 1
     for fragment in continuous:
+        print(fragment)
         len_fragment = len(fragment)
         for begin in range(len_fragment-max_len):
             for p_len in range(min_len, max_len):
@@ -275,12 +291,10 @@ def find_primer(continuous, most, rows, min_len, max_len, ambiguous_base_n):
                 good_primer, tm, detail = is_good_primer(seq)
                 if good_primer:
                     start = seq[0][0]
-                    end = seq[-1][0]
                     sequence = ''.join([i[1] for i in seq])
                     quality = [i[2] for i in seq]
                     primers.append(PrimerWithInfo(
-                        index=n, start=start, end=end, tm=tm,
-                        sequence=sequence,
+                        index=n, start=start, tm=tm, sequence=sequence,
                         quality=get_quality_string(quality, rows)))
                     n += 1
                 else:
@@ -289,7 +303,7 @@ def find_primer(continuous, most, rows, min_len, max_len, ambiguous_base_n):
 
 
 @profile
-def count_and_draw(alignment, consensus_seq, arg):
+def count_and_draw(alignment, consensus, arg):
     """
     Given alignment(numpy array), return unique sequence count List[float].
     Calculate Shannon Index based on
@@ -315,8 +329,7 @@ def count_and_draw(alignment, consensus_seq, arg):
     max_plus = max_product - min_primer * 2
     for i in range(0, columns-min_product, window):
         # skip gap
-        if consensus_seq[i] in ('-', 'N'):
-            print(i)
+        if consensus.sequence[i] in ('-', 'N'):
             continue
         # exclude primer sequence
         split_1 = alignment[:, i:(i+min_plus)]
@@ -476,13 +489,13 @@ def main():
 
     # generate consensus
     base_cumulative_frequency = count_base(alignment, rows, columns)
-    consensus_info, consensus = generate_consensus(base_cumulative_frequency, arg.cutoff,
+    consensus = generate_consensus(base_cumulative_frequency, arg.cutoff,
                                    arg.gap_cutoff, rows, columns,
                                    arg.out+'.consensus.fastq')
 
     # count resolution
     (seq_count_min_len, seq_count_max_len,
-     H1, H2, max_H, index) = count_and_draw(alignment, consensus.sequence, arg)
+     H1, H2, max_H, index) = count_and_draw(alignment, consensus, arg)
 
     # exit if resolution lower than given threshold.
     assert max(seq_count_max_len) > arg.resolution, (
@@ -510,8 +523,8 @@ lower resolution options.
                 good_region[_] = True
                 # +1 or not???????
     # find candidate
-    continuous = find_continuous(consensus_info, good_region, arg.min_primer)
-    primer_candidate = find_primer(continuous, consensus_info, rows, arg.min_primer,
+    continuous = find_continuous(consensus, good_region, arg.min_primer)
+    primer_candidate = find_primer(continuous, rows, arg.min_primer,
                                    arg.max_primer, arg.ambiguous_base_n)
     assert len(primer_candidate) != 0, (
         'Primer not found! Try to loose options.')
