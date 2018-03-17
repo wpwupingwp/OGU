@@ -372,19 +372,19 @@ def count_and_draw(alignment, consensus, arg):
 
 def set_good_region(consensus, index, seq_count_min_len,
                     seq_count_max_len, arg):
-    n = arg.max_product - arg.min_product + arg.max_primer
     # lower bound, min_prodcut with max_primer
     # upper bound, max_prodcut with min_primer
-    n2 = arg.max_product + arg.min_primer
+    n = arg.max_product - arg.min_product
     good_region = list()
     for i, j, k in zip(index, seq_count_min_len, seq_count_max_len):
         if j >= arg.resolution:
-            good_region.append(FeatureLocation(i-n, i))
+            good_region.append(FeatureLocation(i-n+arg.max_primer, i))
             good_region.append(FeatureLocation(
                 i+arg.min_product, i+arg.min_product+arg.max_primer))
         elif k >= arg.resolution:
             good_region.append(FeatureLocation(i-arg.min_primer, i))
-            good_region.append(FeatureLocation(i+arg.max_product, i+n2))
+            good_region.append(FeatureLocation(
+                i+arg.max_product, i+arg.max_product+arg.min_primer))
     consensus.features.append(SeqFeature(CompoundLocation(good_region),
                               type='good_region', strand=1))
     return consensus
