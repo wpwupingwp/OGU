@@ -16,6 +16,7 @@ from typing import List, Dict, Any
 
 from Bio import SearchIO
 from Bio.Blast.Applications import NcbiblastnCommandline as nb
+from Bio.SeqRecord import SeqRecord
 
 import matplotlib
 from matplotlib import pyplot as plt
@@ -29,55 +30,37 @@ matplotlib.rcParams['axes.facecolor'] = '#666666'
 matplotlib.rcParams['figure.figsize'] = 16, 9
 
 
-class PrimerWithInfo:
-    def __init__(self, sequence='', quality='', index=0, start=0, tm=0,
-                 coverage=0, sum_bitscore=0, avg_mid_location=0, detail=0):
-        self.index = index
-        self.start = start
-        self.tm = tm
-        self.coverage = coverage
-        self.sum_bitscore = sum_bitscore
-        self.avg_mid_location = avg_mid_location
-        self.detail = detail
-        self.sequence = sequence
-        self.quality = quality
-        self.end = self.start + self.__len__() - 1
+class PrimerWithInfo(SeqRecord):
+    def __init__(self, seq='', quality='', index=0, start=0, tm=0,
+                 coverage=0, sum_bitscore=0, avg_mid_loc=0, detail=0):
+        super().__init__(seq=seq)
+
+        self.quality = self.letter_annotations['quality'] = quality
+        self.index = self.annotations['index'] = index
+        self.start = self.annotations['start'] = start
+        self.tm = self.annotations['tm'] = tm
+        self.coverage = self.annotations['coverage'] = coverage
+        self.sum_bitscore = self.annotations['sum_bitscore'] = sum_bitscore
+        self.avg_mid_loc = self.annotations['avg_mid_locn'] = avg_mid_loc
+        self.detail = self.annotations['detail'] = detail
+        self.end = self.annotations['end'] = start + self.__len__() - 1
+
+        self.id = ('{}-Start({})-End({})-Tm({:.2f})-Coverage({:.2%})-'
+                   'SumBitScore({})-AvgMidLocation({:.0f})'.format(
+                      self.index, self.start, self.end, self.tm, self.coverage,
+                      self.sum_bitscore, self.avg_mid_loc))
 
     def __getitem__(self, i):
-        if type(i) is int:
-            return PrimerWithInfo(sequence=self.sequence[i],
-                                  quality=self.quality[i],
-                                  start=self.start+i)
-        elif type(i) is slice:
-            return PrimerWithInfo(sequence=self.sequence[i],
-                                  quality=self.quality[i],
-                                  start=self.start+i.start)
+        if isinstance(i, int):
+            i = slice(i, i+1)
+        if isinstance(i, slice):
+            if self.seq is None:
+                raise ValueError("If the sequence is None, we cannot slice it.")
+            answer = PrimerWithInfo(seq=self.seq[i], quality=self.quality[i])
+            answer.annotations = dict(self.annotations.items())
+            return answer
 
-    def __len__(self):
-        return len(self.sequence)
-
-    def __str__(self):
-        return 'Start {}\tEnd {}\t\nSequence {}\nQuality {}\n'.format(
-            self.start, self.end, self.sequence, self.quality)
-
-    def write(self, handle, file_format):
-        self.name = ('{}-Start({})-End({})-Tm({:.2f})-Coverage({:.2%})-'
-                     'SumBitScore({})-AvgMidLocation({:.0f})'.format(
-                      self.index, self.start, self.end, self.tm, self.coverage,
-                      self.sum_bitscore, self.avg_mid_location))
-        if type(handle) == str:
-            handle = open(handle, 'a')
-        if file_format == 'fastq':
-            handle.write('@{}\n'.format(self.name))
-            handle.write(self.sequence+'\n')
-            handle.write('+\n')
-            handle.write('{}\n'.format(self.quality))
-        elif file_format == 'fasta':
-            handle.write('>{}\n'.format(self.name))
-            handle.write(self.sequence+'\n')
-
-
-@profile
+#@profile
 def prepare(fasta):
     """
     Given fasta format alignment filename, return a numpy array for sequence:
@@ -114,7 +97,7 @@ def prepare(fasta):
     return name, sequence, no_gap
 
 
-@profile
+#@profile
 def count_base(alignment, rows, columns):
     """
     Given alignment numpy array, count cumulative frequency of base in each
@@ -149,7 +132,7 @@ def count_base(alignment, rows, columns):
     return frequency
 
 
-@profile
+#@profile
 def get_quality_string(data: List[float], rows: int):
     # https://en.wikipedia.org/wiki/FASTQ_format
     quality = ('''!"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ'''
@@ -163,7 +146,7 @@ def get_quality_string(data: List[float], rows: int):
     return ''.join(quality_string)
 
 
-@profile
+#@profile
 def generate_consensus(base_cumulative_frequency, cutoff, gap_cutoff,
                        rows, columns, output):
     """
@@ -216,7 +199,7 @@ def generate_consensus(base_cumulative_frequency, cutoff, gap_cutoff,
                         finish = True
                         most.append([location, base, count])
     consensus = PrimerWithInfo(start=1, coverage=cutoff,
-                               avg_mid_location=len(most)/2)
+                               avg_mid_loc=len(most)/2)
     consensus.sequence = ''.join([i[1] for i in most])
     quality = [i[2] for i in most]
     consensus.quality = get_quality_string(quality, rows)
@@ -225,7 +208,7 @@ def generate_consensus(base_cumulative_frequency, cutoff, gap_cutoff,
     return consensus
 
 
-@profile
+#@profile
 def find_continuous(consensus, good_region, min_len):
     """
     Given PrimerWithInfo, good_region: List[bool], min_len
@@ -233,21 +216,18 @@ def find_continuous(consensus, good_region, min_len):
     List[PrimerWithInfo]
     """
     continuous: List[PrimerWithInfo] = list()
-    fragment = PrimerWithInfo()
     skip = ('N', '-')
-    for good, base in zip(good_region, consensus.sequence):
-        if not good:
-            continue
-        if base in skip:
-            if len(fragment) >= min_len:
-                continuous.append(fragment)
-                fragment = list()
-            continue
-        fragment.append(base)
+    start = 0
+    for index, base in enumerate(consensus.sequence[-min_len:]):
+        if not good_region[index] or base in skip:
+            if (index-start) >= min_len:
+                continuous.append(consensus[start:index])
+            start = index
+    print(*continuous)
     return continuous
 
 
-@profile
+#@profile
 def find_primer(continuous, rows, min_len, max_len, ambiguous_base_n):
     """
     Find suitable primer in given List[List[int, str, float]]
@@ -287,12 +267,12 @@ def find_primer(continuous, rows, min_len, max_len, ambiguous_base_n):
         len_fragment = len(fragment)
         for begin in range(len_fragment-max_len):
             for p_len in range(min_len, max_len):
-                seq = fragment[begin:(begin+p_len)]
-                good_primer, tm, detail = is_good_primer(seq)
+                seqs = fragment[begin:(begin+p_len)]
+                good_primer, tm, detail = is_good_primer(seqs)
                 if good_primer:
-                    start = seq[0][0]
-                    sequence = ''.join([i[1] for i in seq])
-                    quality = [i[2] for i in seq]
+                    start = seqs[0][0]
+                    sequence = ''.join([i[1] for i in seqs])
+                    quality = [i[2] for i in seqs]
                     primers.append(PrimerWithInfo(
                         index=n, start=start, tm=tm, sequence=sequence,
                         quality=get_quality_string(quality, rows)))
@@ -302,7 +282,7 @@ def find_primer(continuous, rows, min_len, max_len, ambiguous_base_n):
     return primers
 
 
-@profile
+#@profile
 def count_and_draw(alignment, consensus, arg):
     """
     Given alignment(numpy array), return unique sequence count List[float].
@@ -393,7 +373,7 @@ def count_and_draw(alignment, consensus, arg):
             max_shannon_index, index)
 
 
-@profile
+#@profile
 def validate(query_file, db_file, n_seqs, min_len, min_covrage,
              max_mismatch):
     """
@@ -421,7 +401,7 @@ def validate(query_file, db_file, n_seqs, min_len, min_covrage,
         index = int(query.id.split('-')[0])
         if len(query) == 0:
             blast_result[index] = {'coverage': 0, 'sum_bitscore': 0,
-                                   'avg_mid_location': 0}
+                                   'avg_mid_loc': 0}
             continue
         sum_bitscore_raw = 0
         good_hits = 0
@@ -438,11 +418,11 @@ def validate(query_file, db_file, n_seqs, min_len, min_covrage,
             # Notice that here it use bitscore_raw instead of bitscore
             blast_result[index] = {'coverage': coverage,
                                    'sum_bitscore': sum_bitscore_raw,
-                                   'avg_mid_location': start/n_seqs}
+                                   'avg_mid_loc': start/n_seqs}
     return blast_result
 
 
-@profile
+#@profile
 def parse_args():
     arg = argparse.ArgumentParser(description=main.__doc__)
     arg.add_argument('input', help='input alignment file')
@@ -471,7 +451,7 @@ def parse_args():
     return arg.parse_args()
 
 
-@profile
+#@profile
 def main():
     """
     Automatic design primer for DNA barcode.
@@ -546,7 +526,7 @@ lower resolution options.
                 count += 1
                 primer.coverage = result[i]['coverage']
                 primer.sum_bitscore = result[i]['sum_bitscore']
-                primer.avg_mid_location = result[i]['avg_mid_location']
+                primer.avg_mid_loc = result[i]['avg_mid_loc']
                 primer.write(out, 'fastq')
 
     print('Found {} primers.'.format(count))
