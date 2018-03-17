@@ -221,13 +221,13 @@ def find_continuous(consensus, min_len):
             if (index-start) >= min_len:
                 consensus.features.append(SeqFeature(FeatureLocation(
                     start, index), type='continuous', strand=1))
-            start = index
+            start = index + 1
     print(consensus.features[1:])
     return consensus
 
 
 #@profile
-def find_primer(continuous, rows, min_len, max_len, ambiguous_base_n):
+def find_primer(consensus, rows, min_len, max_len, ambiguous_base_n):
     """
     Find suitable primer in given List[List[int, str, float]]
     return List[List[str, str, PrimerInfo]]
@@ -259,9 +259,11 @@ def find_primer(continuous, rows, min_len, max_len, ambiguous_base_n):
         return True, tm, 'Ok'
 
     primers: List[PrimerWithInfo] = list()
-    continuous = [i for i in continuous if len(i) >= min_len]
+    # skip good_region
+    continuous = consensus.features[1:]
     n = 1
-    for fragment in continuous:
+    for feature in continuous:
+        fragment = feature.extract(consensus)
         print(fragment)
         len_fragment = len(fragment)
         for begin in range(len_fragment-max_len):
@@ -506,8 +508,8 @@ lower resolution options.
     # find candidate
     consensus = set_good_region(consensus, index, seq_count_min_len,
                                 seq_count_max_len, arg)
-    continuous = find_continuous(consensus, arg.min_primer)
-    primer_candidate = find_primer(continuous, rows, arg.min_primer,
+    consensus = find_continuous(consensus, arg.min_primer)
+    primer_candidate = find_primer(consensus, rows, arg.min_primer,
                                    arg.max_primer, arg.ambiguous_base_n)
     assert len(primer_candidate) != 0, (
         'Primer not found! Try to loose options.')
