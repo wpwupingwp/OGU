@@ -445,7 +445,7 @@ def parse_args():
     arg.add_argument('input', help='input alignment file')
     arg.add_argument('-a', '--ambiguous_base_n', type=int, default=2,
                      help='number of ambiguous bases')
-    arg.add_argument('-c', '--cutoff', type=float, default=0.8,
+    arg.add_argument('-c', '--cutoff', type=float, default=0.7,
                      help='minium percent to keep base')
     arg.add_argument('-g', '--gap_cutoff', type=float, default=0.5,
                      help='maximum percent for gap to cutoff')
@@ -536,8 +536,6 @@ lower resolution options.
 
     print(*consensus.features, sep='\n')
     print('Found {} primers.'.format(count))
-    print('Primer ID format:')
-    print('name-Tm-Samples-BLAST_Coverage-Bitscore-AvgMidLocation')
     end = timer()
     print('Cost {:.3f} seconds.'.format(end-start))
 
