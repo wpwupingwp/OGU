@@ -148,7 +148,7 @@ def get_quality(data: List[float], rows: int):
 
 
 #@profile
-def generate_consensus(base_cumulative_frequency, cutoff, gap_cutoff,
+def generate_consensus(base_cumulative_frequency, cutoff,
                        rows, columns, output):
     """
     Given base count info, return List[index, base, quality]
@@ -166,23 +166,21 @@ def generate_consensus(base_cumulative_frequency, cutoff, gap_cutoff,
         return data_with_len
 
     ambiguous_dict = get_ambiguous_dict()
-
     most: List[List[int, str, float]] = []
-    gap_cutoff = rows * gap_cutoff
     cutoff = rows * cutoff
 
-    for location, column in enumerate(base_cumulative_frequency, 1):
+    for location, column in enumerate(base_cumulative_frequency):
         finish = False
         # "*" for others
         value = dict(zip(list('ATCGN-*'), column))
 
         base = 'N'
-        if value['N'] >= gap_cutoff:
+        if value['N'] >= cutoff/4:
             count = value['N']
             most.append([location, base, count])
             continue
         sum_gap = sum([value['-'], value['*']])
-        if sum_gap >= gap_cutoff:
+        if sum_gap >= cutoff/4:
             base = '-'
             count = sum_gap
             most.append([location, base, count])
@@ -204,6 +202,7 @@ def generate_consensus(base_cumulative_frequency, cutoff, gap_cutoff,
     consensus = PrimerWithInfo(start=1, seq=''.join([i[1] for i in most]),
                                quality=get_quality(quality, rows))
     SeqIO.write(consensus, output, 'fastq')
+    print(len(consensus), len(base_cumulative_frequency))
     return consensus
 
 
@@ -447,8 +446,6 @@ def parse_args():
                      help='number of ambiguous bases')
     arg.add_argument('-c', '--cutoff', type=float, default=0.7,
                      help='minium percent to keep base')
-    arg.add_argument('-g', '--gap_cutoff', type=float, default=0.5,
-                     help='maximum percent for gap to cutoff')
     arg.add_argument('-pmin', '--min_primer', type=int, default=24,
                      help='minimum primer length')
     arg.add_argument('-pmax', '--max_primer', type=int, default=25,
@@ -486,8 +483,7 @@ def main():
     # generate consensus
     base_cumulative_frequency = count_base(alignment, rows, columns)
     consensus = generate_consensus(base_cumulative_frequency, arg.cutoff,
-                                   arg.gap_cutoff, rows, columns,
-                                   arg.out+'.consensus.fastq')
+                                   rows, columns, arg.out+'.consensus.fastq')
 
     # count resolution
     (seq_count_min_len, seq_count_max_len,
