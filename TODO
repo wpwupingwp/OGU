@@ -2,5 +2,7 @@
 2. integrate batch_query
 3. integrate uniq
 4. integrate remove-long
-5. use Shannon Index
+#5. use Shannon Index
 6. pick primer pair
+7. too few primer found!!!!!!!!!!!!!
+8. some primers do not have info (test2,156989)

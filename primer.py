@@ -202,7 +202,6 @@ def generate_consensus(base_cumulative_frequency, cutoff,
     consensus = PrimerWithInfo(start=1, seq=''.join([i[1] for i in most]),
                                quality=get_quality(quality, rows))
     SeqIO.write(consensus, output, 'fastq')
-    print(len(consensus), len(base_cumulative_frequency))
     return consensus
 
 
@@ -530,7 +529,6 @@ lower resolution options.
                 primer.update_id()
                 SeqIO.write(primer, out, 'fastq')
 
-    print(*consensus.features, sep='\n')
     print('Found {} primers.'.format(count))
     end = timer()
     print('Cost {:.3f} seconds.'.format(end-start))
