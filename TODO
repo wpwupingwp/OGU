@@ -7,3 +7,4 @@
 7. too few primer found!!!!!!!!!!!!!
 8. some primers do not have info (test2,156989)
 9. 30min for a cp genome, too slow
+10. try to replace Bio.SearchIO (10 second+, 50% of runtime)
