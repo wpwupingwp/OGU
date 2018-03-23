@@ -65,7 +65,7 @@ class PrimerWithInfo(SeqRecord):
             answer.annotations = dict(self.annotations.items())
             return answer
 
-#@profile
+@profile
 def prepare(fasta):
     """
     Given fasta format alignment filename, return a numpy array for sequence:
@@ -102,7 +102,7 @@ def prepare(fasta):
     return name, sequence, no_gap
 
 
-#@profile
+@profile
 def count_base(alignment, rows, columns):
     """
     Given alignment numpy array, count cumulative frequency of base in each
@@ -137,7 +137,7 @@ def count_base(alignment, rows, columns):
     return frequency
 
 
-#@profile
+@profile
 def get_quality(data: List[float], rows: int):
     # use fastq-illumina format
     max_q = 62
@@ -147,7 +147,7 @@ def get_quality(data: List[float], rows: int):
     return quality_value
 
 
-#@profile
+@profile
 def generate_consensus(base_cumulative_frequency, cutoff,
                        rows, columns, output):
     """
@@ -225,7 +225,7 @@ def set_good_region(consensus, index, seq_count_min_len,
     return consensus
 
 
-#@profile
+@profile
 def find_continuous(consensus, min_len):
     """
     Given PrimerWithInfo, good_region: List[bool], min_len
@@ -243,7 +243,7 @@ def find_continuous(consensus, min_len):
     return consensus
 
 
-#@profile
+@profile
 def find_primer(consensus, rows, min_len, max_len, ambiguous_base_n):
     """
     Find suitable primer in given List[List[int, str, float]]
@@ -298,7 +298,7 @@ def find_primer(consensus, rows, min_len, max_len, ambiguous_base_n):
     return primers, consensus
 
 
-#@profile
+@profile
 def count_and_draw(alignment, consensus, arg):
     """
     Given alignment(numpy array), return unique sequence count List[float].
@@ -389,7 +389,7 @@ def count_and_draw(alignment, consensus, arg):
             max_shannon_index, index)
 
 
-#@profile
+@profile
 def validate(query_file, db_file, n_seqs, min_len, min_covrage,
              max_mismatch):
     """
@@ -437,7 +437,7 @@ def validate(query_file, db_file, n_seqs, min_len, min_covrage,
     return blast_result
 
 
-#@profile
+@profile
 def parse_args():
     arg = argparse.ArgumentParser(description=main.__doc__)
     arg.add_argument('input', help='input alignment file')
@@ -464,7 +464,7 @@ def parse_args():
     return arg.parse_args()
 
 
-#@profile
+@profile
 def main():
     """
     Automatic design primer for DNA barcode.
