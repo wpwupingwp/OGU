@@ -235,7 +235,7 @@ def find_continuous(consensus, min_len):
     start = 0
     good_region = consensus.features[0]
     for index, base in enumerate(consensus.sequence[:-min_len]):
-        if index not in good_region or base in skip:
+        if base in skip or index not in good_region:
             if (index-start) >= min_len:
                 consensus.features.append(SeqFeature(FeatureLocation(
                     start, index), type='continuous', strand=1))
