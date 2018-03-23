@@ -29,7 +29,6 @@ matplotlib.rcParams['axes.labelsize'] = 16
 matplotlib.rcParams['axes.titlesize'] = 25
 matplotlib.rcParams['font.size'] = 16
 matplotlib.rcParams['axes.facecolor'] = '#666666'
-matplotlib.rcParams['figure.figsize'] = 16, 9
 
 
 class PrimerWithInfo(SeqRecord):
@@ -354,7 +353,7 @@ def count_and_draw(alignment, consensus, arg):
     count_min_len = [i/rows for i in count_min_len]
     count_max_len = [i/rows for i in count_max_len]
     # plt.style.use('ggplot')
-    fig, ax1 = plt.subplots()
+    fig, ax1 = plt.subplots(figsize=(20+len(index)//5000, 10))
     plt.title('Shannon Index & Resolution({}-{}bp, window={})'.format(
         min_product, max_product, window))
     plt.xlabel('Base')
