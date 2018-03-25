@@ -147,7 +147,7 @@ def get_quality(data: List[float], rows: int):
 
 
 @profile
-def generate_consensus(base_cumulative_frequency, cutoff,
+def generate_consensus(base_cumulative_frequency, coverage_percent,
                        rows, columns, output):
     """
     Given base count info, return List[index, base, quality]
@@ -166,7 +166,7 @@ def generate_consensus(base_cumulative_frequency, cutoff,
 
     ambiguous_dict = get_ambiguous_dict()
     most: List[List[int, str, float]] = []
-    cutoff = rows * cutoff
+    coverage = rows * coverage_percent
 
     for location, column in enumerate(base_cumulative_frequency):
         finish = False
@@ -174,12 +174,12 @@ def generate_consensus(base_cumulative_frequency, cutoff,
         value = dict(zip(list('ATCGN-*'), column))
 
         base = 'N'
-        if value['N'] >= cutoff/4:
+        if value['N'] >= coverage/4:
             count = value['N']
             most.append([location, base, count])
             continue
         sum_gap = sum([value['-'], value['*']])
-        if sum_gap >= cutoff/4:
+        if sum_gap >= coverage/4:
             base = '-'
             count = sum_gap
             most.append([location, base, count])
@@ -193,7 +193,7 @@ def generate_consensus(base_cumulative_frequency, cutoff,
                     if finish:
                         break
                     count += value[letter]
-                    if count >= cutoff:
+                    if count >= coverage:
                         base = ambiguous_dict[length][key]
                         finish = True
                         most.append([location, base, count])
@@ -245,8 +245,8 @@ def find_continuous(consensus, min_len):
 @profile
 def find_primer(consensus, rows, min_len, max_len, ambiguous_base_n):
     """
-    Find suitable primer in given List[List[int, str, float]]
-    return List[FeatureLocation]
+    Find suitable primer in given consensus with features labeled as candidate
+    primer, return List[PrimerWithInfo], consensus
     """
     poly = re.compile(r'([ATCG])\1\1\1\1')
     ambiguous_base = re.compile(r'[^ATCG]')
@@ -389,11 +389,15 @@ def count_and_draw(alignment, consensus, arg):
 
 
 @profile
-def validate(query_file, db_file, n_seqs, min_len, min_covrage,
-             max_mismatch):
+def validate(primer_candidate, db_file, n_seqs, arg):
     """
-    Do BLAST. Parse BLAST result. Return Dict[str, Dict[str, Any]].
+    Do BLAST. Parse BLAST result. Return List[PrimerWithInfo]
     """
+    query_file = arg.out + '.candidate.fasta'
+    # SeqIO.write fasta file directly is prohibited. have to write fastq at
+    with open(query_file+'.fastq', 'w') as _:
+        SeqIO.write(primer_candidate, _, 'fastq')
+    SeqIO.convert(query_file+'.fastq', 'fastq', query_file, 'fasta')
     # build blast db
     run('makeblastdb -in {} -dbtype nucl'.format(db_file), shell=True,
         stdout=open('makeblastdb.log', 'w'))
@@ -410,7 +414,7 @@ def validate(query_file, db_file, n_seqs, min_len, min_covrage,
              out=blast_result_file)
     stdout, stderr = cmd()
     # minium match bases * score per base(2)
-    min_bitscore_raw = (min_len - max_mismatch)*2
+    min_bitscore_raw = (arg.min_primer - arg.mismatch)*2
     blast_result: Dict[int, Dict[str, Any]] = dict()
     for query in SearchIO.parse(blast_result_file, 'blast-xml'):
         if len(query) == 0:
@@ -427,13 +431,23 @@ def validate(query_file, db_file, n_seqs, min_len, min_covrage,
                 good_hits += 1
                 start += sum(hit[0].hit_range) / 2
         coverage = good_hits/n_seqs
-        if coverage >= min_covrage:
+        if coverage >= arg.coverage:
             # get sequence unique index for choose
             # Notice that here it use bitscore_raw instead of bitscore
             blast_result[query.id] = {
                 'coverage': coverage, 'sum_bitscore': sum_bitscore_raw,
                 'avg_mid_loc': start/n_seqs}
-    return blast_result
+    primer_verified: List[PrimerWithInfo] = list()
+    for primer in primer_candidate:
+        i = primer.id
+        if i in blast_result:
+            primer.coverage = blast_result[i]['coverage']
+            primer.sum_bitscore = blast_result[i]['sum_bitscore']
+            primer.avg_mid_loc = blast_result[i]['avg_mid_loc']
+            primer.update_id()
+            primer_verified.append(primer)
+    # output
+    return primer_verified
 
 
 @profile
@@ -442,8 +456,8 @@ def parse_args():
     arg.add_argument('input', help='input alignment file')
     arg.add_argument('-a', '--ambiguous_base_n', type=int, default=2,
                      help='number of ambiguous bases')
-    arg.add_argument('-c', '--cutoff', type=float, default=0.7,
-                     help='minium percent to keep base')
+    arg.add_argument('-c', '--coverage', type=float, default=0.7,
+                     help='minium coverage of base and primer')
     arg.add_argument('-pmin', '--min_primer', type=int, default=24,
                      help='minimum primer length')
     arg.add_argument('-pmax', '--max_primer', type=int, default=25,
@@ -473,20 +487,16 @@ def main():
     if arg.out is None:
         arg.out = os.path.basename(arg.input)
         arg.out = arg.out.split('.')[0]
-
     # read from fasta, generate new fasta for makeblastdb
     name, alignment, db_file = prepare(arg.input)
     rows, columns = alignment.shape
-
     # generate consensus
     base_cumulative_frequency = count_base(alignment, rows, columns)
-    consensus = generate_consensus(base_cumulative_frequency, arg.cutoff,
+    consensus = generate_consensus(base_cumulative_frequency, arg.coverage,
                                    rows, columns, arg.out+'.consensus.fastq')
-
     # count resolution
     (seq_count_min_len, seq_count_max_len,
      H1, H2, max_H, index) = count_and_draw(alignment, consensus, arg)
-
     # exit if resolution lower than given threshold.
     assert max(seq_count_max_len) > arg.resolution, (
         """
@@ -494,7 +504,6 @@ The highest resolution of given fragment is {:.2f}, which is lower than
 given resolution threshold({:.2f}). Please try to use longer fragment or
 lower resolution options.
 """.format(max(seq_count_max_len), arg.resolution))
-
     # find candidate
     consensus = set_good_region(consensus, index, seq_count_min_len,
                                 seq_count_max_len, arg)
@@ -503,32 +512,14 @@ lower resolution options.
         consensus, rows, arg.min_primer, arg.max_primer, arg.ambiguous_base_n)
     assert len(primer_candidate) != 0, (
         'Primer not found! Try to loose options.')
-    candidate_file = arg.out + '.candidate.fasta'
-    with open(candidate_file+'.fastq', 'w') as _:
-        for primer in primer_candidate:
-            SeqIO.write(primer, _, 'fastq')
-    # SeqIO.write fasta file directly is prohibited. have to write fastq at
-    # first
-    SeqIO.convert(candidate_file+'.fastq', 'fastq', candidate_file, 'fasta')
-
     # validate
-    result = validate(candidate_file, db_file, rows, arg.min_primer,
-                      arg.cutoff, arg.mismatch)
-    primer_file = '{}-{}_covrage-{}bp_mismatch.fastq'.format(
-        arg.out, arg.cutoff, arg.mismatch)
-    count = 0
+    primer_verified = validate(primer_candidate, db_file, rows, arg)
+    # output
+    primer_file = '{}-{}_coverage-{}bp_mismatch.fastq'.format(
+        arg.out, arg.coverage, arg.mismatch)
     with open(primer_file, 'w') as out:
-        for primer in primer_candidate:
-            i = primer.id
-            if i in result:
-                count += 1
-                primer.coverage = result[i]['coverage']
-                primer.sum_bitscore = result[i]['sum_bitscore']
-                primer.avg_mid_loc = result[i]['avg_mid_loc']
-                primer.update_id()
-                SeqIO.write(primer, out, 'fastq')
-
-    print('Found {} primers.'.format(count))
+            SeqIO.write(primer_verified, out, 'fastq')
+    print('Found {} primers.'.format(len(primer_verified)))
     end = timer()
     print('Cost {:.3f} seconds.'.format(end-start))
 
