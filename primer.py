@@ -16,7 +16,6 @@ from typing import List, Dict, Any
 
 from Bio import SearchIO, SeqIO
 from Bio.Blast.Applications import NcbiblastnCommandline as nb
-from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from Bio.SeqFeature import SeqFeature, FeatureLocation, CompoundLocation
 
@@ -34,7 +33,7 @@ matplotlib.rcParams['axes.facecolor'] = '#666666'
 class PrimerWithInfo(SeqRecord):
     def __init__(self, seq='', quality='', start=0, tm=0,
                  coverage=0, sum_bitscore=0, avg_mid_loc=0, detail=0):
-        super().__init__(seq)
+        super().__init__(seq.upper())
 
         self.sequence = self.seq
         self.quality = self.letter_annotations['solexa_quality'] = quality
@@ -49,10 +48,32 @@ class PrimerWithInfo(SeqRecord):
 
     def update_id(self):
         self.end = self.annotations['end'] = self.start + self.__len__() - 1
-        self.id = ('Start({})-End({})-Tm({:.2f})-Coverage({:.2%})-'
-                   'SumBitScore({})-AvgMidLocation({:.0f})'.format(
-                      self.start, self.end, self.tm, self.coverage,
-                      self.sum_bitscore, self.avg_mid_loc))
+        self.id = ('AvgMidLocation({:.0f})-Tm({:.2f})-Coverage({:.2%})-'
+                   'SumBitScore({})-Start({})-End({})'.format(
+                       self.avg_mid_loc, self.tm, self.coverage,
+                       self.sum_bitscore, self.start, self.end))
+
+    def reverse_complement(self):
+        new_seq = ''
+        for base in self.sequence:
+            if base == 'A':
+                new_seq += 'T'
+            elif base == 'T':
+                new_seq += 'A'
+            elif base == 'C':
+                new_seq += 'G'
+            elif base == 'G':
+                new_seq += 'C'
+            else:
+                new_seq += base
+        new_quality = self.quality[::-1]
+        # try to simplify??
+        return PrimerWithInfo(seq=new_seq, quality=new_quality,
+                              start=self.start, coverage=self.coverage,
+                              sum_bitscore=self.sum_bitscore,
+                              avg_mid_loc=self.avg_mid_loc,
+                              detail=self.detail)
+
 
     def __getitem__(self, i):
         if isinstance(i, int):
@@ -64,7 +85,8 @@ class PrimerWithInfo(SeqRecord):
             answer.annotations = dict(self.annotations.items())
             return answer
 
-@profile
+
+#profile
 def prepare(fasta):
     """
     Given fasta format alignment filename, return a numpy array for sequence:
@@ -101,7 +123,7 @@ def prepare(fasta):
     return name, sequence, no_gap
 
 
-@profile
+#profile
 def count_base(alignment, rows, columns):
     """
     Given alignment numpy array, count cumulative frequency of base in each
@@ -136,7 +158,7 @@ def count_base(alignment, rows, columns):
     return frequency
 
 
-@profile
+#profile
 def get_quality(data: List[float], rows: int):
     # use fastq-illumina format
     max_q = 62
@@ -146,7 +168,7 @@ def get_quality(data: List[float], rows: int):
     return quality_value
 
 
-@profile
+#profile
 def generate_consensus(base_cumulative_frequency, coverage_percent,
                        rows, columns, output):
     """
@@ -224,7 +246,7 @@ def set_good_region(consensus, index, seq_count_min_len,
     return consensus
 
 
-@profile
+#profile
 def find_continuous(consensus, min_len):
     """
     Given PrimerWithInfo, good_region: List[bool], min_len
@@ -242,7 +264,7 @@ def find_continuous(consensus, min_len):
     return consensus
 
 
-@profile
+#profile
 def find_primer(consensus, rows, min_len, max_len, ambiguous_base_n):
     """
     Find suitable primer in given consensus with features labeled as candidate
@@ -297,7 +319,7 @@ def find_primer(consensus, rows, min_len, max_len, ambiguous_base_n):
     return primers, consensus
 
 
-@profile
+#profile
 def count_and_draw(alignment, consensus, arg):
     """
     Given alignment(numpy array), return unique sequence count List[float].
@@ -388,7 +410,7 @@ def count_and_draw(alignment, consensus, arg):
             max_shannon_index, index)
 
 
-@profile
+#profile
 def validate(primer_candidate, db_file, n_seqs, arg):
     """
     Do BLAST. Parse BLAST result. Return List[PrimerWithInfo]
@@ -429,6 +451,8 @@ def validate(primer_candidate, db_file, n_seqs, arg):
             if hsp_bitscore_raw >= min_bitscore_raw:
                 sum_bitscore_raw += hsp_bitscore_raw
                 good_hits += 1
+                # middle location of primer, the difference of two mid_loc
+                # approximately equals to the length of amplified fragment.
                 start += sum(hit[0].hit_range) / 2
         coverage = good_hits/n_seqs
         if coverage >= arg.coverage:
@@ -450,7 +474,26 @@ def validate(primer_candidate, db_file, n_seqs, arg):
     return primer_verified
 
 
-@profile
+#profile
+def pick_pair(primers, arg):
+    pairs = list()
+    for left in primers:
+        # convert mid_loc to 5' location
+        location = left.avg_mid_loc - len(left) / 2
+        begin = location + arg.min_product
+        # fragment plus one primer = max_product length
+        end = location + arg.max_product - len(left)
+        for right in primers:
+            if right.avg_mid_loc < begin:
+                continue
+            if right.avg_mid_loc > end:
+                break
+            pairs.append([left, right.reverse_complement()])
+    return pairs
+
+
+
+#profile
 def parse_args():
     arg = argparse.ArgumentParser(description=main.__doc__)
     arg.add_argument('input', help='input alignment file')
@@ -477,7 +520,7 @@ def parse_args():
     return arg.parse_args()
 
 
-@profile
+#profile
 def main():
     """
     Automatic design primer for DNA barcode.
@@ -514,6 +557,9 @@ lower resolution options.
         'Primer not found! Try to loose options.')
     # validate
     primer_verified = validate(primer_candidate, db_file, rows, arg)
+    primer_verified.sort(key=lambda x: x.avg_mid_loc)
+    # pick pair
+    pairs = pick_pair(primer_verified, arg)
     # output
     primer_file = '{}-{}_coverage-{}bp_mismatch.fastq'.format(
         arg.out, arg.coverage, arg.mismatch)
