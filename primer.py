@@ -14,7 +14,7 @@ from timeit import default_timer as timer
 from subprocess import run
 from typing import List, Dict, Any
 
-from Bio import SearchIO, SeqIO
+from Bio import Phylo, SearchIO, SeqIO
 from Bio.Blast.Applications import NcbiblastnCommandline as nb
 from Bio.SeqRecord import SeqRecord
 from Bio.SeqFeature import SeqFeature, FeatureLocation, CompoundLocation
@@ -31,15 +31,15 @@ matplotlib.rcParams['axes.facecolor'] = '#666666'
 
 
 class PrimerWithInfo(SeqRecord):
-    def __init__(self, seq='', quality='', start=0, tm=0,
-                 coverage=0, sum_bitscore=0, avg_mid_loc=0, detail=0,
-                 reverse_complement=False):
+    def __init__(self, seq='', quality='', start=0, coverage=0, sum_bitscore=0,
+                 avg_mid_loc=0, detail=0, reverse_complement=False):
         super().__init__(seq.upper())
 
         self.sequence = self.seq
+        self.g_seq = re.sub(r'[^ATCG]', 'G', self.seq)
         self.quality = self.letter_annotations['solexa_quality'] = quality
         self.start = self.annotations['start'] = start
-        self.tm = self.annotations['tm'] = tm
+        self.tm = self.annotations['tm'] = primer3.calcTm(self.g_seq)
         self.coverage = self.annotations['coverage'] = coverage
         self.sum_bitscore = self.annotations['sum_bitscore'] = sum_bitscore
         self.avg_mid_loc = self.annotations['avg_mid_loc'] = avg_mid_loc
@@ -49,12 +49,32 @@ class PrimerWithInfo(SeqRecord):
         self.description = ''
         self.update_id()
 
-    def update_id(self):
-        self.end = self.annotations['end'] = self.start + self.__len__() - 1
-        self.id = ('AvgMidLocation({:.0f})-Tm({:.2f})-Coverage({:.2%})-'
-                   'SumBitScore({})-Start({})-End({})'.format(
-                       self.avg_mid_loc, self.tm, self.coverage,
-                       self.sum_bitscore, self.start, self.end))
+    def __getitem__(self, i):
+        if isinstance(i, int):
+            i = slice(i, i+1)
+        if isinstance(i, slice):
+            if self.seq is None:
+                raise ValueError('Empty sequence')
+            answer = PrimerWithInfo(seq=self.seq[i], quality=self.quality[i])
+            answer.annotations = dict(self.annotations.items())
+            return answer
+
+    def is_good_primer(self):
+        poly = re.compile(r'([ATCG])\1\1\1\1')
+        tandem = re.compile(r'([ATCG]{2})\1\1\1\1')
+        # ref1. http://www.premierbiosoft.com/tech_notes/PCR_Primer_Design.html
+        if re.search(poly, self.g_seq) is not None:
+            self.detail = 'Poly(NNNNN) structure found'
+            return False
+        if re.search(tandem, self.g_seq) is not None:
+            self.detail = 'Tandom(NN*5) exist'
+            return False
+        hairpin_tm = primer3.calcHairpinTm(self.g_seq)
+        homodimer_tm = primer3.calcHomodimerTm(self.g_seq)
+        if max(self.tm, hairpin_tm, homodimer_tm) != tm:
+            self.detail = 'Hairpin or homodimer found'
+            return False
+        return True
 
     def reverse_complement(self):
         new_seq = ''
@@ -77,15 +97,12 @@ class PrimerWithInfo(SeqRecord):
                               avg_mid_loc=self.avg_mid_loc,
                               detail=self.detail)
 
-    def __getitem__(self, i):
-        if isinstance(i, int):
-            i = slice(i, i+1)
-        if isinstance(i, slice):
-            if self.seq is None:
-                raise ValueError('Empty sequence')
-            answer = PrimerWithInfo(seq=self.seq[i], quality=self.quality[i])
-            answer.annotations = dict(self.annotations.items())
-            return answer
+    def update_id(self):
+        self.end = self.annotations['end'] = self.start + self.__len__() - 1
+        self.id = ('AvgMidLocation({:.0f})-Tm({:.2f})-Coverage({:.2%})-'
+                   'SumBitScore({})-Start({})-End({})'.format(
+                       self.avg_mid_loc, self.tm, self.coverage,
+                       self.sum_bitscore, self.start, self.end))
 
 
 class Pairs():
@@ -218,26 +235,35 @@ def get_resolution_and_entropy(alignment, start, end):
 
 
 def get_tree_value(alignment, start, end):
-    if run('iqtree -h', shell=True).returncode != 0:
-        raise Exception('Cannot find IQTREE, please check its installation!')
+    if run('iqtree -h', shell=True, stdout=open(
+            'iqtree.log', 'w')).returncode != 0:
+        print('Cannot find IQTREE!')
+        return 0
     fragment = alignment[:, start:end]
     tempfile = 'temp.aln'
     with open(tempfile, 'wb') as _:
         for index, row in enumerate(fragment):
             _.write(b'>'+str(index).encode('utf-8')+b'\n'+b''.join(row)+b'\n')
-    run('iqtree -s {} -m JC -fast'.format(tempfile), shell=True,
+    run('iqtree -s {} -m JC -fast -redo'.format(tempfile), shell=True,
         stdout=open('iqtree.log', 'w'))
-    with open(tempfile+'.treefile', 'r') as tree:
-        raw = tree.read()
-        count = raw.count(':')
-        rows, columns = alignment.shape
-        internal = count - rows
-        tree_value = internal / rows
-    return tree_value
+    tree = Phylo.read(tempfile+'.treefile', 'newick')
+    n_terminals = len(tree.get_terminals())
+    n_internals = len(tree.get_nonterminals())
+    print(n_internals, n_terminals)
+    return n_internals / n_terminals
 
 
-def test_hetrodimer(left, right):
-    pass
+def have_dimer(left, right):
+    to be continue
+    """
+    primer3.setGlobals seems have no effect on calcTm, so I have to replace all
+    ambiguous base to G to get an approximate value. Othervise calcTm() will
+    generate -99999 if there is ambiguous base.
+    """
+    heterodimer_tm = primer3.calcHeterodimer(pure_left, pure_right)
+        tm = primer3.calcTm(pure_seq)
+        return True, tm, 'Ok'
+    return heterodimer_tm
 
 
 #profile
@@ -342,32 +368,6 @@ def find_primer(consensus, rows, min_len, max_len, ambiguous_base_n):
     Find suitable primer in given consensus with features labeled as candidate
     primer, return List[PrimerWithInfo], consensus
     """
-    poly = re.compile(r'([ATCG])\1\1\1\1')
-    ambiguous_base = re.compile(r'[^ATCG]')
-    tandem = re.compile(r'([ATCG]{2})\1\1\1\1')
-
-    def is_good_primer(primer):
-        # ref1. http://www.premierbiosoft.com/tech_notes/PCR_Primer_Design.html
-        seq = ''.join(primer)
-        if re.search(poly, seq) is not None:
-            return False, 0, 'Poly(NNNNN) structure found'
-        if re.search(tandem, seq) is not None:
-            return False, 0, 'Tandom(NN*5) exist'
-            # no more 3 ambiguous base
-        if len(re.findall(ambiguous_base, seq)) >= ambiguous_base_n:
-            return False, 0, 'More than 3 ambiguous base'
-
-# primer3.setGlobals seems have no effect on calcTm, so I have to replace all
-# ambiguous base to A to get an approximate value. Othervise calcTm() will
-# generate -99999 if there is ambiguous base.
-        pure_seq = re.sub(ambiguous_base, 'A', seq)
-        tm = primer3.calcTm(pure_seq)
-        hairpin_tm = primer3.calcHairpinTm(pure_seq)
-        homodimer_tm = primer3.calcHomodimerTm(pure_seq)
-        if max(tm, hairpin_tm, homodimer_tm) != tm:
-            return False, 0, 'Hairpin or homodimer found'
-        return True, tm, 'Ok'
-
     primers: List[SeqFeature] = list()
     # skip good_region
     continuous = consensus.features[1:]
@@ -376,15 +376,12 @@ def find_primer(consensus, rows, min_len, max_len, ambiguous_base_n):
         len_fragment = len(fragment)
         for begin in range(len_fragment-max_len):
             for p_len in range(min_len, max_len):
-                seqs = fragment[begin:(begin+p_len)]
-                good_primer, tm, detail = is_good_primer(seqs)
                 start = feature.location.start + begin
-                if good_primer:
+                primer = consensus[start:start+p_len]
+                if primer.is_good_primer():
                     consensus.features.append(SeqFeature(
                         FeatureLocation(start, start+p_len),
                         type='primer', strand=1))
-                    primer = consensus[start:start+p_len]
-                    primer.tm = tm
                     primer.start = start
                     primer.update_id()
                     primers.append(primer)
