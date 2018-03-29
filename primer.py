@@ -116,7 +116,7 @@ class PrimerWithInfo(SeqRecord):
 
 
 class Pairs():
-    def __init__(self, left, right):
+    def __init__(self, left, right, alignment):
         self.left = left
         if not right.is_reverse_complement:
             self.right = right.reverse_complement()
@@ -132,14 +132,18 @@ class Pairs():
         self.tree_value = 0.0
         self.entropy = 0.0
         self.hetrodimer = False
-
-    def update_info(self, alignment):
         # include end base
         self.resolution, self.entropy = get_resolution_and_entropy(
             alignment, self.start, self.end+1)
         self.tree_value = get_tree_value(alignment, self.start, self.end)
-        self.heterodimer = have_heterodimer(self.left, self.right)
-        print(self.tree_value, self.heterodimer)
+        self.heterodimer_tm = primer3.calcHeterodimer(self.left.g_seq,
+                                                      self.right.g_seq).tm
+        if max(self.heterodimer_tm, self.left.tm,
+               self.right.tm) == self.heterodimer_tm:
+            self.have_heterodimer = True
+        else:
+            self.have_heterodimer = False
+
 
 #profile
 def prepare(fasta):
@@ -263,9 +267,6 @@ def get_tree_value(alignment, start, end):
     return n_internals / n_terminals
 
 
-def have_heterodimer(left, right):
-    heterodimer = primer3.calcHeterodimer(left.g_seq, right.g_seq)
-    return heterodimer.structure_found
 
 
 #profile
@@ -532,7 +533,7 @@ def validate(primer_candidate, db_file, n_seqs, arg):
 
 
 #profile
-def pick_pair(primers, arg):
+def pick_pair(primers, alignment, arg):
     pairs = list()
     for left in primers:
         # convert mid_loc to 5' location
@@ -545,7 +546,7 @@ def pick_pair(primers, arg):
                 continue
             if right.avg_mid_loc > end:
                 break
-            pairs.append(Pairs(left, right))
+            pairs.append(Pairs(left, right, alignment))
     return pairs
 
 
@@ -616,9 +617,8 @@ lower resolution options.
     primer_verified = validate(primer_candidate, db_file, rows, arg)
     primer_verified.sort(key=lambda x: x.avg_mid_loc)
     # pick pair
-    pairs = pick_pair(primer_verified, arg)
+    pairs = pick_pair(primer_verified, alignment, arg)
     for i in pairs:
-        i.update_info(alignment)
         print(i)
     # output
     primer_file = '{}-{}_coverage-{}bp_mismatch.fastq'.format(
