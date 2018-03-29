@@ -264,18 +264,18 @@ def get_resolution_and_entropy(alignment, start, end):
 
 
 def get_tree_value(alignment, start, end):
-    if run('iqtree -h', shell=True, stdout=open(
-            'iqtree.log', 'w')).returncode != 0:
-        print('Cannot find IQTREE!')
+    if run('mafft --help', shell=True, stderr=open('mafft.log', 'w')
+           ).returncode != 1:
+        print('Cannot find MAFFT!')
         return 0
     fragment = alignment[:, start:end]
     tempfile = 'temp.aln'
     with open(tempfile, 'wb') as _:
         for index, row in enumerate(fragment):
             _.write(b'>'+str(index).encode('utf-8')+b'\n'+b''.join(row)+b'\n')
-    run('iqtree -s {} -m JC -fast -blmin 0.00001 -redo'.format(tempfile), shell=True,
-        stdout=open('iqtree.log', 'w'))
-    tree = Phylo.read(tempfile+'.treefile', 'newick')
+    run('mafft --quiet --retree 0 --treeout --reorder {} > mafft.log'.format(
+        tempfile), shell=True)
+    tree = Phylo.read(tempfile+'.tree', 'newick')
     n_terminals = len(tree.get_terminals())
     n_internals = len(tree.get_nonterminals())
     return n_internals / n_terminals
