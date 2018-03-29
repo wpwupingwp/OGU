@@ -122,8 +122,6 @@ class Pairs():
             self.right = right.reverse_complement()
         else:
             self.right = right
-        self.product_length = int((right.avg_mid_loc - len(right)/2) -
-                                  (left.avg_mid_loc + len(left)/2))
         self.delta_tm = abs(left.tm - right.tm)
         self.coverage = min(left.coverage, right.coverage)
         self.start = left.start
@@ -143,6 +141,20 @@ class Pairs():
             self.have_heterodimer = True
         else:
             self.have_heterodimer = False
+
+    def __len__(self):
+        product_length = int((self.right.avg_mid_loc - len(self.right)/2) - (
+            self.left.avg_mid_loc + len(self.left)/2))
+        return product_length
+
+    def __str__(self):
+        return (
+            'Pairs(product_length={}, start={}, end={}, left={}, right={}, '
+            'resolution={:.2%}, tree_value={:.2f}, entropy={:.2f},'
+            'have_heterodimer={})'.format(
+                len(self), self.start, self.end,self.left.seq, self.right.seq,
+                self.resolution, self.tree_value, self.entropy,
+                self.have_heterodimer))
 
 
 #profile
