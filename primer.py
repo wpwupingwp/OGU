@@ -142,6 +142,9 @@ class Pairs():
         else:
             self.have_heterodimer = False
 
+        self.score = (len(self)*0.1 + self.coverage*100 + self.resolution*100
+                      - int(self.have_heterodimer)*100 - self.delta_tm*5)
+
     def __len__(self):
         product_length = int((self.right.avg_mid_loc - len(self.right)/2) - (
             self.left.avg_mid_loc + len(self.left)/2))
@@ -149,11 +152,11 @@ class Pairs():
 
     def __str__(self):
         return (
-            'Pairs(product_length={}, start={}, end={}, left={}, right={}, '
-            'resolution={:.2%}, tree_value={:.2f}, entropy={:.2f},'
+            'Pairs(score={:.2f}, product={}, start={}, end={}, left={}, '
+            'right={}, resolution={:.2%}, coverage={:.2%}, delta_tm={:.2f}, '
             'have_heterodimer={})'.format(
-                len(self), self.start, self.end,self.left.seq, self.right.seq,
-                self.resolution, self.tree_value, self.entropy,
+                self.score, len(self), self.start, self.end, self.left.seq,
+                self.right.seq, self.resolution, self.coverage, self.delta_tm,
                 self.have_heterodimer))
 
 
@@ -270,15 +273,12 @@ def get_tree_value(alignment, start, end):
     with open(tempfile, 'wb') as _:
         for index, row in enumerate(fragment):
             _.write(b'>'+str(index).encode('utf-8')+b'\n'+b''.join(row)+b'\n')
-    run('iqtree -s {} -m JC -fast -redo'.format(tempfile), shell=True,
+    run('iqtree -s {} -m JC -fast -blmin 0.00001 -redo'.format(tempfile), shell=True,
         stdout=open('iqtree.log', 'w'))
     tree = Phylo.read(tempfile+'.treefile', 'newick')
     n_terminals = len(tree.get_terminals())
     n_internals = len(tree.get_nonterminals())
-    print(n_internals, n_terminals)
     return n_internals / n_terminals
-
-
 
 
 #profile
@@ -499,7 +499,7 @@ def validate(primer_candidate, db_file, n_seqs, arg):
              query=query_file,
              db=db_file,
              task='blastn',
-             evalue=1e-5,
+             evalue=1e-3,
              max_hsps=1,
              max_target_seqs=n_seqs,
              outfmt=5,
@@ -630,14 +630,14 @@ lower resolution options.
     primer_verified.sort(key=lambda x: x.avg_mid_loc)
     # pick pair
     pairs = pick_pair(primer_verified, alignment, arg)
+    pairs.sort(key=lambda x: x.score, reverse=True)
     for i in pairs:
         print(i)
     # output
-    primer_file = '{}-{}_coverage-{}bp_mismatch.fastq'.format(
-        arg.out, arg.coverage, arg.mismatch)
+    primer_file = '{}-{}_resolution.fastq'.format(arg.out, arg.resolution)
     with open(primer_file, 'w') as out:
             SeqIO.write(primer_verified, out, 'fastq')
-    print('Found {} primers.'.format(len(primer_verified)))
+    print('Found {} pairs of primers.'.format(len(pairs)))
     end = timer()
     print('Cost {:.3f} seconds.'.format(end-start))
 
