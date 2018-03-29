@@ -131,6 +131,7 @@ class Pairs():
         self.entropy = 0.0
         self.hetrodimer = False
         # include end base
+        print(left.avg_mid_loc, right.avg_mid_loc)
         self.resolution, self.entropy = get_resolution_and_entropy(
             alignment, self.start, self.end+1)
         self.tree_value = get_tree_value(alignment, self.start, self.end)
@@ -537,7 +538,7 @@ def validate(primer_candidate, db_file, n_seqs, arg):
         if i in blast_result:
             primer.coverage = blast_result[i]['coverage']
             primer.sum_bitscore = blast_result[i]['sum_bitscore']
-            primer.avg_mid_loc = blast_result[i]['avg_mid_loc']
+            primer.avg_mid_loc = int(blast_result[i]['avg_mid_loc'])
             primer.update_id()
             primer_verified.append(primer)
     # output
