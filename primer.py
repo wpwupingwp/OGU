@@ -131,7 +131,6 @@ class Pairs():
         self.entropy = 0.0
         self.hetrodimer = False
         # include end base
-        print(left.avg_mid_loc, right.avg_mid_loc)
         self.resolution, self.entropy = get_resolution_and_entropy(
             alignment, self.start, self.end+1)
         self.tree_value = get_tree_value(alignment, self.start, self.end)
@@ -161,7 +160,7 @@ class Pairs():
                 self.have_heterodimer))
 
 
-#profile
+@profile
 def prepare(fasta):
     """
     Given fasta format alignment filename, return a numpy array for sequence:
@@ -198,7 +197,7 @@ def prepare(fasta):
     return name, sequence, no_gap
 
 
-#profile
+@profile
 def count_base(alignment, rows, columns):
     """
     Given alignment numpy array, count cumulative frequency of base in each
@@ -233,7 +232,7 @@ def count_base(alignment, rows, columns):
     return frequency
 
 
-#profile
+@profile
 def get_quality(data: List[float], rows: int):
     # use fastq-illumina format
     max_q = 62
@@ -250,8 +249,8 @@ def get_resolution_and_entropy(alignment, start, end):
     return resolution (float) and entropy (float).
     """
     rows, columns = alignment.shape
-    item, count = np.unique(alignment[:, start:end], return_counts=True,
-                            axis=0)
+    fragment = alignment[:, start:end]
+    item, count = np.unique(fragment, return_counts=True, axis=0)
     resolution = len(count) / rows
 
     entropy = 0
@@ -282,7 +281,7 @@ def get_tree_value(alignment, start, end):
     return n_internals / n_terminals
 
 
-#profile
+@profile
 def generate_consensus(base_cumulative_frequency, coverage_percent,
                        rows, columns, output):
     """
@@ -360,7 +359,7 @@ def set_good_region(consensus, index, seq_count_min_len,
     return consensus
 
 
-#profile
+@profile
 def find_continuous(consensus, min_len):
     """
     Given PrimerWithInfo, good_region: List[bool], min_len
@@ -378,7 +377,7 @@ def find_continuous(consensus, min_len):
     return consensus
 
 
-#profile
+@profile
 def find_primer(consensus, rows, min_len, max_len, ambiguous_base_n):
     """
     Find suitable primer in given consensus with features labeled as candidate
@@ -404,7 +403,7 @@ def find_primer(consensus, rows, min_len, max_len, ambiguous_base_n):
     return primers, consensus
 
 
-#profile
+@profile
 def count_and_draw(alignment, consensus, arg):
     """
     Given alignment(numpy array), return unique sequence count List[float].
@@ -481,7 +480,7 @@ def count_and_draw(alignment, consensus, arg):
             max_shannon_index, index)
 
 
-#profile
+@profile
 def validate(primer_candidate, db_file, n_seqs, arg):
     """
     Do BLAST. Parse BLAST result. Return List[PrimerWithInfo]
@@ -511,8 +510,6 @@ def validate(primer_candidate, db_file, n_seqs, arg):
     blast_result: Dict[int, Dict[str, Any]] = dict()
     for query in SearchIO.parse(blast_result_file, 'blast-xml'):
         if len(query) == 0:
-            blast_result[query.id] = {
-                'coverage': 0, 'sum_bitscore': 0, 'avg_mid_loc': 0}
             continue
         sum_bitscore_raw = 0
         good_hits = 0
@@ -545,7 +542,7 @@ def validate(primer_candidate, db_file, n_seqs, arg):
     return primer_verified
 
 
-#profile
+@profile
 def pick_pair(primers, alignment, arg):
     pairs = list()
     for left in primers:
@@ -564,7 +561,7 @@ def pick_pair(primers, alignment, arg):
 
 
 
-#profile
+@profile
 def parse_args():
     arg = argparse.ArgumentParser(description=main.__doc__)
     arg.add_argument('input', help='input alignment file')
@@ -591,7 +588,7 @@ def parse_args():
     return arg.parse_args()
 
 
-#profile
+@profile
 def main():
     """
     Automatic design primer for DNA barcode.
