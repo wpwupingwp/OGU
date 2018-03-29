@@ -32,7 +32,8 @@ matplotlib.rcParams['axes.facecolor'] = '#666666'
 
 class PrimerWithInfo(SeqRecord):
     def __init__(self, seq='', quality='', start=0, tm=0,
-                 coverage=0, sum_bitscore=0, avg_mid_loc=0, detail=0):
+                 coverage=0, sum_bitscore=0, avg_mid_loc=0, detail=0,
+                 reverse_complement=False):
         super().__init__(seq.upper())
 
         self.sequence = self.seq
@@ -44,6 +45,8 @@ class PrimerWithInfo(SeqRecord):
         self.avg_mid_loc = self.annotations['avg_mid_loc'] = avg_mid_loc
         self.detail = self.annotations['detail'] = detail
         self.end = self.annotations['end'] = start + self.__len__() - 1
+        self.is_reverse_complement = reverse_complement
+        self.description = ''
         self.update_id()
 
     def update_id(self):
@@ -74,7 +77,6 @@ class PrimerWithInfo(SeqRecord):
                               avg_mid_loc=self.avg_mid_loc,
                               detail=self.detail)
 
-
     def __getitem__(self, i):
         if isinstance(i, int):
             i = slice(i, i+1)
@@ -85,6 +87,32 @@ class PrimerWithInfo(SeqRecord):
             answer.annotations = dict(self.annotations.items())
             return answer
 
+
+class Pairs():
+    def __init__(self, left, right):
+        self.left = left
+        if not right.is_reverse_complement:
+            self.right = right.reverse_complement()
+        else:
+            self.right = right
+        self.product_length = int((right.avg_mid_loc - len(right)/2) -
+                                  (left.avg_mid_loc + len(left)/2))
+        self.delta_tm = abs(left.tm - right.tm)
+        self.coverage = min(left.coverage, right.coverage)
+        self.start = left.start
+        self.end = right.end
+        self.resolution = 0
+        self.tree_value = 0.0
+        self.entropy = 0.0
+        self.hetrodimer = False
+
+    def update_info(self, alignment):
+        # include end base
+        self.resolution, self.entropy = get_resolution_and_entropy(
+            alignment, self.start, self.end+1)
+        self.tree_value = get_tree_value(alignment, self.start, self.end)
+        print(self.tree_value)
+        self.hetrodimer = test_hetrodimer(self.left.seq, self.right.seq)
 
 #profile
 def prepare(fasta):
@@ -166,6 +194,50 @@ def get_quality(data: List[float], rows: int):
     # use min to avoid KeyError
     quality_value = [min(max_q, int(i*factor))-1 for i in data]
     return quality_value
+
+
+def get_resolution_and_entropy(alignment, start, end):
+    """
+    Given alignment (2d numpy array), location of fragment(start and end, int,
+    start from zero, exclude end),
+    return resolution (float) and entropy (float).
+    """
+    rows, columns = alignment.shape
+    item, count = np.unique(alignment[:, start:end], return_counts=True,
+                            axis=0)
+    resolution = len(count) / rows
+
+    entropy = 0
+    for j in count:
+        p_j = j / rows
+        log2_p_j = log2(p_j)
+        entropy += log2_p_j * p_j
+    entropy *= -1
+
+    return resolution, entropy
+
+
+def get_tree_value(alignment, start, end):
+    if run('iqtree -h', shell=True).returncode != 0:
+        raise Exception('Cannot find IQTREE, please check its installation!')
+    fragment = alignment[:, start:end]
+    tempfile = 'temp.aln'
+    with open(tempfile, 'wb') as _:
+        for index, row in enumerate(fragment):
+            _.write(b'>'+str(index).encode('utf-8')+b'\n'+b''.join(row)+b'\n')
+    run('iqtree -s {} -m JC -fast'.format(tempfile), shell=True,
+        stdout=open('iqtree.log', 'w'))
+    with open(tempfile+'.treefile', 'r') as tree:
+        raw = tree.read()
+        count = raw.count(':')
+        rows, columns = alignment.shape
+        internal = count - rows
+        tree_value = internal / rows
+    return tree_value
+
+
+def test_hetrodimer(left, right):
+    pass
 
 
 #profile
@@ -349,31 +421,17 @@ def count_and_draw(alignment, consensus, arg):
         if consensus.sequence[i] in ('-', 'N'):
             continue
         # exclude primer sequence
-        split_1 = alignment[:, i:(i+min_plus)]
-        split_2 = alignment[:, i:(i+max_plus)]
-        # uniqe array, count line*times
-        _, count1 = np.unique(split_1, return_counts=True, axis=0)
-        _, count2 = np.unique(split_2, return_counts=True, axis=0)
-        count_min_len.append(len(count1))
-        count_max_len.append(len(count2))
-        # Shannon Index
-        h = 0
-        for j in count1:
-            p_j = j / rows
-            log2_p_j = log2(p_j)
-            h += log2_p_j * p_j
-        shannon_index1.append(-1*h)
-        h = 0
-        for j in count2:
-            p_j = j / rows
-            log2_p_j = log2(p_j)
-            h += log2_p_j * p_j
-        shannon_index2.append(-1*h)
+        resolution1, entropy1 = get_resolution_and_entropy(alignment, i,
+                                                           i+min_plus)
+        resolution2, entropy2 = get_resolution_and_entropy(alignment, i,
+                                                           i+max_plus)
+        count_min_len.append(resolution1)
+        count_max_len.append(resolution2)
+        shannon_index1.append(entropy1)
+        shannon_index2.append(entropy2)
         index.append(i)
 
     # convert value to (0,1)
-    count_min_len = [i/rows for i in count_min_len]
-    count_max_len = [i/rows for i in count_max_len]
     # plt.style.use('ggplot')
     fig, ax1 = plt.subplots(figsize=(20+len(index)//5000, 10))
     plt.title('Shannon Index & Resolution({}-{}bp, window={})'.format(
@@ -488,7 +546,7 @@ def pick_pair(primers, arg):
                 continue
             if right.avg_mid_loc > end:
                 break
-            pairs.append([left, right.reverse_complement()])
+            pairs.append(Pairs(left, right))
     return pairs
 
 
@@ -560,6 +618,8 @@ lower resolution options.
     primer_verified.sort(key=lambda x: x.avg_mid_loc)
     # pick pair
     pairs = pick_pair(primer_verified, arg)
+    for i in pairs:
+        i.update_info(alignment)
     # output
     primer_file = '{}-{}_coverage-{}bp_mismatch.fastq'.format(
         arg.out, arg.coverage, arg.mismatch)
