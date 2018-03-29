@@ -36,6 +36,11 @@ class PrimerWithInfo(SeqRecord):
         super().__init__(seq.upper())
 
         self.sequence = self.seq
+        """
+        primer3.setGlobals seems have no effect on calcTm, so I have to replace
+        all ambiguous base to G to get an approximate value. Othervise calcTm()
+        will generate -99999 if there is ambiguous base.
+        """
         self.g_seq = re.sub(r'[^ATCG]', 'G', self.seq)
         self.quality = self.letter_annotations['solexa_quality'] = quality
         self.start = self.annotations['start'] = start
@@ -69,10 +74,15 @@ class PrimerWithInfo(SeqRecord):
         if re.search(tandem, self.g_seq) is not None:
             self.detail = 'Tandom(NN*5) exist'
             return False
-        hairpin_tm = primer3.calcHairpinTm(self.g_seq)
-        homodimer_tm = primer3.calcHomodimerTm(self.g_seq)
-        if max(self.tm, hairpin_tm, homodimer_tm) != tm:
-            self.detail = 'Hairpin or homodimer found'
+        self.hairpin_tm = primer3.calcHairpinTm(self.g_seq)
+        self.homodimer_tm = primer3.calcHomodimerTm(self.g_seq)
+        # primer3.calcHairpin or calcHomodimer usually return structure found
+        # with low Tm. Here we compare structure_tm with sequence tm
+        if self.hairpin_tm >= self.tm:
+            self.detail = 'Hairpin found'
+            return False
+        if self.homodimer_tm >= self.tm:
+            self.detail = 'Homodimer found'
             return False
         return True
 
@@ -128,8 +138,8 @@ class Pairs():
         self.resolution, self.entropy = get_resolution_and_entropy(
             alignment, self.start, self.end+1)
         self.tree_value = get_tree_value(alignment, self.start, self.end)
-        print(self.tree_value)
-        self.hetrodimer = test_hetrodimer(self.left.seq, self.right.seq)
+        self.heterodimer = have_heterodimer(self.left, self.right)
+        print(self.tree_value, self.heterodimer)
 
 #profile
 def prepare(fasta):
@@ -253,17 +263,9 @@ def get_tree_value(alignment, start, end):
     return n_internals / n_terminals
 
 
-def have_dimer(left, right):
-    to be continue
-    """
-    primer3.setGlobals seems have no effect on calcTm, so I have to replace all
-    ambiguous base to G to get an approximate value. Othervise calcTm() will
-    generate -99999 if there is ambiguous base.
-    """
-    heterodimer_tm = primer3.calcHeterodimer(pure_left, pure_right)
-        tm = primer3.calcTm(pure_seq)
-        return True, tm, 'Ok'
-    return heterodimer_tm
+def have_heterodimer(left, right):
+    heterodimer = primer3.calcHeterodimer(left.g_seq, right.g_seq)
+    return heterodimer.structure_found
 
 
 #profile
@@ -617,6 +619,7 @@ lower resolution options.
     pairs = pick_pair(primer_verified, arg)
     for i in pairs:
         i.update_info(alignment)
+        print(i)
     # output
     primer_file = '{}-{}_coverage-{}bp_mismatch.fastq'.format(
         arg.out, arg.coverage, arg.mismatch)
