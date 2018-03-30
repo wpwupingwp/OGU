@@ -160,7 +160,7 @@ class Pairs():
                 self.have_heterodimer))
 
 
-@profile
+#profile
 def prepare(fasta):
     """
     Given fasta format alignment filename, return a numpy array for sequence:
@@ -197,7 +197,7 @@ def prepare(fasta):
     return name, sequence, no_gap
 
 
-@profile
+#profile
 def count_base(alignment, rows, columns):
     """
     Given alignment numpy array, count cumulative frequency of base in each
@@ -232,7 +232,7 @@ def count_base(alignment, rows, columns):
     return frequency
 
 
-@profile
+#profile
 def get_quality(data: List[float], rows: int):
     # use fastq-illumina format
     max_q = 62
@@ -281,7 +281,7 @@ def get_tree_value(alignment, start, end):
     return n_internals / n_terminals
 
 
-@profile
+#profile
 def generate_consensus(base_cumulative_frequency, coverage_percent,
                        rows, columns, output):
     """
@@ -359,7 +359,7 @@ def set_good_region(consensus, index, seq_count_min_len,
     return consensus
 
 
-@profile
+#profile
 def find_continuous(consensus, min_len):
     """
     Given PrimerWithInfo, good_region: List[bool], min_len
@@ -377,7 +377,7 @@ def find_continuous(consensus, min_len):
     return consensus
 
 
-@profile
+#profile
 def find_primer(consensus, rows, min_len, max_len, ambiguous_base_n):
     """
     Find suitable primer in given consensus with features labeled as candidate
@@ -403,7 +403,7 @@ def find_primer(consensus, rows, min_len, max_len, ambiguous_base_n):
     return primers, consensus
 
 
-@profile
+#profile
 def count_and_draw(alignment, consensus, arg):
     """
     Given alignment(numpy array), return unique sequence count List[float].
@@ -480,7 +480,7 @@ def count_and_draw(alignment, consensus, arg):
             max_shannon_index, index)
 
 
-@profile
+#profile
 def validate(primer_candidate, db_file, n_seqs, arg):
     """
     Do BLAST. Parse BLAST result. Return List[PrimerWithInfo]
@@ -542,7 +542,7 @@ def validate(primer_candidate, db_file, n_seqs, arg):
     return primer_verified
 
 
-@profile
+#profile
 def pick_pair(primers, alignment, arg):
     pairs = list()
     for left in primers:
@@ -561,7 +561,7 @@ def pick_pair(primers, alignment, arg):
 
 
 
-@profile
+#profile
 def parse_args():
     arg = argparse.ArgumentParser(description=main.__doc__)
     arg.add_argument('input', help='input alignment file')
@@ -588,7 +588,7 @@ def parse_args():
     return arg.parse_args()
 
 
-@profile
+#profile
 def main():
     """
     Automatic design primer for DNA barcode.
@@ -629,12 +629,20 @@ lower resolution options.
     # pick pair
     pairs = pick_pair(primer_verified, alignment, arg)
     pairs.sort(key=lambda x: x.score, reverse=True)
-    for i in pairs:
-        print(i)
     # output
-    primer_file = '{}-{}_resolution.fastq'.format(arg.out, arg.resolution)
-    with open(primer_file, 'w') as out:
+    with open('{}-{}_resolution.fastq'.format(arg.out, arg.resolution),
+              'w') as out:
             SeqIO.write(primer_verified, out, 'fastq')
+    with open('{}-{}samples-{:.2f}resolution.csv'.format(
+            arg.out, rows, arg.resolution), 'w') as out:
+        out.write('Score,ProductLength,Coverage,Resolution,'
+                  'DeltaTm,Left,Right,Start,End\n')
+        for pair in pairs:
+            line = '{:.2f},{},{:.2%},{:.2%},{:.2f},{},{},{},{}\n'.format(
+                pair.score, len(pair), pair.coverage, pair.resolution,
+                pair.delta_tm, pair.left.seq, pair.right.seq, pair.start,
+                pair.end)
+            out.write(line)
     print('Found {} pairs of primers.'.format(len(pairs)))
     end = timer()
     print('Cost {:.3f} seconds.'.format(end-start))
