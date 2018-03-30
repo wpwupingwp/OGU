@@ -99,6 +99,7 @@ class PrimerWithInfo(SeqRecord):
                 new_seq += 'C'
             else:
                 new_seq += base
+        new_seq = new_seq[::-1]
         new_quality = self.quality[::-1]
         # try to simplify??
         return PrimerWithInfo(seq=new_seq, quality=new_quality,
