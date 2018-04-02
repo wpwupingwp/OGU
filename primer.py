@@ -631,14 +631,16 @@ lower resolution options.
     pairs = pick_pair(primer_verified, alignment, arg)
     pairs.sort(key=lambda x: x.score, reverse=True)
     # output
+    csv_title = ('Score,SampleUsed,ProductLength,Coverage,Resolution,'
+                 'LeftSeq,LeftTm,RightSeq,RightTm,DeltaTm,Start,End\n')
+    style = '{:.2f},{},{},{:.2%},{:.2%},{},{:.2f},{},{:.2f},{:.2f},{},{}\n'
     with open('{}-{}samples-{:.2f}resolution.fastq'.format(
             arg.out, rows, arg.resolution), 'w') as out1, open(
                 '{}-{}samples-{:.2f}resolution.csv'.format(
             arg.out, rows, arg.resolution), 'w') as out2:
-        out2.write('Score,SampleUsed,ProductLength,Coverage,Resolution,'
-                   'LeftSeq,LeftTm,RightSeq,RightTm,DeltaTm,Start,End\n')
+        out2.write(csv_title)
         for pair in pairs:
-            line = '{:.2f},{},{},{:.2%},{:.2%},{},{:.2f},{},{:.2f},{:.2f},{},{}\n'.format(
+            line = style.format(
                 pair.score, rows, len(pair), pair.coverage, pair.resolution,
                 pair.left.seq, pair.left.tm, pair.right.seq, pair.right.tm,
                 pair.delta_tm, pair.start, pair.end)
