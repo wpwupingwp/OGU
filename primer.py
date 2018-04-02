@@ -12,6 +12,7 @@ from math import log2
 from multiprocessing import cpu_count
 from timeit import default_timer as timer
 from subprocess import run
+from tempfile import NamedTemporaryFile as tmp
 from typing import List, Dict, Any
 
 from Bio import Phylo, SearchIO, SeqIO
@@ -170,7 +171,7 @@ def prepare(fasta):
     no_gap = fasta + '.no_gap'
     data: List[List[str, str]] = []
     record = ['id', 'sequence']
-    with open(fasta, 'r') as raw, open(no_gap, 'w') as out:
+    with open(fasta, 'r') as raw, tmp('wt', delete=False) as out:
         for line in raw:
             out.write(line.replace('-', ''))
             if line.startswith('>'):
@@ -265,20 +266,20 @@ def get_resolution_and_entropy(alignment, start, end):
 
 
 def get_tree_value(alignment, start, end):
-    if run('mafft --help', shell=True, stderr=open('mafft.log', 'w')
+    if run('mafft --help', shell=True, stderr=tmp('wt')
            ).returncode != 1:
         print('Cannot find MAFFT!')
         return 0
     fragment = alignment[:, start:end]
-    tempfile = 'temp.aln'
-    with open(tempfile, 'wb') as _:
-        for index, row in enumerate(fragment):
-            _.write(b'>'+str(index).encode('utf-8')+b'\n'+b''.join(row)+b'\n')
+    _ = tmp(delete=False)
+    for index, row in enumerate(fragment):
+        _.write(b'>'+str(index).encode('utf-8')+b'\n'+b''.join(row)+b'\n')
     run('mafft --quiet --retree 0 --treeout --reorder {} > mafft.log'.format(
-        tempfile), shell=True)
-    tree = Phylo.read(tempfile+'.tree', 'newick')
+        _.name), shell=True)
+    tree = Phylo.read(_.name+'.tree', 'newick')
     n_terminals = len(tree.get_terminals())
     n_internals = len(tree.get_nonterminals())
+    _.close()
     return n_internals / n_terminals
 
 
@@ -493,7 +494,7 @@ def validate(primer_candidate, db_file, n_seqs, arg):
     SeqIO.convert(query_file+'.fastq', 'fastq', query_file, 'fasta')
     # build blast db
     run('makeblastdb -in {} -dbtype nucl'.format(db_file), shell=True,
-        stdout=open('makeblastdb.log', 'w'))
+        stdout=tmp('wt'))
     # blast
     blast_result_file = 'BlastResult.xml'
     cmd = nb(num_threads=cpu_count(),
