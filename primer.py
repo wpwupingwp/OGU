@@ -168,12 +168,12 @@ def prepare(fasta):
     Given fasta format alignment filename, return a numpy array for sequence:
     Generate fasta file without gap for makeblastdb, return file name.
     """
-    no_gap = fasta + '.no_gap'
+    no_gap = tmp('wt', delete=False)
     data: List[List[str, str]] = []
     record = ['id', 'sequence']
-    with open(fasta, 'r') as raw, tmp('wt', delete=False) as out:
+    with open(fasta, 'r') as raw:
         for line in raw:
-            out.write(line.replace('-', ''))
+            no_gap.write(line.replace('-', ''))
             if line.startswith('>'):
                 data.append([record[0], ''.join(record[1:])])
                 # remove ">" and CRLF
@@ -196,7 +196,7 @@ def prepare(fasta):
     # new = np.hstack((name, seq)) -> is slower
     name = np.array([[i[0]] for i in data], dtype=np.bytes_)
     sequence = np.array([list(i[1]) for i in data], dtype=np.bytes_, order='F')
-    return name, sequence, no_gap
+    return name, sequence, no_gap.name
 
 
 #profile
@@ -496,7 +496,7 @@ def validate(primer_candidate, db_file, n_seqs, arg):
     run('makeblastdb -in {} -dbtype nucl'.format(db_file), shell=True,
         stdout=tmp('wt'))
     # blast
-    blast_result_file = 'BlastResult.xml'
+    blast_result_file = tmp('wt', delete=False).name
     cmd = nb(num_threads=cpu_count(),
              query=query_file,
              db=db_file,
@@ -627,24 +627,24 @@ lower resolution options.
         'Primer not found! Try to loose options.')
     # validate
     primer_verified = validate(primer_candidate, db_file, rows, arg)
-    primer_verified.sort(key=lambda x: x.avg_mid_loc)
     # pick pair
     pairs = pick_pair(primer_verified, alignment, arg)
     pairs.sort(key=lambda x: x.score, reverse=True)
     # output
-    with open('{}-{}_resolution.fastq'.format(arg.out, arg.resolution),
-              'w') as out:
-            SeqIO.write(primer_verified, out, 'fastq')
-    with open('{}-{}samples-{:.2f}resolution.csv'.format(
-            arg.out, rows, arg.resolution), 'w') as out:
-        out.write('Score,ProductLength,Coverage,Resolution,'
-                  'DeltaTm,Left,Right,Start,End\n')
+    with open('{}-{}samples-{:.2f}resolution.fastq'.format(
+            arg.out, rows, arg.resolution), 'w') as out1, open(
+                '{}-{}samples-{:.2f}resolution.csv'.format(
+            arg.out, rows, arg.resolution), 'w') as out2:
+        out2.write('Score,ProductLength,Coverage,Resolution,'
+                   'DeltaTm,Left,Right,Start,End\n')
         for pair in pairs:
             line = '{:.2f},{},{:.2%},{:.2%},{:.2f},{},{},{},{}\n'.format(
                 pair.score, len(pair), pair.coverage, pair.resolution,
                 pair.delta_tm, pair.left.seq, pair.right.seq, pair.start,
                 pair.end)
-            out.write(line)
+            out2.write(line)
+            SeqIO.write(pair.left, out1, 'fastq')
+            SeqIO.write(pair.right, out1, 'fastq')
     print('Found {} pairs of primers.'.format(len(pairs)))
     end = timer()
     print('Cost {:.3f} seconds.'.format(end-start))
