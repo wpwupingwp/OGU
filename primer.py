@@ -571,7 +571,7 @@ def parse_args():
                      help='number of ambiguous bases')
     arg.add_argument('-c', '--coverage', type=float, default=0.7,
                      help='minium coverage of base and primer')
-    arg.add_argument('-pmin', '--min_primer', type=int, default=24,
+    arg.add_argument('-pmin', '--min_primer', type=int, default=18,
                      help='minimum primer length')
     arg.add_argument('-pmax', '--max_primer', type=int, default=25,
                      help='maximum primer length')
@@ -580,7 +580,7 @@ def parse_args():
     arg.add_argument('-o', '--out', help='output name prefix')
     arg.add_argument('-r', '--resolution', type=float, default=0.6,
                      help='minium resolution')
-    arg.add_argument('-tmin', '--min_product', type=int, default=380,
+    arg.add_argument('-tmin', '--min_product', type=int, default=300,
                      help='minimum product length(include primer)')
     arg.add_argument('-tmax', '--max_product', type=int, default=480,
                      help='maximum product length(include primer)')
