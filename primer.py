@@ -280,11 +280,14 @@ def get_tree_value(alignment, start, end):
     aln = tmp(delete=False)
     for index, row in enumerate(fragment):
         aln.write(b'>'+str(index).encode('utf-8')+b'\n'+b''.join(row)+b'\n')
-    run('iqtree -s {} -m JC -fast -blmin 0.00001'.format(aln.name),
+    run('iqtree -s {} -m JC -fast'.format(aln.name),
         stdout=tmp('wt'), shell=True)
     tree = Phylo.read(aln.name+'.treefile', 'newick')
     n_terminals = len(tree.get_terminals())
-    n_internals = len(tree.get_nonterminals())
+    # skip the first empty node
+    internals = tree.get_nonterminals()[1:]
+    non_zero_internals = [i for i in internals if i.branch_length > 0]
+    n_internals = len(non_zero_internals)
     return n_internals / n_terminals
 
 
