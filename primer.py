@@ -274,8 +274,8 @@ def get_tree_value(alignment, start, end):
     _ = tmp(delete=False)
     for index, row in enumerate(fragment):
         _.write(b'>'+str(index).encode('utf-8')+b'\n'+b''.join(row)+b'\n')
-    run('mafft --quiet --retree 0 --treeout --reorder {} > mafft.log'.format(
-        _.name), shell=True)
+    run('mafft --quiet --retree 0 --treeout --reorder {} > {}'.format(
+        _.name, tmp('wt', delete=False).name), shell=True)
     tree = Phylo.read(_.name+'.tree', 'newick')
     n_terminals = len(tree.get_terminals())
     n_internals = len(tree.get_nonterminals())
