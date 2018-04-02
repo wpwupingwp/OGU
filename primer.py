@@ -33,7 +33,8 @@ matplotlib.rcParams['axes.facecolor'] = '#666666'
 
 class PrimerWithInfo(SeqRecord):
     def __init__(self, seq='', quality='', start=0, coverage=0, avg_bitscore=0,
-                 avg_mid_loc=0, detail=0, reverse_complement=False):
+                 avg_mid_loc=0, avg_mismatch=0, detail=0,
+                 reverse_complement=False):
         super().__init__(seq.upper())
 
         self.sequence = self.seq
@@ -49,6 +50,7 @@ class PrimerWithInfo(SeqRecord):
         self.coverage = self.annotations['coverage'] = coverage
         self.avg_bitscore = self.annotations['avg_bitscore'] = avg_bitscore
         self.avg_mid_loc = self.annotations['avg_mid_loc'] = avg_mid_loc
+        self.avg_mismatch = self.annotations['avg_mismatch'] = avg_mismatch
         self.detail = self.annotations['detail'] = detail
         self.end = self.annotations['end'] = start + self.__len__() - 1
         self.is_reverse_complement = reverse_complement
@@ -169,7 +171,17 @@ class Pair():
         self.score = self.get_score()
         return self
 
-#profile
+
+class BlastResult():
+    def __init__(self, line):
+        record = line.strip().split('\t')
+        self.query_id, self.hit_id, self.query_seq,  = record[0:3]
+        (self.ident_num, self.mismatch_num, self.bitscore_raw,
+         self.query_start, self.query_end, self.hit_start,
+         self.hit_end) = [int(i) for i in record[3:]]
+
+
+@profile
 def prepare(fasta):
     """
     Given fasta format alignment filename, return a numpy array for sequence:
@@ -206,7 +218,7 @@ def prepare(fasta):
     return name, sequence, no_gap.name
 
 
-#profile
+@profile
 def count_base(alignment, rows, columns):
     """
     Given alignment numpy array, count cumulative frequency of base in each
@@ -241,7 +253,7 @@ def count_base(alignment, rows, columns):
     return frequency
 
 
-#profile
+@profile
 def get_quality(data: List[float], rows: int):
     # use fastq-illumina format
     max_q = 62
@@ -291,7 +303,7 @@ def get_tree_value(alignment, start, end):
     return n_internals / n_terminals
 
 
-#profile
+@profile
 def generate_consensus(base_cumulative_frequency, coverage_percent,
                        rows, columns, output):
     """
@@ -369,7 +381,7 @@ def set_good_region(consensus, index, seq_count_min_len,
     return consensus
 
 
-#profile
+@profile
 def find_continuous(consensus, min_len):
     """
     Given PrimerWithInfo, good_region: List[bool], min_len
@@ -387,7 +399,7 @@ def find_continuous(consensus, min_len):
     return consensus
 
 
-#profile
+@profile
 def find_primer(consensus, rows, min_len, max_len, ambiguous_base_n):
     """
     Find suitable primer in given consensus with features labeled as candidate
@@ -413,7 +425,7 @@ def find_primer(consensus, rows, min_len, max_len, ambiguous_base_n):
     return primers, consensus
 
 
-#profile
+@profile
 def count_and_draw(alignment, consensus, arg):
     """
     Given alignment(numpy array), return unique sequence count List[float].
@@ -490,7 +502,20 @@ def count_and_draw(alignment, consensus, arg):
             max_shannon_index, index)
 
 
-#profile
+def parse_blast_tab(filename):
+    query = list()
+    with open(filename, 'r') as raw:
+        for line in raw:
+            if line.startswith('# BLAST'):
+                yield query
+                query = list()
+            elif line.startswith('#'):
+                pass
+            else:
+                query.append(BlastResult(line))
+
+
+@profile
 def validate(primer_candidate, db_file, n_seqs, arg):
     """
     Do BLAST. Parse BLAST result. Return List[PrimerWithInfo]
@@ -505,6 +530,7 @@ def validate(primer_candidate, db_file, n_seqs, arg):
         stdout=tmp('wt'))
     # blast
     blast_result_file = tmp('wt', delete=False).name
+    fmt = 'qseqid sseqid qseq nident mismatch score qstart qend sstart send'
     cmd = nb(num_threads=cpu_count(),
              query=query_file,
              db=db_file,
@@ -512,33 +538,67 @@ def validate(primer_candidate, db_file, n_seqs, arg):
              evalue=1e-3,
              max_hsps=1,
              max_target_seqs=n_seqs,
-             outfmt=5,
+             outfmt='"7 {}"'.format(fmt),
              out=blast_result_file)
     stdout, stderr = cmd()
-    # minium match bases * score per base(2)
-    min_bitscore_raw = (arg.min_primer - arg.mismatch)*2
     blast_result: Dict[int, Dict[str, Any]] = dict()
-    for query in SearchIO.parse(blast_result_file, 'blast-xml'):
+    for query in parse_blast_tab(blast_result_file):
         if len(query) == 0:
             continue
         sum_bitscore_raw = 0
+        sum_mismatch = 0
         good_hits = 0
-        start = 0
+        mid_loc = 0
         for hit in query:
-            hsp_bitscore_raw = hit[0].bitscore_raw
-            if hsp_bitscore_raw >= min_bitscore_raw:
+            min_positive = len(hit.query_seq) - arg.mismatch
+            hsp_bitscore_raw = hit.bitscore_raw
+            positive = hit.ident_num
+            mismatch = hit.mismatch_num
+            if positive >= min_positive and mismatch <= arg.mismatch:
                 sum_bitscore_raw += hsp_bitscore_raw
+                sum_mismatch += mismatch
                 good_hits += 1
                 # middle location of primer, the difference of two mid_loc
                 # approximately equals to the length of amplified fragment.
-                start += sum(hit[0].hit_range) / 2
+                mid_loc += (hit.hit_start+hit.hit_end) / 2
+            else:
+                print(positive, min_positive, mismatch, arg.mismatch)
         coverage = good_hits/n_seqs
         if coverage >= arg.coverage:
-            # get sequence unique index for choose
-            # Notice that here it use bitscore_raw instead of bitscore
-            blast_result[query.id] = {
+            blast_result[hit.query_id] = {
                 'coverage': coverage, 'avg_bitscore': sum_bitscore_raw/n_seqs,
-                'avg_mid_loc': start/n_seqs}
+                'avg_mismatch': sum_mismatch/n_seqs,
+                'avg_mid_loc': mid_loc/n_seqs}
+    # because SearchIO.parse have bug(only return first record), use
+    # parse_blast_result()
+    # for query in SearchIO.parse(blast_result_file, 'blast-tab', fields=fmt):
+    #     print(query)
+    #     if len(query) == 0:
+    #         continue
+    #     sum_bitscore_raw = 0
+    #     sum_mismatch = 0
+    #     good_hits = 0
+    #     start = 0
+    #     for hit in query:
+    #         min_positive = len(hit[0].query) - arg.mismatch
+    #         hsp_bitscore_raw = hit[0].bitscore_raw
+    #         positive = hit[0].ident_num
+    #         mismatch = hit[0].mismatch_num
+    #         if positive >= min_positive and mismatch <= arg.mismatch:
+    #             sum_bitscore_raw += hsp_bitscore_raw
+    #             sum_mismatch += mismatch
+    #             good_hits += 1
+    #             # middle location of primer, the difference of two mid_loc
+    #             # approximately equals to the length of amplified fragment.
+    #             start += sum(hit[0].hit_range) / 2
+    #     coverage = good_hits/n_seqs
+    #     if coverage >= arg.coverage:
+    #         # get sequence unique index for choose
+    #         # Notice that here it use bitscore_raw instead of bitscore
+    #         blast_result[query.id] = {
+    #             'coverage': coverage, 'avg_bitscore': sum_bitscore_raw/n_seqs,
+    #             'avg_mismatch': sum_mismatch/n_seqs,
+    #             'avg_mid_loc': start/n_seqs}
     primer_verified: List[PrimerWithInfo] = list()
     for primer in primer_candidate:
         i = primer.id
@@ -546,13 +606,14 @@ def validate(primer_candidate, db_file, n_seqs, arg):
             primer.coverage = blast_result[i]['coverage']
             primer.avg_bitscore = blast_result[i]['avg_bitscore']
             primer.avg_mid_loc = int(blast_result[i]['avg_mid_loc'])
+            primer.avg_mismatch = int(blast_result[i]['avg_mismatch'])
             primer.update_id()
             primer_verified.append(primer)
     # output
     return primer_verified
 
 
-#profile
+@profile
 def pick_pair(primers, alignment, arg):
     pairs = list()
     cluster = list()
@@ -585,7 +646,7 @@ def pick_pair(primers, alignment, arg):
     return pairs
 
 
-#profile
+@profile
 def parse_args():
     arg = argparse.ArgumentParser(description=main.__doc__)
     arg.add_argument('input', help='input alignment file')
@@ -614,7 +675,7 @@ def parse_args():
     return arg.parse_args()
 
 
-#profile
+@profile
 def main():
     """
     Automatic design primer for DNA barcode.
@@ -655,10 +716,11 @@ lower resolution options.
     pairs = pick_pair(primer_verified, alignment, arg)
     # output
     csv_title = ('Score,SampleUsed,ProductLength,Coverage,Resolution,'
-                 'TreeValue,LeftSeq,LeftTm,LeftAvgBitscore,RightSeq,RightTm,'
-                 'RightAvgBitscore,DeltaTm,Start,End\n')
-    style = ('{:.2f},{},{},{:.2%},{:.2%},{:.2f},{},{:.2f},{:.2f},{},{:.2f},'
-             '{:.2f},{:.2f},{},{}\n')
+                 'TreeValue,LeftSeq,LeftTm,LeftAvgBitscore,LeftAvgMismatch,'
+                 'RightSeq,RightTm,RightAvgBitscore,RightAvgMismatch,DeltaTm,'
+                 'Start,End\n')
+    style = ('{:.2f},{},{},{:.2%},{:.2%},{:.2f},{},{:.2f},{:.2f},{},{},{:.2f},'
+             '{:.2f},{:.2f},{},{},{}\n')
     with open('{}-{}samples-{:.2f}resolution.fastq'.format(
             arg.out, rows, arg.resolution), 'w') as out1, open(
                 '{}-{}samples-{:.2f}resolution.csv'.format(
@@ -668,8 +730,9 @@ lower resolution options.
             line = style.format(
                 pair.score, rows, len(pair), pair.coverage, pair.resolution,
                 pair.tree_value, pair.left.seq, pair.left.tm,
-                pair.left.avg_bitscore, pair.right.seq, pair.right.tm,
-                pair.right.avg_bitscore, pair.delta_tm, pair.start, pair.end)
+                pair.left.avg_bitscore, pair.left.avg_mismatch, pair.right.seq,
+                pair.right.tm, pair.right.avg_bitscore,
+                pair.right.avg_mismatch, pair.delta_tm, pair.start, pair.end)
             out2.write(line)
             SeqIO.write(pair.left, out1, 'fastq')
             SeqIO.write(pair.right, out1, 'fastq')
