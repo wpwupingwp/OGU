@@ -164,7 +164,8 @@ class Pair():
         return (len(self)*0.1 + self.coverage*100 + self.resolution*100 +
                 self.tree_value*100 + self.left.avg_bitscore*5
                 + self.right.avg_bitscore*5 - int(self.have_heterodimer)*100
-                - self.delta_tm*5)
+                - self.delta_tm*5 - self.left.avg_mismatch*10 -
+                self.right.avg_mismatch*10)
 
     def add_tree_value(self, alignment):
         self.tree_value = get_tree_value(alignment, self.start, self.end)
@@ -720,7 +721,7 @@ lower resolution options.
                  'RightSeq,RightTm,RightAvgBitscore,RightAvgMismatch,DeltaTm,'
                  'Start,End\n')
     style = ('{:.2f},{},{},{:.2%},{:.2%},{:.2f},{},{:.2f},{:.2f},{},{},{:.2f},'
-             '{:.2f},{:.2f},{},{},{}\n')
+             '{:.2f},{},{:.2f},{},{}\n')
     with open('{}-{}samples-{:.2f}resolution.fastq'.format(
             arg.out, rows, arg.resolution), 'w') as out1, open(
                 '{}-{}samples-{:.2f}resolution.csv'.format(
