@@ -124,7 +124,7 @@ class Pairs():
             self.right = right.reverse_complement()
         else:
             self.right = right
-        self.delta_tm = abs(left.tm - right.tm)
+        self.delta_tm = abs(self.left.tm - self.right.tm)
         self.coverage = min(left.coverage, right.coverage)
         self.start = left.start
         self.end = right.end
@@ -635,13 +635,13 @@ lower resolution options.
             arg.out, rows, arg.resolution), 'w') as out1, open(
                 '{}-{}samples-{:.2f}resolution.csv'.format(
             arg.out, rows, arg.resolution), 'w') as out2:
-        out2.write('Score,ProductLength,Coverage,Resolution,'
-                   'DeltaTm,Left,Right,Start,End\n')
+        out2.write('Score,SampleUsed,ProductLength,Coverage,Resolution,'
+                   'LeftSeq,LeftTm,RightSeq,RightTm,DeltaTm,Start,End\n')
         for pair in pairs:
-            line = '{:.2f},{},{:.2%},{:.2%},{:.2f},{},{},{},{}\n'.format(
-                pair.score, len(pair), pair.coverage, pair.resolution,
-                pair.delta_tm, pair.left.seq, pair.right.seq, pair.start,
-                pair.end)
+            line = '{:.2f},{},{},{:.2%},{:.2%},{},{:.2f},{},{:.2f},{:.2f},{},{}\n'.format(
+                pair.score, rows, len(pair), pair.coverage, pair.resolution,
+                pair.left.seq, pair.left.tm, pair.right.seq, pair.right.tm,
+                pair.delta_tm, pair.start, pair.end)
             out2.write(line)
             SeqIO.write(pair.left, out1, 'fastq')
             SeqIO.write(pair.right, out1, 'fastq')
