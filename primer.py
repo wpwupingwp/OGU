@@ -633,7 +633,8 @@ lower resolution options.
     # output
     csv_title = ('Score,SampleUsed,ProductLength,Coverage,Resolution,'
                  'LeftSeq,LeftTm,RightSeq,RightTm,DeltaTm,Start,End\n')
-    style = '{:.2f},{},{},{:.2%},{:.2%},{},{:.2f},{},{:.2f},{:.2f},{},{}\n'
+    style = ('{:.2f},{},{},{:.2%},{:.2%},{:.2f},{},{:.2f},{},{:.2f},{:.2f},{},'
+             '{}\n')
     with open('{}-{}samples-{:.2f}resolution.fastq'.format(
             arg.out, rows, arg.resolution), 'w') as out1, open(
                 '{}-{}samples-{:.2f}resolution.csv'.format(
@@ -642,8 +643,8 @@ lower resolution options.
         for pair in pairs:
             line = style.format(
                 pair.score, rows, len(pair), pair.coverage, pair.resolution,
-                pair.left.seq, pair.left.tm, pair.right.seq, pair.right.tm,
-                pair.delta_tm, pair.start, pair.end)
+                pair.tree_value, pair.left.seq, pair.left.tm, pair.right.seq,
+                pair.right.tm, pair.delta_tm, pair.start, pair.end)
             out2.write(line)
             SeqIO.write(pair.left, out1, 'fastq')
             SeqIO.write(pair.right, out1, 'fastq')
