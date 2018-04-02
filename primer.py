@@ -117,7 +117,7 @@ class PrimerWithInfo(SeqRecord):
                        self.avg_bitscore, self.start, self.end))
 
 
-class Pairs():
+class Pair():
     def __init__(self, left, right, alignment):
         self.left = left
         if not right.is_reverse_complement:
@@ -135,7 +135,6 @@ class Pairs():
         # include end base
         self.resolution, self.entropy = get_resolution_and_entropy(
             alignment, self.start, self.end+1)
-        self.tree_value = get_tree_value(alignment, self.start, self.end)
         self.heterodimer_tm = primer3.calcHeterodimer(self.left.g_seq,
                                                       self.right.g_seq).tm
         if max(self.heterodimer_tm, self.left.tm,
@@ -143,10 +142,7 @@ class Pairs():
             self.have_heterodimer = True
         else:
             self.have_heterodimer = False
-
-        self.score = (len(self)*0.1 + self.coverage*100 + self.resolution*100
-                      + self.left.avg_bitscore*10 + self.right.avg_bitscore*10
-                      - int(self.have_heterodimer)*100 - self.delta_tm*5)
+        self.score = self.get_score()
 
     def __len__(self):
         product_length = int((self.right.avg_mid_loc - len(self.right)/2) - (
@@ -155,13 +151,23 @@ class Pairs():
 
     def __str__(self):
         return (
-            'Pairs(score={:.2f}, product={}, start={}, end={}, left={}, '
+            'Pair(score={:.2f}, product={}, start={}, end={}, left={}, '
             'right={}, resolution={:.2%}, coverage={:.2%}, delta_tm={:.2f}, '
             'have_heterodimer={})'.format(
                 self.score, len(self), self.start, self.end, self.left.seq,
                 self.right.seq, self.resolution, self.coverage, self.delta_tm,
                 self.have_heterodimer))
 
+    def get_score(self):
+        return (len(self)*0.1 + self.coverage*100 + self.resolution*100 +
+                self.tree_value*100 + self.left.avg_bitscore*5
+                + self.right.avg_bitscore*5 - int(self.have_heterodimer)*100
+                - self.delta_tm*5)
+
+    def add_tree_value(self, alignment):
+        self.tree_value = get_tree_value(alignment, self.start, self.end)
+        self.score = self.get_score()
+        return self
 
 #profile
 def prepare(fasta):
@@ -267,20 +273,18 @@ def get_resolution_and_entropy(alignment, start, end):
 
 
 def get_tree_value(alignment, start, end):
-    if run('mafft --help', shell=True, stderr=tmp('wt')
-           ).returncode != 1:
-        print('Cannot find MAFFT!')
+    if run('iqtree -h', shell=True, stdout=tmp('wt')).returncode != 0:
+        print('Cannot find IQTREE!')
         return 0
     fragment = alignment[:, start:end]
-    _ = tmp(delete=False)
+    aln = tmp(delete=False)
     for index, row in enumerate(fragment):
-        _.write(b'>'+str(index).encode('utf-8')+b'\n'+b''.join(row)+b'\n')
-    run('mafft --quiet --retree 0 --treeout --reorder {} > {}'.format(
-        _.name, tmp('wt', delete=False).name), shell=True)
-    tree = Phylo.read(_.name+'.tree', 'newick')
+        aln.write(b'>'+str(index).encode('utf-8')+b'\n'+b''.join(row)+b'\n')
+    run('iqtree -s {} -m JC -fast -blmin 0.00001'.format(aln.name),
+        stdout=tmp('wt'), shell=True)
+    tree = Phylo.read(aln.name+'.treefile', 'newick')
     n_terminals = len(tree.get_terminals())
     n_internals = len(tree.get_nonterminals())
-    _.close()
     return n_internals / n_terminals
 
 
@@ -548,6 +552,7 @@ def validate(primer_candidate, db_file, n_seqs, arg):
 #profile
 def pick_pair(primers, alignment, arg):
     pairs = list()
+    cluster = list()
     for left in primers:
         # convert mid_loc to 5' location
         location = left.avg_mid_loc - len(left) / 2
@@ -559,9 +564,22 @@ def pick_pair(primers, alignment, arg):
                 continue
             if right.avg_mid_loc > end:
                 break
-            pairs.append(Pairs(left, right, alignment))
+            pair = Pair(left, right, alignment)
+            if len(cluster) == 0:
+                pass
+            elif abs(pair.start-cluster[-1].start) >= arg.max_product:
+                cluster.sort(key=lambda x: x.score, reverse=True)
+                # only keep top n for each primer cluster
+                pairs.extend(cluster[:arg.top_n])
+                cluster = list()
+            else:
+                pass
+            cluster.append(pair)
+    cluster.sort(key=lambda x: x.score, reverse=True)
+    pairs.extend(cluster[:arg.top_n])
+    pairs = [i.add_tree_value(alignment) for i in pairs]
+    pairs.sort(key=lambda x: x.score, reverse=True)
     return pairs
-
 
 
 #profile
@@ -585,6 +603,8 @@ def parse_args():
                      help='minimum product length(include primer)')
     arg.add_argument('-tmax', '--max_product', type=int, default=480,
                      help='maximum product length(include primer)')
+    arg.add_argument('-t', '--top_n', type=int, default=1,
+                     help='keep how many primers for one high varient region')
     arg.add_argument('-w', '--window', type=int, default=1,
                      help='window size')
     # arg.print_help()
@@ -630,10 +650,9 @@ lower resolution options.
     primer_verified = validate(primer_candidate, db_file, rows, arg)
     # pick pair
     pairs = pick_pair(primer_verified, alignment, arg)
-    pairs.sort(key=lambda x: x.score, reverse=True)
     # output
     csv_title = ('Score,SampleUsed,ProductLength,Coverage,Resolution,'
-                 'LeftSeq,LeftTm,LeftAvgBitscore,RightSeq,RightTm,'
+                 'TreeValue,LeftSeq,LeftTm,LeftAvgBitscore,RightSeq,RightTm,'
                  'RightAvgBitscore,DeltaTm,Start,End\n')
     style = ('{:.2f},{},{},{:.2%},{:.2%},{:.2f},{},{:.2f},{:.2f},{},{:.2f},'
              '{:.2f},{:.2f},{},{}\n')
