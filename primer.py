@@ -32,7 +32,7 @@ matplotlib.rcParams['axes.facecolor'] = '#666666'
 
 
 class PrimerWithInfo(SeqRecord):
-    def __init__(self, seq='', quality='', start=0, coverage=0, sum_bitscore=0,
+    def __init__(self, seq='', quality='', start=0, coverage=0, avg_bitscore=0,
                  avg_mid_loc=0, detail=0, reverse_complement=False):
         super().__init__(seq.upper())
 
@@ -47,7 +47,7 @@ class PrimerWithInfo(SeqRecord):
         self.start = self.annotations['start'] = start
         self.tm = self.annotations['tm'] = primer3.calcTm(self.g_seq)
         self.coverage = self.annotations['coverage'] = coverage
-        self.sum_bitscore = self.annotations['sum_bitscore'] = sum_bitscore
+        self.avg_bitscore = self.annotations['avg_bitscore'] = avg_bitscore
         self.avg_mid_loc = self.annotations['avg_mid_loc'] = avg_mid_loc
         self.detail = self.annotations['detail'] = detail
         self.end = self.annotations['end'] = start + self.__len__() - 1
@@ -105,7 +105,7 @@ class PrimerWithInfo(SeqRecord):
         # try to simplify??
         return PrimerWithInfo(seq=new_seq, quality=new_quality,
                               start=self.start, coverage=self.coverage,
-                              sum_bitscore=self.sum_bitscore,
+                              avg_bitscore=self.avg_bitscore,
                               avg_mid_loc=self.avg_mid_loc,
                               detail=self.detail)
 
@@ -114,7 +114,7 @@ class PrimerWithInfo(SeqRecord):
         self.id = ('AvgMidLocation({:.0f})-Tm({:.2f})-Coverage({:.2%})-'
                    'SumBitScore({})-Start({})-End({})'.format(
                        self.avg_mid_loc, self.tm, self.coverage,
-                       self.sum_bitscore, self.start, self.end))
+                       self.avg_bitscore, self.start, self.end))
 
 
 class Pairs():
@@ -145,6 +145,7 @@ class Pairs():
             self.have_heterodimer = False
 
         self.score = (len(self)*0.1 + self.coverage*100 + self.resolution*100
+                      + self.left.avg_bitscore*10 + self.right.avg_bitscore*10
                       - int(self.have_heterodimer)*100 - self.delta_tm*5)
 
     def __len__(self):
@@ -529,14 +530,14 @@ def validate(primer_candidate, db_file, n_seqs, arg):
             # get sequence unique index for choose
             # Notice that here it use bitscore_raw instead of bitscore
             blast_result[query.id] = {
-                'coverage': coverage, 'sum_bitscore': sum_bitscore_raw,
+                'coverage': coverage, 'avg_bitscore': sum_bitscore_raw/n_seqs,
                 'avg_mid_loc': start/n_seqs}
     primer_verified: List[PrimerWithInfo] = list()
     for primer in primer_candidate:
         i = primer.id
         if i in blast_result:
             primer.coverage = blast_result[i]['coverage']
-            primer.sum_bitscore = blast_result[i]['sum_bitscore']
+            primer.avg_bitscore = blast_result[i]['avg_bitscore']
             primer.avg_mid_loc = int(blast_result[i]['avg_mid_loc'])
             primer.update_id()
             primer_verified.append(primer)
@@ -632,9 +633,10 @@ lower resolution options.
     pairs.sort(key=lambda x: x.score, reverse=True)
     # output
     csv_title = ('Score,SampleUsed,ProductLength,Coverage,Resolution,'
-                 'LeftSeq,LeftTm,RightSeq,RightTm,DeltaTm,Start,End\n')
-    style = ('{:.2f},{},{},{:.2%},{:.2%},{:.2f},{},{:.2f},{},{:.2f},{:.2f},{},'
-             '{}\n')
+                 'LeftSeq,LeftTm,LeftAvgBitscore,RightSeq,RightTm,'
+                 'RightAvgBitscore,DeltaTm,Start,End\n')
+    style = ('{:.2f},{},{},{:.2%},{:.2%},{:.2f},{},{:.2f},{:.2f},{},{:.2f},'
+             '{:.2f},{:.2f},{},{}\n')
     with open('{}-{}samples-{:.2f}resolution.fastq'.format(
             arg.out, rows, arg.resolution), 'w') as out1, open(
                 '{}-{}samples-{:.2f}resolution.csv'.format(
@@ -643,8 +645,9 @@ lower resolution options.
         for pair in pairs:
             line = style.format(
                 pair.score, rows, len(pair), pair.coverage, pair.resolution,
-                pair.tree_value, pair.left.seq, pair.left.tm, pair.right.seq,
-                pair.right.tm, pair.delta_tm, pair.start, pair.end)
+                pair.tree_value, pair.left.seq, pair.left.tm,
+                pair.left.avg_bitscore, pair.right.seq, pair.right.tm,
+                pair.right.avg_bitscore, pair.delta_tm, pair.start, pair.end)
             out2.write(line)
             SeqIO.write(pair.left, out1, 'fastq')
             SeqIO.write(pair.right, out1, 'fastq')
