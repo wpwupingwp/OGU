@@ -13,7 +13,6 @@ from multiprocessing import cpu_count
 from timeit import default_timer as timer
 from subprocess import run
 from tempfile import NamedTemporaryFile as tmp
-from typing import List, Dict, Any
 
 from Bio import Phylo, SearchIO, SeqIO
 from Bio.Blast.Applications import NcbiblastnCommandline as nb
@@ -189,7 +188,7 @@ def prepare(fasta):
     Generate fasta file without gap for makeblastdb, return file name.
     """
     no_gap = tmp('wt', delete=False)
-    data: List[List[str, str]] = []
+    data = list()
     record = ['id', 'sequence']
     with open(fasta, 'r') as raw:
         for line in raw:
@@ -227,7 +226,7 @@ def count_base(alignment, rows, columns):
     Return List[List[float, float, float, float, float, float, float]] for
     [A, T, C, G, N, GAP, OTHER].
     """
-    frequency: List[List[float, float, float, float, float, float, float]] = []
+    frequency = list()
     for index in range(columns):
         column = alignment[:, [index]]
         base, counts = np.unique(column, return_counts=True)
@@ -255,7 +254,7 @@ def count_base(alignment, rows, columns):
 
 
 # profile
-def get_quality(data: List[float], rows: int):
+def get_quality(data, rows):
     # use fastq-illumina format
     max_q = 62
     factor = max_q/rows
@@ -323,7 +322,7 @@ def generate_consensus(base_cumulative_frequency, coverage_percent,
         return data_with_len
 
     ambiguous_dict = get_ambiguous_dict()
-    most: List[List[int, str, float]] = []
+    most = list()
     coverage = rows * coverage_percent
 
     for location, column in enumerate(base_cumulative_frequency):
@@ -406,7 +405,7 @@ def find_primer(consensus, rows, min_len, max_len, ambiguous_base_n):
     Find suitable primer in given consensus with features labeled as candidate
     primer, return List[PrimerWithInfo], consensus
     """
-    primers: List[SeqFeature] = list()
+    primers = list()
     # skip good_region
     continuous = consensus.features[1:]
     for feature in continuous:
@@ -443,12 +442,12 @@ def count_and_draw(alignment, consensus, arg):
     window = arg.window
     out = arg.out
     # Different count
-    count_min_len: List[List[float]] = list()
-    count_max_len: List[List[float]] = list()
-    shannon_index1: List[float] = list()
-    shannon_index2: List[float] = list()
+    count_min_len = list()
+    count_max_len = list()
+    shannon_index1 = list()
+    shannon_index2 = list()
     max_shannon_index = -1*((1/rows)*log2(1/rows)*rows)
-    index: List[int] = list()
+    index = list()
     min_plus = min_product - max_primer * 2
     max_plus = max_product - min_primer * 2
     for i in range(0, columns-min_product, window):
@@ -542,7 +541,7 @@ def validate(primer_candidate, db_file, n_seqs, arg):
              outfmt='"7 {}"'.format(fmt),
              out=blast_result_file)
     stdout, stderr = cmd()
-    blast_result: Dict[int, Dict[str, Any]] = dict()
+    blast_result = dict()
     for query in parse_blast_tab(blast_result_file):
         if len(query) == 0:
             continue
@@ -600,7 +599,7 @@ def validate(primer_candidate, db_file, n_seqs, arg):
     #             'coverage': coverage, 'avg_bitscore': sum_bitscore_raw/n_seqs,
     #             'avg_mismatch': sum_mismatch/n_seqs,
     #             'avg_mid_loc': start/n_seqs}
-    primer_verified: List[PrimerWithInfo] = list()
+    primer_verified = list()
     for primer in primer_candidate:
         i = primer.id
         if i in blast_result:
