@@ -182,7 +182,7 @@ class BlastResult():
          self.hit_end) = [int(i) for i in record[3:]]
 
 
-@profile
+# profile
 def prepare(fasta):
     """
     Given fasta format alignment filename, return a numpy array for sequence:
@@ -219,7 +219,7 @@ def prepare(fasta):
     return name, sequence, no_gap.name
 
 
-@profile
+# profile
 def count_base(alignment, rows, columns):
     """
     Given alignment numpy array, count cumulative frequency of base in each
@@ -254,7 +254,7 @@ def count_base(alignment, rows, columns):
     return frequency
 
 
-@profile
+# profile
 def get_quality(data: List[float], rows: int):
     # use fastq-illumina format
     max_q = 62
@@ -304,7 +304,7 @@ def get_tree_value(alignment, start, end):
     return n_internals / n_terminals
 
 
-@profile
+# profile
 def generate_consensus(base_cumulative_frequency, coverage_percent,
                        rows, columns, output):
     """
@@ -382,7 +382,7 @@ def set_good_region(consensus, index, seq_count_min_len,
     return consensus
 
 
-@profile
+# profile
 def find_continuous(consensus, min_len):
     """
     Given PrimerWithInfo, good_region: List[bool], min_len
@@ -400,7 +400,7 @@ def find_continuous(consensus, min_len):
     return consensus
 
 
-@profile
+# profile
 def find_primer(consensus, rows, min_len, max_len, ambiguous_base_n):
     """
     Find suitable primer in given consensus with features labeled as candidate
@@ -426,7 +426,7 @@ def find_primer(consensus, rows, min_len, max_len, ambiguous_base_n):
     return primers, consensus
 
 
-@profile
+# profile
 def count_and_draw(alignment, consensus, arg):
     """
     Given alignment(numpy array), return unique sequence count List[float].
@@ -516,7 +516,7 @@ def parse_blast_tab(filename):
                 query.append(BlastResult(line))
 
 
-@profile
+# profile
 def validate(primer_candidate, db_file, n_seqs, arg):
     """
     Do BLAST. Parse BLAST result. Return List[PrimerWithInfo]
@@ -614,7 +614,7 @@ def validate(primer_candidate, db_file, n_seqs, arg):
     return primer_verified
 
 
-@profile
+# profile
 def pick_pair(primers, alignment, arg):
     pairs = list()
     cluster = list()
@@ -629,6 +629,10 @@ def pick_pair(primers, alignment, arg):
                 continue
             if right.avg_mid_loc > end:
                 break
+            # it do exist !
+            if left.start > right.start:
+                continue
+                # left, right = right, left
             pair = Pair(left, right, alignment)
             if len(cluster) == 0:
                 pass
@@ -647,7 +651,7 @@ def pick_pair(primers, alignment, arg):
     return pairs
 
 
-@profile
+# profile
 def parse_args():
     arg = argparse.ArgumentParser(description=main.__doc__)
     arg.add_argument('input', help='input alignment file')
@@ -676,7 +680,7 @@ def parse_args():
     return arg.parse_args()
 
 
-@profile
+# profile
 def main():
     """
     Automatic design primer for DNA barcode.
