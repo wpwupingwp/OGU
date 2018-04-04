@@ -639,7 +639,7 @@ def parse_args():
                      help='number of ambiguous bases')
     arg.add_argument('-c', '--coverage', type=float, default=0.7,
                      help='minium coverage of base and primer')
-    arg.add_argument('-pmin', '--min_primer', type=int, default=18,
+    arg.add_argument('-pmin', '--min_primer', type=int, default=20,
                      help='minimum primer length')
     arg.add_argument('-pmax', '--max_primer', type=int, default=25,
                      help='maximum primer length')
@@ -652,9 +652,9 @@ def parse_args():
                      help='minimum product length(include primer)')
     arg.add_argument('-tmax', '--max_product', type=int, default=480,
                      help='maximum product length(include primer)')
-    arg.add_argument('-t', '--top_n', type=int, default=1,
+    arg.add_argument('-t', '--top_n', type=int, default=3,
                      help='keep how many primers for one high varient region')
-    arg.add_argument('-w', '--window', type=int, default=1,
+    arg.add_argument('-w', '--window', type=int, default=10,
                      help='window size')
     # arg.print_help()
     return arg.parse_args()
