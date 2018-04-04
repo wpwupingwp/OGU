@@ -162,7 +162,7 @@ class Pair():
     def get_score(self):
         return (len(self)*0.1 + self.coverage*100 + self.resolution*100 +
                 self.tree_value*100 + self.left.avg_bitscore*5
-                + self.right.avg_bitscore*5 - int(self.have_heterodimer)*100
+                + self.right.avg_bitscore*5 - int(self.have_heterodimer)*10
                 - self.delta_tm*5 - self.left.avg_mismatch*10 -
                 self.right.avg_mismatch*10)
 
