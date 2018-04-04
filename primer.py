@@ -293,8 +293,12 @@ def get_tree_value(alignment, start, end):
     aln = tmp(delete=False)
     for index, row in enumerate(fragment):
         aln.write(b'>'+str(index).encode('utf-8')+b'\n'+b''.join(row)+b'\n')
-    run('iqtree -s {} -m JC -fast'.format(aln.name),
-        stdout=tmp('wt'), shell=True)
+    iqtree = run('iqtree -s {} -m JC -fast'.format(aln.name),
+                 stdout=tmp('wt'), shell=True)
+    # just return 0 if there is error
+    if iqtree.returncode != 0:
+        print('Cannot get tree_value of {}-{}!'.format(start, end))
+        return 0
     tree = Phylo.read(aln.name+'.treefile', 'newick')
     n_terminals = len(tree.get_terminals())
     # skip the first empty node
