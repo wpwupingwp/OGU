@@ -362,30 +362,28 @@ def generate_consensus(base_cumulative_frequency, coverage_percent,
     return consensus
 
 
-def set_good_region(consensus, index, seq_count, arg):
+@profile
+def get_good_region(consensus, index, seq_count, arg):
     # return loose region, final product may violate product length
     # restriction
     n = arg.max_product - arg.min_product
-    good_region = list()
+    good_region = set()
     for i, j in zip(index, seq_count):
         if j >= arg.resolution:
-            good_region.append(FeatureLocation(i-arg.max_primer, i-n))
-            good_region.append(FeatureLocation(
-                i+arg.min_product, i-arg.max_primer+arg.max_product))
-    consensus.features.append(SeqFeature(CompoundLocation(good_region),
-                              type='good_region', strand=1))
-    return consensus
+            good_region.update(range(i-arg.max_primer, i-n))
+            good_region.update(range(i+arg.min_product,
+                                     i-arg.max_primer+arg.max_product))
+    return good_region
 
 
 @profile
-def find_continuous(consensus, min_len):
+def find_continuous(consensus, good_region, min_len):
     """
     Given PrimerWithInfo, good_region: List[bool], min_len
     Return consensus with features.
     """
     skip = ('N', '-')
     start = 0
-    good_region = consensus.features[0]
     for index, base in enumerate(consensus.sequence[:-min_len]):
         if base in skip or index not in good_region:
             if (index-start) >= min_len:
@@ -403,7 +401,7 @@ def find_primer(consensus, rows, min_len, max_len, ambiguous_base_n):
     """
     primers = list()
     # skip good_region
-    continuous = consensus.features[1:]
+    continuous = consensus.features
     for feature in continuous:
         fragment = feature.extract(consensus)
         len_fragment = len(fragment)
@@ -465,9 +463,6 @@ def count_and_draw(alignment, consensus, arg):
     ax1.set_ylabel('H')
     ax1.grid(True)
     ax1.legend(loc='upper right')
-    legends = ax1.get_legend()
-    legends.legendHandles[0].set_color('xkcd:azure')
-    legends.legendHandles[1].set_color('xkcd:orangered')
     ax2 = ax1.twinx()
     ax2.plot(index, count, 'r-', label='{}bp'.format(max_product))
     ax2.yaxis.set_major_formatter(mtick.PercentFormatter(xmax=1.0))
@@ -485,6 +480,7 @@ def count_and_draw(alignment, consensus, arg):
     return (count, shannon_index, max_shannon_index, index)
 
 
+@profile
 def parse_blast_tab(filename):
     query = list()
     with open(filename, 'r') as raw:
@@ -689,8 +685,8 @@ given resolution threshold({:.2f}). Please try to use longer fragment or
 lower resolution options.
 """.format(max(seq_count), arg.resolution))
     # find candidate
-    consensus = set_good_region(consensus, index, seq_count, arg)
-    consensus = find_continuous(consensus, arg.min_primer)
+    good_region = get_good_region(consensus, index, seq_count, arg)
+    consensus = find_continuous(consensus, good_region, arg.min_primer)
     primer_candidate, consensus_with_features = find_primer(
         consensus, rows, arg.min_primer, arg.max_primer, arg.ambiguous_base_n)
     assert len(primer_candidate) != 0, (
