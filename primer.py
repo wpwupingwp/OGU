@@ -181,7 +181,7 @@ class BlastResult():
          self.hit_end) = [int(i) for i in record[3:]]
 
 
-# profile
+@profile
 def prepare(fasta):
     """
     Given fasta format alignment filename, return a numpy array for sequence:
@@ -218,7 +218,7 @@ def prepare(fasta):
     return name, sequence, no_gap.name
 
 
-# profile
+@profile
 def count_base(alignment, rows, columns):
     """
     Given alignment numpy array, count cumulative frequency of base in each
@@ -253,7 +253,7 @@ def count_base(alignment, rows, columns):
     return frequency
 
 
-# profile
+@profile
 def get_quality(data, rows):
     # use fastq-illumina format
     max_q = 62
@@ -263,6 +263,7 @@ def get_quality(data, rows):
     return quality_value
 
 
+@profile
 def get_resolution_and_entropy(alignment, start, end):
     """
     Given alignment (2d numpy array), location of fragment(start and end, int,
@@ -303,7 +304,7 @@ def get_tree_value(alignment, start, end):
     return n_internals / n_terminals
 
 
-# profile
+@profile
 def generate_consensus(base_cumulative_frequency, coverage_percent,
                        rows, columns, output):
     """
@@ -361,27 +362,22 @@ def generate_consensus(base_cumulative_frequency, coverage_percent,
     return consensus
 
 
-def set_good_region(consensus, index, seq_count_min_len,
-                    seq_count_max_len, arg):
-    # lower bound, min_prodcut with max_primer
-    # upper bound, max_prodcut with min_primer
+def set_good_region(consensus, index, seq_count, arg):
+    # return loose region, final product may violate product length
+    # restriction
     n = arg.max_product - arg.min_product
     good_region = list()
-    for i, j, k in zip(index, seq_count_min_len, seq_count_max_len):
+    for i, j in zip(index, seq_count):
         if j >= arg.resolution:
-            good_region.append(FeatureLocation(i-n+arg.max_primer, i))
+            good_region.append(FeatureLocation(i-arg.max_primer, i-n))
             good_region.append(FeatureLocation(
-                i+arg.min_product, i+arg.min_product+arg.max_primer))
-        elif k >= arg.resolution:
-            good_region.append(FeatureLocation(i-arg.min_primer, i))
-            good_region.append(FeatureLocation(
-                i+arg.max_product, i+arg.max_product+arg.min_primer))
+                i+arg.min_product, i-arg.max_primer+arg.max_product))
     consensus.features.append(SeqFeature(CompoundLocation(good_region),
                               type='good_region', strand=1))
     return consensus
 
 
-# profile
+@profile
 def find_continuous(consensus, min_len):
     """
     Given PrimerWithInfo, good_region: List[bool], min_len
@@ -399,7 +395,7 @@ def find_continuous(consensus, min_len):
     return consensus
 
 
-# profile
+@profile
 def find_primer(consensus, rows, min_len, max_len, ambiguous_base_n):
     """
     Find suitable primer in given consensus with features labeled as candidate
@@ -425,7 +421,7 @@ def find_primer(consensus, rows, min_len, max_len, ambiguous_base_n):
     return primers, consensus
 
 
-# profile
+@profile
 def count_and_draw(alignment, consensus, arg):
     """
     Given alignment(numpy array), return unique sequence count List[float].
@@ -436,47 +432,36 @@ def count_and_draw(alignment, consensus, arg):
     """
     rows, columns = alignment.shape
     min_primer = arg.min_primer
-    max_primer = arg.max_primer
-    min_product = arg.min_product
     max_product = arg.max_product
     window = arg.window
     out = arg.out
     # Different count
-    count_min_len = list()
-    count_max_len = list()
-    shannon_index1 = list()
-    shannon_index2 = list()
+    count = list()
+    shannon_index = list()
     max_shannon_index = -1*((1/rows)*log2(1/rows)*rows)
     index = list()
-    min_plus = min_product - max_primer * 2
     max_plus = max_product - min_primer * 2
-    for i in range(0, columns-min_product, window):
+    for i in range(0, columns-max_product, window):
         # skip gap
         if consensus.sequence[i] in ('-', 'N'):
             continue
         # exclude primer sequence
-        resolution1, entropy1 = get_resolution_and_entropy(alignment, i,
-                                                           i+min_plus)
         resolution2, entropy2 = get_resolution_and_entropy(alignment, i,
                                                            i+max_plus)
-        count_min_len.append(resolution1)
-        count_max_len.append(resolution2)
-        shannon_index1.append(entropy1)
-        shannon_index2.append(entropy2)
+        count.append(resolution2)
+        shannon_index.append(entropy2)
         index.append(i)
 
     # convert value to (0,1)
     # plt.style.use('ggplot')
     fig, ax1 = plt.subplots(figsize=(20+len(index)//5000, 10))
-    plt.title('Shannon Index & Resolution({}-{}bp, window={})'.format(
-        min_product, max_product, window))
+    plt.title('Shannon Index & Resolution({}bp, window={})'.format(
+        max_product, window))
     plt.xlabel('Base')
     plt.xticks(range(0, columns, int(columns/10)))
     # c=List for different color, s=size for different size
-    ax1.scatter(index, shannon_index1, c=shannon_index1,
-                cmap='GnBu', alpha=0.8, s=10, label='{}bp'.format(min_product))
-    ax1.scatter(index, shannon_index2, c=shannon_index2,
-                cmap='OrRd', alpha=0.8, s=10, label='{}bp'.format(max_product))
+    ax1.scatter(index, shannon_index, c=shannon_index,
+                cmap='GnBu', alpha=0.8, s=10, label='{}bp'.format(max_product))
     ax1.set_ylabel('H')
     ax1.grid(True)
     ax1.legend(loc='upper right')
@@ -484,8 +469,7 @@ def count_and_draw(alignment, consensus, arg):
     legends.legendHandles[0].set_color('xkcd:azure')
     legends.legendHandles[1].set_color('xkcd:orangered')
     ax2 = ax1.twinx()
-    ax2.plot(index, count_min_len, 'b-', label='{}bp'.format(min_product))
-    ax2.plot(index, count_max_len, 'r-', label='{}bp'.format(max_product))
+    ax2.plot(index, count, 'r-', label='{}bp'.format(max_product))
     ax2.yaxis.set_major_formatter(mtick.PercentFormatter(xmax=1.0))
     ax2.set_ylabel('Resolution(% of {})'.format(rows))
     ax2.grid(True)
@@ -494,12 +478,11 @@ def count_and_draw(alignment, consensus, arg):
     plt.savefig(out+'.png')
     # plt.show()
     with open(out+'-Resolution.tsv', 'w') as _:
-        _.write('Base\tResolution(window={})\n'.format(min_product))
-        for base, resolution in enumerate(count_min_len):
+        _.write('Base\tResolution(window={})\n'.format(max_product))
+        for base, resolution in enumerate(count):
             _.write('{}\t{:.2f}\n'.format(base, resolution))
 
-    return (count_min_len, count_max_len, shannon_index1, shannon_index2,
-            max_shannon_index, index)
+    return (count, shannon_index, max_shannon_index, index)
 
 
 def parse_blast_tab(filename):
@@ -515,7 +498,7 @@ def parse_blast_tab(filename):
                 query.append(BlastResult(line))
 
 
-# profile
+@profile
 def validate(primer_candidate, db_file, n_seqs, arg):
     """
     Do BLAST. Parse BLAST result. Return List[PrimerWithInfo]
@@ -613,7 +596,7 @@ def validate(primer_candidate, db_file, n_seqs, arg):
     return primer_verified
 
 
-# profile
+@profile
 def pick_pair(primers, alignment, arg):
     pairs = list()
     cluster = list()
@@ -650,7 +633,7 @@ def pick_pair(primers, alignment, arg):
     return pairs
 
 
-# profile
+@profile
 def parse_args():
     arg = argparse.ArgumentParser(description=main.__doc__)
     arg.add_argument('input', help='input alignment file')
@@ -679,7 +662,7 @@ def parse_args():
     return arg.parse_args()
 
 
-# profile
+@profile
 def main():
     """
     Automatic design primer for DNA barcode.
@@ -697,18 +680,16 @@ def main():
     consensus = generate_consensus(base_cumulative_frequency, arg.coverage,
                                    rows, columns, arg.out+'.consensus.fastq')
     # count resolution
-    (seq_count_min_len, seq_count_max_len,
-     H1, H2, max_H, index) = count_and_draw(alignment, consensus, arg)
+    (seq_count, H, max_H, index) = count_and_draw(alignment, consensus, arg)
     # exit if resolution lower than given threshold.
-    assert max(seq_count_max_len) > arg.resolution, (
+    assert max(seq_count) > arg.resolution, (
         """
 The highest resolution of given fragment is {:.2f}, which is lower than
 given resolution threshold({:.2f}). Please try to use longer fragment or
 lower resolution options.
-""".format(max(seq_count_max_len), arg.resolution))
+""".format(max(seq_count), arg.resolution))
     # find candidate
-    consensus = set_good_region(consensus, index, seq_count_min_len,
-                                seq_count_max_len, arg)
+    consensus = set_good_region(consensus, index, seq_count, arg)
     consensus = find_continuous(consensus, arg.min_primer)
     primer_candidate, consensus_with_features = find_primer(
         consensus, rows, arg.min_primer, arg.max_primer, arg.ambiguous_base_n)
