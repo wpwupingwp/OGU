@@ -513,7 +513,7 @@ def validate(primer_candidate, db_file, n_seqs, arg):
     cmd = nb(num_threads=cpu_count(),
              query=query_file,
              db=db_file,
-             task='blastn',
+             task='blastn-short',
              evalue=1e-3,
              max_hsps=1,
              max_target_seqs=n_seqs,
