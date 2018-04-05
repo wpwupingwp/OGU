@@ -228,8 +228,7 @@ def count_base(alignment, rows, columns):
     """
     frequency = list()
     for index in range(columns):
-        column = alignment[:, [index]]
-        base, counts = np.unique(column, return_counts=True)
+        base, counts = np.unique(alignment[:, [index]], return_counts=True)
         count_dict = {b'A': 0, b'C': 0, b'G': 0, b'T': 0, b'M': 0, b'R': 0,
                       b'W': 0, b'S': 0, b'Y': 0, b'K': 0, b'V': 0, b'H': 0,
                       b'D': 0, b'B': 0, b'X': 0, b'N': 0, b'-': 0, b'?': 0}
@@ -271,11 +270,11 @@ def get_resolution_and_entropy(alignment, start, end):
     return resolution (float) and entropy (float).
     """
     rows, columns = alignment.shape
-    fragment = alignment[:, start:end]
     # index error
-    if fragment.shape[1] is 0:
+    if start >= end or end > columns:
         return 0, 0
-    item, count = np.unique(fragment, return_counts=True, axis=0)
+    item, count = np.unique(alignment[:, start:end],
+                            return_counts=True, axis=0)
     resolution = len(count) / rows
 
     entropy = 0
@@ -292,9 +291,8 @@ def get_tree_value(alignment, start, end):
     if run('iqtree -h', shell=True, stdout=tmp('wt')).returncode != 0:
         print('Cannot find IQTREE!')
         return 0
-    fragment = alignment[:, start:end]
     aln = tmp(delete=False)
-    for index, row in enumerate(fragment):
+    for index, row in enumerate(alignment[:, start:end]):
         aln.write(b'>'+str(index).encode('utf-8')+b'\n'+b''.join(row)+b'\n')
     iqtree = run('iqtree -s {} -m JC -fast'.format(aln.name),
                  stdout=tmp('wt'), shell=True)
