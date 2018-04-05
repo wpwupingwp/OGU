@@ -14,20 +14,20 @@ from timeit import default_timer as timer
 from subprocess import run
 from tempfile import NamedTemporaryFile as tmp
 
-from Bio import Phylo, SearchIO, SeqIO
+from Bio import Phylo, SeqIO
 from Bio.Blast.Applications import NcbiblastnCommandline as nb
 from Bio.SeqRecord import SeqRecord
-from Bio.SeqFeature import SeqFeature, FeatureLocation, CompoundLocation
+from Bio.SeqFeature import SeqFeature, FeatureLocation
 
-import matplotlib
 from matplotlib import pyplot as plt
 from matplotlib import ticker as mtick
-matplotlib.rcParams['lines.linewidth'] = 1.5
-matplotlib.rcParams['axes.linewidth'] = 1.5
-matplotlib.rcParams['axes.labelsize'] = 16
-matplotlib.rcParams['axes.titlesize'] = 25
-matplotlib.rcParams['font.size'] = 16
-matplotlib.rcParams['axes.facecolor'] = '#666666'
+from matplotlib import rcParams
+rcParams['lines.linewidth'] = 1.5
+rcParams['axes.linewidth'] = 1.5
+rcParams['axes.labelsize'] = 16
+rcParams['axes.titlesize'] = 25
+rcParams['font.size'] = 16
+rcParams['axes.facecolor'] = '#666666'
 
 
 class PrimerWithInfo(SeqRecord):
