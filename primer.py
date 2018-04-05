@@ -548,7 +548,8 @@ def validate(primer_candidate, db_file, n_seqs, arg):
                 # approximately equals to the length of amplified fragment.
                 mid_loc += (hit.hit_start+hit.hit_end) / 2
             else:
-                print(positive, min_positive, mismatch, arg.mismatch)
+                # print(positive, min_positive, mismatch, arg.mismatch)
+                pass
         coverage = good_hits/n_seqs
         if coverage >= arg.coverage:
             blast_result[hit.query_id] = {
