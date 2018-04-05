@@ -6,8 +6,10 @@
 # 6. pick primer pair
 # 7. too few primer found!!!!!!!!!!!!!
 # 8. some primers do not have info (test2,156989)
-9. 30min for a cp genome, too slow
-10. try to replace Bio.SearchIO (10 second+, 50% of runtime)
+#9. 30min for a cp genome, too slow
+#10. try to replace Bio.SearchIO (10 second+, 50% of runtime)
 11. +1 or not
 # 12. use tree_value or not, mafft seems give 1.0 always
 13. too slow for chloroplast genome, 10 samples, 6 hours
+14. difflib
+15. log
