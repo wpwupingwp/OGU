@@ -272,6 +272,9 @@ def get_resolution_and_entropy(alignment, start, end):
     """
     rows, columns = alignment.shape
     fragment = alignment[:, start:end]
+    # index error
+    if fragment.shape[1] is 0:
+        return 0, 0
     item, count = np.unique(fragment, return_counts=True, axis=0)
     resolution = len(count) / rows
 
@@ -626,9 +629,7 @@ def pick_pair(primers, alignment, arg):
     pairs.extend(cluster[:arg.top_n])
     good_pairs = list()
     for i in pairs:
-        # it do exist ! just skip
-        if (i.left.start < right.start and
-                i.resolution >= arg.resolution):
+        if i.resolution >= arg.resolution:
             i.add_tree_value(alignment)
             good_pairs.append(i)
     good_pairs.sort(key=lambda x: x.score, reverse=True)
