@@ -31,6 +31,9 @@ rcParams['axes.facecolor'] = '#666666'
 
 
 class PrimerWithInfo(SeqRecord):
+    __slots__ = ['seq', 'quality', 'start', 'coverage', 'avg_bitscore',
+                 'avg_mid_loc', 'avg_mismatch', 'detail', 'reverse_complement']
+
     def __init__(self, seq='', quality='', start=0, coverage=0, avg_bitscore=0,
                  avg_mid_loc=0, avg_mismatch=0, detail=0,
                  reverse_complement=False):
@@ -119,6 +122,10 @@ class PrimerWithInfo(SeqRecord):
 
 
 class Pair():
+    __slots__ = ['left', 'right', 'delta_tm', 'coverage', 'start', 'end',
+                 'resolution', 'tree_value', 'entropy', 'heterodimer',
+                 'heterodimer_tm', 'score']
+
     def __init__(self, left, right, alignment):
         self.left = left
         if not right.is_reverse_complement:
@@ -132,7 +139,7 @@ class Pair():
         self.resolution = 0
         self.tree_value = 0.0
         self.entropy = 0.0
-        self.hetrodimer = False
+        self.heterodimer = False
         # include end base
         self.resolution, self.entropy = get_resolution_and_entropy(
             alignment, self.start, self.end+1)
@@ -173,9 +180,13 @@ class Pair():
 
 
 class BlastResult():
+    __slots = ['query_id', 'hit_id', 'query_seq', 'ident_num', 'mismatch_num',
+               'bitscore_raw', 'query_start', 'query_end', 'hit_start',
+               'hit_end']
+
     def __init__(self, line):
         record = line.strip().split('\t')
-        self.query_id, self.hit_id, self.query_seq,  = record[0:3]
+        self.query_id, self.hit_id, self.query_seq = record[0:3]
         (self.ident_num, self.mismatch_num, self.bitscore_raw,
          self.query_start, self.query_end, self.hit_start,
          self.hit_end) = [int(i) for i in record[3:]]
