@@ -31,8 +31,8 @@ rcParams['axes.facecolor'] = '#666666'
 
 
 class PrimerWithInfo(SeqRecord):
-    __slots__ = ['seq', 'sequence', 'quality', 'start', 'coverage', 'avg_bitscore',
-                 'avg_mid_loc', 'avg_mismatch', 'detail', 'is_reverse_complement']
+    # __slots__ = ['seq', 'sequence', 'quality', 'start', 'coverage', 'avg_bitscore',
+    #              'avg_mid_loc', 'avg_mismatch', 'detail', 'is_reverse_complement']
 
     def __init__(self, seq='', quality='', start=0, coverage=0, avg_bitscore=0,
                  avg_mid_loc=0, avg_mismatch=0, detail=0,
@@ -123,7 +123,7 @@ class PrimerWithInfo(SeqRecord):
 
 class Pair():
     __slots__ = ['left', 'right', 'delta_tm', 'coverage', 'start', 'end',
-                 'resolution', 'tree_value', 'entropy', 'heterodimer',
+                 'resolution', 'tree_value', 'entropy', 'have_heterodimer',
                  'heterodimer_tm', 'score']
 
     def __init__(self, left, right, alignment):
@@ -139,7 +139,7 @@ class Pair():
         self.resolution = 0
         self.tree_value = 0.0
         self.entropy = 0.0
-        self.heterodimer = False
+        self.have_heterodimer = False
         # include end base
         self.resolution, self.entropy = get_resolution_and_entropy(
             alignment, self.start, self.end+1)
