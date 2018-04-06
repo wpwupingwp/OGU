@@ -215,7 +215,10 @@ def prepare(fasta):
     # new = np.hstack((name, seq)) -> is slower
     name = np.array([[i[0]] for i in data], dtype=np.bytes_)
     sequence = np.array([list(i[1]) for i in data], dtype=np.bytes_, order='F')
-    return name, sequence, no_gap.name
+    organize_no_gap = tmp('wt', delete=False)
+    # try to avoid makeblastdb error
+    SeqIO.convert(no_gap.name, 'fasta', organize_no_gap.name, 'fasta')
+    return name, sequence, organize_no_gap.name
 
 
 # profile
