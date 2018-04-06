@@ -31,8 +31,8 @@ rcParams['axes.facecolor'] = '#666666'
 
 
 class PrimerWithInfo(SeqRecord):
-    __slots__ = ['seq', 'quality', 'start', 'coverage', 'avg_bitscore',
-                 'avg_mid_loc', 'avg_mismatch', 'detail', 'reverse_complement']
+    __slots__ = ['seq', 'sequence', 'quality', 'start', 'coverage', 'avg_bitscore',
+                 'avg_mid_loc', 'avg_mismatch', 'detail', 'is_reverse_complement']
 
     def __init__(self, seq='', quality='', start=0, coverage=0, avg_bitscore=0,
                  avg_mid_loc=0, avg_mismatch=0, detail=0,
