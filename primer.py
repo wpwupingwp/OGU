@@ -8,8 +8,10 @@ import numpy as np
 import primer3
 
 from collections import defaultdict
+from glob import glob
 from math import log2
 from multiprocessing import cpu_count
+from os import remove
 from timeit import default_timer as timer
 from subprocess import run
 from tempfile import NamedTemporaryFile as tmp
@@ -198,7 +200,7 @@ def prepare(fasta):
     Given fasta format alignment filename, return a numpy array for sequence:
     Generate fasta file without gap for makeblastdb, return file name.
     """
-    no_gap = tmp('wt', delete=False)
+    no_gap = tmp('wt')
     data = list()
     record = ['id', 'sequence']
     with open(fasta, 'r') as raw:
@@ -229,6 +231,7 @@ def prepare(fasta):
     organize_no_gap = tmp('wt', delete=False)
     # try to avoid makeblastdb error
     SeqIO.convert(no_gap.name, 'fasta', organize_no_gap.name, 'fasta')
+    no_gap.close()
     return name, sequence, organize_no_gap.name
 
 
@@ -305,7 +308,7 @@ def get_tree_value(alignment, start, end):
     if run('iqtree -h', shell=True, stdout=tmp('wt')).returncode != 0:
         print('Cannot find IQTREE!')
         return 0
-    aln = tmp(delete=False)
+    aln = tmp('wb')
     for index, row in enumerate(alignment[:, start:end]):
         aln.write(b'>'+str(index).encode('utf-8')+b'\n'+b''.join(row)+b'\n')
     iqtree = run('iqtree -s {} -m JC -fast'.format(aln.name),
@@ -320,6 +323,11 @@ def get_tree_value(alignment, start, end):
     internals = tree.get_nonterminals()[1:]
     non_zero_internals = [i for i in internals if i.branch_length > 0]
     n_internals = len(non_zero_internals)
+    # remove iqtree generated files
+    for i in glob(aln.name+'.*'):
+        remove(i)
+
+    aln.close()
     return n_internals / n_terminals
 
 
@@ -527,7 +535,7 @@ def validate(primer_candidate, db_file, n_seqs, arg):
     run('makeblastdb -in {} -dbtype nucl'.format(db_file), shell=True,
         stdout=tmp('wt'))
     # blast
-    blast_result_file = tmp('wt', delete=False).name
+    blast_result_file = tmp('wt')
     fmt = 'qseqid sseqid qseq nident mismatch score qstart qend sstart send'
     cmd = nb(num_threads=cpu_count(),
              query=query_file,
@@ -537,10 +545,10 @@ def validate(primer_candidate, db_file, n_seqs, arg):
              max_hsps=1,
              max_target_seqs=n_seqs,
              outfmt='"7 {}"'.format(fmt),
-             out=blast_result_file)
+             out=blast_result_file.name)
     stdout, stderr = cmd()
     blast_result = dict()
-    for query in parse_blast_tab(blast_result_file):
+    for query in parse_blast_tab(blast_result_file.name):
         if len(query) == 0:
             continue
         sum_bitscore_raw = 0
@@ -608,7 +616,10 @@ def validate(primer_candidate, db_file, n_seqs, arg):
             primer.avg_mismatch = int(blast_result[i]['avg_mismatch'])
             primer.update_id()
             primer_verified.append(primer)
-    # output
+    blast_result_file.close()
+    # clean makeblastdb files
+    for i in glob(db_file+'*'):
+        remove(i)
     return primer_verified
 
 
