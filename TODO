@@ -14,3 +14,5 @@
 14. difflib
 15. log
 16. give fragment name by gb file
+17. use time.test2 to profile
+18. too much primer candidate
