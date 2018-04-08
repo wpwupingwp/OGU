@@ -595,7 +595,8 @@ def validate(primer_candidate, db_file, n_seqs, arg):
 def pick_pair(primers, alignment, arg):
     pairs = list()
     cluster = list()
-    for left in primers:
+    for index in range(len(primers)):
+        left = primers[index]
         # convert mid_loc to 5' location
         location = left.avg_mid_loc - len(left) / 2
         begin = location + arg.min_product
@@ -609,10 +610,11 @@ def pick_pair(primers, alignment, arg):
             pair = Pair(left, right, alignment)
             if len(cluster) == 0:
                 pass
-            elif abs(pair.start-cluster[-1].start) >= arg.max_product:
+            elif (len(cluster) >= arg.top_n or
+                  abs(pair.start-cluster[-1].start) >= arg.max_product):
                 cluster.sort(key=lambda x: x.score, reverse=True)
                 # only keep top n for each primer cluster
-                pairs.extend(cluster[:arg.top_n])
+                pairs.extend(cluster)
                 cluster.clear()
             else:
                 pass
@@ -647,7 +649,7 @@ def parse_args():
                      help='minium resolution')
     arg.add_argument('-tmin', '--min_product', type=int, default=300,
                      help='minimum product length(include primer)')
-    arg.add_argument('-tmax', '--max_product', type=int, default=450,
+    arg.add_argument('-tmax', '--max_product', type=int, default=480,
                      help='maximum product length(include primer)')
     arg.add_argument('-t', '--top_n', type=int, default=1,
                      help='keep how many primers for one high varient region')
