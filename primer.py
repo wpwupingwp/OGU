@@ -672,6 +672,7 @@ def main():
     # read from fasta, generate new fasta for makeblastdb
     name, alignment, db_file = prepare(arg.input)
     rows, columns = alignment.shape
+    assert rows >= 4, 'Too few sequence in alignment (less than 4)!'
     # generate consensus
     base_cumulative_frequency = count_base(alignment, rows, columns)
     consensus = generate_consensus(base_cumulative_frequency, arg.coverage,
