@@ -632,24 +632,24 @@ def pick_pair(primers, alignment, arg):
 def parse_args():
     arg = argparse.ArgumentParser(description=main.__doc__)
     arg.add_argument('input', help='input alignment file')
-    arg.add_argument('-a', '--ambiguous_base_n', type=int, default=2,
+    arg.add_argument('-a', '--ambiguous_base_n', type=int, default=4,
                      help='number of ambiguous bases')
-    arg.add_argument('-c', '--coverage', type=float, default=0.7,
+    arg.add_argument('-c', '--coverage', type=float, default=0.6,
                      help='minium coverage of base and primer')
     arg.add_argument('-pmin', '--min_primer', type=int, default=20,
                      help='minimum primer length')
     arg.add_argument('-pmax', '--max_primer', type=int, default=24,
                      help='maximum primer length')
-    arg.add_argument('-m', '--mismatch', type=int, default=2,
+    arg.add_argument('-m', '--mismatch', type=int, default=4,
                      help='maximum mismatch bases in primer')
     arg.add_argument('-o', '--out', help='output name prefix')
-    arg.add_argument('-r', '--resolution', type=float, default=0.6,
+    arg.add_argument('-r', '--resolution', type=float, default=0.5,
                      help='minium resolution')
     arg.add_argument('-tmin', '--min_product', type=int, default=300,
                      help='minimum product length(include primer)')
-    arg.add_argument('-tmax', '--max_product', type=int, default=480,
+    arg.add_argument('-tmax', '--max_product', type=int, default=450,
                      help='maximum product length(include primer)')
-    arg.add_argument('-t', '--top_n', type=int, default=3,
+    arg.add_argument('-t', '--top_n', type=int, default=1,
                      help='keep how many primers for one high varient region')
     arg.add_argument('-w', '--window', type=int, default=10,
                      help='window size')
