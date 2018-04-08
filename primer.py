@@ -594,31 +594,31 @@ def validate(primer_candidate, db_file, n_seqs, arg):
 # profile
 def pick_pair(primers, alignment, arg):
     pairs = list()
-    cluster = list()
-    for index in range(len(primers)):
-        left = primers[index]
+    for left in primers:
+        if len(pairs) > 0:
+            # skip same place
+            if left.start-pairs[-1].left.start < arg.max_primer:
+                continue
         # convert mid_loc to 5' location
         location = left.avg_mid_loc - len(left) / 2
         begin = location + arg.min_product
         # fragment plus one primer = max_product length
         end = location + arg.max_product - len(left)
+        cluster = list()
         for right in primers:
             if right.avg_mid_loc < begin:
                 continue
             if right.avg_mid_loc > end:
                 break
             pair = Pair(left, right, alignment)
-            if len(cluster) == 0:
-                pass
-            elif (len(cluster) >= arg.top_n or
-                  abs(pair.start-cluster[-1].start) >= arg.max_product):
+            cluster.append(pair)
+            if (len(cluster) >= arg.top_n or
+                    abs(pair.start-cluster[-1].start) >= arg.max_product):
                 cluster.sort(key=lambda x: x.score, reverse=True)
                 # only keep top n for each primer cluster
-                pairs.extend(cluster)
-                cluster.clear()
-            else:
-                pass
-            cluster.append(pair)
+                pairs.extend(cluster[:arg.top_n])
+                # get enough pairs and break
+                break
     cluster.sort(key=lambda x: x.score, reverse=True)
     pairs.extend(cluster[:arg.top_n])
     good_pairs = list()
