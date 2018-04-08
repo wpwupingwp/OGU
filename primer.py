@@ -1,29 +1,26 @@
 #!/usr/bin/python3
 
 import argparse
-import os
-import re
-
 import numpy as np
+import os
 import primer3
-
+import re
+from Bio import Phylo, SeqIO
+from Bio.Blast.Applications import NcbiblastnCommandline as Blast
+from Bio.SeqFeature import SeqFeature, FeatureLocation
+from Bio.SeqRecord import SeqRecord
 from collections import defaultdict
 from glob import glob
 from math import log2
+from matplotlib import pyplot as plt
+from matplotlib import rcParams
+from matplotlib import ticker as mtick
 from multiprocessing import cpu_count
 from os import remove
-from timeit import default_timer as timer
 from subprocess import run
-from tempfile import NamedTemporaryFile as tmp
+from tempfile import NamedTemporaryFile as Tmp
+from timeit import default_timer as timer
 
-from Bio import Phylo, SeqIO
-from Bio.Blast.Applications import NcbiblastnCommandline as nb
-from Bio.SeqRecord import SeqRecord
-from Bio.SeqFeature import SeqFeature, FeatureLocation
-
-from matplotlib import pyplot as plt
-from matplotlib import ticker as mtick
-from matplotlib import rcParams
 rcParams['lines.linewidth'] = 1.5
 rcParams['axes.linewidth'] = 1.5
 rcParams['axes.labelsize'] = 16
@@ -33,9 +30,6 @@ rcParams['axes.facecolor'] = '#666666'
 
 
 class PrimerWithInfo(SeqRecord):
-    # __slots__ = ['seq', 'sequence', 'quality', 'start', 'coverage', 'avg_bitscore',
-    #              'avg_mid_loc', 'avg_mismatch', 'detail', 'is_reverse_complement']
-
     def __init__(self, seq='', quality='', start=0, coverage=0, avg_bitscore=0,
                  avg_mid_loc=0, avg_mismatch=0, detail=0,
                  reverse_complement=False):
@@ -59,6 +53,8 @@ class PrimerWithInfo(SeqRecord):
         self.end = self.annotations['end'] = start + self.__len__() - 1
         self.is_reverse_complement = reverse_complement
         self.description = ''
+        self.hairpin_tm = 0
+        self.homodimer_tm = 0
         self.update_id()
 
     def __getitem__(self, i):
@@ -123,7 +119,7 @@ class PrimerWithInfo(SeqRecord):
                        self.avg_bitscore, self.start, self.end))
 
 
-class Pair():
+class Pair:
     __slots__ = ['left', 'right', 'delta_tm', 'coverage', 'start', 'end',
                  'resolution', 'tree_value', 'entropy', 'have_heterodimer',
                  'heterodimer_tm', 'score']
@@ -194,13 +190,13 @@ class BlastResult():
          self.hit_end) = [int(i) for i in record[3:]]
 
 
-# profile
+@profile
 def prepare(fasta):
     """
     Given fasta format alignment filename, return a numpy array for sequence:
     Generate fasta file without gap for makeblastdb, return file name.
     """
-    no_gap = tmp('wt')
+    no_gap = Tmp('wt')
     data = list()
     record = ['id', 'sequence']
     with open(fasta, 'r') as raw:
@@ -228,14 +224,14 @@ def prepare(fasta):
     # new = np.hstack((name, seq)) -> is slower
     name = np.array([[i[0]] for i in data], dtype=np.bytes_)
     sequence = np.array([list(i[1]) for i in data], dtype=np.bytes_, order='F')
-    organize_no_gap = tmp('wt', delete=False)
+    organize_no_gap = Tmp('wt', delete=False)
     # try to avoid makeblastdb error
     SeqIO.convert(no_gap.name, 'fasta', organize_no_gap.name, 'fasta')
     no_gap.close()
     return name, sequence, organize_no_gap.name
 
 
-# profile
+@profile
 def count_base(alignment, rows, columns):
     """
     Given alignment numpy array, count cumulative frequency of base in each
@@ -269,7 +265,7 @@ def count_base(alignment, rows, columns):
     return frequency
 
 
-# profile
+@profile
 def get_quality(data, rows):
     # use fastq-illumina format
     max_q = 62
@@ -279,7 +275,7 @@ def get_quality(data, rows):
     return quality_value
 
 
-# profile
+@profile
 def get_resolution_and_entropy(alignment, start, end):
     """
     Given alignment (2d numpy array), location of fragment(start and end, int,
@@ -305,14 +301,14 @@ def get_resolution_and_entropy(alignment, start, end):
 
 
 def get_tree_value(alignment, start, end):
-    if run('iqtree -h', shell=True, stdout=tmp('wt')).returncode != 0:
+    if run('iqtree -h', shell=True, stdout=Tmp('wt')).returncode != 0:
         print('Cannot find IQTREE!')
         return 0
-    aln = tmp('wb')
+    aln = Tmp('wb')
     for index, row in enumerate(alignment[:, start:end]):
         aln.write(b'>'+str(index).encode('utf-8')+b'\n'+b''.join(row)+b'\n')
     iqtree = run('iqtree -s {} -m JC -fast'.format(aln.name),
-                 stdout=tmp('wt'), shell=True)
+                 stdout=Tmp('wt'), shell=True)
     # just return 0 if there is error
     if iqtree.returncode != 0:
         print('Cannot get tree_value of {}-{}!'.format(start, end))
@@ -331,7 +327,7 @@ def get_tree_value(alignment, start, end):
     return n_internals / n_terminals
 
 
-# profile
+@profile
 def generate_consensus(base_cumulative_frequency, coverage_percent,
                        rows, columns, output):
     """
@@ -389,8 +385,8 @@ def generate_consensus(base_cumulative_frequency, coverage_percent,
     return consensus
 
 
-# profile
-def get_good_region(consensus, index, seq_count, arg):
+@profile
+def get_good_region(index, seq_count, arg):
     # return loose region, final product may violate product length
     # restriction
     n = arg.max_product - arg.min_product
@@ -403,7 +399,7 @@ def get_good_region(consensus, index, seq_count, arg):
     return good_region
 
 
-# profile
+@profile
 def find_continuous(consensus, good_region, min_len):
     """
     Given PrimerWithInfo, good_region: List[bool], min_len
@@ -420,8 +416,8 @@ def find_continuous(consensus, good_region, min_len):
     return consensus
 
 
-# profile
-def find_primer(consensus, rows, min_len, max_len, ambiguous_base_n):
+@profile
+def find_primer(consensus, min_len, max_len):
     """
     Find suitable primer in given consensus with features labeled as candidate
     primer, return List[PrimerWithInfo], consensus
@@ -446,7 +442,7 @@ def find_primer(consensus, rows, min_len, max_len, ambiguous_base_n):
     return primers, consensus
 
 
-# profile
+@profile
 def count_and_draw(alignment, consensus, arg):
     """
     Given alignment(numpy array), return unique sequence count List[float].
@@ -504,16 +500,17 @@ def count_and_draw(alignment, consensus, arg):
         for base, resolution in enumerate(count):
             _.write('{}\t{:.2f}\n'.format(base, resolution))
 
-    return (count, shannon_index, max_shannon_index, index)
+    return count, shannon_index, max_shannon_index, index
 
 
-# profile
+@profile
 def parse_blast_tab(filename):
     query = list()
     with open(filename, 'r') as raw:
         for line in raw:
             if line.startswith('# BLAST'):
                 yield query
+                # query.clear()
                 query = list()
             elif line.startswith('#'):
                 pass
@@ -521,7 +518,7 @@ def parse_blast_tab(filename):
                 query.append(BlastResult(line))
 
 
-# profile
+@profile
 def validate(primer_candidate, db_file, n_seqs, arg):
     """
     Do BLAST. Parse BLAST result. Return List[PrimerWithInfo]
@@ -533,19 +530,19 @@ def validate(primer_candidate, db_file, n_seqs, arg):
     SeqIO.convert(query_file+'.fastq', 'fastq', query_file, 'fasta')
     # build blast db
     run('makeblastdb -in {} -dbtype nucl'.format(db_file), shell=True,
-        stdout=tmp('wt'))
+        stdout=Tmp('wt'))
     # blast
-    blast_result_file = tmp('wt')
+    blast_result_file = Tmp('wt')
     fmt = 'qseqid sseqid qseq nident mismatch score qstart qend sstart send'
-    cmd = nb(num_threads=cpu_count(),
-             query=query_file,
-             db=db_file,
-             task='blastn-short',
-             evalue=1e-3,
-             max_hsps=1,
-             max_target_seqs=n_seqs,
-             outfmt='"7 {}"'.format(fmt),
-             out=blast_result_file.name)
+    cmd = Blast(num_threads=cpu_count(),
+                query=query_file,
+                db=db_file,
+                task='blastn-short',
+                evalue=1e-3,
+                max_hsps=1,
+                max_target_seqs=n_seqs,
+                outfmt='"7 {}"'.format(fmt),
+                out=blast_result_file.name)
     stdout, stderr = cmd()
     blast_result = dict()
     for query in parse_blast_tab(blast_result_file.name):
@@ -578,34 +575,6 @@ def validate(primer_candidate, db_file, n_seqs, arg):
                 'avg_mid_loc': mid_loc/n_seqs}
     # because SearchIO.parse have bug(only return first record), use
     # parse_blast_result()
-    # for query in SearchIO.parse(blast_result_file, 'blast-tab', fields=fmt):
-    #     print(query)
-    #     if len(query) == 0:
-    #         continue
-    #     sum_bitscore_raw = 0
-    #     sum_mismatch = 0
-    #     good_hits = 0
-    #     start = 0
-    #     for hit in query:
-    #         min_positive = len(hit[0].query) - arg.mismatch
-    #         hsp_bitscore_raw = hit[0].bitscore_raw
-    #         positive = hit[0].ident_num
-    #         mismatch = hit[0].mismatch_num
-    #         if positive >= min_positive and mismatch <= arg.mismatch:
-    #             sum_bitscore_raw += hsp_bitscore_raw
-    #             sum_mismatch += mismatch
-    #             good_hits += 1
-    #             # middle location of primer, the difference of two mid_loc
-    #             # approximately equals to the length of amplified fragment.
-    #             start += sum(hit[0].hit_range) / 2
-    #     coverage = good_hits/n_seqs
-    #     if coverage >= arg.coverage:
-    #         # get sequence unique index for choose
-    #         # Notice that here it use bitscore_raw instead of bitscore
-    #         blast_result[query.id] = {
-    #             'coverage': coverage, 'avg_bitscore': sum_bitscore_raw/n_seqs,
-    #             'avg_mismatch': sum_mismatch/n_seqs,
-    #             'avg_mid_loc': start/n_seqs}
     primer_verified = list()
     for primer in primer_candidate:
         i = primer.id
@@ -623,7 +592,7 @@ def validate(primer_candidate, db_file, n_seqs, arg):
     return primer_verified
 
 
-# profile
+@profile
 def pick_pair(primers, alignment, arg):
     pairs = list()
     cluster = list()
@@ -660,7 +629,7 @@ def pick_pair(primers, alignment, arg):
     return good_pairs
 
 
-# profile
+@profile
 def parse_args():
     arg = argparse.ArgumentParser(description=main.__doc__)
     arg.add_argument('input', help='input alignment file')
@@ -689,7 +658,7 @@ def parse_args():
     return arg.parse_args()
 
 
-# profile
+@profile
 def main():
     """
     Automatic design primer for DNA barcode.
@@ -716,10 +685,10 @@ given resolution threshold({:.2f}). Please try to use longer fragment or
 lower resolution options.
 """.format(max(seq_count), arg.resolution))
     # find candidate
-    good_region = get_good_region(consensus, index, seq_count, arg)
+    good_region = get_good_region(index, seq_count, arg)
     consensus = find_continuous(consensus, good_region, arg.min_primer)
     primer_candidate, consensus_with_features = find_primer(
-        consensus, rows, arg.min_primer, arg.max_primer, arg.ambiguous_base_n)
+        consensus, arg.min_primer, arg.max_primer)
     assert len(primer_candidate) != 0, (
         'Primer not found! Try to loose options.')
     # validate
