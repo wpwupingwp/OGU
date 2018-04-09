@@ -132,8 +132,8 @@ class Pair:
             self.right = right
         self.delta_tm = abs(self.left.tm - self.right.tm)
         self.coverage = min(left.coverage, right.coverage)
-        self.start = left.start
-        self.end = right.end
+        self.start = left.avg_mid_loc
+        self.end = right.avg_mid_loc
         self.resolution = 0
         self.tree_value = 0.0
         self.entropy = 0.0
