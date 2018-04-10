@@ -113,12 +113,14 @@ class PrimerWithInfo(SeqRecord):
 
     def update_id(self):
         self.end = self.annotations['end'] = self.start + self.__len__() - 1
-        self.avg_mid_loc = np.mean(self.mid_loc)
-        self.stdev_mid_loc = np.std(self.mid_loc)
-        self.id = ('MidLocation({:.0f})-Tm({:.2f})-Coverage({:.2%})-'
+        if self.mid_loc is not None:
+            self.avg_mid_loc = np.mean(self.mid_loc)
+        else:
+            self.avg_mid_loc = 0
+        self.id = ('AvgMidLocation({:.0f})-Tm({:.2f})-Coverage({:.2%})-'
                    'AvgBitScore({:.2f})-Start({})-End({})'.format(
-                       sum(self.mid_loc)/len(self.mid_loc), self.tm,
-                       self.coverage, self.avg_bitscore, self.start, self.end))
+                       self.avg_mid_loc, self.tm, self.coverage,
+                       self.avg_bitscore, self.start, self.end))
 
 
 class Pair:
@@ -138,7 +140,7 @@ class Pair:
         a = len(self.left)/2
         b = len(self.right)/2
         self.start = int(sum(left.mid_loc)/len(left.mid_loc))
-        self.start = int(sum(right.mid_loc)/len(right.mid_loc))
+        self.end = int(sum(right.mid_loc)/len(right.mid_loc))
         length = [(r-b)-(l+a) for r, l in zip(right.mid_loc, left.mid_loc)]
         self.length = [int(i) for i in length]
         self.resolution = 0
@@ -159,20 +161,19 @@ class Pair:
 
     def __str__(self):
         return (
-            'Pair(score={:.2f}, product={}, start={}, end={}, left={}, '
+            'Pair(score={:.2f}, product={:.0f}, start={}, end={}, left={}, '
             'right={}, resolution={:.2%}, coverage={:.2%}, delta_tm={:.2f}, '
             'have_heterodimer={})'.format(
-                self.score, self.length[1], self.start, self.end,
+                self.score, np.mean(self.length), self.start, self.end,
                 self.left.seq, self.right.seq, self.resolution, self.coverage,
                 self.delta_tm, self.have_heterodimer))
 
     def get_score(self):
-        return (self.length[1]*0.5 + self.coverage*100 + self.resolution*100
+        return (np.mean(self.length) + self.coverage*100 + self.resolution*100
                 + self.tree_value*100 + self.entropy*5
                 - int(self.have_heterodimer)*10
-                - self.delta_tm*5 - self.left.avg_mismatch*10 -
-                self.right.avg_mismatch*10 -
-                (self.length[2]-self.length[0])*0.1)
+                - self.delta_tm*5 - self.left.avg_mismatch*10
+                - self.right.avg_mismatch*10)
 
     def add_tree_value(self, alignment):
         self.tree_value = get_tree_value(alignment, self.left.start,
@@ -570,7 +571,6 @@ def validate(primer_candidate, db_file, n_seqs, arg):
                 # middle location of primer, the difference of two mid_loc
                 # approximately equals to the length of amplified fragment.
                 mid_loc.append((hit.hit_start+hit.hit_end)/2)
-                print(hit.hit_start, hit.hit_end)
             else:
                 # print(positive, min_positive, mismatch, arg.mismatch)
                 pass
@@ -608,15 +608,18 @@ def pick_pair(primers, alignment, arg):
             if left.start-pairs[-1].left.start < arg.max_primer:
                 continue
         # convert mid_loc to 5' location
-        location = left.mid_loc[1] - len(left) / 2
+        location = left.avg_mid_loc - len(left) / 2
         begin = location + arg.min_product
         # fragment plus one primer = max_product length
         end = location + arg.max_product - len(left)
         cluster = list()
         for right in primers:
-            if right.mid_loc[1] < begin:
+            # skip if overlap
+            if min(right.mid_loc) < max(left.mid_loc):
                 continue
-            if right.mid_loc[1] > end:
+            if right.avg_mid_loc < begin:
+                continue
+            if right.avg_mid_loc > end:
                 break
             pair = Pair(left, right, alignment)
             cluster.append(pair)
@@ -706,12 +709,12 @@ lower resolution options.
     # pick pair
     pairs = pick_pair(primer_verified, alignment, arg)
     # output
-    csv_title = ('Score,SampleUsed,MinProductLength,AvgProductLength,'
+    csv_title = ('Score,SampleUsed,AvgProductLength,StdEV,MinProductLength,'
                  'MaxProductLength,Coverage,Resolution,TreeValue,LeftSeq,'
                  'LeftTm,LeftAvgBitscore,LeftAvgMismatch,RightSeq,RightTm,'
                  'RightAvgBitscore,RightAvgMismatch,DeltaTm,Start,End\n')
-    style = ('{:.2f},{},{},{},{},{:.2%},{:.2%},{:.2f},{:.2f},{},{:.2f},{:.2f},'
-             '{:.2f},{},{:.2f},{:.2f},{:.2f},{:.2f},{},{}\n')
+    style = ('{:.2f},{},{:.0f},{:.0f},{},{},{:.2%},{:.2%},{:.2f},{:.2f},{},'
+             '{:.2f},{:.2f},{:.2f},{},{:.2f},{:.2f},{:.2f},{:.2f},{},{}\n')
     with open('{}-{}samples-{:.2f}resolution.fastq'.format(
             arg.out, rows, arg.resolution), 'w') as out1, open(
                 '{}-{}samples-{:.2f}resolution.csv'.format(
@@ -719,10 +722,11 @@ lower resolution options.
         out2.write(csv_title)
         for pair in pairs:
             line = style.format(
-                pair.score, rows, *pair.length, pair.coverage, pair.resolution,
-                pair.tree_value, pair.entropy, pair.left.seq, pair.left.tm,
-                pair.left.avg_bitscore, pair.left.avg_mismatch, pair.right.seq,
-                pair.right.tm, pair.right.avg_bitscore,
+                pair.score, rows, np.mean(pair.length), np.std(pair.length),
+                min(pair.length), max(pair.length), pair.coverage,
+                pair.resolution, pair.tree_value, pair.entropy, pair.left.seq,
+                pair.left.tm, pair.left.avg_bitscore, pair.left.avg_mismatch,
+                pair.right.seq, pair.right.tm, pair.right.avg_bitscore,
                 pair.right.avg_mismatch, pair.delta_tm, pair.start, pair.end)
             out2.write(line)
             SeqIO.write(pair.left, out1, 'fastq')
