@@ -31,7 +31,7 @@ rcParams['axes.facecolor'] = '#666666'
 
 class PrimerWithInfo(SeqRecord):
     def __init__(self, seq='', quality='', start=0, coverage=0, avg_bitscore=0,
-                 avg_mid_loc=0, avg_mismatch=0, detail=0,
+                 mid_loc=(0, 0, 0), avg_mismatch=0, detail=0,
                  reverse_complement=False):
         super().__init__(seq.upper())
 
@@ -47,7 +47,7 @@ class PrimerWithInfo(SeqRecord):
         self.tm = self.annotations['tm'] = primer3.calcTm(self.g_seq)
         self.coverage = self.annotations['coverage'] = coverage
         self.avg_bitscore = self.annotations['avg_bitscore'] = avg_bitscore
-        self.avg_mid_loc = self.annotations['avg_mid_loc'] = avg_mid_loc
+        self.mid_loc = self.annotations['mid_loc'] = [int(i) for i in mid_loc]
         self.avg_mismatch = self.annotations['avg_mismatch'] = avg_mismatch
         self.detail = self.annotations['detail'] = detail
         self.end = self.annotations['end'] = start + self.__len__() - 1
@@ -108,21 +108,21 @@ class PrimerWithInfo(SeqRecord):
         return PrimerWithInfo(seq=new_seq, quality=new_quality,
                               start=self.start, coverage=self.coverage,
                               avg_bitscore=self.avg_bitscore,
-                              avg_mid_loc=self.avg_mid_loc,
+                              mid_loc=self.mid_loc,
                               detail=self.detail)
 
     def update_id(self):
         self.end = self.annotations['end'] = self.start + self.__len__() - 1
-        self.id = ('AvgMidLocation({:.0f})-Tm({:.2f})-Coverage({:.2%})-'
+        self.id = ('MidLocation({:.0f})-Tm({:.2f})-Coverage({:.2%})-'
                    'SumBitScore({})-Start({})-End({})'.format(
-                       self.avg_mid_loc, self.tm, self.coverage,
+                       self.mid_loc[1], self.tm, self.coverage,
                        self.avg_bitscore, self.start, self.end))
 
 
 class Pair:
     __slots__ = ['left', 'right', 'delta_tm', 'coverage', 'start', 'end',
                  'resolution', 'tree_value', 'entropy', 'have_heterodimer',
-                 'heterodimer_tm', 'score']
+                 'heterodimer_tm', 'score', 'length']
 
     def __init__(self, left, right, alignment):
         self.left = left
@@ -132,15 +132,21 @@ class Pair:
             self.right = right
         self.delta_tm = abs(self.left.tm - self.right.tm)
         self.coverage = min(left.coverage, right.coverage)
-        self.start = left.avg_mid_loc
-        self.end = right.avg_mid_loc
+        # pairs use mid_loc from BLAST as start/end
+        self.start = left.mid_loc[1]
+        self.end = right.mid_loc[1]
+        a = int(len(self.left)/2)
+        b = int(len(self.right)/2)
+        self.length = [(self.right.mid_loc[2]-b)-(self.left.mid_loc[0]+a),
+                       (self.right.mid_loc[1]-b)-(self.left.mid_loc[1]+a),
+                       (self.right.mid_loc[0]-b)-(self.left.mid_loc[2]+a)]
         self.resolution = 0
         self.tree_value = 0.0
         self.entropy = 0.0
         self.have_heterodimer = False
-        # include end base
+        # include end base, use alignment loc for slice
         self.resolution, self.entropy = get_resolution_and_entropy(
-            alignment, self.start, self.end+1)
+            alignment, self.left.start, self.right.end+1)
         self.heterodimer_tm = primer3.calcHeterodimer(self.left.g_seq,
                                                       self.right.g_seq).tm
         if max(self.heterodimer_tm, self.left.tm,
@@ -150,29 +156,25 @@ class Pair:
             self.have_heterodimer = False
         self.score = self.get_score()
 
-    def __len__(self):
-        product_length = int((self.right.avg_mid_loc - len(self.right)/2) - (
-            self.left.avg_mid_loc + len(self.left)/2))
-        return product_length
-
     def __str__(self):
         return (
             'Pair(score={:.2f}, product={}, start={}, end={}, left={}, '
             'right={}, resolution={:.2%}, coverage={:.2%}, delta_tm={:.2f}, '
             'have_heterodimer={})'.format(
-                self.score, len(self), self.start, self.end, self.left.seq,
-                self.right.seq, self.resolution, self.coverage, self.delta_tm,
-                self.have_heterodimer))
+                self.score, self.length[1], self.start, self.end,
+                self.left.seq, self.right.seq, self.resolution, self.coverage,
+                self.delta_tm, self.have_heterodimer))
 
     def get_score(self):
-        return (len(self)*0.1 + self.coverage*100 + self.resolution*100 +
-                self.tree_value*100 + self.left.avg_bitscore*5
+        return (self.length[1]*0.5 + self.coverage*100 + self.resolution*100
+                + self.tree_value*100 + self.left.avg_bitscore*5
                 + self.right.avg_bitscore*5 - int(self.have_heterodimer)*10
                 - self.delta_tm*5 - self.left.avg_mismatch*10 -
                 self.right.avg_mismatch*10)
 
     def add_tree_value(self, alignment):
-        self.tree_value = get_tree_value(alignment, self.start, self.end)
+        self.tree_value = get_tree_value(alignment, self.left.start,
+                                         self.right.end)
         self.score = self.get_score()
         return self
 
@@ -301,6 +303,9 @@ def get_resolution_and_entropy(alignment, start, end):
 
 
 def get_tree_value(alignment, start, end):
+    rows, columns = alignment.shape
+    if start >= end or end > columns:
+        return 0
     if run('iqtree -h', shell=True, stdout=Tmp('wt')).returncode != 0:
         print('Cannot find IQTREE!')
         return 0
@@ -550,7 +555,7 @@ def validate(primer_candidate, db_file, n_seqs, arg):
         sum_bitscore_raw = 0
         sum_mismatch = 0
         good_hits = 0
-        mid_loc = 0
+        mid_loc = list()
         for hit in query:
             min_positive = len(hit.query_seq) - arg.mismatch
             hsp_bitscore_raw = hit.bitscore_raw
@@ -562,7 +567,7 @@ def validate(primer_candidate, db_file, n_seqs, arg):
                 good_hits += 1
                 # middle location of primer, the difference of two mid_loc
                 # approximately equals to the length of amplified fragment.
-                mid_loc += (hit.hit_start+hit.hit_end) / 2
+                mid_loc.append((hit.hit_start+hit.hit_end)/2)
             else:
                 # print(positive, min_positive, mismatch, arg.mismatch)
                 pass
@@ -571,7 +576,7 @@ def validate(primer_candidate, db_file, n_seqs, arg):
             blast_result[hit.query_id] = {
                 'coverage': coverage, 'avg_bitscore': sum_bitscore_raw/n_seqs,
                 'avg_mismatch': sum_mismatch/n_seqs,
-                'avg_mid_loc': mid_loc/n_seqs}
+                'mid_loc': (min(mid_loc), sum(mid_loc)/n_seqs, max(mid_loc))}
     # because SearchIO.parse have bug(only return first record), use
     # parse_blast_result()
     primer_verified = list()
@@ -580,7 +585,7 @@ def validate(primer_candidate, db_file, n_seqs, arg):
         if i in blast_result:
             primer.coverage = blast_result[i]['coverage']
             primer.avg_bitscore = blast_result[i]['avg_bitscore']
-            primer.avg_mid_loc = int(blast_result[i]['avg_mid_loc'])
+            primer.mid_loc = blast_result[i]['mid_loc']
             primer.avg_mismatch = int(blast_result[i]['avg_mismatch'])
             primer.update_id()
             primer_verified.append(primer)
@@ -600,15 +605,15 @@ def pick_pair(primers, alignment, arg):
             if left.start-pairs[-1].left.start < arg.max_primer:
                 continue
         # convert mid_loc to 5' location
-        location = left.avg_mid_loc - len(left) / 2
+        location = left.mid_loc[1] - len(left) / 2
         begin = location + arg.min_product
         # fragment plus one primer = max_product length
         end = location + arg.max_product - len(left)
         cluster = list()
         for right in primers:
-            if right.avg_mid_loc < begin:
+            if right.mid_loc[1] < begin:
                 continue
-            if right.avg_mid_loc > end:
+            if right.mid_loc[1] > end:
                 break
             pair = Pair(left, right, alignment)
             cluster.append(pair)
@@ -698,12 +703,12 @@ lower resolution options.
     # pick pair
     pairs = pick_pair(primer_verified, alignment, arg)
     # output
-    csv_title = ('Score,SampleUsed,ProductLength,Coverage,Resolution,'
-                 'TreeValue,LeftSeq,LeftTm,LeftAvgBitscore,LeftAvgMismatch,'
-                 'RightSeq,RightTm,RightAvgBitscore,RightAvgMismatch,DeltaTm,'
-                 'Start,End\n')
-    style = ('{:.2f},{},{},{:.2%},{:.2%},{:.2f},{},{:.2f},{:.2f},{},{},{:.2f},'
-             '{:.2f},{},{:.2f},{},{}\n')
+    csv_title = ('Score,SampleUsed,MinProductLength,AvgProductLength,'
+                 'MaxProductLength,Coverage,Resolution,TreeValue,LeftSeq,'
+                 'LeftTm,LeftAvgBitscore,LeftAvgMismatch,RightSeq,RightTm,'
+                 'RightAvgBitscore,RightAvgMismatch,DeltaTm,Start,End\n')
+    style = ('{:.2f},{},{},{},{},{:.2%},{:.2%},{:.2f},{},{:.2f},{:.2f},{},{},'
+             '{:.2f},{:.2f},{},{:.2f},{},{}\n')
     with open('{}-{}samples-{:.2f}resolution.fastq'.format(
             arg.out, rows, arg.resolution), 'w') as out1, open(
                 '{}-{}samples-{:.2f}resolution.csv'.format(
@@ -711,7 +716,7 @@ lower resolution options.
         out2.write(csv_title)
         for pair in pairs:
             line = style.format(
-                pair.score, rows, len(pair), pair.coverage, pair.resolution,
+                pair.score, rows, *pair.length, pair.coverage, pair.resolution,
                 pair.tree_value, pair.left.seq, pair.left.tm,
                 pair.left.avg_bitscore, pair.left.avg_mismatch, pair.right.seq,
                 pair.right.tm, pair.right.avg_bitscore,
