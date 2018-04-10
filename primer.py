@@ -137,9 +137,11 @@ class Pair:
         self.end = right.mid_loc[1]
         a = int(len(self.left)/2)
         b = int(len(self.right)/2)
-        self.length = [(self.right.mid_loc[2]-b)-(self.left.mid_loc[0]+a),
-                       (self.right.mid_loc[1]-b)-(self.left.mid_loc[1]+a),
-                       (self.right.mid_loc[0]-b)-(self.left.mid_loc[2]+a)]
+        # [min, avg, max]
+        length = [(self.right.mid_loc[0]-b)-(self.left.mid_loc[2]+a),
+                  (self.right.mid_loc[1]-b)-(self.left.mid_loc[1]+a),
+                  (self.right.mid_loc[2]-b)-(self.left.mid_loc[0]+a)]
+        self.length = [int(i) for i in length]
         self.resolution = 0
         self.tree_value = 0.0
         self.entropy = 0.0
