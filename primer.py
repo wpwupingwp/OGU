@@ -47,7 +47,7 @@ class PrimerWithInfo(SeqRecord):
         self.tm = self.annotations['tm'] = primer3.calcTm(self.g_seq)
         self.coverage = self.annotations['coverage'] = coverage
         self.avg_bitscore = self.annotations['avg_bitscore'] = avg_bitscore
-        self.mid_loc = self.annotations['mid_loc'] = [int(i) for i in mid_loc]
+        self.mid_loc = self.annotations['mid_loc'] = mid_loc
         self.avg_mismatch = self.annotations['avg_mismatch'] = avg_mismatch
         self.detail = self.annotations['detail'] = detail
         self.end = self.annotations['end'] = start + self.__len__() - 1
@@ -114,7 +114,7 @@ class PrimerWithInfo(SeqRecord):
     def update_id(self):
         self.end = self.annotations['end'] = self.start + self.__len__() - 1
         self.id = ('MidLocation({:.0f})-Tm({:.2f})-Coverage({:.2%})-'
-                   'SumBitScore({})-Start({})-End({})'.format(
+                   'AvgBitScore({:.2f})-Start({})-End({})'.format(
                        self.mid_loc[1], self.tm, self.coverage,
                        self.avg_bitscore, self.start, self.end))
 
@@ -133,10 +133,10 @@ class Pair:
         self.delta_tm = abs(self.left.tm - self.right.tm)
         self.coverage = min(left.coverage, right.coverage)
         # pairs use mid_loc from BLAST as start/end
-        self.start = left.mid_loc[1]
-        self.end = right.mid_loc[1]
-        a = int(len(self.left)/2)
-        b = int(len(self.right)/2)
+        self.start = int(left.mid_loc[1])
+        self.end = int(right.mid_loc[1])
+        a = len(self.left)/2
+        b = len(self.right)/2
         # [min, avg, max]
         length = [(self.right.mid_loc[0]-b)-(self.left.mid_loc[2]+a),
                   (self.right.mid_loc[1]-b)-(self.left.mid_loc[1]+a),
@@ -169,10 +169,11 @@ class Pair:
 
     def get_score(self):
         return (self.length[1]*0.5 + self.coverage*100 + self.resolution*100
-                + self.tree_value*100 + self.left.avg_bitscore*5
-                + self.right.avg_bitscore*5 - int(self.have_heterodimer)*10
+                + self.tree_value*100 + self.entropy*5
+                - int(self.have_heterodimer)*10
                 - self.delta_tm*5 - self.left.avg_mismatch*10 -
-                self.right.avg_mismatch*10)
+                self.right.avg_mismatch*10 -
+                (self.length[2]-self.length[0])*0.1)
 
     def add_tree_value(self, alignment):
         self.tree_value = get_tree_value(alignment, self.left.start,
@@ -588,7 +589,7 @@ def validate(primer_candidate, db_file, n_seqs, arg):
             primer.coverage = blast_result[i]['coverage']
             primer.avg_bitscore = blast_result[i]['avg_bitscore']
             primer.mid_loc = blast_result[i]['mid_loc']
-            primer.avg_mismatch = int(blast_result[i]['avg_mismatch'])
+            primer.avg_mismatch = blast_result[i]['avg_mismatch']
             primer.update_id()
             primer_verified.append(primer)
     blast_result_file.close()
@@ -709,8 +710,8 @@ lower resolution options.
                  'MaxProductLength,Coverage,Resolution,TreeValue,LeftSeq,'
                  'LeftTm,LeftAvgBitscore,LeftAvgMismatch,RightSeq,RightTm,'
                  'RightAvgBitscore,RightAvgMismatch,DeltaTm,Start,End\n')
-    style = ('{:.2f},{},{},{},{},{:.2%},{:.2%},{:.2f},{},{:.2f},{:.2f},{},{},'
-             '{:.2f},{:.2f},{},{:.2f},{},{}\n')
+    style = ('{:.2f},{},{},{},{},{:.2%},{:.2%},{:.2f},{:.2f},{},{:.2f},{:.2f},'
+             '{:.2f},{},{:.2f},{:.2f},{:.2f},{:.2f},{},{}\n')
     with open('{}-{}samples-{:.2f}resolution.fastq'.format(
             arg.out, rows, arg.resolution), 'w') as out1, open(
                 '{}-{}samples-{:.2f}resolution.csv'.format(
@@ -719,7 +720,7 @@ lower resolution options.
         for pair in pairs:
             line = style.format(
                 pair.score, rows, *pair.length, pair.coverage, pair.resolution,
-                pair.tree_value, pair.left.seq, pair.left.tm,
+                pair.tree_value, pair.entropy, pair.left.seq, pair.left.tm,
                 pair.left.avg_bitscore, pair.left.avg_mismatch, pair.right.seq,
                 pair.right.tm, pair.right.avg_bitscore,
                 pair.right.avg_mismatch, pair.delta_tm, pair.start, pair.end)
