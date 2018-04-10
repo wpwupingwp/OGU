@@ -31,7 +31,7 @@ rcParams['axes.facecolor'] = '#666666'
 
 class PrimerWithInfo(SeqRecord):
     def __init__(self, seq='', quality='', start=0, coverage=0, avg_bitscore=0,
-                 mid_loc=(0, 0, 0), avg_mismatch=0, detail=0,
+                 mid_loc=None, avg_mismatch=0, detail=0,
                  reverse_complement=False):
         super().__init__(seq.upper())
 
@@ -113,10 +113,12 @@ class PrimerWithInfo(SeqRecord):
 
     def update_id(self):
         self.end = self.annotations['end'] = self.start + self.__len__() - 1
+        self.avg_mid_loc = np.mean(self.mid_loc)
+        self.stdev_mid_loc = np.std(self.mid_loc)
         self.id = ('MidLocation({:.0f})-Tm({:.2f})-Coverage({:.2%})-'
                    'AvgBitScore({:.2f})-Start({})-End({})'.format(
-                       self.mid_loc[1], self.tm, self.coverage,
-                       self.avg_bitscore, self.start, self.end))
+                       sum(self.mid_loc)/len(self.mid_loc), self.tm,
+                       self.coverage, self.avg_bitscore, self.start, self.end))
 
 
 class Pair:
@@ -133,14 +135,11 @@ class Pair:
         self.delta_tm = abs(self.left.tm - self.right.tm)
         self.coverage = min(left.coverage, right.coverage)
         # pairs use mid_loc from BLAST as start/end
-        self.start = int(left.mid_loc[1])
-        self.end = int(right.mid_loc[1])
         a = len(self.left)/2
         b = len(self.right)/2
-        # [min, avg, max]
-        length = [(self.right.mid_loc[0]-b)-(self.left.mid_loc[2]+a),
-                  (self.right.mid_loc[1]-b)-(self.left.mid_loc[1]+a),
-                  (self.right.mid_loc[2]-b)-(self.left.mid_loc[0]+a)]
+        self.start = int(sum(left.mid_loc)/len(left.mid_loc))
+        self.start = int(sum(right.mid_loc)/len(right.mid_loc))
+        length = [(r-b)-(l+a) for r, l in zip(right.mid_loc, left.mid_loc)]
         self.length = [int(i) for i in length]
         self.resolution = 0
         self.tree_value = 0.0
@@ -571,6 +570,7 @@ def validate(primer_candidate, db_file, n_seqs, arg):
                 # middle location of primer, the difference of two mid_loc
                 # approximately equals to the length of amplified fragment.
                 mid_loc.append((hit.hit_start+hit.hit_end)/2)
+                print(hit.hit_start, hit.hit_end)
             else:
                 # print(positive, min_positive, mismatch, arg.mismatch)
                 pass
@@ -580,11 +580,8 @@ def validate(primer_candidate, db_file, n_seqs, arg):
                 'coverage': coverage,
                 'avg_bitscore': sum_bitscore_raw/good_hits,
                 'avg_mismatch': sum_mismatch/good_hits,
-                'mid_loc': (min(mid_loc), sum(mid_loc)/good_hits,
-                            max(mid_loc))}
+                'mid_loc': mid_loc}
     # because SearchIO.parse is slow, use parse_blast_result()
-    for i in blast_result.items():
-        print(*i)
     primer_verified = list()
     for primer in primer_candidate:
         i = primer.id
