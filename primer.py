@@ -577,11 +577,14 @@ def validate(primer_candidate, db_file, n_seqs, arg):
         coverage = good_hits/n_seqs
         if coverage >= arg.coverage:
             blast_result[hit.query_id] = {
-                'coverage': coverage, 'avg_bitscore': sum_bitscore_raw/n_seqs,
-                'avg_mismatch': sum_mismatch/n_seqs,
-                'mid_loc': (min(mid_loc), sum(mid_loc)/n_seqs, max(mid_loc))}
-    # because SearchIO.parse have bug(only return first record), use
-    # parse_blast_result()
+                'coverage': coverage,
+                'avg_bitscore': sum_bitscore_raw/good_hits,
+                'avg_mismatch': sum_mismatch/good_hits,
+                'mid_loc': (min(mid_loc), sum(mid_loc)/good_hits,
+                            max(mid_loc))}
+    # because SearchIO.parse is slow, use parse_blast_result()
+    for i in blast_result.items():
+        print(*i)
     primer_verified = list()
     for primer in primer_candidate:
         i = primer.id
