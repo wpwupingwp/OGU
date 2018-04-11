@@ -139,8 +139,8 @@ class Pair:
         # pairs use mid_loc from BLAST as start/end
         a = len(self.left)/2
         b = len(self.right)/2
-        self.start = int(sum(left.mid_loc)/len(left.mid_loc))
-        self.end = int(sum(right.mid_loc)/len(right.mid_loc))
+        self.start = int(left.avg_mid_loc)
+        self.end = int(right.avg_mid_loc)
         length = [(r-b)-(l+a) for r, l in zip(right.mid_loc, left.mid_loc)]
         self.length = [int(i) for i in length]
         self.resolution = 0
