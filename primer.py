@@ -605,7 +605,7 @@ def pick_pair(primers, alignment, arg):
     for left in primers:
         if len(pairs) > 0:
             # skip same place
-            if left.start-pairs[-1].left.start < arg.max_primer:
+            if left.start-pairs[-1].left.start < arg.min_primer:
                 continue
         # convert mid_loc to 5' location
         location = left.avg_mid_loc - len(left) / 2
@@ -615,7 +615,7 @@ def pick_pair(primers, alignment, arg):
         cluster = list()
         for right in primers:
             # skip if overlap
-            if min(right.mid_loc) < max(left.mid_loc):
+            if right.avg_mid_loc < left.avg_mid_loc:
                 continue
             if right.avg_mid_loc < begin:
                 continue
@@ -660,7 +660,7 @@ def parse_args():
                      help='minium resolution')
     arg.add_argument('-tmin', '--min_product', type=int, default=300,
                      help='minimum product length(include primer)')
-    arg.add_argument('-tmax', '--max_product', type=int, default=480,
+    arg.add_argument('-tmax', '--max_product', type=int, default=500,
                      help='maximum product length(include primer)')
     arg.add_argument('-t', '--top_n', type=int, default=1,
                      help='keep how many primers for one high varient region')
