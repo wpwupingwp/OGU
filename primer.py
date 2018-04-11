@@ -622,6 +622,8 @@ def pick_pair(primers, alignment, arg):
             if right.avg_mid_loc > end:
                 break
             pair = Pair(left, right, alignment)
+            if min(pair.length) < 0:
+                continue
             cluster.append(pair)
             if (len(cluster) >= arg.top_n or
                     abs(pair.start-cluster[-1].start) >= arg.max_product):
