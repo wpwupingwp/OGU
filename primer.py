@@ -147,9 +147,8 @@ class Pair:
         self.tree_value = 0.0
         self.entropy = 0.0
         self.have_heterodimer = False
-        # include end base, use alignment loc for slice
-        self.resolution, self.entropy = get_resolution_and_entropy(
-            alignment, self.left.start, self.right.end+1)
+        self.resolution = 0
+        self.entropy = 0
         self.heterodimer_tm = primer3.calcHeterodimer(self.left.g_seq,
                                                       self.right.g_seq).tm
         if max(self.heterodimer_tm, self.left.tm,
@@ -157,7 +156,7 @@ class Pair:
             self.have_heterodimer = True
         else:
             self.have_heterodimer = False
-        self.score = self.get_score()
+        self.get_score()
 
     def __str__(self):
         return (
@@ -169,16 +168,20 @@ class Pair:
                 self.delta_tm, self.have_heterodimer))
 
     def get_score(self):
-        return (np.mean(self.length) + self.coverage*100 + self.resolution*100
-                + self.tree_value*100 + self.entropy*5
-                - int(self.have_heterodimer)*10
-                - self.delta_tm*5 - self.left.avg_mismatch*10
-                - self.right.avg_mismatch*10)
+        self.score = (np.mean(self.length) + self.coverage*100
+                      + self.resolution*100
+                      + self.tree_value*100 + self.entropy*5
+                      - int(self.have_heterodimer)*10
+                      - self.delta_tm*5 - self.left.avg_mismatch*10
+                      - self.right.avg_mismatch*10)
 
-    def add_tree_value(self, alignment):
+    def add_info(self, alignment):
+        # include end base, use alignment loc for slice
+        self.resolution, self.entropy = get_resolution_and_entropy(
+            alignment, self.left.start, self.right.end+1)
         self.tree_value = get_tree_value(alignment, self.left.start,
                                          self.right.end)
-        self.score = self.get_score()
+        self.get_score()
         return self
 
 
@@ -645,8 +648,8 @@ def pick_pair(primers, alignment, arg):
     less_pairs.extend(cluster[:arg.top_n])
     good_pairs = list()
     for i in less_pairs:
+        i.add_info(alignment)
         if i.resolution >= arg.resolution:
-            i.add_tree_value(alignment)
             good_pairs.append(i)
     good_pairs.sort(key=lambda x: x.score, reverse=True)
     return good_pairs
