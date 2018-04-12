@@ -603,10 +603,6 @@ def validate(primer_candidate, db_file, n_seqs, arg):
 def pick_pair(primers, alignment, arg):
     pairs = list()
     for left in primers:
-        if len(pairs) > 0:
-            # skip same place
-            if left.start-pairs[-1].left.start < arg.min_primer:
-                continue
         # convert mid_loc to 5' location
         location = left.avg_mid_loc - len(left) / 2
         begin = location + arg.min_product
@@ -630,12 +626,25 @@ def pick_pair(primers, alignment, arg):
                 cluster.sort(key=lambda x: x.score, reverse=True)
                 # only keep top n for each primer cluster
                 pairs.extend(cluster[:arg.top_n])
+                cluster.clear()
                 # get enough pairs and break
                 break
     cluster.sort(key=lambda x: x.score, reverse=True)
     pairs.extend(cluster[:arg.top_n])
+    # remove close located primers
+    less_pairs = list()
+    cluster = list()
+    for index in range(1, len(pairs)):
+        if pairs[index].start - pairs[index-1].start < arg.min_primer:
+            cluster.append(pairs[index])
+        else:
+            cluster.sort(key=lambda x: x.score, reverse=True)
+            less_pairs.extend(cluster[:arg.top_n])
+            cluster.clear()
+    cluster.sort(key=lambda x: x.score, reverse=True)
+    less_pairs.extend(cluster[:arg.top_n])
     good_pairs = list()
-    for i in pairs:
+    for i in less_pairs:
         if i.resolution >= arg.resolution:
             i.add_tree_value(alignment)
             good_pairs.append(i)
