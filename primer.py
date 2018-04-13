@@ -48,6 +48,7 @@ class PrimerWithInfo(SeqRecord):
         self.coverage = self.annotations['coverage'] = coverage
         self.avg_bitscore = self.annotations['avg_bitscore'] = avg_bitscore
         self.mid_loc = self.annotations['mid_loc'] = mid_loc
+        self.avg_mid_loc = 0
         self.avg_mismatch = self.annotations['avg_mismatch'] = avg_mismatch
         self.detail = self.annotations['detail'] = detail
         self.end = self.annotations['end'] = start + self.__len__() - 1
@@ -113,10 +114,8 @@ class PrimerWithInfo(SeqRecord):
 
     def update_id(self):
         self.end = self.annotations['end'] = self.start + self.__len__() - 1
-        if self.mid_loc is not None:
+        if self.mid_loc is not None and len(self.mid_loc) != 0:
             self.avg_mid_loc = np.mean(self.mid_loc)
-        else:
-            self.avg_mid_loc = 0
         self.id = ('AvgMidLocation({:.0f})-Tm({:.2f})-Coverage({:.2%})-'
                    'AvgBitScore({:.2f})-Start({})-End({})'.format(
                        self.avg_mid_loc, self.tm, self.coverage,
@@ -140,15 +139,17 @@ class Pair:
         a = len(self.left)/2
         b = len(self.right)/2
         lengths = list()
+        new_l = list()
+        new_r = list()
         for l, r in zip(self.left.mid_loc, self.right.mid_loc):
             length = (r-b) - (l+a)
-        # omit negative length
+            # omit negative length
             if length > 0:
+                new_l.append(l)
+                new_r.append(r)
                 lengths.append(length)
-            else:
-                # remove invalid loc
-                left.mid_loc.remove(l)
-                right.mid_loc.remove(r)
+        self.left.mid_loc = new_l
+        self.right.mid_loc = new_r
         self.left.coverage = len(self.left.mid_loc) / rows
         # recalculate coverage due to dropping some records
         self.right.coverage = len(self.right.mid_loc) / rows
