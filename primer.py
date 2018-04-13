@@ -129,20 +129,35 @@ class Pair:
                  'heterodimer_tm', 'score', 'length']
 
     def __init__(self, left, right, alignment):
+        rows, columns = alignment.shape
         self.left = left
         if not right.is_reverse_complement:
             self.right = right.reverse_complement()
         else:
             self.right = right
         self.delta_tm = abs(self.left.tm - self.right.tm)
-        self.coverage = min(left.coverage, right.coverage)
         # pairs use mid_loc from BLAST as start/end
         a = len(self.left)/2
         b = len(self.right)/2
-        self.start = int(left.avg_mid_loc)
-        self.end = int(right.avg_mid_loc)
-        length = [(r-b)-(l+a) for r, l in zip(right.mid_loc, left.mid_loc)]
-        self.length = [int(i) for i in length]
+        lengths = list()
+        for l, r in zip(self.left.mid_loc, self.right.mid_loc):
+            length = (r-b) - (l+a)
+        # omit negative length
+            if length > 0:
+                lengths.append(length)
+            else:
+                # remove invalid loc
+                left.mid_loc.remove(l)
+                right.mid_loc.remove(r)
+        self.left.coverage = len(self.left.mid_loc) / rows
+        # recalculate coverage due to dropping some records
+        self.right.coverage = len(self.right.mid_loc) / rows
+        self.left.update_id()
+        self.right.update_id()
+        self.coverage = min(self.left.coverage, self.right.coverage)
+        self.start = int(self.left.avg_mid_loc)
+        self.end = int(self.right.avg_mid_loc)
+        self.length = [int(i) for i in lengths]
         self.resolution = 0
         self.tree_value = 0.0
         self.entropy = 0.0
@@ -621,8 +636,6 @@ def pick_pair(primers, alignment, arg):
             if right.avg_mid_loc > end:
                 break
             pair = Pair(left, right, alignment)
-            if min(pair.length) < 0:
-                continue
             cluster.append(pair)
             if (len(cluster) >= arg.top_n or
                     abs(pair.start-cluster[-1].start) >= arg.max_product):
