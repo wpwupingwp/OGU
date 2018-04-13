@@ -183,7 +183,7 @@ class Pair:
                 self.delta_tm, self.have_heterodimer))
 
     def get_score(self):
-        self.score = (np.mean(self.length) + self.coverage*100
+        self.score = (np.mean(self.length) + self.coverage*200
                       + self.resolution*100
                       + self.tree_value*100 + self.entropy*5
                       - int(self.have_heterodimer)*10
