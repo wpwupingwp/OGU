@@ -758,9 +758,11 @@ lower resolution options.
             out2.write(line)
             SeqIO.write(pair.left, out1, 'fastq')
             SeqIO.write(pair.right, out1, 'fastq')
+    print('Input alignment:')
+    print('\t{}: {} rows, {} columns'.format(arg.input, rows, columns))
     print('Parameters:')
     for i in vars(arg).items():
-        print(*i)
+        print('\t{}: {}'.format(i[0].capitalize(), i[1]))
     print('Found {} pairs of primers.'.format(len(pairs)))
     end = timer()
     print('Cost {:.3f} seconds.'.format(end-start))
