@@ -115,7 +115,7 @@ class PrimerWithInfo(SeqRecord):
     def update_id(self):
         self.end = self.annotations['end'] = self.start + self.__len__() - 1
         if self.mid_loc is not None and len(self.mid_loc) != 0:
-            self.avg_mid_loc = np.mean(self.mid_loc)
+            self.avg_mid_loc = np.average(self.mid_loc)
         self.id = ('AvgMidLocation({:.0f})-Tm({:.2f})-Coverage({:.2%})-'
                    'AvgBitScore({:.2f})-Start({})-End({})'.format(
                        self.avg_mid_loc, self.tm, self.coverage,
@@ -135,7 +135,6 @@ class Pair:
         else:
             self.right = right
         self.delta_tm = abs(self.left.tm - self.right.tm)
-        # pairs use mid_loc from BLAST as start/end
         a = len(self.left)/2
         b = len(self.right)/2
         lengths = list()
@@ -148,6 +147,7 @@ class Pair:
                 new_l.append(l)
                 new_r.append(r)
                 lengths.append(length)
+        self.length = [int(i) for i in lengths]
         self.left.mid_loc = new_l
         self.right.mid_loc = new_r
         self.left.coverage = len(self.left.mid_loc) / rows
@@ -156,9 +156,9 @@ class Pair:
         self.left.update_id()
         self.right.update_id()
         self.coverage = min(self.left.coverage, self.right.coverage)
+        # pairs use mid_loc from BLAST as start/end
         self.start = int(self.left.avg_mid_loc)
         self.end = int(self.right.avg_mid_loc)
-        self.length = [int(i) for i in lengths]
         self.resolution = 0
         self.tree_value = 0.0
         self.entropy = 0.0
@@ -179,12 +179,12 @@ class Pair:
             'Pair(score={:.2f}, product={:.0f}, start={}, end={}, left={}, '
             'right={}, resolution={:.2%}, coverage={:.2%}, delta_tm={:.2f}, '
             'have_heterodimer={})'.format(
-                self.score, np.mean(self.length), self.start, self.end,
+                self.score, np.average(self.length), self.start, self.end,
                 self.left.seq, self.right.seq, self.resolution, self.coverage,
                 self.delta_tm, self.have_heterodimer))
 
     def get_score(self):
-        self.score = (np.mean(self.length) + self.coverage*200
+        self.score = (np.average(self.length) + self.coverage*200
                       + self.resolution*100
                       + self.tree_value*100 + self.entropy*5
                       - int(self.have_heterodimer)*10
@@ -502,30 +502,33 @@ def count_and_draw(alignment, consensus, arg):
 
     # convert value to (0,1)
     # plt.style.use('ggplot')
-    fig, ax1 = plt.subplots(figsize=(20+len(index)//5000, 10))
-    plt.title('Shannon Index & Resolution({}bp, window={})'.format(
-        max_product, window))
-    plt.xlabel('Base')
-    plt.xticks(range(0, columns, int(columns/10)))
-    # c=List for different color, s=size for different size
-    ax1.scatter(index, shannon_index, c=shannon_index,
-                cmap='GnBu', alpha=0.8, s=10, label='{}bp'.format(max_product))
-    ax1.set_ylabel('H')
-    ax1.grid(True)
-    ax1.legend(loc='upper right')
-    ax2 = ax1.twinx()
-    ax2.plot(index, count, 'r-', label='{}bp'.format(max_product))
-    ax2.yaxis.set_major_formatter(mtick.PercentFormatter(xmax=1.0))
-    ax2.set_ylabel('Resolution(% of {})'.format(rows))
-    ax2.grid(True)
-    ax2.legend(loc='upper left')
-    plt.savefig(out+'.pdf')
-    plt.savefig(out+'.png')
-    # plt.show()
-    with open(out+'-Resolution.tsv', 'w') as _:
-        _.write('Base\tResolution(window={})\n'.format(max_product))
-        for base, resolution in enumerate(count):
-            _.write('{}\t{:.2f}\n'.format(base, resolution))
+    try:
+        fig, ax1 = plt.subplots(figsize=(20+len(index)//5000, 10))
+        plt.title('Shannon Index & Resolution({}bp, window={})'.format(
+            max_product, window))
+        plt.xlabel('Base')
+        plt.xticks(range(0, columns, int(columns/10)))
+        # c=List for different color, s=size for different size
+        ax1.scatter(index, shannon_index, c=shannon_index,
+                    cmap='GnBu', alpha=0.8, s=10, label='{}bp'.format(max_product))
+        ax1.set_ylabel('H')
+        ax1.grid(True)
+        ax1.legend(loc='upper right')
+        ax2 = ax1.twinx()
+        ax2.plot(index, count, 'r-', label='{}bp'.format(max_product))
+        ax2.yaxis.set_major_formatter(mtick.PercentFormatter(xmax=1.0))
+        ax2.set_ylabel('Resolution(% of {})'.format(rows))
+        ax2.grid(True)
+        ax2.legend(loc='upper left')
+        plt.savefig(out+'.pdf')
+        plt.savefig(out+'.png')
+        # plt.show()
+        with open(out+'-Resolution.tsv', 'w') as _:
+            _.write('Base\tResolution(window={})\n'.format(max_product))
+            for base, resolution in enumerate(count):
+                _.write('{}\t{:.2f}\n'.format(base, resolution))
+    except Exception:
+        pass
 
     return count, shannon_index, max_shannon_index, index
 
@@ -593,7 +596,7 @@ def validate(primer_candidate, db_file, n_seqs, arg):
             else:
                 # print(positive, min_positive, mismatch, arg.mismatch)
                 pass
-        coverage = good_hits/n_seqs
+        coverage = good_hits / n_seqs
         if coverage >= arg.coverage:
             blast_result[hit.query_id] = {
                 'coverage': coverage,
@@ -611,6 +614,7 @@ def validate(primer_candidate, db_file, n_seqs, arg):
             primer.avg_mismatch = blast_result[i]['avg_mismatch']
             primer.update_id()
             primer_verified.append(primer)
+    primer_verified.sort(key=lambda x: x.start)
     blast_result_file.close()
     # clean makeblastdb files
     for i in glob(db_file+'*'):
@@ -750,7 +754,7 @@ lower resolution options.
         out2.write(csv_title)
         for pair in pairs:
             line = style.format(
-                pair.score, rows, np.mean(pair.length), np.std(pair.length),
+                pair.score, rows, np.average(pair.length), np.std(pair.length),
                 min(pair.length), max(pair.length), pair.coverage,
                 pair.resolution, pair.tree_value, pair.entropy, pair.left.seq,
                 pair.left.tm, pair.left.avg_bitscore, pair.left.avg_mismatch,
