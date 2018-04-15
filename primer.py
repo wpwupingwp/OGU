@@ -115,7 +115,12 @@ class PrimerWithInfo(SeqRecord):
     def update_id(self):
         self.end = self.annotations['end'] = self.start + self.__len__() - 1
         if self.mid_loc is not None and len(self.mid_loc) != 0:
-            self.avg_mid_loc = np.average(self.mid_loc)
+            if len(self.mid_loc[0]) == 2:
+                self.avg_mid_loc = [
+                    np.average([i[0] for i in self.mid_loc.values()]),
+                    np.average([i[1] for i in self.mid_loc.values()])]
+            else:
+                self.avg_mid_loc = [np.average(self.mid_loc), ]
         self.id = ('AvgMidLocation({:.0f})-Tm({:.2f})-Coverage({:.2%})-'
                    'AvgBitScore({:.2f})-Start({})-End({})'.format(
                        self.avg_mid_loc, self.tm, self.coverage,
@@ -603,6 +608,8 @@ def validate(primer_candidate, db_file, n_seqs, arg):
                 # middle location of primer, the difference of two mid_loc
                 # approximately equals to the length of amplified fragment.
                 mid_loc[hsp.hit_id] = loc
+        if len(set([len(i) for i in mid_loc.values()])) != 1:
+            continue
         coverage = good_hits / n_seqs
         if coverage >= arg.coverage:
             blast_result[hit.query_id] = {
