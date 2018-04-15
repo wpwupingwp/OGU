@@ -573,26 +573,36 @@ def validate(primer_candidate, db_file, n_seqs, arg):
                 out=blast_result_file.name)
     stdout, stderr = cmd()
     blast_result = dict()
+    # because SearchIO.parse is slow, use parse_blast_result()
     for query in parse_blast_tab(blast_result_file.name):
         sum_bitscore_raw = 0
         sum_mismatch = 0
         good_hits = 0
-        mid_loc = list()
+        mid_loc = dict()
+        hsps = defaultdict(list)
+        min_positive = len(query[0].query_seq) - arg.mismatch
         for hit in query:
-            min_positive = len(hit.query_seq) - arg.mismatch
-            hsp_bitscore_raw = hit.bitscore_raw
-            positive = hit.ident_num
-            mismatch = hit.mismatch_num
+            hsps[hit.hit_id].append(hit)
+        for hsp in hsps.values():
+            n = len(hsp)
+            # only allow less than 2 hsps for IR region, otherwize discard
+            # directly
+            if n > 2:
+                continue
+            else:
+                hsp_bitscore_raw = np.average([i.bitscore_raw for i in hsp])
+                positive = np.average([i.ident_num for i in hsp])
+                mismatch = np.average([i.mismatch_num for i in hsp])
+                loc = [np.average([i.hit_start, i.hit_end]) for i in hsp]
+                # force order to be same
+                loc.sort()
             if positive >= min_positive and mismatch <= arg.mismatch:
                 sum_bitscore_raw += hsp_bitscore_raw
                 sum_mismatch += mismatch
                 good_hits += 1
                 # middle location of primer, the difference of two mid_loc
                 # approximately equals to the length of amplified fragment.
-                mid_loc.append((hit.hit_start+hit.hit_end)/2)
-            else:
-                # print(positive, min_positive, mismatch, arg.mismatch)
-                pass
+                mid_loc[hsp.hit_id] = loc
         coverage = good_hits / n_seqs
         if coverage >= arg.coverage:
             blast_result[hit.query_id] = {
@@ -600,7 +610,6 @@ def validate(primer_candidate, db_file, n_seqs, arg):
                 'avg_bitscore': sum_bitscore_raw/good_hits,
                 'avg_mismatch': sum_mismatch/good_hits,
                 'mid_loc': mid_loc}
-    # because SearchIO.parse is slow, use parse_blast_result()
     primer_verified = list()
     for primer in primer_candidate:
         i = primer.id
