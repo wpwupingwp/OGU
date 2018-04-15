@@ -575,8 +575,6 @@ def validate(primer_candidate, db_file, n_seqs, arg):
     stdout, stderr = cmd()
     blast_result = dict()
     for query in parse_blast_tab(blast_result_file.name):
-        if len(query) == 0:
-            continue
         sum_bitscore_raw = 0
         sum_mismatch = 0
         good_hits = 0
