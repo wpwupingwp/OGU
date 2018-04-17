@@ -16,7 +16,6 @@ from matplotlib import pyplot as plt
 from matplotlib import rcParams
 from matplotlib import ticker as mtick
 from multiprocessing import cpu_count
-from os import remove
 from subprocess import run
 from tempfile import NamedTemporaryFile as Tmp
 from timeit import default_timer as timer
@@ -184,7 +183,10 @@ class Pair:
                 self.coverage, self.delta_tm, self.have_heterodimer))
 
     def get_score(self):
-        self.score = (np.average(list(self.length.values()))*1 + self.coverage*200
+        self.score = (np.average(list(self.length.values()))*0.1
+                      + self.coverage*200
+                      + len(self.left)*10
+                      + len(self.right)*10
                       + self.resolution*100
                       + self.tree_value*100 + self.entropy*5
                       - int(self.have_heterodimer)*10
@@ -331,7 +333,7 @@ def get_tree_value(alignment, start, end):
     if run('iqtree -h', shell=True, stdout=Tmp('wt')).returncode != 0:
         print('Cannot find IQTREE!')
         return 0
-    aln = Tmp('wb')
+    aln = Tmp('wb', delete=False)
     for index, row in enumerate(alignment[:, start:end]):
         aln.write(b'>'+str(index).encode('utf-8')+b'\n'+b''.join(row)+b'\n')
     iqtree = run('iqtree -s {} -m JC -fast'.format(aln.name),
@@ -347,10 +349,8 @@ def get_tree_value(alignment, start, end):
     non_zero_internals = [i for i in internals if i.branch_length > 0]
     n_internals = len(non_zero_internals)
     # remove iqtree generated files
-    for i in glob(aln.name+'.*'):
-        remove(i)
-
-    aln.close()
+    for i in glob(aln.name+'*'):
+        os.remove(i)
     return n_internals / n_terminals
 
 
@@ -567,8 +567,7 @@ def validate(primer_candidate, db_file, n_seqs, arg):
                 query=query_file,
                 db=db_file,
                 task='blastn-short',
-                evalue=1e-3,
-                max_target_seqs=n_seqs,
+                evalue=1e-5,
                 outfmt='"7 {}"'.format(fmt),
                 out=blast_result_file.name)
     stdout, stderr = cmd()
@@ -620,7 +619,7 @@ def validate(primer_candidate, db_file, n_seqs, arg):
     blast_result_file.close()
     # clean makeblastdb files
     for i in glob(db_file+'*'):
-        remove(i)
+        os.remove(i)
     return primer_verified
 
 
