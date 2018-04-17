@@ -568,7 +568,6 @@ def validate(primer_candidate, db_file, n_seqs, arg):
                 task='blastn-short',
                 evalue=1e-2,
                 max_hsps=1,
-                strand='plus',
                 outfmt='"7 {}"'.format(fmt),
                 out=blast_result_file.name)
     stdout, stderr = cmd()
