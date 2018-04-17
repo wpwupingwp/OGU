@@ -566,10 +566,9 @@ def validate(primer_candidate, db_file, n_seqs, arg):
                 query=query_file,
                 db=db_file,
                 task='blastn-short',
-                evalue=1e-5,
+                evalue=1e-2,
                 max_hsps=1,
                 strand='plus',
-                ungapped=True,
                 outfmt='"7 {}"'.format(fmt),
                 out=blast_result_file.name)
     stdout, stderr = cmd()
@@ -582,8 +581,8 @@ def validate(primer_candidate, db_file, n_seqs, arg):
         sum_mismatch = 0
         good_hits = 0
         mid_loc = dict()
-        min_positive = len(query[0].query_seq) - arg.mismatch
         for hit in query:
+            min_positive = len(hit.query_seq) - arg.mismatch
             hsp_bitscore_raw = hit.bitscore_raw
             positive = hit.ident_num
             mismatch = hit.mismatch_num
@@ -678,7 +677,7 @@ def parse_args():
                      help='number of ambiguous bases')
     arg.add_argument('-c', '--coverage', type=float, default=0.6,
                      help='minium coverage of base and primer')
-    arg.add_argument('-pmin', '--min_primer', type=int, default=20,
+    arg.add_argument('-pmin', '--min_primer', type=int, default=18,
                      help='minimum primer length')
     arg.add_argument('-pmax', '--max_primer', type=int, default=24,
                      help='maximum primer length')
@@ -741,9 +740,11 @@ lower resolution options.
     csv_title = ('Score,SampleUsed,AvgProductLength,StdEV,MinProductLength,'
                  'MaxProductLength,Coverage,Resolution,TreeValue,LeftSeq,'
                  'LeftTm,LeftAvgBitscore,LeftAvgMismatch,RightSeq,RightTm,'
-                 'RightAvgBitscore,RightAvgMismatch,DeltaTm,Start,End\n')
+                 'RightAvgBitscore,RightAvgMismatch,DeltaTm,AlnStart,AlnEnd,'
+                 'AvgSeqStart,AvgSeqEnd\n')
     style = ('{:.2f},{},{:.0f},{:.0f},{},{},{:.2%},{:.2%},{:.2f},{:.2f},{},'
-             '{:.2f},{:.2f},{:.2f},{},{:.2f},{:.2f},{:.2f},{:.2f},{},{}\n')
+             '{:.2f},{:.2f},{:.2f},{},{:.2f},{:.2f},{:.2f},{:.2f},{},{},{},{}'
+             '\n')
     with open('{}-{}samples-{:.2f}resolution.fastq'.format(
             arg.out, rows, arg.resolution), 'w') as out1, open(
                 '{}-{}samples-{:.2f}resolution.csv'.format(
@@ -757,7 +758,8 @@ lower resolution options.
                 pair.resolution, pair.tree_value, pair.entropy, pair.left.seq,
                 pair.left.tm, pair.left.avg_bitscore, pair.left.avg_mismatch,
                 pair.right.seq, pair.right.tm, pair.right.avg_bitscore,
-                pair.right.avg_mismatch, pair.delta_tm, pair.start, pair.end)
+                pair.right.avg_mismatch, pair.delta_tm, pair.left.start,
+                pair.right.end, pair.start, pair.end)
             out2.write(line)
             SeqIO.write(pair.left, out1, 'fastq')
             SeqIO.write(pair.right, out1, 'fastq')
