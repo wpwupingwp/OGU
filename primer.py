@@ -114,8 +114,7 @@ class PrimerWithInfo(SeqRecord):
     def update_id(self):
         self.end = self.annotations['end'] = self.start + self.__len__() - 1
         if self.mid_loc is not None and len(self.mid_loc) != 0:
-            if len(self.mid_loc) != 0:
-                self.avg_mid_loc = np.average(list(self.mid_loc.values()))
+            self.avg_mid_loc = np.average(list(self.mid_loc.values()))
         self.id = ('AvgMidLocation({:.0f})-Tm({:.2f})-Coverage({:.2%})-'
                    'AvgBitScore({:.2f})-Start({})-End({})'.format(
                        self.avg_mid_loc, self.tm, self.coverage,
@@ -583,24 +582,19 @@ def validate(primer_candidate, db_file, n_seqs, arg):
         sum_mismatch = 0
         good_hits = 0
         mid_loc = dict()
-        hsps = defaultdict(list)
         min_positive = len(query[0].query_seq) - arg.mismatch
         for hit in query:
-            hsps[hit.hit_id].append(hit)
-        # if more than one hsp, skip
-        new_hsps = {i: hsps[i][0] for i in hsps if len(hsps[i]) == 1}
-        for hsp in new_hsps.values():
-            hsp_bitscore_raw = hsp.bitscore_raw
-            positive = hsp.ident_num
-            mismatch = hsp.mismatch_num
-            loc = np.average([hsp.hit_start, hsp.hit_end])
+            hsp_bitscore_raw = hit.bitscore_raw
+            positive = hit.ident_num
+            mismatch = hit.mismatch_num
+            loc = np.average([hit.hit_start, hit.hit_end])
             if positive >= min_positive and mismatch <= arg.mismatch:
                 sum_bitscore_raw += hsp_bitscore_raw
                 sum_mismatch += mismatch
                 good_hits += 1
                 # middle location of primer, the difference of two mid_loc
                 # approximately equals to the length of amplified fragment.
-                mid_loc[hsp.hit_id] = loc
+                mid_loc[hit.hit_id] = loc
         coverage = good_hits / n_seqs
         if coverage >= arg.coverage:
             blast_result[hit.query_id] = {
@@ -637,14 +631,13 @@ def pick_pair(primers, alignment, arg):
         end = location + arg.max_product - len(left)
         cluster = list()
         for right in primers:
-            # skip if overlap
-            if right.avg_mid_loc < left.avg_mid_loc:
-                continue
             if right.avg_mid_loc < begin:
                 continue
             if right.avg_mid_loc > end:
                 break
             pair = Pair(left, right, alignment)
+            if pair.coverage < arg.coverage:
+                continue
             cluster.append(pair)
             if (len(cluster) >= arg.top_n or
                     abs(pair.start-cluster[-1].start) >= arg.max_product):
