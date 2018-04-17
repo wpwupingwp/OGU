@@ -116,7 +116,7 @@ class PrimerWithInfo(SeqRecord):
         self.end = self.annotations['end'] = self.start + self.__len__() - 1
         if self.mid_loc is not None and len(self.mid_loc) != 0:
             if len(self.mid_loc) != 0:
-                self.avg_mid_loc = np.average(self.mid_loc.values())
+                self.avg_mid_loc = np.average(list(self.mid_loc.values()))
         self.id = ('AvgMidLocation({:.0f})-Tm({:.2f})-Coverage({:.2%})-'
                    'AvgBitScore({:.2f})-Start({})-End({})'.format(
                        self.avg_mid_loc, self.tm, self.coverage,
@@ -179,12 +179,12 @@ class Pair:
             'Pair(score={:.2f}, product={:.0f}, start={}, end={}, left={}, '
             'right={}, resolution={:.2%}, coverage={:.2%}, delta_tm={:.2f}, '
             'have_heterodimer={})'.format(
-                self.score, np.average(self.length.values()), self.start,
+                self.score, np.average(list(self.length.values())), self.start,
                 self.end, self.left.seq, self.right.seq, self.resolution,
                 self.coverage, self.delta_tm, self.have_heterodimer))
 
     def get_score(self):
-        self.score = (np.average(self.length.values())*1 + self.coverage*200
+        self.score = (np.average(list(self.length.values()))*1 + self.coverage*200
                       + self.resolution*100
                       + self.tree_value*100 + self.entropy*5
                       - int(self.have_heterodimer)*10
@@ -756,8 +756,9 @@ lower resolution options.
         out2.write(csv_title)
         for pair in pairs:
             line = style.format(
-                pair.score, rows, np.average(pair.length), np.std(pair.length),
-                min(pair.length), max(pair.length), pair.coverage,
+                pair.score, rows, np.average(list(pair.length.values())),
+                np.std(list(pair.length.values())), min(pair.length.values()),
+                max(pair.length.values()), pair.coverage,
                 pair.resolution, pair.tree_value, pair.entropy, pair.left.seq,
                 pair.left.tm, pair.left.avg_bitscore, pair.left.avg_mismatch,
                 pair.right.seq, pair.right.tm, pair.right.avg_bitscore,
