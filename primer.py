@@ -115,12 +115,8 @@ class PrimerWithInfo(SeqRecord):
     def update_id(self):
         self.end = self.annotations['end'] = self.start + self.__len__() - 1
         if self.mid_loc is not None and len(self.mid_loc) != 0:
-            if len(self.mid_loc[0]) == 2:
-                self.avg_mid_loc = [
-                    np.average([i[0] for i in self.mid_loc.values()]),
-                    np.average([i[1] for i in self.mid_loc.values()])]
-            else:
-                self.avg_mid_loc = [np.average(self.mid_loc), ]
+            if len(self.mid_loc) != 0:
+                self.avg_mid_loc = np.average(self.mid_loc.values())
         self.id = ('AvgMidLocation({:.0f})-Tm({:.2f})-Coverage({:.2%})-'
                    'AvgBitScore({:.2f})-Start({})-End({})'.format(
                        self.avg_mid_loc, self.tm, self.coverage,
@@ -142,19 +138,18 @@ class Pair:
         self.delta_tm = abs(self.left.tm - self.right.tm)
         a = len(self.left)/2
         b = len(self.right)/2
-        lengths = list()
-        new_l = list()
-        new_r = list()
-        for l, r in zip(self.left.mid_loc, self.right.mid_loc):
-            length = (r-b) - (l+a)
+        lengths = dict()
+        common = self.left.mid_loc.keys() & self.right.mid_loc.keys()
+        for key in common:
+            length = (self.right.mid_loc[key]-b) - (self.left.mid_loc[key]+a)
             # omit negative length
             if length > 0:
-                new_l.append(l)
-                new_r.append(r)
-                lengths.append(length)
-        self.length = [int(i) for i in lengths]
-        self.left.mid_loc = new_l
-        self.right.mid_loc = new_r
+                lengths[key] = int(length)
+        self.length = lengths
+        self.left.mid_loc = {i: j for i, j in self.left.mid_loc.items() if
+                             (i in lengths)}
+        self.right.mid_loc = {i: j for i, j in self.right.mid_loc.items() if
+                              (i in lengths)}
         self.left.coverage = len(self.left.mid_loc) / rows
         # recalculate coverage due to dropping some records
         self.right.coverage = len(self.right.mid_loc) / rows
@@ -184,12 +179,12 @@ class Pair:
             'Pair(score={:.2f}, product={:.0f}, start={}, end={}, left={}, '
             'right={}, resolution={:.2%}, coverage={:.2%}, delta_tm={:.2f}, '
             'have_heterodimer={})'.format(
-                self.score, np.average(self.length), self.start, self.end,
-                self.left.seq, self.right.seq, self.resolution, self.coverage,
-                self.delta_tm, self.have_heterodimer))
+                self.score, np.average(self.length.values()), self.start,
+                self.end, self.left.seq, self.right.seq, self.resolution,
+                self.coverage, self.delta_tm, self.have_heterodimer))
 
     def get_score(self):
-        self.score = (np.average(self.length) + self.coverage*200
+        self.score = (np.average(self.length.values())*1 + self.coverage*200
                       + self.resolution*100
                       + self.tree_value*100 + self.entropy*5
                       - int(self.have_heterodimer)*10
@@ -580,6 +575,8 @@ def validate(primer_candidate, db_file, n_seqs, arg):
     blast_result = dict()
     # because SearchIO.parse is slow, use parse_blast_result()
     for query in parse_blast_tab(blast_result_file.name):
+        if len(query) == 0:
+            continue
         sum_bitscore_raw = 0
         sum_mismatch = 0
         good_hits = 0
@@ -588,19 +585,13 @@ def validate(primer_candidate, db_file, n_seqs, arg):
         min_positive = len(query[0].query_seq) - arg.mismatch
         for hit in query:
             hsps[hit.hit_id].append(hit)
-        for hsp in hsps.values():
-            n = len(hsp)
-            # only allow less than 2 hsps for IR region, otherwize discard
-            # directly
-            if n > 2:
-                continue
-            else:
-                hsp_bitscore_raw = np.average([i.bitscore_raw for i in hsp])
-                positive = np.average([i.ident_num for i in hsp])
-                mismatch = np.average([i.mismatch_num for i in hsp])
-                loc = [np.average([i.hit_start, i.hit_end]) for i in hsp]
-                # force order to be same
-                loc.sort()
+        # if more than one hsp, skip
+        new_hsps = {i: hsps[i][0] for i in hsps if len(hsps[i]) == 1}
+        for hsp in new_hsps.values():
+            hsp_bitscore_raw = hsp.bitscore_raw
+            positive = hsp.ident_num
+            mismatch = hsp.mismatch_num
+            loc = np.average([hsp.hit_start, hsp.hit_end])
             if positive >= min_positive and mismatch <= arg.mismatch:
                 sum_bitscore_raw += hsp_bitscore_raw
                 sum_mismatch += mismatch
@@ -608,8 +599,6 @@ def validate(primer_candidate, db_file, n_seqs, arg):
                 # middle location of primer, the difference of two mid_loc
                 # approximately equals to the length of amplified fragment.
                 mid_loc[hsp.hit_id] = loc
-        if len(set([len(i) for i in mid_loc.values()])) != 1:
-            continue
         coverage = good_hits / n_seqs
         if coverage >= arg.coverage:
             blast_result[hit.query_id] = {
