@@ -649,7 +649,7 @@ def pick_pair(primers, alignment, arg):
     pairs.extend(cluster[:arg.top_n])
     # remove close located primers
     less_pairs = list()
-    cluster = list()
+    cluster = [pairs[0], ]
     for index in range(1, len(pairs)):
         if pairs[index].start - pairs[index-1].start < arg.min_primer:
             cluster.append(pairs[index])
