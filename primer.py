@@ -333,6 +333,10 @@ def get_tree_value(alignment, start, end):
         print('Cannot find IQTREE!')
         return 0
     aln_file = '{}-{}.aln.tmp'.format(start, end)
+    # remove iqtree generated files
+    def clean():
+        for i in glob(aln_file+'*'):
+            os.remove(i)
     with open(aln_file, 'wb') as aln:
         for index, row in enumerate(alignment[:, start:end]):
             aln.write(b'>'+str(index).encode('utf-8')+b'\n'+b''.join(
@@ -342,6 +346,7 @@ def get_tree_value(alignment, start, end):
     # just return 0 if there is error
     if iqtree.returncode != 0:
         print('Cannot get tree_value of {}-{}!'.format(start, end))
+        clean()
         return 0
     tree = Phylo.read(aln.name+'.treefile', 'newick')
     n_terminals = len(tree.get_terminals())
@@ -349,9 +354,7 @@ def get_tree_value(alignment, start, end):
     internals = tree.get_nonterminals()[1:]
     non_zero_internals = [i for i in internals if i.branch_length > 0]
     n_internals = len(non_zero_internals)
-    # remove iqtree generated files
-    for i in glob(aln_file+'*'):
-        os.remove(i)
+    clean()
     return n_internals / n_terminals
 
 
