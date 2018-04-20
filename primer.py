@@ -652,6 +652,7 @@ def pick_pair(primers, alignment, arg):
                 break
     cluster.sort(key=lambda x: x.score, reverse=True)
     pairs.extend(cluster[:arg.top_n])
+    assert len(pairs) != 0, 'Primers pairs not found!'
     # remove close located primers
     less_pairs = list()
     cluster = [pairs[0], ]
@@ -723,6 +724,7 @@ def main():
     # count resolution
     (seq_count, H, max_H, index) = count_and_draw(alignment, consensus, arg)
     # exit if resolution lower than given threshold.
+    assert len(seq_count) != 0, 'Problematic Input !'
     assert max(seq_count) > arg.resolution, (
         """
 The highest resolution of given fragment is {:.2f}, which is lower than
@@ -738,6 +740,7 @@ lower resolution options.
         'Primer not found! Try to loose options.')
     # validate
     primer_verified = validate(primer_candidate, db_file, rows, arg)
+    assert len(primer_verified) != 0, 'Primer not found! Try to loose options.'
     # pick pair
     pairs = pick_pair(primer_verified, alignment, arg)
     # output
