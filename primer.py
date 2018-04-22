@@ -745,10 +745,10 @@ lower resolution options.
     pairs = pick_pair(primer_verified, alignment, arg)
     # output
     csv_title = ('Score,SampleUsed,AvgProductLength,StdEV,MinProductLength,'
-                 'MaxProductLength,Coverage,Resolution,TreeValue,LeftSeq,'
-                 'LeftTm,LeftAvgBitscore,LeftAvgMismatch,RightSeq,RightTm,'
-                 'RightAvgBitscore,RightAvgMismatch,DeltaTm,AlnStart,AlnEnd,'
-                 'AvgSeqStart,AvgSeqEnd\n')
+                 'MaxProductLength,Coverage,Resolution,TreeValue,Entropy,'
+                 'LeftSeq,LeftTm,LeftAvgBitscore,LeftAvgMismatch,RightSeq,'
+                 'RightTm,RightAvgBitscore,RightAvgMismatch,DeltaTm,'
+                 'AlnStart,AlnEnd,AvgSeqStart,AvgSeqEnd\n')
     style = ('{:.2f},{},{:.0f},{:.0f},{},{},{:.2%},{:.2%},{:.2f},{:.2f},{},'
              '{:.2f},{:.2f},{:.2f},{},{:.2f},{:.2f},{:.2f},{:.2f},{},{},{},{}'
              '\n')
