@@ -676,7 +676,9 @@ def pick_pair(primers, alignment, arg):
 
 # profile
 def parse_args():
-    arg = argparse.ArgumentParser(description=main.__doc__)
+    arg = argparse.ArgumentParser(
+        description=main.__doc__,
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     arg.add_argument('input', help='input alignment file')
     arg.add_argument('-a', '--ambiguous_base_n', type=int, default=4,
                      help='number of ambiguous bases')
