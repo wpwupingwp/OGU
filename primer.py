@@ -90,18 +90,8 @@ class PrimerWithInfo(SeqRecord):
         return True
 
     def reverse_complement(self):
-        new_seq = ''
-        for base in self.sequence:
-            if base == 'A':
-                new_seq += 'T'
-            elif base == 'T':
-                new_seq += 'A'
-            elif base == 'C':
-                new_seq += 'G'
-            elif base == 'G':
-                new_seq += 'C'
-            else:
-                new_seq += base
+        table = str.maketrans('ATCGRMYKHBDV', 'TAGCYKRMDVHB')
+        new_seq = str.translate(self.sequence, table)
         new_seq = new_seq[::-1]
         new_quality = self.quality[::-1]
         # try to simplify??
