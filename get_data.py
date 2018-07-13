@@ -1,26 +1,47 @@
 #!/usr/bin/python3
 
 import argparse
+import json
 import os
-from functools import wraps
-from timeit import default_timer as timer
 from datetime import datetime
+from Bio import Entrez
 
 
-def print_time(function):
-    @wraps(function)
-    def wrapper(*args, **kargs):
-        start = timer()
-        result = function(*args, **kargs)
-        end = timer()
-        print('Cost {0:3f}s.\n'.format(end-start))
-        return result
-    return wrapper
+def download(arg, query):
+    Entrez.email = arg.email
+    query_handle = Entrez.read(Entrez.esearch(db='nuccore', term=query,
+                                              usehistory='y'))
+    count = int(query_handle['Count'])
+    print('Your query:')
+    print(query)
+    print('{} records found.'.format(count))
+    print('Downloading... Ctrl+C to quit')
+    json_file = os.path.join(arg.out, 'query.json')
+    with open(json_file, 'w') as _:
+        json.dump(query_handle, _)
 
-
-@print_time
-def function():
-    pass
+    file_name = os.path.join(arg.out, arg.query+'.gb')
+    output = open(file_name, 'w')
+    ret_start = 0
+    ret_max = 1000
+    while ret_start <= count:
+        print('{}-{}'.format(ret_start, ret_start+ret_max))
+        try:
+            data = Entrez.efetch(db='nuccore',
+                                 webenv=query_handle['WebEnv'],
+                                 query_key=query_handle['QueryKey'],
+                                 rettype='gb',
+                                 retmode='text',
+                                 retstart=ret_start,
+                                 retmax=ret_max)
+            output.write(data.read())
+        # just retry if connection failed
+        except IOError:
+            print('Retrying...')
+            continue
+        ret_start += 1000
+    print('Done.')
+    return file_name
 
 
 def parse_args():
@@ -30,7 +51,7 @@ def parse_args():
     arg.add_argument('query', help='query text')
     arg.add_argument('-continue', action='store_true',
                      help='continue broken download process')
-    arg.add_argument('-email', default='wpwupingwp@outlook.com',
+    arg.add_argument('-email', default='',
                      help='email address used by NCBI Genbank')
     arg.add_argument('-out',  help='output directory')
     filters = arg.add_argument_group('filters')
@@ -73,14 +94,11 @@ def main():
     """Get data from Genbank.
     """
     arg = parse_args()
-    # start here
     if arg.out is None:
         arg.out = datetime.now().isoformat().replace(':', '-')
     query = get_query_string(arg)
-    print(query)
     os.mkdir(arg.out)
-    function()
-    # end
+    download(arg, query)
 
 
 if __name__ == '__main__':
