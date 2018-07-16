@@ -6,9 +6,20 @@ import re
 from datetime import datetime
 from os import mkdir
 from os.path import join as join_path
+from subprocess import run
 from timeit import default_timer as timer
 from Bio import Entrez, SeqIO
 from Bio.Seq import Seq
+
+
+def check_tools():
+    for tools in ('mafft', 'iqtree'):
+        check = run('{} --veriosn'.format(tools), shell=True)
+        if check.returncode != 0:
+            raise Exception('{} not found! Please install it!'.format(tools))
+        check = run('blastn -version', shell=True)
+        if check.returncode != 0:
+            raise Exception('BLAST not found! Please install it!')
 
 
 def download(arg, query):
@@ -311,6 +322,7 @@ def get_query_string(arg):
 def main():
     """Get data from Genbank.
     """
+    check_tools()
     arg = parse_args()
     if arg.out is None:
         arg.out = datetime.now().isoformat().replace(':', '-')
