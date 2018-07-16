@@ -48,7 +48,7 @@ def download(arg, query):
     return file_name
 
 
-def rename(old_name):
+def gene_rename(old_name):
     """For chloroplast gene.
     Input->str
     Output->List[new_name:str, name_type:str]
@@ -187,7 +187,7 @@ def divide(gbfile, rename=True, expand=True):
             if feature.type == 'gene':
                 if 'gene' in feature.qualifiers:
                     gene = feature.qualifiers['gene'][0].replace(' ', '_')
-                    gene = rename(gene)[0]
+                    gene = gene_rename(gene)[0]
                     name = safe(gene)
                 elif 'product' in feature.qualifiers:
                     product = feature.qualifiers['product'][0].replace(
@@ -225,7 +225,7 @@ def divide(gbfile, rename=True, expand=True):
             SeqIO.write(record, handle_name, 'fasta')
 
     end = timer()
-    print('Done with {:.3f}s.'.format(end-start))
+    print('Divide done with {:.3f}s.'.format(end-start))
     return groupby_gene, groupby_name
 
 
@@ -288,7 +288,8 @@ def main():
         arg.out = datetime.now().isoformat().replace(':', '-')
     query = get_query_string(arg)
     mkdir(arg.out)
-    download(arg, query)
+    gbfile = download(arg, query)
+    groupby_gene, groupby_name = divide(gbfile, arg.rename, arg.expand)
 
 
 if __name__ == '__main__':
