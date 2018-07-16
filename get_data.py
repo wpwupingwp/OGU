@@ -193,29 +193,57 @@ def divide(gbfile, rename=True, expand=True):
                     product = feature.qualifiers['product'][0].replace(
                         ' ', '_')
                     name = safe(product)
-            elif (feature.type == 'misc_feature' and
-                  'note' in feature.qualifiers):
-                misc_feature = feature.qualifiers['note'][0].replace(' ', '_')
+            elif feature.type == 'misc_feature':
+                if 'product' in feature.qualifiers:
+                    misc_feature = feature.qualifiers['product'][0].replace(
+                        ' ', '_')
+                elif 'note' in feature.qualifiers:
+                    misc_feature = feature.qualifiers['note'][0].replace(
+                        ' ', '_')
+                else:
+                    continue
                 if (('intergenic_spacer' in misc_feature or
-                     'IGS' in misc_feature)
-                        and len(misc_feature) < 100):
+                     'IGS' in misc_feature) and len(misc_feature) < 100):
                     name = safe(misc_feature)
                     name = name.replace('intergenic_spacer_region',
                                         'intergenic_spacer')
                 else:
-                    print(misc_feature)
+                    print('Too long name: {}'.format(misc_feature))
+            elif feature.type == 'misc_RNA':
+                if 'product' in feature.qualifiers:
+                    misc_feature = feature.qualifiers['product'][0].replace(
+                        ' ', '_')
+                elif 'note' in feature.qualifiers:
+                    misc_feature = feature.qualifiers['note'][0].replace(
+                        ' ', '_')
+                else:
                     continue
+                name = safe(misc_feature)
+                # handle ITS
+                if 'internal_transcribed_spacer' in name:
+                    name = 'ITS'
+                # name = name.replace('internal_transcribed_spacer', 'ITS')
+                # if 'ITS_1' in name:
+                #     if 'ITS_2' in name:
+                #         name = 'ITS'
+                #     else:
+                #         name = 'ITS_1'
+                # elif 'ITS_2' in name:
+                #     name = 'ITS_2'
             else:
+                print(feature)
                 continue
             extract(feature, name, whole_seq)
             feature_name.append(name)
-        if len(feature_name) >= 4:
+        if 'ITS' in feature_name:
+            name_str = 'ITS'
+        elif len(feature_name) >= 4:
             name_str = '{}-{}features-{}'.format(
                 feature_name[0], len(feature_name)-2, feature_name[-1])
-        elif len(feature_name) != 0:
-            name_str = '-'.join(feature_name)
-        else:
+        elif len(feature_name) == 0:
             name_str = 'Unknown'
+        else:
+            name_str = '-'.join(feature_name)
 
         record.id = '|'.join([name_str, taxon, accession, specimen])
         record.description = ''
