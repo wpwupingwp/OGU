@@ -17,9 +17,9 @@ def check_tools():
         check = run('{} --veriosn'.format(tools), shell=True)
         if check.returncode != 0:
             raise Exception('{} not found! Please install it!'.format(tools))
-        check = run('blastn -version', shell=True)
-        if check.returncode != 0:
-            raise Exception('BLAST not found! Please install it!')
+    check = run('blastn -version', shell=True)
+    if check.returncode != 0:
+        raise Exception('BLAST not found! Please install it!')
 
 
 def download(arg, query):
@@ -165,6 +165,41 @@ def divide(gbfile, rename=True, expand=True):
     mkdir(groupby_name)
     handle_raw = open(gbfile+'.fasta', 'w')
 
+    def get_spacer(lists, whole_sequence, arg):
+        """
+        Do not create new features so cannot use get_seq().
+        lists: [begin, end, name, strand]
+        """
+        # sorted according to sequence starting postion
+        lists.sort()
+        for n, present in enumerate(lists[1:], 1):
+            before = lists[n-1]
+            # use sort to handle complex location relationship of two fragments
+            location = [before[0], before[1], present[0], present[1]]
+            location.sort()
+            start, end = location[1:3]
+            if arg.expand:
+                start = max(0, start-arg.expand_n)
+                end = min(len(whole_sequence), end+arg.expand_n)
+            sequence = whole_sequence[start:end]
+            if before[-1] == present[-1] == '-':
+                sequence = sequence.reverse_complement()
+            name = '_'.join([before[2], present[2]])
+            # strand = '+'
+
+            seq_id = '|'.join([name, taxon, accession, specimen])
+            handle_raw.write('>{}\n'.format(seq_id))
+            handle_raw.write(sequence+'\n')
+
+            if arg.expand:
+                handle_name = join_path(groupby_gene,
+                                        'expand.{}.fasta'.format(name))
+            else:
+                handle_name = join_path(groupby_gene, '{}.fasta'.format(name))
+            with open(handle_name, 'a') as out:
+                out.write('>{}\n'.format(seq_id))
+                out.write(sequence+'\n')
+
     def extract(feature, name, whole_seq):
         filename = join_path(groupby_gene, name+'.fasta')
         sequence = get_seq(feature, whole_seq, expand=False)
@@ -192,6 +227,7 @@ def divide(gbfile, rename=True, expand=True):
             specimen = ''
         whole_seq = record.seq
         feature_name = list()
+        genes = list()
 
         for feature in record.features:
             gene = ''
@@ -200,6 +236,9 @@ def divide(gbfile, rename=True, expand=True):
                     gene = feature.qualifiers['gene'][0].replace(' ', '_')
                     gene = gene_rename(gene)[0]
                     name = safe(gene)
+                    genes.append([int(feature.location.start),
+                                  int(feature.location.end), name])
+
                 elif 'product' in feature.qualifiers:
                     product = feature.qualifiers['product'][0].replace(
                         ' ', '_')
@@ -246,6 +285,9 @@ def divide(gbfile, rename=True, expand=True):
                 continue
             extract(feature, name, whole_seq)
             feature_name.append(name)
+
+    # extract spacer
+
         if 'ITS' in feature_name:
             name_str = 'ITS'
         elif len(feature_name) >= 4:
