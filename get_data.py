@@ -166,16 +166,17 @@ def write_seq(feature, whole_seq, path, arg):
     return feature.extract(whole_sequence)
 
 
-def get_feature_name(feature, genes):
+def get_feature_name(feature):
     """
     Get feature name and collect genes for extract spacer.
     """
+    name = None
     if feature.type == 'gene':
         if 'gene' in feature.qualifiers:
             gene = feature.qualifiers['gene'][0].replace(' ', '_')
             gene = gene_rename(gene)[0]
             name = safe(gene)
-            genes.append(feature)
+            return name, feature
         elif 'product' in feature.qualifiers:
             product = feature.qualifiers['product'][0].replace(
                 ' ', '_')
@@ -215,7 +216,7 @@ def get_feature_name(feature, genes):
         #     name = 'ITS_2'
     else:
         print(feature)
-    return name, genes
+    return name
 
 
 def get_spacer(genes, arg):
@@ -269,10 +270,14 @@ def divide(gbfile, arg):
         genes = list()
 
         for feature in record.features:
-            name = get_feature_name(feature, genes)
+            name, *_ = get_feature_name(feature, genes)
+            if len(_) == 1:
+                genes.append(_[0])
+            if name is None:
+                name = 'Unknown'
+            feature_name.append(name)
             sequence_id = '>' + '|'.join([name, taxon, accession, specimen])
             write_seq(feature, whole_seq, path, arg)
-            feature_name.append(name)
 
         spacers = get_spacer(genes, arg)
         for spacer in spacers:
