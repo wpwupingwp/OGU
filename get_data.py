@@ -4,7 +4,7 @@ import argparse
 import json
 import re
 from datetime import datetime
-from os import mkdir
+from os import mkdir, sched_getaffinity
 from os.path import join as join_path
 from subprocess import run
 from timeit import default_timer as timer
@@ -36,7 +36,7 @@ def download(arg, query):
     with open(json_file, 'w') as _:
         json.dump(query_handle, _)
 
-    file_name = join_path(arg.out, arg.query+'.gb')
+    file_name = join_path(arg.out, safe(arg.query)+'.gb')
     output = open(file_name, 'w')
     ret_start = 0
     ret_max = 1000
@@ -250,6 +250,9 @@ def get_spacer(genes, arg):
 
 
 def divide(gbfile, arg):
+    """
+    Given genbank file, return divided fasta files.
+    """
     start = timer()
     groupby_gene = '{}-groupby_gene'.format(gbfile.replace('.gb', ''))
     mkdir(groupby_gene)
@@ -376,8 +379,17 @@ def get_query_string(arg):
 
 
 def mafft(files):
+    result = list()
+    # get available CPU cores
+    cores = len(sched_getaffinity(0))
     for fasta in files:
-        pass
+        out = fasta + '.aln'
+        _ = ('mafft --thread {} --reorder --adjustdirection {} > {}'.format(
+            cores-1, fasta, out))
+        m = run(_, shell=True)
+        if m.returncode == 0:
+            result.append(out)
+    return result
 
 
 def main():
@@ -392,9 +404,12 @@ def main():
     gbfile = download(arg, query)
     wrote_by_gene, wrote_by_name = divide(gbfile, arg)
     if arg.max_len > 10000:
-        mafft(wrote_by_gene)
+        # two few sequences will cause empty output, which was omit
+        aligned = mafft(wrote_by_gene)
     else:
-        mafft(wrote_by_name)
+        aligned = mafft(wrote_by_name)
+    for aln in aligned:
+        print(aln)
 
 
 if __name__ == '__main__':
