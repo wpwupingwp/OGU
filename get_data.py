@@ -163,7 +163,8 @@ def write_seq(name, sequence_id, feature, whole_seq, path, arg):
         with open(filename2, 'a') as handle:
             handle.write(sequence_id+'\n')
             handle.write(str(sequence)+'\n')
-    return
+        return filename2
+    return filename
 
 
 def get_feature_name(feature, arg):
@@ -255,6 +256,8 @@ def divide(gbfile, arg):
     groupby_name = '{}-groupby_name'.format(gbfile.replace('.gb', ''))
     mkdir(groupby_name)
     handle_raw = open(gbfile+'.fasta', 'w')
+    wrote_by_gene = set()
+    wrote_by_name = set()
 
     for record in SeqIO.parse(gbfile, 'gb'):
         # only accept gene, product, and spacer in misc_features.note
@@ -282,15 +285,18 @@ def divide(gbfile, arg):
                 genes.append(_)
             feature_name.append(name)
             sequence_id = '>' + '|'.join([name, taxon, accession, specimen])
-            write_seq(name, sequence_id, feature, whole_seq, groupby_gene, arg)
+            wrote = write_seq(name, sequence_id, feature, whole_seq,
+                              groupby_gene, arg)
+            wrote_by_gene.add(wrote)
 
         # extract spacer
         spacers = get_spacer(genes, arg)
         for spacer in spacers:
             sequence_id = '>' + '|'.join([spacer.id, taxon,
                                           accession, specimen])
-            write_seq(spacer.id, sequence_id, spacer, whole_seq,
-                      groupby_gene, arg)
+            wrote = write_seq(spacer.id, sequence_id, spacer, whole_seq,
+                              groupby_gene, arg)
+            wrote_by_gene.add(wrote)
         # write to group_by name, i.e., one gb record one fasta
         if 'ITS' in feature_name:
             name_str = 'ITS'
@@ -303,14 +309,16 @@ def divide(gbfile, arg):
 
         record.id = '|'.join([name_str, taxon, accession, specimen])
         record.description = ''
-        with open(join_path(groupby_name, name_str+'.fasta'), 'a') as out:
+        filename = join_path(groupby_name, name_str+'.fasta')
+        with open(filename, 'a') as out:
             SeqIO.write(record, out, 'fasta')
+            wrote_by_name.add(filename)
         # write raw fasta
         SeqIO.write(record, handle_raw, 'fasta')
 
     end = timer()
     print('Divide done with {:.3f}s.'.format(end-start))
-    return groupby_gene, groupby_name
+    return wrote_by_gene, wrote_by_name
 
 
 def parse_args():
@@ -367,6 +375,11 @@ def get_query_string(arg):
     return ' AND '.join(condition)
 
 
+def mafft(files):
+    for fasta in files:
+        pass
+
+
 def main():
     """Get data from Genbank.
     """
@@ -377,7 +390,11 @@ def main():
     query = get_query_string(arg)
     mkdir(arg.out)
     gbfile = download(arg, query)
-    groupby_gene, groupby_name = divide(gbfile, arg)
+    wrote_by_gene, wrote_by_name = divide(gbfile, arg)
+    if arg.max_len > 10000:
+        mafft(wrote_by_gene)
+    else:
+        mafft(wrote_by_name)
 
 
 if __name__ == '__main__':
