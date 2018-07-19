@@ -143,27 +143,25 @@ def get_taxon(order_family):
     return order, family
 
 
-def write_seq(feature, whole_seq, path, arg):
+def write_seq(name, sequence_id, feature, whole_seq, path, arg):
     """
     Write fasta file.
     """
-    def extract(feature, name, whole_seq):
-        filename = join_path(groupby_gene, name+'.fasta')
-        sequence = get_seq(feature, whole_seq, expand=False)
-        with open(filename, 'a') as handle:
-            handle.write('>{}|{}|{}|{}\n{}\n'.format(
-                name, taxon, accession, specimen, sequence))
-        filename2 = join_path(groupby_gene, 'expand.{}.fasta'.format(name))
-        sequence = get_seq(feature, whole_seq, expand=True, expand_n=100)
-        with open(filename2, 'a') as handle:
-            handle.write('>{}|{}|{}|{}\n{}\n'.format(
-                name, taxon, accession, specimen, sequence))
+    sequence = feature.extract(whole_seq)
+    filename = join_path(path, name+'.fasta')
+    with open(filename, 'a') as handle:
+        handle.write(sequence_id+'\n')
+        handle.write(sequence+'\n')
     if arg.expand:
         # in case of negative start
         feature.location.star = max(0, feature.location.start-arg.expand_n)
-        feature.location.end = min(len(whole_sequence),
+        feature.location.end = min(len(whole_seq),
                                    feature.location.end+arg.expand_n)
-    return feature.extract(whole_sequence)
+        filename2 = join_path(path, 'expand.{}.fasta'.format(name))
+        with open(filename2, 'a') as handle:
+            handle.write(sequence_id+'\n')
+            handle.write(sequence+'\n')
+    return
 
 
 def get_feature_name(feature):
@@ -277,7 +275,7 @@ def divide(gbfile, arg):
                 name = 'Unknown'
             feature_name.append(name)
             sequence_id = '>' + '|'.join([name, taxon, accession, specimen])
-            write_seq(feature, whole_seq, path, arg)
+            write_seq(name, sequence_id, feature, whole_seq, path, arg)
 
         spacers = get_spacer(genes, arg)
         for spacer in spacers:
