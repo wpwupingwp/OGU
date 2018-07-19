@@ -18,9 +18,11 @@ def check_tools():
         check = run('{} --version'.format(tools), shell=True)
         if check.returncode != 0:
             raise Exception('{} not found! Please install it!'.format(tools))
+        print('{} OK.'.format(tools))
     check = run('blastn -version', shell=True)
     if check.returncode != 0:
         raise Exception('BLAST not found! Please install it!')
+    print('BLAST OK.')
 
 
 def download(arg, query):
@@ -220,6 +222,7 @@ def get_feature_name(feature, arg):
         # elif 'ITS_2' in name:
         #     name = 'ITS_2'
     else:
+        print('Cannot handle feature:')
         print(feature)
     return name, None
 
@@ -382,13 +385,15 @@ def mafft(files):
     result = list()
     # get available CPU cores
     cores = len(sched_getaffinity(0))
+    print('Start mafft ...')
     for fasta in files:
         out = fasta + '.aln'
-        _ = ('mafft --thread {} --reorder --adjustdirection {} > {}'.format(
-            cores-1, fasta, out))
+        _ = ('mafft --thread {} --reorder --quiet --adjustdirection '
+             ' {} > {}'.format(cores-1, fasta, out))
         m = run(_, shell=True)
         if m.returncode == 0:
             result.append(out)
+    print('Done with mafft.')
     return result
 
 
