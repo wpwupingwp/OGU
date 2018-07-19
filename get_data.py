@@ -143,10 +143,21 @@ def get_taxon(order_family):
     return order, family
 
 
-def get_seq(feature, whole_sequence, arg):
+def write_seq(feature, whole_seq, path, arg):
     """
-    Given feature and arg, return sequence.
+    Write fasta file.
     """
+    def extract(feature, name, whole_seq):
+        filename = join_path(groupby_gene, name+'.fasta')
+        sequence = get_seq(feature, whole_seq, expand=False)
+        with open(filename, 'a') as handle:
+            handle.write('>{}|{}|{}|{}\n{}\n'.format(
+                name, taxon, accession, specimen, sequence))
+        filename2 = join_path(groupby_gene, 'expand.{}.fasta'.format(name))
+        sequence = get_seq(feature, whole_seq, expand=True, expand_n=100)
+        with open(filename2, 'a') as handle:
+            handle.write('>{}|{}|{}|{}\n{}\n'.format(
+                name, taxon, accession, specimen, sequence))
     if arg.expand:
         # in case of negative start
         feature.location.star = max(0, feature.location.start-arg.expand_n)
@@ -155,19 +166,71 @@ def get_seq(feature, whole_sequence, arg):
     return feature.extract(whole_sequence)
 
 
+def get_feature_name(feature, genes):
+    """
+    Get feature name and collect genes for extract spacer.
+    """
+    if feature.type == 'gene':
+        if 'gene' in feature.qualifiers:
+            gene = feature.qualifiers['gene'][0].replace(' ', '_')
+            gene = gene_rename(gene)[0]
+            name = safe(gene)
+            genes.append(feature)
+        elif 'product' in feature.qualifiers:
+            product = feature.qualifiers['product'][0].replace(
+                ' ', '_')
+            name = safe(product)
+    elif feature.type == 'misc_feature':
+        if 'product' in feature.qualifiers:
+            misc_feature = feature.qualifiers['product'][0].replace(
+                ' ', '_')
+        elif 'note' in feature.qualifiers:
+            misc_feature = feature.qualifiers['note'][0].replace(
+                ' ', '_')
+        if (('intergenic_spacer' in misc_feature or
+             'IGS' in misc_feature) and len(misc_feature) < 100):
+            name = safe(misc_feature)
+            name = name.replace('intergenic_spacer_region',
+                                'intergenic_spacer')
+        else:
+            print('Too long name: {}'.format(misc_feature))
+    elif feature.type == 'misc_RNA':
+        if 'product' in feature.qualifiers:
+            misc_feature = feature.qualifiers['product'][0].replace(
+                ' ', '_')
+        elif 'note' in feature.qualifiers:
+            misc_feature = feature.qualifiers['note'][0].replace(
+                ' ', '_')
+        name = safe(misc_feature)
+        # handle ITS
+        if 'internal_transcribed_spacer' in name:
+            name = 'ITS'
+        # name = name.replace('internal_transcribed_spacer', 'ITS')
+        # if 'ITS_1' in name:
+        #     if 'ITS_2' in name:
+        #         name = 'ITS'
+        #     else:
+        #         name = 'ITS_1'
+        # elif 'ITS_2' in name:
+        #     name = 'ITS_2'
+    else:
+        print(feature)
+    return name, genes
+
+
 def get_spacer(genes, arg):
     """
-    Do not create new features so cannot use get_seq().
-    lists: [begin, end, name, strand]
+    List: [SeqFeature]
     """
     spacers = list()
     # sorted according to sequence starting postion
-    genes.sort()
+    genes.sort(key=lambda x: int(x.location.start))
     for n, present in enumerate(genes[1:], 1):
         before = genes[n-1]
         # use sort to handle complex location relationship of two fragments
-        location = [before[0], before[1], present[0], present[1]]
-        location.sort()
+        location = [before.location.start, before.location.end,
+                    present.location.start, present.location.end]
+        location.sort(key=lambda x: int(x))
         start, end = location[1:3]
         if before[-1] == present[-1] == '-':
             strand = '-'
@@ -180,27 +243,13 @@ def get_spacer(genes, arg):
     return spacers
 
 
-def divide(gbfile, rename=True, expand=True):
+def divide(gbfile, arg):
     start = timer()
-
     groupby_gene = '{}-groupby_gene'.format(gbfile.replace('.gb', ''))
     mkdir(groupby_gene)
     groupby_name = '{}-groupby_name'.format(gbfile.replace('.gb', ''))
     mkdir(groupby_name)
     handle_raw = open(gbfile+'.fasta', 'w')
-
-
-    def extract(feature, name, whole_seq):
-        filename = join_path(groupby_gene, name+'.fasta')
-        sequence = get_seq(feature, whole_seq, expand=False)
-        with open(filename, 'a') as handle:
-            handle.write('>{}|{}|{}|{}\n{}\n'.format(
-                name, taxon, accession, specimen, sequence))
-        filename2 = join_path(groupby_gene, 'expand.{}.fasta'.format(name))
-        sequence = get_seq(feature, whole_seq, expand=True, expand_n=100)
-        with open(filename2, 'a') as handle:
-            handle.write('>{}|{}|{}|{}\n{}\n'.format(
-                name, taxon, accession, specimen, sequence))
 
     for record in SeqIO.parse(gbfile, 'gb'):
         # only accept gene, product, and spacer in misc_features.note
@@ -220,62 +269,14 @@ def divide(gbfile, rename=True, expand=True):
         genes = list()
 
         for feature in record.features:
-            gene = ''
-            if feature.type == 'gene':
-                if 'gene' in feature.qualifiers:
-                    gene = feature.qualifiers['gene'][0].replace(' ', '_')
-                    gene = gene_rename(gene)[0]
-                    name = safe(gene)
-                    genes.append([int(feature.location.start),
-                                  int(feature.location.end), name])
-
-                elif 'product' in feature.qualifiers:
-                    product = feature.qualifiers['product'][0].replace(
-                        ' ', '_')
-                    name = safe(product)
-            elif feature.type == 'misc_feature':
-                if 'product' in feature.qualifiers:
-                    misc_feature = feature.qualifiers['product'][0].replace(
-                        ' ', '_')
-                elif 'note' in feature.qualifiers:
-                    misc_feature = feature.qualifiers['note'][0].replace(
-                        ' ', '_')
-                else:
-                    continue
-                if (('intergenic_spacer' in misc_feature or
-                     'IGS' in misc_feature) and len(misc_feature) < 100):
-                    name = safe(misc_feature)
-                    name = name.replace('intergenic_spacer_region',
-                                        'intergenic_spacer')
-                else:
-                    print('Too long name: {}'.format(misc_feature))
-            elif feature.type == 'misc_RNA':
-                if 'product' in feature.qualifiers:
-                    misc_feature = feature.qualifiers['product'][0].replace(
-                        ' ', '_')
-                elif 'note' in feature.qualifiers:
-                    misc_feature = feature.qualifiers['note'][0].replace(
-                        ' ', '_')
-                else:
-                    continue
-                name = safe(misc_feature)
-                # handle ITS
-                if 'internal_transcribed_spacer' in name:
-                    name = 'ITS'
-                # name = name.replace('internal_transcribed_spacer', 'ITS')
-                # if 'ITS_1' in name:
-                #     if 'ITS_2' in name:
-                #         name = 'ITS'
-                #     else:
-                #         name = 'ITS_1'
-                # elif 'ITS_2' in name:
-                #     name = 'ITS_2'
-            else:
-                print(feature)
-                continue
-            extract(feature, name, whole_seq)
+            name = get_feature_name(feature, genes)
+            sequence_id = '>' + '|'.join([name, taxon, accession, specimen])
+            write_seq(feature, whole_seq, path, arg)
             feature_name.append(name)
 
+        spacers = get_spacer(genes, arg)
+        for spacer in spacers:
+            write_seq(spacer, whole_seq, path, arg)
     # extract spacer
 
         if 'ITS' in feature_name:
