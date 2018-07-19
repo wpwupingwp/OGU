@@ -15,7 +15,7 @@ from Bio.SeqFeature import SeqFeature, FeatureLocation
 
 def check_tools():
     for tools in ('mafft', 'iqtree'):
-        check = run('{} --veriosn'.format(tools), shell=True)
+        check = run('{} --version'.format(tools), shell=True)
         if check.returncode != 0:
             raise Exception('{} not found! Please install it!'.format(tools))
     check = run('blastn -version', shell=True)
@@ -151,29 +151,34 @@ def write_seq(name, sequence_id, feature, whole_seq, path, arg):
     filename = join_path(path, name+'.fasta')
     with open(filename, 'a') as handle:
         handle.write(sequence_id+'\n')
-        handle.write(sequence+'\n')
-    if arg.expand:
+        handle.write(str(sequence)+'\n')
+    if not arg.no_expand:
         # in case of negative start
-        feature.location.star = max(0, feature.location.start-arg.expand_n)
-        feature.location.end = min(len(whole_seq),
-                                   feature.location.end+arg.expand_n)
+        start = max(0, feature.location.start-arg.expand_n)
+        end = min(len(whole_seq), feature.location.end+arg.expand_n)
+        new_feature = SeqFeature(FeatureLocation(start, end), id=feature.id,
+                                 type='expand', strand=feature.strand)
+        sequence = new_feature.extract(whole_seq)
         filename2 = join_path(path, 'expand.{}.fasta'.format(name))
         with open(filename2, 'a') as handle:
             handle.write(sequence_id+'\n')
-            handle.write(sequence+'\n')
+            handle.write(str(sequence)+'\n')
     return
 
 
-def get_feature_name(feature):
+def get_feature_name(feature, arg):
     """
     Get feature name and collect genes for extract spacer.
     Only handle gene, product, misc_feature, misc_RNA.
     """
     name = None
+    if feature.type == 'source':
+        return name, None
     if feature.type == 'gene':
         if 'gene' in feature.qualifiers:
             gene = feature.qualifiers['gene'][0].replace(' ', '_')
-            gene = gene_rename(gene)[0]
+            if arg.rename:
+                gene = gene_rename(gene)[0]
             name = safe(gene)
             return name, feature
         elif 'product' in feature.qualifiers:
@@ -215,7 +220,7 @@ def get_feature_name(feature):
         #     name = 'ITS_2'
     else:
         print(feature)
-    return name
+    return name, None
 
 
 def get_spacer(genes, arg):
@@ -269,12 +274,12 @@ def divide(gbfile, arg):
         genes = list()
 
         for feature in record.features:
-            name, *_ = get_feature_name(feature, genes)
-            if len(_) == 1:
-                genes.append(_[0])
+            name, _ = get_feature_name(feature, arg)
             if name is None:
                 # skip other features
                 continue
+            if _ is not None:
+                genes.append(_)
             feature_name.append(name)
             sequence_id = '>' + '|'.join([name, taxon, accession, specimen])
             write_seq(name, sequence_id, feature, whole_seq, groupby_gene, arg)
@@ -321,8 +326,11 @@ def parse_args():
     output.add_argument('-out',  help='output directory')
     output.add_argument('-rename', action='store_true',
                         help='try to rename gene')
-    output.add_argument('--expand', type=int, default=200,
-                        help='expand length of upstream/downstream')
+    output.add_argument('--no_expand', default=False,
+                        action='store_true',
+                        help='do not expand upstream/downstream')
+    output.add_argument('--expand_n', type=int, default=200,
+                        help='expand length')
     filters = arg.add_argument_group('filters')
     filters.add_argument('-group', default='plants',
                          choices=('animals', 'plants', 'fungi', 'protists',
@@ -369,7 +377,7 @@ def main():
     query = get_query_string(arg)
     mkdir(arg.out)
     gbfile = download(arg, query)
-    groupby_gene, groupby_name = divide(gbfile, arg.rename, arg.expand)
+    groupby_gene, groupby_name = divide(gbfile, arg)
 
 
 if __name__ == '__main__':
