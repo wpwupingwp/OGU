@@ -167,6 +167,7 @@ def write_seq(name, sequence_id, feature, whole_seq, path, arg):
 def get_feature_name(feature):
     """
     Get feature name and collect genes for extract spacer.
+    Only handle gene, product, misc_feature, misc_RNA.
     """
     name = None
     if feature.type == 'gene':
@@ -272,21 +273,24 @@ def divide(gbfile, arg):
             if len(_) == 1:
                 genes.append(_[0])
             if name is None:
-                name = 'Unknown'
+                # skip other features
+                continue
             feature_name.append(name)
             sequence_id = '>' + '|'.join([name, taxon, accession, specimen])
-            write_seq(name, sequence_id, feature, whole_seq, path, arg)
+            write_seq(name, sequence_id, feature, whole_seq, groupby_gene, arg)
 
+        # extract spacer
         spacers = get_spacer(genes, arg)
         for spacer in spacers:
-            write_seq(spacer, whole_seq, path, arg)
-    # extract spacer
-
+            sequence_id = '>' + '|'.join([spacer.id, taxon,
+                                          accession, specimen])
+            write_seq(spacer.id, sequence_id, spacer, whole_seq,
+                      groupby_gene, arg)
+        # write to group_by name, i.e., one gb record one fasta
         if 'ITS' in feature_name:
             name_str = 'ITS'
         elif len(feature_name) >= 4:
-            name_str = '{}-{}features-{}'.format(
-                feature_name[0], len(feature_name)-2, feature_name[-1])
+            name_str = '{}-...-{}'.format(feature_name[0], feature_name[-1])
         elif len(feature_name) == 0:
             name_str = 'Unknown'
         else:
@@ -294,10 +298,10 @@ def divide(gbfile, arg):
 
         record.id = '|'.join([name_str, taxon, accession, specimen])
         record.description = ''
+        with open(join_path(groupby_name, name_str+'.fasta'), 'a') as out:
+            SeqIO.write(record, out, 'fasta')
+        # write raw fasta
         SeqIO.write(record, handle_raw, 'fasta')
-        with open(join_path(groupby_name, name_str+'.fasta'),
-                  'a') as handle_name:
-            SeqIO.write(record, handle_name, 'fasta')
 
     end = timer()
     print('Divide done with {:.3f}s.'.format(end-start))
