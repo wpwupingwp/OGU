@@ -13,7 +13,44 @@ from Bio.Seq import Seq
 from Bio.SeqFeature import SeqFeature, FeatureLocation
 
 
+def parse_args():
+    arg = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description=main.__doc__)
+    arg.add_argument('-query', help='query text')
+    arg.add_argument('-continue', action='store_true',
+                     help='continue broken download process')
+    arg.add_argument('-email', default='',
+                     help='email address used by NCBI Genbank')
+    output = arg.add_argument_group('output')
+    output.add_argument('-out',  help='output directory')
+    output.add_argument('-rename', action='store_true',
+                        help='try to rename gene')
+    output.add_argument('-no_expand', default=False,
+                        action='store_true',
+                        help='do not expand upstream/downstream')
+    output.add_argument('-expand_n', type=int, default=200,
+                        help='expand length')
+    filters = arg.add_argument_group('filters')
+    filters.add_argument('-group', default='plants',
+                         choices=('animals', 'plants', 'fungi', 'protists',
+                                  'bacteria', 'archaea', 'viruses'),
+                         help='Species kind')
+    filters.add_argument('-min_len', default=100, type=int,
+                         help='minium length')
+    filters.add_argument('-max_len', default=10000, type=int,
+                         help='maximum length')
+    filters.add_argument('-molecular', choices=('DNA', 'RNA'),
+                         help='molecular type')
+    filters.add_argument('-taxon', help='Taxonomy name')
+    filters.add_argument('-organelle',
+                         choices=('mitochondrion', 'plastid', 'chloroplast'),
+                         help='organelle type')
+    return arg.parse_args()
+
+
 def check_tools():
+    print('Checking dependencies ..')
     for tools in ('mafft', 'iqtree'):
         check = run('{} --version'.format(tools), shell=True)
         if check.returncode != 0:
@@ -22,7 +59,25 @@ def check_tools():
     check = run('blastn -version', shell=True)
     if check.returncode != 0:
         raise Exception('BLAST not found! Please install it!')
-    print('BLAST OK.')
+    print('BLAST OK.\n')
+
+
+def get_query_string(arg):
+    condition = list()
+    condition.append('{}[filter]'.format(arg.group))
+    condition.append('("{}"[SLEN] : "{}"[SLEN])'.format(arg.min_len,
+                                                        arg.max_len))
+    if arg.query is not None:
+        condition.append('"{}"'.format(arg.query))
+    if arg.molecular is not None:
+        d = {'DNA': 'biomol_genomic[PROP]',
+             'RNA': 'biomol_mrna[PROP]'}
+        condition.append(d[arg.molecular])
+    if arg.taxon is not None:
+        condition.append('"{}"[ORGANISM]'.format(arg.taxon))
+    if arg.organelle is not None:
+        condition.append('{}[filter]'.format(arg.organelle))
+    return ' AND '.join(condition)
 
 
 def download(arg, query):
@@ -38,7 +93,11 @@ def download(arg, query):
     with open(json_file, 'w') as _:
         json.dump(query_handle, _)
 
-    file_name = join_path(arg.out, safe(arg.query)+'.gb')
+    if arg.query is None:
+        name = safe(arg.taxon)
+    else:
+        name = safe(arg.query)
+    file_name = join_path(arg.out, name+'.gb')
     output = open(file_name, 'w')
     ret_start = 0
     ret_max = 1000
@@ -327,60 +386,6 @@ def divide(gbfile, arg):
     return wrote_by_gene, wrote_by_name
 
 
-def parse_args():
-    arg = argparse.ArgumentParser(
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description=main.__doc__)
-    arg.add_argument('query', help='query text')
-    arg.add_argument('-continue', action='store_true',
-                     help='continue broken download process')
-    arg.add_argument('-email', default='',
-                     help='email address used by NCBI Genbank')
-    output = arg.add_argument_group('output')
-    output.add_argument('-out',  help='output directory')
-    output.add_argument('-rename', action='store_true',
-                        help='try to rename gene')
-    output.add_argument('--no_expand', default=False,
-                        action='store_true',
-                        help='do not expand upstream/downstream')
-    output.add_argument('--expand_n', type=int, default=200,
-                        help='expand length')
-    filters = arg.add_argument_group('filters')
-    filters.add_argument('-group', default='plants',
-                         choices=('animals', 'plants', 'fungi', 'protists',
-                                  'bacteria', 'archaea', 'viruses'),
-                         help='Species kind')
-    filters.add_argument('-min_len', default=100, type=int,
-                         help='minium length')
-    filters.add_argument('-max_len', default=10000, type=int,
-                         help='maximum length')
-    filters.add_argument('-molecular', choices=('DNA', 'RNA'),
-                         help='molecular type')
-    filters.add_argument('-taxon', help='Taxonomy name')
-    filters.add_argument('-organelle',
-                         choices=('mitochondrion', 'plastid', 'chloroplast'),
-                         help='organelle type')
-    arg.print_help()
-    return arg.parse_args()
-
-
-def get_query_string(arg):
-    condition = list()
-    condition.append('"{}"'.format(arg.query))
-    condition.append('{}[filter]'.format(arg.group))
-    condition.append('("{}"[SLEN] : "{}"[SLEN])'.format(arg.min_len,
-                                                        arg.max_len))
-    if arg.molecular is not None:
-        d = {'DNA': 'biomol_genomic[PROP]',
-             'RNA': 'biomol_mrna[PROP]'}
-        condition.append(d[arg.molecular])
-    if arg.taxon is not None:
-        condition.append('"{}"[ORGANISM]'.format(arg.taxon))
-    if arg.organelle is not None:
-        condition.append('{}[filter]'.format(arg.organelle))
-    return ' AND '.join(condition)
-
-
 def mafft(files):
     result = list()
     # get available CPU cores
@@ -400,12 +405,12 @@ def mafft(files):
 def main():
     """Get data from Genbank.
     """
-    check_tools()
     arg = parse_args()
     if arg.out is None:
         arg.out = datetime.now().isoformat().replace(':', '-')
-    query = get_query_string(arg)
     mkdir(arg.out)
+    check_tools()
+    query = get_query_string(arg)
     gbfile = download(arg, query)
     wrote_by_gene, wrote_by_name = divide(gbfile, arg)
     if arg.max_len > 10000:
