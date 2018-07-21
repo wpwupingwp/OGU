@@ -46,7 +46,11 @@ def parse_args():
     filters.add_argument('-organelle',
                          choices=('mitochondrion', 'plastid', 'chloroplast'),
                          help='organelle type')
-    return arg.parse_args()
+    parsed = arg.parse_args()
+    if parsed.query is None and parsed.taxon is None:
+        arg.print_help()
+        raise ValueError('Please give more specific query!')
+    return parsed
 
 
 def check_tools():
