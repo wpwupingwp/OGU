@@ -216,8 +216,9 @@ def write_seq(name, sequence_id, feature, whole_seq, path, arg):
     """
     Write fasta file.
     """
-    sequence = feature.extract(whole_seq)
     filename = join_path(path, name+'.fasta')
+    sequence = feature.extract(whole_seq)
+
     with open(filename, 'a') as handle:
         handle.write(sequence_id+'\n')
         handle.write(str(sequence)+'\n')
@@ -240,17 +241,15 @@ def get_feature_name(feature, arg):
     """
     Get feature name and collect genes for extract spacer.
     Only handle gene, product, misc_feature, misc_RNA.
+    Return: [name, feature.type]
     """
     name = None
-    if feature.type == 'source':
-        return name, None
     if feature.type == 'gene':
         if 'gene' in feature.qualifiers:
             gene = feature.qualifiers['gene'][0].replace(' ', '_')
             if arg.rename:
                 gene = gene_rename(gene)[0]
             name = safe(gene)
-            return name, feature
         elif 'product' in feature.qualifiers:
             product = feature.qualifiers['product'][0].replace(
                 ' ', '_')
@@ -263,12 +262,13 @@ def get_feature_name(feature, arg):
             misc_feature = feature.qualifiers['note'][0].replace(
                 ' ', '_')
         if (('intergenic_spacer' in misc_feature or
-             'IGS' in misc_feature) and len(misc_feature) < 100):
+             'IGS' in misc_feature)):
+            # 'IGS' in misc_feature) and len(misc_feature) < 100):
             name = safe(misc_feature)
             name = name.replace('intergenic_spacer_region',
                                 'intergenic_spacer')
         else:
-            print('Too long name: {}'.format(misc_feature))
+            pass
     elif feature.type == 'misc_RNA':
         if 'product' in feature.qualifiers:
             misc_feature = feature.qualifiers['product'][0].replace(
@@ -289,30 +289,31 @@ def get_feature_name(feature, arg):
         # elif 'ITS_2' in name:
         #     name = 'ITS_2'
     else:
-        print('Cannot handle feature:')
-        print(feature)
-    return name, None
+        pass
+        # print('Cannot handle feature:')
+        # print(feature)
+    return name, feature.type
 
 
 def get_spacer(genes, arg):
     """
-    List: [SeqFeature]
+    List: [[name, SeqFeature],]
     """
     spacers = list()
     # sorted according to sequence starting postion
-    genes.sort(key=lambda x: int(x.location.start))
+    genes.sort(key=lambda x: int(x[1].location.start))
     for n, present in enumerate(genes[1:], 1):
         before = genes[n-1]
         # use sort to handle complex location relationship of two fragments
-        location = [before.location.start, before.location.end,
-                    present.location.start, present.location.end]
+        location = [before[1].location.start, before[1].location.end,
+                    present[1].location.start, present[1].location.end]
         location.sort(key=lambda x: int(x))
         start, end = location[1:3]
-        if before[-1] == present[-1] == '-':
-            strand = '-'
+        if before[1].location.strand == present[1].location.strand == -1:
+            strand = -1
         else:
-            strand = '+'
-        name = '_'.join([before[2], present[2]])
+            strand = 1
+        name = '_'.join([before[0], present[0]])
         spacer = SeqFeature(FeatureLocation(start, end), id=name,
                             type='spacer', strand=strand)
         spacers.append(spacer)
@@ -350,12 +351,16 @@ def divide(gbfile, arg):
         genes = list()
 
         for feature in record.features:
-            name, _ = get_feature_name(feature, arg)
+            name, feature_type = get_feature_name(feature, arg)
+            # skip unsupport feature
             if name is None:
-                # skip other features
                 continue
-            if _ is not None:
-                genes.append(_)
+            if feature_type == 'gene':
+                if name == 'rps12' and len(feature) > 10000:
+                    print('Skip abnormal annotaion of rps12!')
+                    print('Accession: ', accession)
+                    continue
+                genes.append([name, feature])
             feature_name.append(name)
             sequence_id = '>' + '|'.join([name, taxon, accession, specimen])
             wrote = write_seq(name, sequence_id, feature, whole_seq,
@@ -400,6 +405,7 @@ def mafft(files):
     cores = len(sched_getaffinity(0))
     print('Start mafft ...')
     for fasta in files:
+        print('Aligning {}'.format(fasta))
         out = fasta + '.aln'
         _ = ('mafft --thread {} --reorder --quiet --adjustdirection '
              ' {} > {}'.format(cores-1, fasta, out))
