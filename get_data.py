@@ -395,7 +395,9 @@ def divide(gbfile, arg):
             name_str = 'Unknown'
         else:
             name_str = '-'.join(feature_name)
-
+        # directly use genome type as name
+        if arg.organelle is not None:
+            name_str = '{}_genome'.format(arg.organelle)
         record.id = '|'.join([name_str, taxon, accession, specimen])
         record.description = ''
         filename = join_path(groupby_name, name_str+'.fasta')
