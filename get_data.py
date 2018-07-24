@@ -223,12 +223,22 @@ def write_seq(name, sequence_id, feature, whole_seq, path, arg):
         handle.write(sequence_id+'\n')
         handle.write(str(sequence)+'\n')
     if not arg.no_expand:
-        # in case of negative start
-        start = max(0, feature.location.start-arg.expand_n)
-        end = min(len(whole_seq), feature.location.end+arg.expand_n)
-        new_feature = SeqFeature(FeatureLocation(start, end), id=feature.id,
-                                 type='expand', strand=feature.strand)
-        sequence = new_feature.extract(whole_seq)
+        if feature.location_operator == 'join':
+            loc = feature.location.parts
+            # ensure increasing order
+            # parts do not have sort method
+            sorted(loc, key=lambda x: x.start)
+            new_loc = sum([
+                # avoid IndexError
+                FeatureLocation(max(0, loc[0].start-arg.expand_n),
+                                loc[0].end, loc[0].strand),
+                *loc[1:-1],
+                FeatureLocation(loc[-1].start,
+                                min(len(whole_seq), loc[-1].end+arg.expand_n),
+                                loc[-1].strand)])
+            feature.location = new_loc
+        feature.type = 'expand'
+        sequence = feature.extract(whole_seq)
         filename2 = join_path(path, 'expand.{}.fasta'.format(name))
         with open(filename2, 'a') as handle:
             handle.write(sequence_id+'\n')
@@ -356,7 +366,7 @@ def divide(gbfile, arg):
             if name is None:
                 continue
             # skip abnormal annotation
-            if len(feature) > 10000:
+            if len(feature) > 20000:
                 print('Skip abnormal annotaion of {}!'.format(name))
                 print('Accession: ', accession)
                 continue
