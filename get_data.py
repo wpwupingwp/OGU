@@ -17,7 +17,7 @@ def parse_args():
     arg = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description=main.__doc__)
-    arg.add_argument('-query', help='query text')
+    arg.add_argument("-query", help='query text')
     arg.add_argument('-continue', action='store_true',
                      help='continue broken download process')
     arg.add_argument('-email', default='',
@@ -47,6 +47,10 @@ def parse_args():
                          choices=('mitochondrion', 'plastid', 'chloroplast'),
                          help='organelle type')
     parsed = arg.parse_args()
+    if parsed.organelle is not None:
+        # 10k to 1m seems enough
+        parsed.min_len = 10000
+        parsed.max_len = 1000000
     if parsed.query is None and parsed.taxon is None:
         arg.print_help()
         raise ValueError('Please give more specific query!')
@@ -85,12 +89,12 @@ def get_query_string(arg):
 
 
 def download(arg, query):
+    print('Your query:')
+    print(query)
     Entrez.email = arg.email
     query_handle = Entrez.read(Entrez.esearch(db='nuccore', term=query,
                                               usehistory='y'))
     count = int(query_handle['Count'])
-    print('Your query:')
-    print(query)
     print('{} records found.'.format(count))
     print('Downloading... Ctrl+C to quit')
     json_file = join_path(arg.out, 'query.json')
