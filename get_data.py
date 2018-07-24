@@ -355,11 +355,12 @@ def divide(gbfile, arg):
             # skip unsupport feature
             if name is None:
                 continue
+            # skip abnormal annotation
+            if len(feature) > 10000:
+                print('Skip abnormal annotaion of {}!'.format(name))
+                print('Accession: ', accession)
+                continue
             if feature_type == 'gene':
-                if name == 'rps12' and len(feature) > 10000:
-                    print('Skip abnormal annotaion of rps12!')
-                    print('Accession: ', accession)
-                    continue
                 genes.append([name, feature])
             feature_name.append(name)
             sequence_id = '>' + '|'.join([name, taxon, accession, specimen])
