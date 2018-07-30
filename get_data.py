@@ -32,7 +32,7 @@ def parse_args():
     output.add_argument('-expand_n', type=int, default=200,
                         help='expand length')
     filters = arg.add_argument_group('filters')
-    filters.add_argument('-group', default='plants',
+    filters.add_argument('-group',
                          choices=('animals', 'plants', 'fungi', 'protists',
                                   'bacteria', 'archaea', 'viruses'),
                          help='Species kind')
@@ -72,9 +72,10 @@ def check_tools():
 
 def get_query_string(arg):
     condition = list()
-    condition.append('{}[filter]'.format(arg.group))
     condition.append('("{}"[SLEN] : "{}"[SLEN])'.format(arg.min_len,
                                                         arg.max_len))
+    if arg.group is not None:
+        condition.append('{}[filter]'.format(arg.group))
     if arg.query is not None:
         condition.append('"{}"'.format(arg.query))
     if arg.molecular is not None:
