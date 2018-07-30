@@ -4,7 +4,7 @@ import argparse
 import json
 import re
 from datetime import datetime
-from os import mkdir, sched_getaffinity
+from os import mkdir, sched_getaffinity, DEVNULL
 from os.path import join as join_path
 from subprocess import run
 from timeit import default_timer as timer
@@ -62,11 +62,11 @@ def parse_args():
 def check_tools():
     print('Checking dependencies ..')
     for tools in ('mafft', 'iqtree'):
-        check = run('{} --version'.format(tools), shell=True)
+        check = run('{} --help'.format(tools), shell=True, stdout=DEVNULL)
         if check.returncode != 0:
             raise Exception('{} not found! Please install it!'.format(tools))
         print('{} OK.'.format(tools))
-    check = run('blastn -version', shell=True)
+    check = run('blastn -h', shell=True, stdout=DEVNULL)
     if check.returncode != 0:
         raise Exception('BLAST not found! Please install it!')
     print('BLAST OK.\n')
