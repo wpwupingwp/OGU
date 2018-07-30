@@ -22,6 +22,8 @@ def parse_args():
                      help='continue broken download process')
     arg.add_argument('-email', default='',
                      help='email address used by NCBI Genbank')
+    arg.add_argument('-only_get', action='store_true',
+                     help='only get data')
     output = arg.add_argument_group('output')
     output.add_argument('-out',  help='output directory')
     output.add_argument('-rename', action='store_true',
@@ -441,6 +443,8 @@ def main():
     query = get_query_string(arg)
     gbfile = download(arg, query)
     wrote_by_gene, wrote_by_name = divide(gbfile, arg)
+    if arg.only_get:
+        return
     if arg.max_len > 10000:
         # two few sequences will cause empty output, which was omit
         aligned = mafft(wrote_by_gene)
@@ -448,6 +452,7 @@ def main():
         aligned = mafft(wrote_by_name)
     for aln in aligned:
         print(aln)
+    return
 
 
 if __name__ == '__main__':
