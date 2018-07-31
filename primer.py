@@ -327,7 +327,7 @@ def get_resolution_and_H_and_Pi(alignment, start, end):
             # bool is subclass of int
             d_ij = sum([i_seq[idx] != j_seq[idx] for idx in range(m)])
             sum_d_ij += d_ij
-    pi = 2 / (n*(n-1)) * sum_d_ij
+    pi = (2 / (n*(n-1)) * sum_d_ij) / m
     return resolution, entropy, pi
 
 
@@ -483,7 +483,6 @@ def count_and_draw(alignment, consensus, arg):
     All calculation excludes primer sequence.
     """
     rows, columns = alignment.shape
-    print(alignment.shape)
     min_primer = arg.min_primer
     max_product = arg.max_product
     window = arg.window
@@ -518,21 +517,18 @@ def count_and_draw(alignment, consensus, arg):
         # c=List for different color, s=size for different size
         ax1.scatter(index, shannon_index, c=shannon_index,
                     cmap='GnBu', alpha=0.8, s=10,
-                    label='{}bp'.format(max_product))
+                    label='Shannon Index')
         ax1.set_ylabel('H')
         ax1.grid(False)
-        ax1.legend(loc='upper right')
+        ax1.legend(loc='upper left')
         ax2 = ax1.twinx()
-        ax2.plot(index, count, 'r-', label='{}bp'.format(max_product))
+        ax2.plot(index, count, 'r-', label='Resolution')
+        ax2.plot(index, Pi, 'b-', label=r'$\pi$')
         ax2.yaxis.set_major_formatter(mtick.PercentFormatter(xmax=1.0))
-        ax2.set_ylabel('Resolution(% of {})'.format(rows))
+        ax2.set_ylabel('Resolution')
         ax2.grid(True)
-        ax2.legend(loc='upper left')
-        ax3 = ax1.twinx()
-        ax3.plot(index, Pi, 'b-', label='{}bp'.format(max_product))
-        ax3.set_ylabel('Pi')
-        ax3.grid(True)
-        ax3.legend(loc='upper left')
+        ax2.legend(loc='upper right')
+        plt.yscale('log')
         plt.savefig(out+'.pdf')
         plt.savefig(out+'.png')
         # plt.show()
