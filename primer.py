@@ -205,7 +205,6 @@ class BlastResult():
          self.hit_end) = [int(i) for i in record[3:]]
 
 
-# profile
 def prepare(fasta):
     """
     Given fasta format alignment filename, return a numpy array for sequence:
@@ -246,7 +245,6 @@ def prepare(fasta):
     return name, sequence, organize_no_gap.name
 
 
-# profile
 def count_base(alignment, rows, columns):
     """
     Given alignment numpy array, count cumulative frequency of base in each
@@ -280,7 +278,6 @@ def count_base(alignment, rows, columns):
     return frequency
 
 
-# profile
 def get_quality(data, rows):
     # use fastq-illumina format
     max_q = 62
@@ -290,7 +287,6 @@ def get_quality(data, rows):
     return quality_value
 
 
-# profile
 def get_resolution_and_entropy(alignment, start, end):
     """
     Given alignment (2d numpy array), location of fragment(start and end, int,
@@ -349,7 +345,6 @@ def get_tree_value(alignment, start, end):
     return n_internals / n_terminals
 
 
-# profile
 def generate_consensus(base_cumulative_frequency, coverage_percent,
                        rows, columns, output):
     """
@@ -407,7 +402,6 @@ def generate_consensus(base_cumulative_frequency, coverage_percent,
     return consensus
 
 
-# profile
 def get_good_region(index, seq_count, arg):
     # return loose region, final product may violate product length
     # restriction
@@ -421,7 +415,6 @@ def get_good_region(index, seq_count, arg):
     return good_region
 
 
-# profile
 def find_continuous(consensus, good_region, min_len):
     """
     Given PrimerWithInfo, good_region: List[bool], min_len
@@ -438,7 +431,6 @@ def find_continuous(consensus, good_region, min_len):
     return consensus
 
 
-# profile
 def find_primer(consensus, min_len, max_len):
     """
     Find suitable primer in given consensus with features labeled as candidate
@@ -464,7 +456,6 @@ def find_primer(consensus, min_len, max_len):
     return primers, consensus
 
 
-# profile
 def count_and_draw(alignment, consensus, arg):
     """
     Given alignment(numpy array), return unique sequence count List[float].
@@ -529,7 +520,6 @@ def count_and_draw(alignment, consensus, arg):
     return count, shannon_index, max_shannon_index, index
 
 
-# profile
 def parse_blast_tab(filename):
     query = list()
     with open(filename, 'r') as raw:
@@ -543,7 +533,6 @@ def parse_blast_tab(filename):
                 query.append(BlastResult(line))
 
 
-# profile
 def validate(primer_candidate, db_file, n_seqs, arg):
     """
     Do BLAST. Parse BLAST result. Return List[PrimerWithInfo]
@@ -615,7 +604,6 @@ def validate(primer_candidate, db_file, n_seqs, arg):
     return primer_verified
 
 
-# profile
 def pick_pair(primers, alignment, arg):
     pairs = list()
     for left in primers:
@@ -666,7 +654,6 @@ def pick_pair(primers, alignment, arg):
     return good_pairs
 
 
-# profile
 def parse_args():
     arg = argparse.ArgumentParser(
         description=main.__doc__,
@@ -697,7 +684,6 @@ def parse_args():
     return arg.parse_args()
 
 
-# profile
 def main():
     """
     Automatic design primer for DNA barcode.
