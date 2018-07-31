@@ -287,7 +287,7 @@ def get_quality(data, rows):
     return quality_value
 
 
-def get_resolution_and_entropy(alignment, start, end):
+def get_resolution_and_entropy_and_pi(alignment, start, end):
     """
     Given alignment (2d numpy array), location of fragment(start and end, int,
     start from zero, exclude end),
@@ -308,7 +308,22 @@ def get_resolution_and_entropy(alignment, start, end):
         entropy += log2_p_j * p_j
     entropy *= -1
 
-    return resolution, entropy
+    # Nucleotide diversity (pi)
+    # pi = k/m
+    # k = 2/(n*(n-1))*sum(d_ij)
+    # d_ij = count(different between seq i and j)
+    m = columns
+    n = rows
+    sum_d_ij = 0
+    for i in range(n):
+        for j in range(i+1, n):
+            i_seq = alignment[i]
+            j_seq = alignment[j]
+            # bool is subclass of int
+            d_ij = sum([i_seq[idx] != j_seq[idx] for idx in range(m)])
+            sum_d_ij += d_ij
+    pi = 2 / (n*(n-1)) * sum_d_ij
+    return resolution, entropy, pi
 
 
 def get_tree_value(alignment, start, end):
