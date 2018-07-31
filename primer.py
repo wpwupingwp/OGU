@@ -298,12 +298,12 @@ def get_resolution_and_H_and_Pi(alignment, start, end):
     start from zero, exclude end),
     return resolution (float) and entropy (float).
     """
-    rows, columns = alignment.shape
+    subalignment = alignment[:, start:end]
+    rows, columns = subalignment.shape
     # index error
-    if start >= end or end > columns:
-        return 0, 0
-    item, count = np.unique(alignment[:, start:end],
-                            return_counts=True, axis=0)
+    if columns == 0:
+        return 0, 0, 0
+    item, count = np.unique(subalignment, return_counts=True, axis=0)
     resolution = len(count) / rows
 
     entropy = 0
@@ -322,8 +322,8 @@ def get_resolution_and_H_and_Pi(alignment, start, end):
     sum_d_ij = 0
     for i in range(n):
         for j in range(i+1, n):
-            i_seq = alignment[i]
-            j_seq = alignment[j]
+            i_seq = subalignment[i]
+            j_seq = subalignment[j]
             # bool is subclass of int
             d_ij = sum([i_seq[idx] != j_seq[idx] for idx in range(m)])
             sum_d_ij += d_ij
@@ -483,6 +483,7 @@ def count_and_draw(alignment, consensus, arg):
     All calculation excludes primer sequence.
     """
     rows, columns = alignment.shape
+    print(alignment.shape)
     min_primer = arg.min_primer
     max_product = arg.max_product
     window = arg.window
@@ -519,7 +520,7 @@ def count_and_draw(alignment, consensus, arg):
                     cmap='GnBu', alpha=0.8, s=10,
                     label='{}bp'.format(max_product))
         ax1.set_ylabel('H')
-        ax1.grid(True)
+        ax1.grid(False)
         ax1.legend(loc='upper right')
         ax2 = ax1.twinx()
         ax2.plot(index, count, 'r-', label='{}bp'.format(max_product))
@@ -528,7 +529,7 @@ def count_and_draw(alignment, consensus, arg):
         ax2.grid(True)
         ax2.legend(loc='upper left')
         ax3 = ax1.twinx()
-        ax3.plot(index, pi, 'b-', label='{}bp'.format(max_product))
+        ax3.plot(index, Pi, 'b-', label='{}bp'.format(max_product))
         ax3.set_ylabel('Pi')
         ax3.grid(True)
         ax3.legend(loc='upper left')
@@ -540,7 +541,7 @@ def count_and_draw(alignment, consensus, arg):
             for base, resolution in enumerate(count):
                 _.write('{}\t{:.2f}\n'.format(base, resolution))
     except Exception:
-        pass
+        raise
 
     return count, shannon_index, max_shannon_index, index
 
@@ -702,7 +703,7 @@ def parse_args():
     arg.add_argument('-tmax', '--max_product', type=int, default=500,
                      help='maximum product length(include primer)')
     arg.add_argument('-t', '--top_n', type=int, default=1,
-                     help='keep how many primers for one high varient region')
+                     help='keep how many primers for each high varient region')
     arg.add_argument('-w', '--window', type=int, default=10,
                      help='window size')
     # arg.print_help()
