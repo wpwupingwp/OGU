@@ -9,6 +9,7 @@ from Bio import Phylo, SeqIO
 from Bio.Blast.Applications import NcbiblastnCommandline as Blast
 from Bio.SeqFeature import SeqFeature, FeatureLocation
 from Bio.SeqRecord import SeqRecord
+from Bio.Seq import Seq
 from collections import defaultdict
 from glob import glob
 from math import log2
@@ -32,15 +33,16 @@ class PrimerWithInfo(SeqRecord):
     def __init__(self, seq='', quality='', start=0, coverage=0, avg_bitscore=0,
                  mid_loc=None, avg_mismatch=0, detail=0,
                  reverse_complement=False):
-        super().__init__(seq.upper())
+        # store str
+        super().__init__(Seq(seq.upper()))
+        self.sequence = str(self.seq)
 
-        self.sequence = self.seq
         """
         primer3.setGlobals seems have no effect on calcTm, so I have to replace
         all ambiguous base to G to get an approximate value. Othervise calcTm()
         will generate -99999 if there is ambiguous base.
         """
-        self.g_seq = re.sub(r'[^ATCG]', 'G', self.seq)
+        self.g_seq = re.sub(r'[^ATCG]', 'G', self.sequence)
         self.quality = self.letter_annotations['solexa_quality'] = quality
         self.start = self.annotations['start'] = start
         self.tm = self.annotations['tm'] = primer3.calcTm(self.g_seq)
@@ -63,7 +65,8 @@ class PrimerWithInfo(SeqRecord):
         if isinstance(i, slice):
             if self.seq is None:
                 raise ValueError('Empty sequence')
-            answer = PrimerWithInfo(seq=self.seq[i], quality=self.quality[i])
+            answer = PrimerWithInfo(seq=str(self.seq[i]),
+                                    quality=self.quality[i])
             answer.annotations = dict(self.annotations.items())
             return answer
 
@@ -153,6 +156,7 @@ class Pair:
         self.have_heterodimer = False
         self.resolution = 0
         self.entropy = 0
+        self.pi = 0.0
         self.heterodimer_tm = primer3.calcHeterodimer(self.left.g_seq,
                                                       self.right.g_seq).tm
         if max(self.heterodimer_tm, self.left.tm,
@@ -184,7 +188,7 @@ class Pair:
 
     def add_info(self, alignment):
         # include end base, use alignment loc for slice
-        self.resolution, self.entropy = get_resolution_and_entropy(
+        self.resolution, self.entropy, self.pi = get_resolution_and_H_and_Pi(
             alignment, self.left.start, self.right.end+1)
         self.tree_value = get_tree_value(alignment, self.left.start,
                                          self.right.end)
@@ -287,7 +291,7 @@ def get_quality(data, rows):
     return quality_value
 
 
-def get_resolution_and_entropy_and_pi(alignment, start, end):
+def get_resolution_and_H_and_Pi(alignment, start, end):
     """
     Given alignment (2d numpy array), location of fragment(start and end, int,
     start from zero, exclude end),
@@ -381,18 +385,19 @@ def generate_consensus(base_cumulative_frequency, coverage_percent,
     most = list()
     coverage = rows * coverage_percent
 
+    limit = coverage /4
     for location, column in enumerate(base_cumulative_frequency):
         finish = False
         # "*" for others
         value = dict(zip(list('ATCGN-*'), column))
 
         base = 'N'
-        if value['N'] >= coverage/4:
+        if value['N'] >= limit:
             count = value['N']
             most.append([location, base, count])
             continue
         sum_gap = value['-'] + value['*']
-        if sum_gap >= coverage/4:
+        if sum_gap >= limit:
             base = '-'
             count = sum_gap
             most.append([location, base, count])
@@ -413,6 +418,7 @@ def generate_consensus(base_cumulative_frequency, coverage_percent,
     quality = [i[2] for i in most]
     consensus = PrimerWithInfo(start=1, seq=''.join([i[1] for i in most]),
                                quality=get_quality(quality, rows))
+    print(consensus.seq, type(consensus.seq))
     SeqIO.write(consensus, output, 'fastq')
     return consensus
 
@@ -487,6 +493,7 @@ def count_and_draw(alignment, consensus, arg):
     # Different count
     count = list()
     shannon_index = list()
+    Pi = list()
     max_shannon_index = -1*((1/rows)*log2(1/rows)*rows)
     index = list()
     max_plus = max_product - min_primer * 2
@@ -495,10 +502,11 @@ def count_and_draw(alignment, consensus, arg):
         if consensus.sequence[i] in ('-', 'N'):
             continue
         # exclude primer sequence
-        resolution, entropy = get_resolution_and_entropy(alignment, i,
-                                                         i+max_plus)
+        resolution, entropy, pi = get_resolution_and_H_and_Pi(
+            alignment, i, i+max_plus)
         count.append(resolution)
         shannon_index.append(entropy)
+        Pi.append(pi)
         index.append(i)
 
     # convert value to (0,1)
@@ -522,6 +530,11 @@ def count_and_draw(alignment, consensus, arg):
         ax2.set_ylabel('Resolution(% of {})'.format(rows))
         ax2.grid(True)
         ax2.legend(loc='upper left')
+        ax3 = ax1.twinx()
+        ax3.plot(index, pi, 'b-', label='{}bp'.format(max_product))
+        ax3.set_ylabel('Pi')
+        ax3.grid(True)
+        ax3.legend(loc='upper left')
         plt.savefig(out+'.pdf')
         plt.savefig(out+'.png')
         # plt.show()
