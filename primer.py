@@ -324,6 +324,7 @@ def get_tree_value(alignment, start, end):
         return 0
     aln_file = '{}-{}.aln.tmp'.format(start, end)
     # remove iqtree generated files
+
     def clean():
         for i in glob(aln_file+'*'):
             os.remove(i)
@@ -504,7 +505,8 @@ def count_and_draw(alignment, consensus, arg):
         plt.xticks(range(0, columns, int(columns/10)))
         # c=List for different color, s=size for different size
         ax1.scatter(index, shannon_index, c=shannon_index,
-                    cmap='GnBu', alpha=0.8, s=10, label='{}bp'.format(max_product))
+                    cmap='GnBu', alpha=0.8, s=10,
+                    label='{}bp'.format(max_product))
         ax1.set_ylabel('H')
         ax1.grid(True)
         ax1.legend(loc='upper right')
