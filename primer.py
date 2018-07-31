@@ -115,9 +115,10 @@ class PrimerWithInfo(SeqRecord):
 
 
 class Pair:
+    # save memory
     __slots__ = ['left', 'right', 'delta_tm', 'coverage', 'start', 'end',
                  'resolution', 'tree_value', 'entropy', 'have_heterodimer',
-                 'heterodimer_tm', 'score', 'length']
+                 'heterodimer_tm', 'pi', 'score', 'length']
 
     def __init__(self, left, right, alignment):
         rows, columns = alignment.shape
@@ -334,9 +335,6 @@ def get_tree_value(alignment, start, end):
     rows, columns = alignment.shape
     if start >= end or end > columns:
         return 0
-    if run('iqtree -h', shell=True, stdout=Tmp('wt')).returncode != 0:
-        print('Cannot find IQTREE!')
-        return 0
     aln_file = '{}-{}.aln.tmp'.format(start, end)
     # remove iqtree generated files
 
@@ -418,7 +416,6 @@ def generate_consensus(base_cumulative_frequency, coverage_percent,
     quality = [i[2] for i in most]
     consensus = PrimerWithInfo(start=1, seq=''.join([i[1] for i in most]),
                                quality=get_quality(quality, rows))
-    print(consensus.seq, type(consensus.seq))
     SeqIO.write(consensus, output, 'fastq')
     return consensus
 
