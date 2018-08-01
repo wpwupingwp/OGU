@@ -368,6 +368,9 @@ def divide(gbfile, arg):
             # skip unsupport feature
             if name is None:
                 continue
+            if len(name) > 50:
+                print('Too long name: {}.'.format(name))
+                name = name[:50] + '...'
             # skip abnormal annotation
             if len(feature) > 20000:
                 print('Skip abnormal annotaion of {}!'.format(name))
