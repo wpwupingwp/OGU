@@ -268,16 +268,15 @@ def get_feature_name(feature, arg):
                 ' ', '_')
             name = safe(product)
     elif feature.type == 'misc_feature':
+        misc_feature = None
         if 'product' in feature.qualifiers:
             misc_feature = feature.qualifiers['product'][0].replace(
                 ' ', '_')
         elif 'note' in feature.qualifiers:
             misc_feature = feature.qualifiers['note'][0].replace(
                 ' ', '_')
-        else:
-            pass
-        if (('intergenic_spacer' in misc_feature or
-             'IGS' in misc_feature)):
+        if (misc_feature is not None) and ('intergenic_spacer' in misc_feature
+                                           or 'IGS' in misc_feature):
             # 'IGS' in misc_feature) and len(misc_feature) < 100):
             name = safe(misc_feature)
             name = name.replace('intergenic_spacer_region',
