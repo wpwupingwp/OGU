@@ -274,14 +274,14 @@ def get_feature_name(feature, arg):
         elif 'note' in feature.qualifiers:
             misc_feature = feature.qualifiers['note'][0].replace(
                 ' ', '_')
+        else:
+            pass
         if (('intergenic_spacer' in misc_feature or
              'IGS' in misc_feature)):
             # 'IGS' in misc_feature) and len(misc_feature) < 100):
             name = safe(misc_feature)
             name = name.replace('intergenic_spacer_region',
                                 'intergenic_spacer')
-        else:
-            pass
     elif feature.type == 'misc_RNA':
         if 'product' in feature.qualifiers:
             misc_feature = feature.qualifiers['product'][0].replace(
