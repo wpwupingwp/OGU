@@ -483,8 +483,8 @@ def count_and_draw(alignment, consensus, arg):
     max_plus = max_product - min_primer * 2
     for i in range(0, columns-max_product, window):
         # skip gap
-        if consensus.sequence[i] in ('-', 'N'):
-            continue
+        # if consensus.sequence[i] in ('-', 'N'):
+        #     continue
         # exclude primer sequence
         resolution, entropy, pi, tree_value = get_resolution(alignment, i,
                                                              i+max_plus)
