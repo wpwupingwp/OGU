@@ -26,7 +26,7 @@ rcParams['axes.linewidth'] = 1.5
 rcParams['axes.labelsize'] = 16
 rcParams['axes.titlesize'] = 25
 rcParams['font.size'] = 16
-rcParams['axes.facecolor'] = '#666666'
+rcParams['axes.facecolor'] = '#ffffff'
 
 
 class PrimerWithInfo(SeqRecord):
@@ -473,9 +473,9 @@ def count_and_draw(alignment, consensus, arg):
     max_product = arg.max_product
     window = arg.window
     out = arg.out
-    # Different count
-    count = list()
-    shannon_index = list()
+    # R, H, Pi, T : count, entropy, Pi, tree value
+    R = list()
+    H = list()
     Pi = list()
     T = list()
     # max_shannon_index = -1*((1/rows)*log2(1/rows)*rows)
@@ -488,41 +488,39 @@ def count_and_draw(alignment, consensus, arg):
         # exclude primer sequence
         resolution, entropy, pi, tree_value = get_resolution(alignment, i,
                                                              i+max_plus)
-        count.append(resolution)
-        shannon_index.append(entropy)
+        R.append(resolution)
+        H.append(entropy)
         Pi.append(pi)
         T.append(tree_value)
         index.append(i)
 
     # plt.style.use('ggplot')
     fig, ax1 = plt.subplots(figsize=(20+len(index)//5000, 10))
-    plt.title('Resolution({}bp, window={})'.format(max_product, window))
+    plt.title('Resolution({} bp, window={})'.format(max_product, window))
     plt.xlabel('Base')
-    plt.xticks(range(0, columns, int(columns/10)))
-    # c=List for different color, s=size for different size
-    ax1.scatter(index, shannon_index, c=shannon_index,
-                cmap='GnBu', alpha=0.8, s=10,
-                label='Shannon Index')
-    ax1.set_ylabel('H')
-    ax1.grid(False)
-    ax1.legend(loc='upper left')
+    plt.xticks(np.arange(0, columns+1, window))
+    ax1.plot(index, H, 'g-', label='Shannon Index')
+    ax1.set_ylabel('Entropy/Resolution/TreeValue')
+    ax1.plot(index, R, 'r-', label='Resolution')
+    ax1.plot(index, T, 'y-', label='tree value')
+    ax1.legend(loc='lower left')
+    ax1.yaxis.set_ticks(np.concatenate(
+        [np.linspace(0, 1, num=11), np.arange(1, max(H)+0.5, 0.5)]))
     ax2 = ax1.twinx()
-    ax2.plot(index, count, 'r-', label='Resolution')
-    ax2.plot(index, T, 'y-', label='tree value')
     ax2.plot(index, Pi, 'b-', label=r'$\pi$')
-    ax2.yaxis.set_major_formatter(mtick.PercentFormatter(xmax=1.0))
-    ax2.set_ylabel('Resolution')
-    ax2.grid(True)
+    ax2.set_ylabel('Pi')
+    _ = round(np.log10(max(Pi)))
+    ax2.yaxis.set_ticks(np.linspace(0, 10**_, num=11))
     ax2.legend(loc='upper right')
-    plt.yscale('log')
+    # plt.yscale('log')
     plt.savefig(out+'.pdf')
     plt.savefig(out+'.png')
     # plt.show()
     with open(out+'-Resolution.tsv', 'w') as _:
-        _.write('Base\tResolution(window={})\n'.format(max_product))
-        for base, resolution in enumerate(count):
-            _.write('{}\t{:.2f}\n'.format(base, resolution))
-    return count, shannon_index, Pi, index
+        _.write('Index,R,H,Pi,T\n')
+        for i, r, h, pi, t in zip(index, R, H, Pi, T):
+            _.write('{},{:.2f},{:.2f},{:.2f},{:.2f}\n'.format(i, r, h, pi, t))
+    return R, H, Pi, T, index
 
 
 def parse_blast_tab(filename):
@@ -714,7 +712,7 @@ given resolution threshold({:.2f}). Please try to use longer fragment or
 lower resolution options.
 """.format(max_count, arg.resolution))
     # count resolution
-    (seq_count, H, Pi, index) = count_and_draw(alignment, consensus, arg)
+    (seq_count, H, Pi, T, index) = count_and_draw(alignment, consensus, arg)
     # exit if resolution lower than given threshold.
     assert len(seq_count) != 0, 'Problematic Input !'
     # find candidate
