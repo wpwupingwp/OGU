@@ -297,6 +297,7 @@ def get_resolution(alignment, start, end):
     start from zero, exclude end),
     return resolution, entropy, Pi and tree value.
     """
+    print('1')
     subalignment = alignment[:, start:end]
     rows, columns = subalignment.shape
     # index error
@@ -481,7 +482,8 @@ def count_and_draw(alignment, consensus, arg):
     # max_shannon_index = -1*((1/rows)*log2(1/rows)*rows)
     index = list()
     max_plus = max_product - min_primer * 2
-    for i in range(0, columns-max_product, window):
+    max_range = columns - max_product
+    for i in range(0, max_range, window):
         # skip gap
         # if consensus.sequence[i] in ('-', 'N'):
         #     continue
@@ -496,9 +498,10 @@ def count_and_draw(alignment, consensus, arg):
 
     # plt.style.use('ggplot')
     fig, ax1 = plt.subplots(figsize=(20+len(index)//5000, 10))
-    plt.title('Resolution({} bp, window={})'.format(max_product, window))
+    plt.title('Resolution(step={} bp, window={} bp)'.format(
+        max_product, window))
     plt.xlabel('Base')
-    plt.xticks(np.arange(0, columns+1, window))
+    plt.xticks(np.arange(0, max_range, window))
     ax1.plot(index, H, 'g-', label='Shannon Index')
     ax1.set_ylabel('Entropy/Resolution/TreeValue')
     ax1.plot(index, R, 'r-', label='Resolution')
