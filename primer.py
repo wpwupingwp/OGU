@@ -297,13 +297,12 @@ def get_resolution(alignment, start, end):
     start from zero, exclude end),
     return resolution, entropy, Pi and tree value.
     """
-    print('1')
-    subalignment = alignment[:, start:end]
-    rows, columns = subalignment.shape
+    subalign = alignment[:, start:end]
+    rows, columns = subalign.shape
     # index error
     if columns == 0:
         return 0, 0, 0, 0
-    item, count = np.unique(subalignment, return_counts=True, axis=0)
+    item, count = np.unique(subalign, return_counts=True, axis=0)
     resolution = len(count) / rows
     # entropy
     entropy = 0
@@ -317,12 +316,14 @@ def get_resolution(alignment, start, end):
     n = rows
     sum_d_ij = 0
     for i in range(n):
-        for j in range(i+1, n):
-            i_seq = subalignment[i]
-            j_seq = subalignment[j]
-            # bool is subclass of int
-            d_ij = sum([i_seq[idx] != j_seq[idx] for idx in range(m)])
-            sum_d_ij += d_ij
+        # for j in range(i+1, n):
+            # d_ij = np.sum(subalign[i] == subalign[j])
+        d_ij = np.sum(subalign[i] == subalign[(i+1):])
+            # i_seq = subalign[i]
+            # j_seq = subalign[j]
+            # # bool is subclass of int
+            # d_ij = sum([i_seq[idx] != j_seq[idx] for idx in range(m)])
+        sum_d_ij += d_ij
     pi = (2 / (n*(n-1)) * sum_d_ij) / m
     # tree value
     aln_file = '{}-{}.aln.tmp'.format(start, end)
@@ -334,7 +335,7 @@ def get_resolution(alignment, start, end):
         for index, row in enumerate(alignment[:, start:end]):
             aln.write(b'>'+str(index).encode('utf-8')+b'\n'+b''.join(
                 row)+b'\n')
-    iqtree = run('iqtree -s {} -m JC -fast -czb'.format(aln_file),
+    iqtree = run('iqtree - {} -m JC -fast -czb'.format(aln_file),
                  stdout=Tmp('wt'), shell=True)
     # just return 0 if there is error
     if iqtree.returncode != 0:
