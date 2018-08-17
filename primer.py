@@ -12,10 +12,8 @@ from Bio.SeqRecord import SeqRecord
 from Bio.Seq import Seq
 from collections import defaultdict
 from glob import glob
-from math import log2
 from matplotlib import pyplot as plt
 from matplotlib import rcParams
-from matplotlib import ticker as mtick
 from multiprocessing import cpu_count
 from subprocess import run
 from tempfile import NamedTemporaryFile as Tmp
@@ -308,7 +306,7 @@ def get_resolution(alignment, start, end):
     entropy = 0
     for j in count:
         p_j = j / rows
-        log2_p_j = log2(p_j)
+        log2_p_j = np.log2(p_j)
         entropy += log2_p_j * p_j
     entropy *= -1
     # Nucleotide diversity (pi)
@@ -330,7 +328,7 @@ def get_resolution(alignment, start, end):
         for index, row in enumerate(alignment[:, start:end]):
             aln.write(b'>'+str(index).encode('utf-8')+b'\n'+b''.join(
                 row)+b'\n')
-    iqtree = run('iqtree -s {} -m JC -fast -czb'.format(aln_file),
+    iqtree = run('iqtree -s {} - JC -fast -czb'.format(aln_file),
                  stdout=Tmp('wt'), shell=True)
     # just return 0 if there is error
     if iqtree.returncode != 0:
@@ -468,18 +466,18 @@ def count_and_draw(alignment, consensus, arg):
     rows, columns = alignment.shape
     min_primer = arg.min_primer
     max_product = arg.max_product
-    window = arg.window
+    step = arg.step
     out = arg.out
-    # R, H, Pi, T : count, entropy, Pi, tree value
+    # R, H, Pi, T : count, normalized entropy, Pi, tree value
     R = list()
     H = list()
     Pi = list()
     T = list()
-    # max_shannon_index = -1*((1/rows)*log2(1/rows)*rows)
+    max_H = np.log2(rows)
     index = list()
     max_plus = max_product - min_primer * 2
     max_range = columns - max_product
-    for i in range(0, max_range, window):
+    for i in range(0, max_range, step):
         # skip gap
         # if consensus.sequence[i] in ('-', 'N'):
         #     continue
@@ -487,24 +485,23 @@ def count_and_draw(alignment, consensus, arg):
         resolution, entropy, pi, tree_value = get_resolution(alignment, i,
                                                              i+max_plus)
         R.append(resolution)
-        H.append(entropy)
+        H.append(entropy/max_H)
         Pi.append(pi)
         T.append(tree_value)
         index.append(i)
 
-    # plt.style.use('ggplot')
+    plt.style.use('seaborn-colorblind')
     fig, ax1 = plt.subplots(figsize=(20+len(index)//5000, 10))
-    plt.title('Resolution(step={} bp, window={} bp)'.format(
-        max_product, window))
+    plt.title('Resolution(window={} bp, step={} bp)'.format(
+        max_product, step))
     plt.xlabel('Base')
-    plt.xticks(np.arange(0, max_range, window))
-    ax1.plot(index, H, 'g-', label='Shannon Index')
-    ax1.set_ylabel('Entropy/Resolution/TreeValue')
-    ax1.plot(index, R, 'r-', label='Resolution')
-    ax1.plot(index, T, 'y-', label='tree value')
+    # plt.xticks(np.linspace(0, max_range, 21))
+    ax1.set_ylabel('(Shannon Index)%/Resolution/TreeValue')
+    ax1.plot(index, H, label='Shannon Index')
+    ax1.plot(index, R, label='Resolution')
+    ax1.plot(index, T, label='tree value')
     ax1.legend(loc='lower left')
-    ax1.yaxis.set_ticks(np.concatenate(
-        [np.linspace(0, 1, num=11), np.arange(1, max(H)+0.5, 0.5)]))
+    ax1.yaxis.set_ticks(np.linspace(0, 1, num=11))
     ax2 = ax1.twinx()
     ax2.plot(index, Pi, 'b-', label=r'$\pi$')
     ax2.set_ylabel('Pi')
@@ -680,8 +677,8 @@ def parse_args():
                      help='maximum product length(include primer)')
     arg.add_argument('-t', '--top_n', type=int, default=1,
                      help='keep how many primers for each high varient region')
-    arg.add_argument('-w', '--window', type=int, default=10,
-                     help='window size')
+    arg.add_argument('-s', '--step', type=int, default=50,
+                     help='step size')
     # arg.print_help()
     return arg.parse_args()
 
