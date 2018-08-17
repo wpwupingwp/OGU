@@ -189,10 +189,9 @@ class Pair:
 
     def add_info(self, alignment):
         # include end base, use alignment loc for slice
-        self.resolution, self.entropy, self.pi = get_resolution_and_H_and_Pi(
-            alignment, self.left.start, self.right.end+1)
-        self.tree_value = get_tree_value(alignment, self.left.start,
-                                         self.right.end)
+        (self.resolution, self.entropy, self.pi,
+         self.tree_value) = get_resolution(alignment, self.left.start,
+                                           self.right.end+1)
         self.get_score()
         return self
 
@@ -292,31 +291,27 @@ def get_quality(data, rows):
     return quality_value
 
 
-def get_resolution_and_H_and_Pi(alignment, start, end):
+def get_resolution(alignment, start, end):
     """
     Given alignment (2d numpy array), location of fragment(start and end, int,
     start from zero, exclude end),
-    return resolution (float) and entropy (float).
+    return resolution, entropy, Pi and tree value.
     """
     subalignment = alignment[:, start:end]
     rows, columns = subalignment.shape
     # index error
     if columns == 0:
-        return 0, 0, 0
+        return 0, 0, 0, 0
     item, count = np.unique(subalignment, return_counts=True, axis=0)
     resolution = len(count) / rows
-
+    # entropy
     entropy = 0
     for j in count:
         p_j = j / rows
         log2_p_j = log2(p_j)
         entropy += log2_p_j * p_j
     entropy *= -1
-
     # Nucleotide diversity (pi)
-    # pi = k/m
-    # k = 2/(n*(n-1))*sum(d_ij)
-    # d_ij = count(different between seq i and j)
     m = columns
     n = rows
     sum_d_ij = 0
@@ -328,15 +323,8 @@ def get_resolution_and_H_and_Pi(alignment, start, end):
             d_ij = sum([i_seq[idx] != j_seq[idx] for idx in range(m)])
             sum_d_ij += d_ij
     pi = (2 / (n*(n-1)) * sum_d_ij) / m
-    return resolution, entropy, pi
-
-
-def get_tree_value(alignment, start, end):
-    rows, columns = alignment.shape
-    if start >= end or end > columns:
-        return 0
+    # tree value
     aln_file = '{}-{}.aln.tmp'.format(start, end)
-    # remove iqtree generated files
 
     def clean():
         for i in glob(aln_file+'*'):
@@ -345,21 +333,19 @@ def get_tree_value(alignment, start, end):
         for index, row in enumerate(alignment[:, start:end]):
             aln.write(b'>'+str(index).encode('utf-8')+b'\n'+b''.join(
                 row)+b'\n')
-    iqtree = run('iqtree -s {} -m JC -fast'.format(aln_file),
+    iqtree = run('iqtree -s {} -m JC -fast -czb'.format(aln_file),
                  stdout=Tmp('wt'), shell=True)
     # just return 0 if there is error
     if iqtree.returncode != 0:
         print('Cannot get tree_value of {}-{}!'.format(start, end))
         clean()
-        return 0
+        return resolution, entropy, pi, 0
     tree = Phylo.read(aln.name+'.treefile', 'newick')
-    n_terminals = len(tree.get_terminals())
     # skip the first empty node
     internals = tree.get_nonterminals()[1:]
-    non_zero_internals = [i for i in internals if i.branch_length > 0]
-    n_internals = len(non_zero_internals)
     clean()
-    return n_internals / n_terminals
+    tree_value = len(internals) / len(tree.get_terminals())
+    return resolution, entropy, pi, tree_value
 
 
 def generate_consensus(base_cumulative_frequency, coverage_percent,
@@ -383,7 +369,7 @@ def generate_consensus(base_cumulative_frequency, coverage_percent,
     most = list()
     coverage = rows * coverage_percent
 
-    limit = coverage /4
+    limit = coverage / 4
     for location, column in enumerate(base_cumulative_frequency):
         finish = False
         # "*" for others
@@ -491,7 +477,8 @@ def count_and_draw(alignment, consensus, arg):
     count = list()
     shannon_index = list()
     Pi = list()
-    max_shannon_index = -1*((1/rows)*log2(1/rows)*rows)
+    T = list()
+    # max_shannon_index = -1*((1/rows)*log2(1/rows)*rows)
     index = list()
     max_plus = max_product - min_primer * 2
     for i in range(0, columns-max_product, window):
@@ -499,47 +486,43 @@ def count_and_draw(alignment, consensus, arg):
         if consensus.sequence[i] in ('-', 'N'):
             continue
         # exclude primer sequence
-        resolution, entropy, pi = get_resolution_and_H_and_Pi(
-            alignment, i, i+max_plus)
+        resolution, entropy, pi, tree_value = get_resolution(alignment, i,
+                                                             i+max_plus)
         count.append(resolution)
         shannon_index.append(entropy)
         Pi.append(pi)
+        T.append(tree_value)
         index.append(i)
 
-    # convert value to (0,1)
     # plt.style.use('ggplot')
-    try:
-        fig, ax1 = plt.subplots(figsize=(20+len(index)//5000, 10))
-        plt.title('Shannon Index & Resolution({}bp, window={})'.format(
-            max_product, window))
-        plt.xlabel('Base')
-        plt.xticks(range(0, columns, int(columns/10)))
-        # c=List for different color, s=size for different size
-        ax1.scatter(index, shannon_index, c=shannon_index,
-                    cmap='GnBu', alpha=0.8, s=10,
-                    label='Shannon Index')
-        ax1.set_ylabel('H')
-        ax1.grid(False)
-        ax1.legend(loc='upper left')
-        ax2 = ax1.twinx()
-        ax2.plot(index, count, 'r-', label='Resolution')
-        ax2.plot(index, Pi, 'b-', label=r'$\pi$')
-        ax2.yaxis.set_major_formatter(mtick.PercentFormatter(xmax=1.0))
-        ax2.set_ylabel('Resolution')
-        ax2.grid(True)
-        ax2.legend(loc='upper right')
-        plt.yscale('log')
-        plt.savefig(out+'.pdf')
-        plt.savefig(out+'.png')
-        # plt.show()
-        with open(out+'-Resolution.tsv', 'w') as _:
-            _.write('Base\tResolution(window={})\n'.format(max_product))
-            for base, resolution in enumerate(count):
-                _.write('{}\t{:.2f}\n'.format(base, resolution))
-    except Exception:
-        raise
-
-    return count, shannon_index, max_shannon_index, index
+    fig, ax1 = plt.subplots(figsize=(20+len(index)//5000, 10))
+    plt.title('Resolution({}bp, window={})'.format(max_product, window))
+    plt.xlabel('Base')
+    plt.xticks(range(0, columns, int(columns/10)))
+    # c=List for different color, s=size for different size
+    ax1.scatter(index, shannon_index, c=shannon_index,
+                cmap='GnBu', alpha=0.8, s=10,
+                label='Shannon Index')
+    ax1.set_ylabel('H')
+    ax1.grid(False)
+    ax1.legend(loc='upper left')
+    ax2 = ax1.twinx()
+    ax2.plot(index, count, 'r-', label='Resolution')
+    ax2.plot(index, T, 'y-', label='tree value')
+    ax2.plot(index, Pi, 'b-', label=r'$\pi$')
+    ax2.yaxis.set_major_formatter(mtick.PercentFormatter(xmax=1.0))
+    ax2.set_ylabel('Resolution')
+    ax2.grid(True)
+    ax2.legend(loc='upper right')
+    plt.yscale('log')
+    plt.savefig(out+'.pdf')
+    plt.savefig(out+'.png')
+    # plt.show()
+    with open(out+'-Resolution.tsv', 'w') as _:
+        _.write('Base\tResolution(window={})\n'.format(max_product))
+        for base, resolution in enumerate(count):
+            _.write('{}\t{:.2f}\n'.format(base, resolution))
+    return count, shannon_index, Pi, index
 
 
 def parse_blast_tab(filename):
@@ -723,16 +706,17 @@ def main():
     base_cumulative_frequency = count_base(alignment, rows, columns)
     consensus = generate_consensus(base_cumulative_frequency, arg.coverage,
                                    rows, columns, arg.out+'.consensus.fastq')
-    # count resolution
-    (seq_count, H, max_H, index) = count_and_draw(alignment, consensus, arg)
-    # exit if resolution lower than given threshold.
-    assert len(seq_count) != 0, 'Problematic Input !'
-    assert max(seq_count) > arg.resolution, (
+    max_count, max_H, max_Pi, max_T = get_resolution(alignment, 0, columns)
+    assert max_count > arg.resolution, (
         """
 The highest resolution of given fragment is {:.2f}, which is lower than
 given resolution threshold({:.2f}). Please try to use longer fragment or
 lower resolution options.
-""".format(max(seq_count), arg.resolution))
+""".format(max_count, arg.resolution))
+    # count resolution
+    (seq_count, H, Pi, index) = count_and_draw(alignment, consensus, arg)
+    # exit if resolution lower than given threshold.
+    assert len(seq_count) != 0, 'Problematic Input !'
     # find candidate
     good_region = get_good_region(index, seq_count, arg)
     consensus = find_continuous(consensus, good_region, arg.min_primer)
