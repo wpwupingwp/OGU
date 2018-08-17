@@ -316,17 +316,12 @@ def get_resolution(alignment, start, end):
     n = rows
     sum_d_ij = 0
     for i in range(n):
-        # for j in range(i+1, n):
-            # d_ij = np.sum(subalign[i] == subalign[j])
-        d_ij = np.sum(subalign[i] == subalign[(i+1):])
-            # i_seq = subalign[i]
-            # j_seq = subalign[j]
-            # # bool is subclass of int
-            # d_ij = sum([i_seq[idx] != j_seq[idx] for idx in range(m)])
+        d_ij = np.sum(subalign[i] != subalign[(i+1):])
         sum_d_ij += d_ij
     pi = (2 / (n*(n-1)) * sum_d_ij) / m
     # tree value
     aln_file = '{}-{}.aln.tmp'.format(start, end)
+    print(pi)
 
     def clean():
         for i in glob(aln_file+'*'):
@@ -335,7 +330,7 @@ def get_resolution(alignment, start, end):
         for index, row in enumerate(alignment[:, start:end]):
             aln.write(b'>'+str(index).encode('utf-8')+b'\n'+b''.join(
                 row)+b'\n')
-    iqtree = run('iqtree - {} -m JC -fast -czb'.format(aln_file),
+    iqtree = run('iqtree -s {} -m JC -fast -czb'.format(aln_file),
                  stdout=Tmp('wt'), shell=True)
     # just return 0 if there is error
     if iqtree.returncode != 0:
