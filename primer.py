@@ -493,23 +493,23 @@ def count_and_draw(alignment, consensus, arg):
 
     plt.style.use('seaborn-colorblind')
     fig, ax1 = plt.subplots(figsize=(15+len(index)//5000, 10))
-    plt.title('Resolution(window={} bp, step={} bp)'.format(
+    plt.title('Resolution(window={} bp, step={} bp)\n'.format(
         max_product, step))
     plt.xlabel('Base')
     # plt.xticks(np.linspace(0, max_range, 21))
     if not arg.fast:
         ax1.set_ylabel('Normalized Shannon Index / Resolution / TreeValue')
-        ax1.plot(index, T, label='tree value')
+        ax1.plot(index, T, label='TreeValue', alpha=0.8)
     else:
         ax1.set_ylabel('Normalized Shannon Index / Resolution')
 
-    ax1.plot(index, H, label='Shannon Index')
-    ax1.plot(index, R, label='Resolution')
+    ax1.plot(index, H, label='Shannon Index', alpha=0.8)
+    ax1.plot(index, R, label='Resolution', alpha=0.8)
     ax1.legend(loc='lower left')
     ax1.yaxis.set_ticks(np.linspace(0, 1, num=11))
     ax2 = ax1.twinx()
-    ax2.plot(index, Pi, 'k-', label=r'$\pi$')
-    ax2.set_ylabel('Pi')
+    ax2.plot(index, Pi, 'k-', label=r'$\pi$', alpha=0.8)
+    ax2.set_ylabel(r'$\pi$', rotation=-90, labelpad=20)
     _ = round(np.log10(max(Pi)))
     ax2.yaxis.set_ticks(np.linspace(0, 10**_, num=11))
     ax2.legend(loc='upper right')
