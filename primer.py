@@ -24,7 +24,6 @@ rcParams['axes.linewidth'] = 1.5
 rcParams['axes.labelsize'] = 16
 rcParams['axes.titlesize'] = 25
 rcParams['font.size'] = 16
-rcParams['axes.facecolor'] = '#ffffff'
 
 
 class PrimerWithInfo(SeqRecord):
@@ -493,7 +492,7 @@ def count_and_draw(alignment, consensus, arg):
         index.append(i)
 
     plt.style.use('seaborn-colorblind')
-    fig, ax1 = plt.subplots(figsize=(20+len(index)//5000, 10))
+    fig, ax1 = plt.subplots(figsize=(15+len(index)//5000, 10))
     plt.title('Resolution(window={} bp, step={} bp)'.format(
         max_product, step))
     plt.xlabel('Base')
