@@ -699,7 +699,8 @@ def main():
     arg = parse_args()
     if arg.out is None:
         arg.out = os.path.basename(arg.input)
-        arg.out = arg.out.split('.')[0]
+        arg.out = arg.out.split('.')[:-1]
+        arg.out = '.'.join(arg.out)
     # read from fasta, generate new fasta for makeblastdb
     name, alignment, db_file = prepare(arg.input)
     rows, columns = alignment.shape
