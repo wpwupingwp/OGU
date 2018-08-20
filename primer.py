@@ -289,7 +289,7 @@ def get_quality(data, rows):
     return quality_value
 
 
-def get_resolution(alignment, start, end):
+def get_resolution(alignment, start, end, fast=False):
     """
     Given alignment (2d numpy array), location of fragment(start and end, int,
     start from zero, exclude end),
@@ -319,27 +319,29 @@ def get_resolution(alignment, start, end):
     pi = (2 / (n*(n-1)) * sum_d_ij) / m
     # tree value
     aln_file = '{}-{}.aln.tmp'.format(start, end)
-    print(pi)
 
     def clean():
         for i in glob(aln_file+'*'):
             os.remove(i)
-    with open(aln_file, 'wb') as aln:
-        for index, row in enumerate(alignment[:, start:end]):
-            aln.write(b'>'+str(index).encode('utf-8')+b'\n'+b''.join(
-                row)+b'\n')
-    iqtree = run('iqtree -s {} - JC -fast -czb'.format(aln_file),
-                 stdout=Tmp('wt'), shell=True)
-    # just return 0 if there is error
-    if iqtree.returncode != 0:
-        print('Cannot get tree_value of {}-{}!'.format(start, end))
+    if not fast:
+        with open(aln_file, 'wb') as aln:
+            for index, row in enumerate(alignment[:, start:end]):
+                aln.write(b'>'+str(index).encode('utf-8')+b'\n'+b''.join(
+                    row)+b'\n')
+        iqtree = run('iqtree -s {} -m JC -fast -czb'.format(aln_file),
+                     stdout=Tmp('wt'), shell=True)
+        # just return 0 if there is error
+        if iqtree.returncode != 0:
+            print('Cannot get tree_value of {}-{}!'.format(start, end))
+            clean()
+            return resolution, entropy, pi, 0
+        tree = Phylo.read(aln.name+'.treefile', 'newick')
+        # skip the first empty node
+        internals = tree.get_nonterminals()[1:]
         clean()
-        return resolution, entropy, pi, 0
-    tree = Phylo.read(aln.name+'.treefile', 'newick')
-    # skip the first empty node
-    internals = tree.get_nonterminals()[1:]
-    clean()
-    tree_value = len(internals) / len(tree.get_terminals())
+        tree_value = len(internals) / len(tree.get_terminals())
+    else:
+        tree_value = 0
     return resolution, entropy, pi, tree_value
 
 
@@ -482,8 +484,8 @@ def count_and_draw(alignment, consensus, arg):
         # if consensus.sequence[i] in ('-', 'N'):
         #     continue
         # exclude primer sequence
-        resolution, entropy, pi, tree_value = get_resolution(alignment, i,
-                                                             i+max_plus)
+        resolution, entropy, pi, tree_value = get_resolution(
+            alignment, i, i+max_plus, arg.fast)
         R.append(resolution)
         H.append(entropy/max_H)
         Pi.append(pi)
@@ -496,14 +498,18 @@ def count_and_draw(alignment, consensus, arg):
         max_product, step))
     plt.xlabel('Base')
     # plt.xticks(np.linspace(0, max_range, 21))
-    ax1.set_ylabel('(Shannon Index)%/Resolution/TreeValue')
+    if not arg.fast:
+        ax1.set_ylabel('Normalized Shannon Index / Resolution / TreeValue')
+        ax1.plot(index, T, label='tree value')
+    else:
+        ax1.set_ylabel('Normalized Shannon Index / Resolution')
+
     ax1.plot(index, H, label='Shannon Index')
     ax1.plot(index, R, label='Resolution')
-    ax1.plot(index, T, label='tree value')
     ax1.legend(loc='lower left')
     ax1.yaxis.set_ticks(np.linspace(0, 1, num=11))
     ax2 = ax1.twinx()
-    ax2.plot(index, Pi, 'b-', label=r'$\pi$')
+    ax2.plot(index, Pi, 'k-', label=r'$\pi$')
     ax2.set_ylabel('Pi')
     _ = round(np.log10(max(Pi)))
     ax2.yaxis.set_ticks(np.linspace(0, 10**_, num=11))
@@ -662,6 +668,9 @@ def parse_args():
                      help='number of ambiguous bases')
     arg.add_argument('-c', '--coverage', type=float, default=0.6,
                      help='minium coverage of base and primer')
+    arg.add_argument('-f', '--fast', action='store_true',
+                     default=False,
+                     help='faster evaluate variance by omit tree_value')
     arg.add_argument('-pmin', '--min_primer', type=int, default=18,
                      help='minimum primer length')
     arg.add_argument('-pmax', '--max_primer', type=int, default=24,
@@ -671,14 +680,14 @@ def parse_args():
     arg.add_argument('-o', '--out', help='output name prefix')
     arg.add_argument('-r', '--resolution', type=float, default=0.5,
                      help='minium resolution')
+    arg.add_argument('-s', '--step', type=int, default=50,
+                     help='step size')
     arg.add_argument('-tmin', '--min_product', type=int, default=300,
                      help='minimum product length(include primer)')
     arg.add_argument('-tmax', '--max_product', type=int, default=500,
                      help='maximum product length(include primer)')
     arg.add_argument('-t', '--top_n', type=int, default=1,
                      help='keep how many primers for each high varient region')
-    arg.add_argument('-s', '--step', type=int, default=50,
-                     help='step size')
     # arg.print_help()
     return arg.parse_args()
 
