@@ -174,7 +174,7 @@ class Pair:
                 self.coverage, self.delta_tm, self.have_heterodimer))
 
     def get_score(self):
-        self.score = (np.average(list(self.length.values()))*0.1
+        self.score = (np.average(list(self.length.values()))*0.5
                       + self.coverage*200
                       + len(self.left)*10
                       + len(self.right)*10
