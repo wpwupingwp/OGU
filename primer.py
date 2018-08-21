@@ -237,16 +237,17 @@ def parse_args():
                          help='maximum product length(include primer)')
     # arg.print_help()
     parsed = arg.parse_args()
-    user_input = parsed.input
+    parsed.out = os.path.basename(parsed.input)
+    parsed.out = parsed.out.split('.')[:-1]
+    parsed.out = '.'.join(parsed.out)
     # overwrite options by given json
     if parsed.json is not None:
         with open(parsed.json, 'r') as _:
             config = json.load(_)
         n_arg = argparse.Namespace(**config)
-        n_arg.input = user_input
-        print('Write configuration into json')
-        with open(user_input+'.json', 'w') as out:
-            json.dump(vars(n_arg), out, indent=4, sort_keys=True)
+        n_arg.input = parsed.input
+        n_arg.out = parsed.out
+        return n_arg
     else:
         return parsed
 
@@ -709,9 +710,9 @@ def main():
     """
     start = timer()
     arg = parse_args()
-    arg.out = os.path.basename(arg.input)
-    arg.out = arg.out.split('.')[:-1]
-    arg.out = '.'.join(arg.out)
+    print('Write configuration into json')
+    with open(arg.input+'.json', 'w') as out:
+        json.dump(vars(arg), out, indent=4, sort_keys=True)
     # read from fasta, generate new fasta for makeblastdb
     name, alignment, db_file = prepare(arg.input)
     rows, columns = alignment.shape
