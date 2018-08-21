@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import argparse
+import json
 import numpy as np
 import os
 import primer3
@@ -14,7 +15,6 @@ from collections import defaultdict
 from glob import glob
 from matplotlib import pyplot as plt
 from matplotlib import rcParams
-from multiprocessing import cpu_count
 from subprocess import run
 from tempfile import NamedTemporaryFile as Tmp
 from timeit import default_timer as timer
@@ -204,6 +204,51 @@ class BlastResult():
         (self.ident_num, self.mismatch_num, self.bitscore_raw,
          self.query_start, self.query_end, self.hit_start,
          self.hit_end) = [int(i) for i in record[3:]]
+
+
+def parse_args():
+    arg = argparse.ArgumentParser(
+        description=main.__doc__,
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    arg.add_argument('input', help='input alignment file')
+    options = arg.add_argument_group()
+    options.add_argument('-a', '--ambiguous_base_n', type=int, default=4,
+                         help='number of ambiguous bases')
+    options.add_argument('-c', '--coverage', type=float, default=0.6,
+                         help='minium coverage of base and primer')
+    options.add_argument('-f', '--fast', action='store_true', default=False,
+                         help='faster evaluate variance by omit tree_value')
+    options.add_argument('-j', '--json', help='configuration json file')
+    options.add_argument('-m', '--mismatch', type=int, default=4,
+                         help='maximum mismatch bases in primer')
+    options.add_argument('-pmin', '--min_primer', type=int, default=18,
+                         help='minimum primer length')
+    options.add_argument('-pmax', '--max_primer', type=int, default=24,
+                         help='maximum primer length')
+    options.add_argument('-r', '--resolution', type=float, default=0.5,
+                         help='minium resolution')
+    options.add_argument('-s', '--step', type=int, default=50,
+                         help='step size')
+    options.add_argument('-t', '--top_n', type=int, default=1,
+                         help='keep n primers for each high varient region')
+    options.add_argument('-tmin', '--min_product', type=int, default=300,
+                         help='minimum product length(include primer)')
+    options.add_argument('-tmax', '--max_product', type=int, default=500,
+                         help='maximum product length(include primer)')
+    # arg.print_help()
+    parsed = arg.parse_args()
+    user_input = parsed.input
+    # overwrite options by given json
+    if parsed.json is not None:
+        with open(parsed.json, 'r') as _:
+            config = json.load(_)
+        n_arg = argparse.Namespace(**config)
+        n_arg.input = user_input
+        print('Write configuration into json')
+        with open(user_input+'.json', 'w') as out:
+            json.dump(vars(n_arg), out, indent=4, sort_keys=True)
+    else:
+        return parsed
 
 
 def prepare(fasta):
@@ -552,7 +597,7 @@ def validate(primer_candidate, db_file, n_seqs, arg):
     # blast
     blast_result_file = Tmp('wt')
     fmt = 'qseqid sseqid qseq nident mismatch score qstart qend sstart send'
-    cmd = Blast(num_threads=cpu_count(),
+    cmd = Blast(num_threads=len(os.sched_getaffinity(0)),
                 query=query_file,
                 db=db_file,
                 task='blastn-short',
@@ -658,49 +703,15 @@ def pick_pair(primers, alignment, arg):
     return good_pairs
 
 
-def parse_args():
-    arg = argparse.ArgumentParser(
-        description=main.__doc__,
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    arg.add_argument('input', help='input alignment file')
-    arg.add_argument('-a', '--ambiguous_base_n', type=int, default=4,
-                     help='number of ambiguous bases')
-    arg.add_argument('-c', '--coverage', type=float, default=0.6,
-                     help='minium coverage of base and primer')
-    arg.add_argument('-f', '--fast', action='store_true',
-                     default=False,
-                     help='faster evaluate variance by omit tree_value')
-    arg.add_argument('-pmin', '--min_primer', type=int, default=18,
-                     help='minimum primer length')
-    arg.add_argument('-pmax', '--max_primer', type=int, default=24,
-                     help='maximum primer length')
-    arg.add_argument('-m', '--mismatch', type=int, default=4,
-                     help='maximum mismatch bases in primer')
-    arg.add_argument('-o', '--out', help='output name prefix')
-    arg.add_argument('-r', '--resolution', type=float, default=0.5,
-                     help='minium resolution')
-    arg.add_argument('-s', '--step', type=int, default=50,
-                     help='step size')
-    arg.add_argument('-tmin', '--min_product', type=int, default=300,
-                     help='minimum product length(include primer)')
-    arg.add_argument('-tmax', '--max_product', type=int, default=500,
-                     help='maximum product length(include primer)')
-    arg.add_argument('-t', '--top_n', type=int, default=1,
-                     help='keep how many primers for each high varient region')
-    # arg.print_help()
-    return arg.parse_args()
-
-
 def main():
     """
     Automatic design primer for DNA barcode.
     """
     start = timer()
     arg = parse_args()
-    if arg.out is None:
-        arg.out = os.path.basename(arg.input)
-        arg.out = arg.out.split('.')[:-1]
-        arg.out = '.'.join(arg.out)
+    arg.out = os.path.basename(arg.input)
+    arg.out = arg.out.split('.')[:-1]
+    arg.out = '.'.join(arg.out)
     # read from fasta, generate new fasta for makeblastdb
     name, alignment, db_file = prepare(arg.input)
     rows, columns = alignment.shape

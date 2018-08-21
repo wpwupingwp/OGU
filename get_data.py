@@ -17,13 +17,13 @@ def parse_args():
     arg = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description=main.__doc__)
-    arg.add_argument("-query", help='query text')
     arg.add_argument('-continue', action='store_true',
                      help='continue broken download process')
     arg.add_argument('-email', default='',
                      help='email address used by NCBI Genbank')
     arg.add_argument('-only_get', action='store_true',
                      help='only get data')
+    arg.add_argument("-query", help='query text')
     output = arg.add_argument_group('output')
     output.add_argument('-out',  help='output directory')
     output.add_argument('-rename', action='store_true',
