@@ -679,6 +679,7 @@ def pick_pair(primers, alignment, arg):
     # remove close located primers
     less_pairs = list()
     cluster = [pairs[0], ]
+    print(len(pairs))
     for index in range(1, len(pairs)):
         if pairs[index].start - pairs[index-1].start < arg.min_primer:
             cluster.append(pairs[index])
@@ -688,12 +689,14 @@ def pick_pair(primers, alignment, arg):
             cluster.clear()
     cluster.sort(key=lambda x: x.score, reverse=True)
     less_pairs.extend(cluster[:arg.top_n])
+    print(len(less_pairs))
     good_pairs = list()
     for i in less_pairs:
         i.add_info(alignment)
         if i.resolution >= arg.resolution:
             good_pairs.append(i)
     good_pairs.sort(key=lambda x: x.score, reverse=True)
+    print(len(good_pairs))
     return good_pairs
 
 
@@ -728,8 +731,8 @@ def main():
     else:
         with open(summary, 'a') as s:
             s.write('{},{},{},{:.2%},{:.4f},{:.4f},{:.4f},{:.6f}\n'.format(
-                arg.input, rows, columns, gap_ratio, max_count, max_T, max_H,
-                max_Pi))
+                os.path.basename(arg.input), rows, columns, gap_ratio,
+                max_count, max_T, max_H, max_Pi))
     assert max_count > arg.resolution, (
         """
 The highest resolution of given fragment is {:.2f}, which is lower than
