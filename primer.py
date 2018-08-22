@@ -656,14 +656,14 @@ def validate(primer_candidate, db_file, n_seqs, arg):
 
 def pick_pair(primers, alignment, arg):
     pairs = list()
-    for left in primers:
+    for n_left, left in enumerate(primers):
         # convert mid_loc to 5' location
         location = left.avg_mid_loc - len(left) / 2
         begin = location + arg.min_product
         # fragment plus one primer = max_product length
         end = location + arg.max_product - len(left)
         cluster = list()
-        for right in primers:
+        for right in primers[(n_left+1):]:
             if right.avg_mid_loc < begin:
                 continue
             if right.avg_mid_loc > end:
@@ -672,16 +672,9 @@ def pick_pair(primers, alignment, arg):
             if pair.coverage < arg.coverage:
                 continue
             cluster.append(pair)
-            if (len(cluster) >= arg.top_n or
-                    abs(pair.start-cluster[-1].start) >= arg.max_product):
-                cluster.sort(key=lambda x: x.score, reverse=True)
-                # only keep top n for each primer cluster
-                pairs.extend(cluster[:arg.top_n])
-                cluster.clear()
-                # get enough pairs and break
-                break
-    cluster.sort(key=lambda x: x.score, reverse=True)
-    pairs.extend(cluster[:arg.top_n])
+        cluster.sort(key=lambda x: x.score, reverse=True)
+        # only keep top n for each primer cluster
+        pairs.extend(cluster[:arg.top_n])
     assert len(pairs) != 0, 'Primers pairs not found!'
     # remove close located primers
     less_pairs = list()
