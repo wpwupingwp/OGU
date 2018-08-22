@@ -708,6 +708,7 @@ def main():
     """
     Automatic design primer for DNA barcode.
     """
+    summary = 'Summary.csv'
     start = timer()
     arg = parse_args()
     print('Write configuration into json')
@@ -722,6 +723,20 @@ def main():
     consensus = generate_consensus(base_cumulative_frequency, arg.coverage,
                                    rows, columns, arg.out+'.consensus.fastq')
     max_count, max_H, max_Pi, max_T = get_resolution(alignment, 0, columns)
+    n_gap = sum([i[5] for i in base_cumulative_frequency])
+    gap_ratio = n_gap / rows / columns
+    if not os.path.exists(summary):
+        with open(summary, 'w') as s:
+            s.write('Name,Sequences,Length,GapRatio,ObservedResolution,'
+                    'TreeValue,ShannonIndex,Pi\n')
+            s.write('{},{},{},{:.2%},{:.6f},{:.6f},{:.6f},{:.6f}\n'.format(
+                os.path.basename(arg.input), rows, columns, gap_ratio,
+                max_count, max_T, max_H, max_Pi))
+    else:
+        with open(summary, 'a') as s:
+            s.write('{},{},{},{:.2%},{:.4f},{:.4f},{:.4f},{:.6f}\n'.format(
+                arg.input, rows, columns, gap_ratio, max_count, max_T, max_H,
+                max_Pi))
     assert max_count > arg.resolution, (
         """
 The highest resolution of given fragment is {:.2f}, which is lower than
@@ -745,7 +760,7 @@ lower resolution options.
     # pick pair
     pairs = pick_pair(primer_verified, alignment, arg)
     # output
-    csv_title = ('Score,SampleUsed,AvgProductLength,StdEV,MinProductLength,'
+    csv_title = ('Score,Sequences,AvgProductLength,StdEV,MinProductLength,'
                  'MaxProductLength,Coverage,Resolution,TreeValue,Entropy,'
                  'LeftSeq,LeftTm,LeftAvgBitscore,LeftAvgMismatch,RightSeq,'
                  'RightTm,RightAvgBitscore,RightAvgMismatch,DeltaTm,'
