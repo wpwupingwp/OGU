@@ -61,15 +61,15 @@ def parse_args():
 
 def check_tools():
     print('Checking dependencies ..')
-    for tools in ('mafft', 'iqtree'):
-        check = run('{} --help'.format(tools), shell=True, stdout=devnull)
-        if check.returncode != 0:
+    f = open(devnull, 'w')
+    for tools in ('mafft', 'iqtree', 'blastn'):
+        check = run('{} --help'.format(tools), shell=True, stdout=f, stderr=f)
+        # mafft return 1 if "--help", BLAST do not have --help
+        # to simplify code, use "--help" and accept 1 as returncode
+        if check.returncode not in (0, 1):
             raise Exception('{} not found! Please install it!'.format(tools))
         print('{} OK.'.format(tools))
-    check = run('blastn -h', shell=True, stdout=devnull)
-    if check.returncode != 0:
-        raise Exception('BLAST not found! Please install it!')
-    print('BLAST OK.\n')
+    f.close()
 
 
 def get_query_string(arg):
