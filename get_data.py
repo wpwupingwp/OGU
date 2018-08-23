@@ -102,7 +102,7 @@ def download(arg, query):
     print('Downloading... Ctrl+C to quit')
     json_file = join_path(arg.out, 'query.json')
     with open(json_file, 'w') as _:
-        json.dump(query_handle, _)
+        json.dump(query_handle, _, indent=4, sort_keys=True)
 
     if arg.query is None:
         name = safe(arg.taxon)
