@@ -4,7 +4,8 @@ import argparse
 import json
 import re
 from datetime import datetime
-from os import devnull, mkdir, sched_getaffinity
+from glob import glob
+from os import devnull, mkdir, remove, sched_getaffinity
 from os.path import join as join_path
 from subprocess import run
 from timeit import default_timer as timer
@@ -21,7 +22,8 @@ def parse_args():
                      help='continue broken download process')
     arg.add_argument('-email', default='',
                      help='email address used by NCBI Genbank')
-    arg.add_argument('-fasta', help='fasta format data to add')
+    arg.add_argument('-fasta', default='',
+                     help='fasta format data to add')
     arg.add_argument('-query', help='query text')
     arg.add_argument('-stop', choices=(1, 2, 3), default=3,
                      help=('Stop after which step:\n'
@@ -422,7 +424,7 @@ def divide(gbfile, arg):
 
     end = timer()
     print('Divide done with {:.3f}s.'.format(end-start))
-    return wrote_by_gene, wrote_by_name
+    return list(wrote_by_gene), list(wrote_by_name)
 
 
 def uniq(files):
@@ -457,11 +459,13 @@ def mafft(files):
         print('Aligning {}'.format(fasta))
         out = fasta + '.aln'
         _ = ('mafft --thread {} --reorder --quiet --adjustdirection '
-             ' {} > {}'.format(cores-1, fasta, out))
+             '{} > {}'.format(cores-1, fasta, out))
         m = run(_, shell=True)
         if m.returncode == 0:
             result.append(out)
     print('Done with mafft.')
+    for i in glob('_order*'):
+        remove(i)
     return result
 
 
@@ -476,13 +480,16 @@ def main():
     if arg.stop == 1:
         return
     wrote_by_gene, wrote_by_name = divide(gbfile, arg)
+    user_data = list(glob(arg.fasta))
+    wrote_by_gene.extend(user_data)
+    wrote_by_name.extend(user_data)
     if arg.no_uniq:
         pass
     else:
         wrote_by_gene = uniq(wrote_by_gene)
         wrote_by_name = uniq(wrote_by_name)
     if arg.max_len > 10000:
-        # two few sequences will cause empty output, which was omit
+        # less than two records will cause empty output, which was omit
         aligned = mafft(wrote_by_gene)
     else:
         aligned = mafft(wrote_by_name)
