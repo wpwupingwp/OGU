@@ -117,30 +117,21 @@ class Pair:
                  'resolution', 'tree_value', 'entropy', 'have_heterodimer',
                  'heterodimer_tm', 'pi', 'score', 'length']
 
-    @profile
     def __init__(self, left, right, alignment):
         rows, columns = alignment.shape
         self.left = left
         self.right = right
         self.delta_tm = abs(self.left.tm - self.right.tm)
+        # get accurate length
         a = len(self.left)/2
         b = len(self.right)/2
-        lengths = dict()
-        common = self.left.mid_loc.keys() & self.right.mid_loc.keys()
-        for key in common:
-            length = (self.right.mid_loc[key]-b) - (self.left.mid_loc[key]+a)
-            # omit negative length
-            if length > 0:
-                lengths[key] = int(length)
+        common = left.mid_loc.keys() & right.mid_loc.keys()
+        lengths = [[key, ((right.mid_loc[key]-b) - (left.mid_loc[key]+a))
+                    ] for key in common]
+        lengths = {i[0]: int(i[1]) for i in lengths if i[1] > 0}
         self.length = lengths
-        self.left.mid_loc = {i: j for i, j in self.left.mid_loc.items() if
-                             (i in lengths)}
-        self.right.mid_loc = {i: j for i, j in self.right.mid_loc.items() if
-                              (i in lengths)}
-        self.left.coverage = len(self.left.mid_loc) / rows
-        # recalculate coverage due to dropping some records
         self.right.coverage = len(self.right.mid_loc) / rows
-        self.coverage = min(self.left.coverage, self.right.coverage)
+        self.coverage = len(common) / rows
         # pairs use mid_loc from BLAST as start/end
         self.start = int(self.left.avg_mid_loc)
         self.end = int(self.right.avg_mid_loc)
@@ -662,7 +653,6 @@ def validate(primer_candidate, db_file, n_seqs, arg):
 def pick_pair(primers, alignment, arg):
     pairs = list()
     for n_left, left in enumerate(primers):
-        print('>', end='', flush=True)
         # convert mid_loc to 5' location
         location = left.avg_mid_loc - len(left) / 2
         begin = location + arg.min_product
