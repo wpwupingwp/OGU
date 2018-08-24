@@ -636,6 +636,7 @@ def pick_pair(primers, alignment, arg):
     less_pairs = list()
     cluster = [pairs[0], ]
     print(len(pairs))
+    pairs.sort(key=lambda x: x.start)
     for index in range(1, len(pairs)):
         if pairs[index].start - pairs[index-1].start < arg.min_primer:
             cluster.append(pairs[index])
@@ -772,7 +773,7 @@ def parse_args():
                            '\t3. Analyze\n'))
     arg.add_argument('-no_uniq', action='store_true',
                      help='do not remove redundant records')
-    output = arg.add_argument_group('output')
+    output = arg.add_argument_group('Output')
     output.add_argument('-out',  help='output directory')
     output.add_argument('-rename', action='store_true',
                         help='try to rename gene')
@@ -781,7 +782,7 @@ def parse_args():
                         help='do not expand upstream/downstream')
     output.add_argument('-expand_n', type=int, default=200,
                         help='expand length')
-    filters = arg.add_argument_group('filters')
+    filters = arg.add_argument_group('Filters')
     filters.add_argument('-group',
                          choices=('animals', 'plants', 'fungi', 'protists',
                                   'bacteria', 'archaea', 'viruses'),
@@ -796,7 +797,7 @@ def parse_args():
     filters.add_argument('-organelle',
                          choices=('mitochondrion', 'plastid', 'chloroplast'),
                          help='organelle type')
-    options = arg.add_argument_group()
+    options = arg.add_argument_group('Analyze')
     options.add_argument('-a', '--ambiguous_base_n', type=int, default=4,
                          help='number of ambiguous bases')
     options.add_argument('-c', '--coverage', type=float, default=0.6,
