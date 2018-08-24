@@ -233,8 +233,9 @@ def prepare(fasta):
     data = data[1:]
     # check sequence length
     length_check = [len(i[1]) for i in data]
-    assert len(set(length_check)) == 1, (
-        'Alignment does not have uniform width, please check again !')
+    if len(set(length_check)) != 1:
+        print('{} does not have uniform width!'.format(fasta))
+        return None, None, None
 
     # Convert List to numpy array.
     # order 'F' is a bit faster than 'C'
@@ -629,7 +630,8 @@ def pick_pair(primers, alignment, arg):
         cluster.sort(key=lambda x: x.score, reverse=True)
         # only keep top n for each primer cluster
         pairs.extend(cluster[:arg.top_n])
-    assert len(pairs) != 0, 'Primers pairs not found!'
+    if len(pairs) == 0:
+        return []
     # remove close located primers
     less_pairs = list()
     cluster = [pairs[0], ]
@@ -665,8 +667,12 @@ def analyze(arg):
         json.dump(vars(arg), out, indent=4, sort_keys=True)
     # read from fasta, generate new fasta for makeblastdb
     name, alignment, db_file = prepare(arg.input)
+    if name is None:
+        return
     rows, columns = alignment.shape
-    assert rows >= 4, 'Too few sequence in alignment (less than 4)!'
+    if rows < 4:
+        print('Too few sequence in {} (less than 4)!'.format(arg.input))
+        return
     # generate consensus
     base_cumulative_frequency = count_base(alignment, rows, columns)
     consensus = generate_consensus(
@@ -688,12 +694,9 @@ def analyze(arg):
             s.write('{},{},{},{:.2%},{:.4f},{:.4f},{:.4f},{:.6f}\n'.format(
                 basename(arg.input), rows, columns, gap_ratio,
                 max_count, max_T, max_H, max_Pi))
-    assert max_count > arg.resolution, (
-        """
-The highest resolution of given fragment is {:.2f}, which is lower than
-given resolution threshold({:.2f}). Please try to use longer fragment or
-lower resolution options.
-""".format(max_count, arg.resolution))
+    if max_count < arg.resolution:
+        print('Too low resolution of {} !'.format(arg.input))
+        return
     # count resolution
     (seq_count, H, Pi, T, index) = count_and_draw(alignment, consensus, arg)
     # exit if resolution lower than given threshold.
@@ -703,13 +706,19 @@ lower resolution options.
     consensus = find_continuous(consensus, good_region, arg.min_primer)
     primer_candidate, consensus = find_primer(consensus, arg.min_primer,
                                               arg.max_primer)
-    assert len(primer_candidate) != 0, (
-        'Primer not found! Try to loose options.')
+    if len(primer_candidate) == 0:
+        print('Cannot find primers in {}. Try to loose options!'.format(
+            arg.input))
     # validate
     primer_verified = validate(primer_candidate, db_file, rows, arg)
-    assert len(primer_verified) != 0, 'Primer not found! Try to loose options.'
+    if len(primer_verified) == 0:
+        print('Cannot find primers in {}. Try to loose options!'.format(
+            arg.input))
     # pick pair
     pairs = pick_pair(primer_verified, alignment, arg)
+    if len(pairs) == 0:
+        print('Cannot find primers in {}. Try to loose options!'.format(
+            arg.input))
     # output
     csv_title = ('Score,Sequences,AvgProductLength,StdEV,MinProductLength,'
                  'MaxProductLength,Coverage,Resolution,TreeValue,Entropy,'
