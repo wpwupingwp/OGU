@@ -472,11 +472,10 @@ def mafft(files):
     return result
 
 
-def primer(arg=None):
+def main():
     """Get data from Genbank.
     """
-    if arg is None:
-        arg = parse_args()
+    arg = parse_args()
     check_tools()
     mkdir(arg.out)
     user_data = list(glob(arg.fasta))
@@ -509,4 +508,4 @@ def primer(arg=None):
 
 
 if __name__ == '__main__':
-    primer()
+    main()

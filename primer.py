@@ -8,7 +8,7 @@ import re
 from collections import defaultdict
 from glob import glob
 from os import remove, sched_getaffinity
-from os.path import basename, exists
+from os.path import basename, exists, splitext
 from subprocess import run
 from tempfile import NamedTemporaryFile as Tmp
 from timeit import default_timer as timer
@@ -118,6 +118,7 @@ class Pair:
                  'resolution', 'tree_value', 'entropy', 'have_heterodimer',
                  'heterodimer_tm', 'pi', 'score', 'length']
 
+    @profile
     def __init__(self, left, right, alignment):
         rows, columns = alignment.shape
         self.left = left
@@ -143,8 +144,6 @@ class Pair:
         self.left.coverage = len(self.left.mid_loc) / rows
         # recalculate coverage due to dropping some records
         self.right.coverage = len(self.right.mid_loc) / rows
-        self.left.update_id()
-        self.right.update_id()
         self.coverage = min(self.left.coverage, self.right.coverage)
         # pairs use mid_loc from BLAST as start/end
         self.start = int(self.left.avg_mid_loc)
@@ -156,13 +155,6 @@ class Pair:
         self.resolution = 0
         self.entropy = 0
         self.pi = 0.0
-        self.heterodimer_tm = primer3.calcHeterodimer(self.left.g_seq,
-                                                      self.right.g_seq).tm
-        if max(self.heterodimer_tm, self.left.tm,
-               self.right.tm) == self.heterodimer_tm:
-            self.have_heterodimer = True
-        else:
-            self.have_heterodimer = False
         self.get_score()
 
     def __str__(self):
@@ -190,7 +182,16 @@ class Pair:
         (self.resolution, self.entropy, self.pi,
          self.tree_value) = get_resolution(alignment, self.left.start,
                                            self.right.end+1)
+        self.heterodimer_tm = primer3.calcHeterodimer(self.left.g_seq,
+                                                      self.right.g_seq).tm
+        if max(self.heterodimer_tm, self.left.tm,
+               self.right.tm) == self.heterodimer_tm:
+            self.have_heterodimer = True
+        else:
+            self.have_heterodimer = False
         self.get_score()
+        self.left.update_id()
+        self.right.update_id()
         return self
 
 
@@ -238,16 +239,14 @@ def parse_args():
                          help='maximum product length(include primer)')
     # arg.print_help()
     parsed = arg.parse_args()
-    parsed.out = basename(parsed.input)
-    parsed.out = parsed.out.split('.')[:-1]
-    parsed.out = '.'.join(parsed.out)
+    parsed.out_file = splitext(parsed.input)[0]
     # overwrite options by given json
     if parsed.json is not None:
         with open(parsed.json, 'r') as _:
             config = json.load(_)
         n_arg = argparse.Namespace(**config)
         n_arg.input = parsed.input
-        n_arg.out = parsed.out
+        n_arg.out_file = parsed.out
         return n_arg
     else:
         return parsed
@@ -515,7 +514,7 @@ def count_and_draw(alignment, consensus, arg):
     min_primer = arg.min_primer
     max_product = arg.max_product
     step = arg.step
-    out = arg.out
+    out = arg.out_file
     # R, H, Pi, T : count, normalized entropy, Pi, tree value
     R = list()
     H = list()
@@ -557,8 +556,8 @@ def count_and_draw(alignment, consensus, arg):
     ax2 = ax1.twinx()
     ax2.plot(index, Pi, 'k-', label=r'$\pi$', alpha=0.8)
     ax2.set_ylabel(r'$\pi$', rotation=-90, labelpad=20)
-    _ = round(np.log10(max(Pi)))
-    ax2.yaxis.set_ticks(np.linspace(0, 10**_, num=11))
+    # _ = round(np.log10(max(Pi))) + 1
+    # ax2.yaxis.set_ticks(np.linspace(0, 10**_, num=11))
     ax2.legend(loc='upper right')
     # plt.yscale('log')
     plt.savefig(out+'.pdf')
@@ -588,7 +587,7 @@ def validate(primer_candidate, db_file, n_seqs, arg):
     """
     Do BLAST. Parse BLAST result. Return List[PrimerWithInfo]
     """
-    query_file = arg.out + '.candidate.fasta'
+    query_file = arg.out_file + '.candidate.fasta'
     # SeqIO.write fasta file directly is prohibited. have to write fastq at
     with open(query_file+'.fastq', 'w') as _:
         SeqIO.write(primer_candidate, _, 'fastq')
@@ -658,6 +657,7 @@ def validate(primer_candidate, db_file, n_seqs, arg):
 def pick_pair(primers, alignment, arg):
     pairs = list()
     for n_left, left in enumerate(primers):
+        print('>', end='', flush=True)
         # convert mid_loc to 5' location
         location = left.avg_mid_loc - len(left) / 2
         begin = location + arg.min_product
@@ -701,13 +701,14 @@ def pick_pair(primers, alignment, arg):
     return good_pairs
 
 
-def primer_design():
+def primer_design(arg=None):
     """
     Automatic design primer for DNA barcode.
     """
-    summary = 'Summary.csv'
     start = timer()
-    arg = parse_args()
+    if arg is None:
+        arg = parse_args()
+    summary = 'Summary.csv'
     print('Write configuration into json')
     with open(arg.input+'.json', 'w') as out:
         json.dump(vars(arg), out, indent=4, sort_keys=True)
@@ -717,8 +718,9 @@ def primer_design():
     assert rows >= 4, 'Too few sequence in alignment (less than 4)!'
     # generate consensus
     base_cumulative_frequency = count_base(alignment, rows, columns)
-    consensus = generate_consensus(base_cumulative_frequency, arg.coverage,
-                                   rows, columns, arg.out+'.consensus.fastq')
+    consensus = generate_consensus(
+        base_cumulative_frequency, arg.coverage, rows, columns,
+        arg.out_file+'.consensus.fastq')
     max_count, max_H, max_Pi, max_T = get_resolution(alignment, 0, columns)
     n_gap = sum([i[5] for i in base_cumulative_frequency])
     gap_ratio = n_gap / rows / columns
@@ -766,9 +768,9 @@ lower resolution options.
              '{:.2f},{:.2f},{:.2f},{},{:.2f},{:.2f},{:.2f},{:.2f},{},{},{},{}'
              '\n')
     with open('{}-{}samples-{:.2f}resolution.fastq'.format(
-            arg.out, rows, arg.resolution), 'w') as out1, open(
+            arg.out_file, rows, arg.resolution), 'w') as out1, open(
                 '{}-{}samples-{:.2f}resolution.csv'.format(
-            arg.out, rows, arg.resolution), 'w') as out2:
+            arg.out_file, rows, arg.resolution), 'w') as out2:
         out2.write(csv_title)
         for pair in pairs:
             line = style.format(
