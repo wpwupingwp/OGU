@@ -61,7 +61,7 @@ def parse_args():
         # 10k to 1m seems enough
         parsed.min_len = 10000
         parsed.max_len = 1000000
-    if parsed.query is None and parsed.taxon is None:
+    if parsed.query is None and parsed.taxon is None and parsed.fasta == '':
         arg.print_help()
         raise ValueError('Please give more specific query!')
     if parsed.out is None:
@@ -84,8 +84,6 @@ def check_tools():
 
 def get_query_string(arg):
     condition = list()
-    condition.append('("{}"[SLEN] : "{}"[SLEN])'.format(arg.min_len,
-                                                        arg.max_len))
     if arg.group is not None:
         condition.append('{}[filter]'.format(arg.group))
     if arg.query is not None:
@@ -98,7 +96,12 @@ def get_query_string(arg):
         condition.append('"{}"[ORGANISM]'.format(arg.taxon))
     if arg.organelle is not None:
         condition.append('{}[filter]'.format(arg.organelle))
-    return ' AND '.join(condition)
+    if len(condition) != 0:
+        condition.append('("{}"[SLEN] : "{}"[SLEN])'.format(
+            arg.min_len, arg.max_len))
+        return ' AND '.join(condition)
+    else:
+        return None
 
 
 def download(arg, query):
@@ -469,20 +472,25 @@ def mafft(files):
     return result
 
 
-def main():
+def primer(arg=None):
     """Get data from Genbank.
     """
-    arg = parse_args()
-    mkdir(arg.out)
+    if arg is None:
+        arg = parse_args()
     check_tools()
+    mkdir(arg.out)
+    user_data = list(glob(arg.fasta))
     query = get_query_string(arg)
-    gbfile = download(arg, query)
+    if query is not None:
+        gbfile = download(arg, query)
+        wrote_by_gene, wrote_by_name = divide(gbfile, arg)
+        wrote_by_gene.extend(user_data)
+        wrote_by_name.extend(user_data)
+    else:
+        wrote_by_gene = user_data[::]
+        wrote_by_name = user_data[::]
     if arg.stop == 1:
         return
-    wrote_by_gene, wrote_by_name = divide(gbfile, arg)
-    user_data = list(glob(arg.fasta))
-    wrote_by_gene.extend(user_data)
-    wrote_by_name.extend(user_data)
     if arg.no_uniq:
         pass
     else:
@@ -501,4 +509,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    primer()

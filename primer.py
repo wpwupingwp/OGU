@@ -209,7 +209,7 @@ class BlastResult():
 
 def parse_args():
     arg = argparse.ArgumentParser(
-        description=main.__doc__,
+        description=primer_design.__doc__,
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     arg.add_argument('input', help='input alignment file')
     options = arg.add_argument_group()
@@ -701,7 +701,7 @@ def pick_pair(primers, alignment, arg):
     return good_pairs
 
 
-def main():
+def primer_design():
     """
     Automatic design primer for DNA barcode.
     """
@@ -794,4 +794,4 @@ lower resolution options.
 
 
 if __name__ == '__main__':
-    main()
+    primer_design()
