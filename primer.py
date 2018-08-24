@@ -122,10 +122,7 @@ class Pair:
     def __init__(self, left, right, alignment):
         rows, columns = alignment.shape
         self.left = left
-        if not right.is_reverse_complement:
-            self.right = right.reverse_complement()
-        else:
-            self.right = right
+        self.right = right
         self.delta_tm = abs(self.left.tm - self.right.tm)
         a = len(self.left)/2
         b = len(self.right)/2
@@ -178,6 +175,11 @@ class Pair:
                       - self.right.avg_mismatch*10)
 
     def add_info(self, alignment):
+        """
+        put slow steps here to save time
+        """
+        if not self.right.is_reverse_complement:
+            self.right = self.right.reverse_complement()
         # include end base, use alignment loc for slice
         (self.resolution, self.entropy, self.pi,
          self.tree_value) = get_resolution(alignment, self.left.start,
