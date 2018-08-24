@@ -21,13 +21,15 @@ def parse_args():
                      help='continue broken download process')
     arg.add_argument('-email', default='',
                      help='email address used by NCBI Genbank')
+    arg.add_argument('-fasta', help='fasta format data to add')
+    arg.add_argument('-query', help='query text')
     arg.add_argument('-stop', choices=(1, 2, 3), default=3,
                      help=('Stop after which step:\n'
                            '\t1. Download\n'
                            '\t2. Preprocess data\n'
                            '\t3. Analyze\n'))
-    arg.add_argument('-query', help='query text')
-    arg.add_arguments('-fasta', help='fasta format data to add')
+    arg.add_argument('-no_uniq', action='store_true',
+                     help='do not remove redundant records')
     output = arg.add_argument_group('output')
     output.add_argument('-out',  help='output directory')
     output.add_argument('-rename', action='store_true',
@@ -423,6 +425,29 @@ def divide(gbfile, arg):
     return wrote_by_gene, wrote_by_name
 
 
+def uniq(files):
+    """
+    Only keep first record with same id.
+    """
+    uniq_files = list()
+    for fasta in files:
+        raw = SeqIO.parse(fasta, 'fasta')
+        new = fasta + '.uniq'
+        new_handle = open(new, 'w')
+        names = set()
+        for record in raw:
+            # gene|order|family|genus|species|specimen
+            name = ' '.join(record.id.split('|')[3:5])
+            if name in names:
+                pass
+            else:
+                SeqIO.write(record, new_handle, 'fasta')
+                names.add(name)
+        new_handle.close()
+        uniq_files.append(new)
+    return uniq_files
+
+
 def mafft(files):
     result = list()
     # get available CPU cores
@@ -448,15 +473,20 @@ def main():
     check_tools()
     query = get_query_string(arg)
     gbfile = download(arg, query)
-    if arg.task == 1:
+    if arg.stop == 1:
         return
     wrote_by_gene, wrote_by_name = divide(gbfile, arg)
+    if arg.no_uniq:
+        pass
+    else:
+        wrote_by_gene = uniq(wrote_by_gene)
+        wrote_by_name = uniq(wrote_by_name)
     if arg.max_len > 10000:
         # two few sequences will cause empty output, which was omit
         aligned = mafft(wrote_by_gene)
     else:
         aligned = mafft(wrote_by_name)
-    if arg.task == 2:
+    if arg.stop == 2:
         return
     for aln in aligned:
         print(aln)
