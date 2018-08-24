@@ -3,21 +3,22 @@
 import argparse
 import json
 import numpy as np
-import os
 import primer3
 import re
-from Bio import Phylo, SeqIO
-from Bio.Blast.Applications import NcbiblastnCommandline as Blast
-from Bio.SeqFeature import SeqFeature, FeatureLocation
-from Bio.SeqRecord import SeqRecord
-from Bio.Seq import Seq
 from collections import defaultdict
 from glob import glob
-from matplotlib import pyplot as plt
-from matplotlib import rcParams
+from os import remove, sched_getaffinity
+from os.path import basename, exists
 from subprocess import run
 from tempfile import NamedTemporaryFile as Tmp
 from timeit import default_timer as timer
+from Bio import Phylo, SeqIO
+from Bio.Blast.Applications import NcbiblastnCommandline as Blast
+from Bio.Seq import Seq
+from Bio.SeqFeature import SeqFeature, FeatureLocation
+from Bio.SeqRecord import SeqRecord
+from matplotlib import pyplot as plt
+from matplotlib import rcParams
 
 rcParams['lines.linewidth'] = 1.5
 rcParams['axes.linewidth'] = 1.5
@@ -237,7 +238,7 @@ def parse_args():
                          help='maximum product length(include primer)')
     # arg.print_help()
     parsed = arg.parse_args()
-    parsed.out = os.path.basename(parsed.input)
+    parsed.out = basename(parsed.input)
     parsed.out = parsed.out.split('.')[:-1]
     parsed.out = '.'.join(parsed.out)
     # overwrite options by given json
@@ -367,7 +368,7 @@ def get_resolution(alignment, start, end, fast=False):
 
     def clean():
         for i in glob(aln_file+'*'):
-            os.remove(i)
+            remove(i)
     if not fast:
         with open(aln_file, 'wb') as aln:
             for index, row in enumerate(alignment[:, start:end]):
@@ -598,7 +599,7 @@ def validate(primer_candidate, db_file, n_seqs, arg):
     # blast
     blast_result_file = Tmp('wt')
     fmt = 'qseqid sseqid qseq nident mismatch score qstart qend sstart send'
-    cmd = Blast(num_threads=len(os.sched_getaffinity(0)),
+    cmd = Blast(num_threads=len(sched_getaffinity(0)),
                 query=query_file,
                 db=db_file,
                 task='blastn-short',
@@ -650,7 +651,7 @@ def validate(primer_candidate, db_file, n_seqs, arg):
     blast_result_file.close()
     # clean makeblastdb files
     for i in glob(db_file+'*'):
-        os.remove(i)
+        remove(i)
     return primer_verified
 
 
@@ -721,17 +722,17 @@ def main():
     max_count, max_H, max_Pi, max_T = get_resolution(alignment, 0, columns)
     n_gap = sum([i[5] for i in base_cumulative_frequency])
     gap_ratio = n_gap / rows / columns
-    if not os.path.exists(summary):
+    if not exists(summary):
         with open(summary, 'w') as s:
             s.write('Name,Sequences,Length,GapRatio,ObservedResolution,'
                     'TreeValue,ShannonIndex,Pi\n')
             s.write('{},{},{},{:.2%},{:.6f},{:.6f},{:.6f},{:.6f}\n'.format(
-                os.path.basename(arg.input), rows, columns, gap_ratio,
+                basename(arg.input), rows, columns, gap_ratio,
                 max_count, max_T, max_H, max_Pi))
     else:
         with open(summary, 'a') as s:
             s.write('{},{},{},{:.2%},{:.4f},{:.4f},{:.4f},{:.6f}\n'.format(
-                os.path.basename(arg.input), rows, columns, gap_ratio,
+                basename(arg.input), rows, columns, gap_ratio,
                 max_count, max_T, max_H, max_Pi))
     assert max_count > arg.resolution, (
         """
