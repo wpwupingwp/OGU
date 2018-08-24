@@ -91,9 +91,8 @@ class PrimerWithInfo(SeqRecord):
         return True
 
     def reverse_complement(self):
-        table = str.maketrans('ATCGRMYKHBDV', 'TAGCYKRMDVHB')
-        new_seq = str.translate(self.sequence, table)
-        new_seq = new_seq[::-1]
+        table = str.maketrans('ACGTMRWSYKVHDBXN', 'TGCAKYWSRMBDHVXN')
+        new_seq = str.translate(self.sequence, table)[::-1]
         new_quality = self.quality[::-1]
         # try to simplify??
         return PrimerWithInfo(seq=new_seq, quality=new_quality,
