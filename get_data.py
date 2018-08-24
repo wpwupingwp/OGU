@@ -21,9 +21,13 @@ def parse_args():
                      help='continue broken download process')
     arg.add_argument('-email', default='',
                      help='email address used by NCBI Genbank')
-    arg.add_argument('-only_get', action='store_true',
-                     help='only get data')
-    arg.add_argument("-query", help='query text')
+    arg.add_argument('-stop', choices=(1, 2, 3), default=3,
+                     help=('Stop after which step:\n'
+                           '\t1. Download\n'
+                           '\t2. Preprocess data\n'
+                           '\t3. Analyze\n'))
+    arg.add_argument('-query', help='query text')
+    arg.add_arguments('-fasta', help='fasta format data to add')
     output = arg.add_argument_group('output')
     output.add_argument('-out',  help='output directory')
     output.add_argument('-rename', action='store_true',
@@ -56,6 +60,8 @@ def parse_args():
     if parsed.query is None and parsed.taxon is None:
         arg.print_help()
         raise ValueError('Please give more specific query!')
+    if parsed.out is None:
+        parsed.out = datetime.now().isoformat().replace(':', '-')
     return parsed
 
 
@@ -438,20 +444,20 @@ def main():
     """Get data from Genbank.
     """
     arg = parse_args()
-    if arg.out is None:
-        arg.out = datetime.now().isoformat().replace(':', '-')
     mkdir(arg.out)
     check_tools()
     query = get_query_string(arg)
     gbfile = download(arg, query)
-    wrote_by_gene, wrote_by_name = divide(gbfile, arg)
-    if arg.only_get:
+    if arg.task == 1:
         return
+    wrote_by_gene, wrote_by_name = divide(gbfile, arg)
     if arg.max_len > 10000:
         # two few sequences will cause empty output, which was omit
         aligned = mafft(wrote_by_gene)
     else:
         aligned = mafft(wrote_by_name)
+    if arg.task == 2:
+        return
     for aln in aligned:
         print(aln)
     return
