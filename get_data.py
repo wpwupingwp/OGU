@@ -12,6 +12,7 @@ from timeit import default_timer as timer
 from Bio import Entrez, SeqIO
 from Bio.Seq import Seq
 from Bio.SeqFeature import SeqFeature, FeatureLocation
+from primer_design import analyze
 
 
 def parse_args():
@@ -23,7 +24,9 @@ def parse_args():
     arg.add_argument('-email', default='',
                      help='email address used by NCBI Genbank')
     arg.add_argument('-fasta', default='',
-                     help='fasta format data to add')
+                     help='unaligned fasta format data to add')
+    arg.add_argument('-aln', default=None,
+                     help='aligned fasta files to analyze')
     arg.add_argument('-query', help='query text')
     arg.add_argument('-stop', choices=(1, 2, 3), default=3,
                      help=('Stop after which step:\n'
@@ -56,6 +59,30 @@ def parse_args():
     filters.add_argument('-organelle',
                          choices=('mitochondrion', 'plastid', 'chloroplast'),
                          help='organelle type')
+    options = arg.add_argument_group()
+    options.add_argument('-a', '--ambiguous_base_n', type=int, default=4,
+                         help='number of ambiguous bases')
+    options.add_argument('-c', '--coverage', type=float, default=0.6,
+                         help='minium coverage of base and primer')
+    options.add_argument('-f', '--fast', action='store_true', default=False,
+                         help='faster evaluate variance by omit tree_value')
+    options.add_argument('-j', '--json', help='configuration json file')
+    options.add_argument('-m', '--mismatch', type=int, default=4,
+                         help='maximum mismatch bases in primer')
+    options.add_argument('-pmin', '--min_primer', type=int, default=18,
+                         help='minimum primer length')
+    options.add_argument('-pmax', '--max_primer', type=int, default=24,
+                         help='maximum primer length')
+    options.add_argument('-r', '--resolution', type=float, default=0.5,
+                         help='minium resolution')
+    options.add_argument('-s', '--step', type=int, default=50,
+                         help='step size')
+    options.add_argument('-t', '--top_n', type=int, default=1,
+                         help='keep n primers for each high varient region')
+    options.add_argument('-tmin', '--min_product', type=int, default=300,
+                         help='minimum product length(include primer)')
+    options.add_argument('-tmax', '--max_product', type=int, default=500,
+                         help='maximum product length(include primer)')
     parsed = arg.parse_args()
     if parsed.organelle is not None:
         # 10k to 1m seems enough
@@ -66,7 +93,17 @@ def parse_args():
         raise ValueError('Please give more specific query!')
     if parsed.out is None:
         parsed.out = datetime.now().isoformat().replace(':', '-')
-    return parsed
+
+    # arg.print_help()
+    # overwrite options by given json
+    if parsed.json is not None:
+        with open(parsed.json, 'r') as _:
+            config = json.load(_)
+        d_parsed = vars(parsed)
+        new_arg = argparse.Namespace(**config, **d_parsed)
+        return new_arg
+    else:
+        return parsed
 
 
 def check_tools():
@@ -478,6 +515,11 @@ def main():
     arg = parse_args()
     check_tools()
     mkdir(arg.out)
+    if arg.aln is not None:
+        for i in list(glob(arg.aln)):
+            arg.input = i
+            analyze(arg)
+        return
     user_data = list(glob(arg.fasta))
     query = get_query_string(arg)
     if query is not None:
@@ -503,7 +545,8 @@ def main():
     if arg.stop == 2:
         return
     for aln in aligned:
-        print(aln)
+        arg.input = aln
+        analyze(arg)
     return
 
 

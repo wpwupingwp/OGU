@@ -202,7 +202,7 @@ class BlastResult():
 
 def parse_args():
     arg = argparse.ArgumentParser(
-        description=primer_design.__doc__,
+        description=analyze.__doc__,
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     arg.add_argument('input', help='input alignment file')
     options = arg.add_argument_group()
@@ -231,14 +231,11 @@ def parse_args():
                          help='maximum product length(include primer)')
     # arg.print_help()
     parsed = arg.parse_args()
-    parsed.out_file = splitext(parsed.input)[0]
     # overwrite options by given json
     if parsed.json is not None:
         with open(parsed.json, 'r') as _:
             config = json.load(_)
         n_arg = argparse.Namespace(**config)
-        n_arg.input = parsed.input
-        n_arg.out_file = parsed.out
         return n_arg
     else:
         return parsed
@@ -696,13 +693,14 @@ def pick_pair(primers, alignment, arg):
     return good_pairs
 
 
-def primer_design(arg=None):
+def analyze(arg=None):
     """
     Automatic design primer for DNA barcode.
     """
     start = timer()
     if arg is None:
         arg = parse_args()
+    arg.out_file = splitext(arg.input)[0]
     summary = 'Summary.csv'
     print('Write configuration into json')
     with open(arg.input+'.json', 'w') as out:
@@ -791,4 +789,4 @@ lower resolution options.
 
 
 if __name__ == '__main__':
-    primer_design()
+    analyze()
