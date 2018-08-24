@@ -469,7 +469,7 @@ def count_and_draw(alignment, consensus, arg):
     min_primer = arg.min_primer
     max_product = arg.max_product
     step = arg.step
-    out_file = arg.out_file
+    out_file = join_path(arg.out, basename(arg.out_file))
     # R, H, Pi, T : count, normalized entropy, Pi, tree value
     R = list()
     H = list()
