@@ -515,10 +515,10 @@ def count_and_draw(alignment, consensus, arg):
     # ax2.yaxis.set_ticks(np.linspace(0, 10**_, num=11))
     ax2.legend(loc='upper right')
     # plt.yscale('log')
-    plt.savefig(join_path(arg.out, out_file+'.pdf'))
-    plt.savefig(join_path(arg.out, out_file+'.png'))
+    plt.savefig(out_file+'.pdf')
+    plt.savefig(out_file+'.png')
     # plt.show()
-    with open(join_path(arg.out, out_file+'-Resolution.tsv'), 'w') as _:
+    with open(out_file+'-Resolution.tsv', 'w') as _:
         _.write('Index,R,H,Pi,T\n')
         for i, r, h, pi, t in zip(index, R, H, Pi, T):
             _.write('{},{:.2f},{:.2f},{:.2f},{:.2f}\n'.format(i, r, h, pi, t))
@@ -542,7 +542,7 @@ def validate(primer_candidate, db_file, n_seqs, arg):
     """
     Do BLAST. Parse BLAST result. Return List[PrimerWithInfo]
     """
-    query_file = join_path(arg.out, arg.out_file+'.candidate.fasta')
+    query_file = arg.out_file + '.candidate.fasta'
     # SeqIO.write fasta file directly is prohibited. have to write fastq at
     with open(query_file+'.fastq', 'w') as _:
         SeqIO.write(primer_candidate, _, 'fastq')
@@ -728,7 +728,7 @@ def analyze(arg):
     style = ('{:.2f},{},{:.0f},{:.0f},{},{},{:.2%},{:.2%},{:.2f},{:.2f},{},'
              '{:.2f},{:.2f},{:.2f},{},{:.2f},{:.2f},{:.2f},{:.2f},{},{},{},{}'
              '\n')
-    _ = join_path(arg.out, arg.out_file)
+    _ = join_path(arg.out, basename(arg.out_file))
     with open(_+'.fastq', 'w') as out1, open(_+'.csv', 'w') as out2:
         out2.write(csv_title)
         for pair in pairs:
@@ -747,8 +747,6 @@ def analyze(arg):
     print('Input alignment:')
     print('\t{}: {} rows, {} columns'.format(arg.input, rows, columns))
     print('Parameters:')
-    for i in vars(arg).items():
-        print('\t{}: {}'.format(i[0].capitalize(), i[1]))
     print('Found {} pairs of primers.'.format(len(pairs)))
     end = timer()
     print('Cost {:.3f} seconds.'.format(end-start))
@@ -1202,6 +1200,10 @@ def divide(gbfile, arg):
         # write raw fasta
         SeqIO.write(record, handle_raw, 'fasta')
 
+    # skip analyze of Unknown.fasta
+    unknown = join_path(groupby_name, 'Unknown.fasta')
+    if unknown in wrote_by_name:
+        wrote_by_name.remove(unknown)
     end = timer()
     print('Divide done with {:.3f}s.'.format(end-start))
     return list(wrote_by_gene), list(wrote_by_name)
@@ -1285,8 +1287,11 @@ def main():
     if arg.stop == 2:
         return
     for aln in aligned:
+        print(aln)
         arg.input = aln
         analyze(arg)
+    for i in vars(arg).items():
+        print('\t{}: {}'.format(i[0].capitalize(), i[1]))
     return
 
 
