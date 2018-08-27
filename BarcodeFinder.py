@@ -32,8 +32,8 @@ rcParams['font.size'] = 16
 
 
 class PrimerWithInfo(SeqRecord):
-    def __init__(self, seq='', quality=None, start=0, coverage=0, avg_bitscore=0,
-                 mid_loc=None, avg_mismatch=0, detail=0,
+    def __init__(self, seq='', quality=None, start=0, coverage=0,
+                 avg_bitscore=0, mid_loc=None, avg_mismatch=0, detail=0,
                  reverse_complement=False):
         # store str
         super().__init__(Seq(seq.upper()))
@@ -63,7 +63,7 @@ class PrimerWithInfo(SeqRecord):
 
     def __getitem__(self, i):
         if isinstance(i, int):
-            i = slice(i, i+1)
+            i = slice(i, i + 1)
         if isinstance(i, slice):
             if self.seq is None:
                 raise ValueError('Empty sequence')
@@ -111,8 +111,8 @@ class PrimerWithInfo(SeqRecord):
             self.avg_mid_loc = average(list(self.mid_loc.values()))
         self.id = ('AvgMidLocation({:.0f})-Tm({:.2f})-Coverage({:.2%})-'
                    'AvgBitScore({:.2f})-Start({})-End({})'.format(
-                       self.avg_mid_loc, self.tm, self.coverage,
-                       self.avg_bitscore, self.start, self.end))
+                    self.avg_mid_loc, self.tm, self.coverage,
+                    self.avg_bitscore, self.start, self.end))
 
 
 class Pair:
@@ -127,10 +127,10 @@ class Pair:
         self.right = right
         self.delta_tm = abs(self.left.tm - self.right.tm)
         # get accurate length
-        a = len(self.left)/2
-        b = len(self.right)/2
+        a = len(self.left) / 2
+        b = len(self.right) / 2
         common = left.mid_loc.keys() & right.mid_loc.keys()
-        lengths = [[key, ((right.mid_loc[key]-b) - (left.mid_loc[key]+a))
+        lengths = [[key, ((right.mid_loc[key] - b) - (left.mid_loc[key] + a))
                     ] for key in common]
         lengths = {i[0]: int(i[1]) for i in lengths if i[1] > 0}
         self.length = lengths
@@ -158,15 +158,15 @@ class Pair:
                 self.coverage, self.delta_tm, self.have_heterodimer))
 
     def get_score(self):
-        self.score = (average(list(self.length.values()))*0.5
-                      + self.coverage*200
-                      + len(self.left)*10
-                      + len(self.right)*10
-                      + self.resolution*100
-                      + self.tree_value*100 + self.entropy*5
-                      - int(self.have_heterodimer)*10
-                      - self.delta_tm*5 - self.left.avg_mismatch*10
-                      - self.right.avg_mismatch*10)
+        self.score = (average(list(self.length.values())) * 0.5
+                      + self.coverage * 200
+                      + len(self.left) * 10
+                      + len(self.right) * 10
+                      + self.resolution * 100
+                      + self.tree_value * 100 + self.entropy * 5
+                      - int(self.have_heterodimer) * 10
+                      - self.delta_tm * 5 - self.left.avg_mismatch * 10
+                      - self.right.avg_mismatch * 10)
 
     def add_info(self, alignment):
         """
@@ -177,7 +177,7 @@ class Pair:
         # include end base, use alignment loc for slice
         (self.resolution, self.entropy, self.pi,
          self.tree_value) = get_resolution(alignment, self.left.start,
-                                           self.right.end+1)
+                                           self.right.end + 1)
         self.heterodimer_tm = primer3.calcHeterodimer(self.left.g_seq,
                                                       self.right.g_seq).tm
         if max(self.heterodimer_tm, self.left.tm,
@@ -264,17 +264,17 @@ def count_base(alignment, rows, columns):
                       b'D': 0, b'B': 0, b'X': 0, b'N': 0, b'-': 0, b'?': 0}
         count_dict.update(dict(zip(base, counts)))
         a = (count_dict[b'A'] +
-             (count_dict[b'D']+count_dict[b'H']+count_dict[b'V'])/3 +
-             (count_dict[b'M']+count_dict[b'R'] + count_dict[b'W'])/2)
+             (count_dict[b'D'] + count_dict[b'H'] + count_dict[b'V']) / 3 +
+             (count_dict[b'M'] + count_dict[b'R'] + count_dict[b'W']) / 2)
         t = (count_dict[b'T'] +
-             (count_dict[b'B']+count_dict[b'H']+count_dict[b'D'])/3 +
-             (count_dict[b'K']+count_dict[b'W'] + count_dict[b'Y'])/2)
+             (count_dict[b'B'] + count_dict[b'H'] + count_dict[b'D']) / 3 +
+             (count_dict[b'K'] + count_dict[b'W'] + count_dict[b'Y']) / 2)
         c = (count_dict[b'C'] +
-             (count_dict[b'B']+count_dict[b'H']+count_dict[b'V'])/3 +
-             (count_dict[b'M']+count_dict[b'S'] + count_dict[b'Y'])/2)
+             (count_dict[b'B'] + count_dict[b'H'] + count_dict[b'V']) / 3 +
+             (count_dict[b'M'] + count_dict[b'S'] + count_dict[b'Y']) / 2)
         g = (count_dict[b'G'] +
-             (count_dict[b'B']+count_dict[b'D']+count_dict[b'V'])/3 +
-             (count_dict[b'K']+count_dict[b'R'] + count_dict[b'S'])/2)
+             (count_dict[b'B'] + count_dict[b'D'] + count_dict[b'V']) / 3 +
+             (count_dict[b'K'] + count_dict[b'R'] + count_dict[b'S']) / 2)
         gap = count_dict[b'-']
         n = count_dict[b'N'] + count_dict[b'X'] + count_dict[b'?']
         other = rows - a - t - c - g - gap - n
@@ -293,7 +293,7 @@ def get_quality(data, rows):
     max_q = 62
     factor = max_q / rows
     # use min to avoid KeyError
-    quality_value = [min(max_q, int(i*factor))-1 for i in data]
+    quality_value = [min(max_q, int(i * factor)) - 1 for i in data]
     return quality_value
 
 
@@ -322,20 +322,21 @@ def get_resolution(alignment, start, end, fast=False):
     n = rows
     sum_d_ij = 0
     for i in range(n):
-        d_ij = np.sum(subalign[i] != subalign[(i+1):])
+        d_ij = np.sum(subalign[i] != subalign[(i + 1):])
         sum_d_ij += d_ij
-    pi = (2 / (n*(n-1)) * sum_d_ij) / m
+    pi = (2 / (n * (n - 1)) * sum_d_ij) / m
     # tree value
     aln_file = '{}-{}.aln.tmp'.format(start, end)
 
     def clean():
-        for _ in glob(aln_file+'*'):
+        for _ in glob(aln_file + '*'):
             remove(_)
+
     if not fast:
         with open(aln_file, 'wb') as aln:
             for index, row in enumerate(alignment[:, start:end]):
-                aln.write(b'>'+str(index).encode('utf-8')+b'\n'+b''.join(
-                    row)+b'\n')
+                aln.write(b'>' + str(index).encode('utf-8') + b'\n' + b''.join(
+                    row) + b'\n')
         iqtree = run('iqtree -s {} -m JC -fast -czb'.format(aln_file),
                      stdout=Tmp('wt'), shell=True)
         # just return 0 if there is error
@@ -343,7 +344,7 @@ def get_resolution(alignment, start, end, fast=False):
             print('Cannot get tree_value of {}-{}!'.format(start, end))
             clean()
             return resolution, entropy, pi, 0
-        tree = Phylo.read(aln.name+'.treefile', 'newick')
+        tree = Phylo.read(aln.name + '.treefile', 'newick')
         # skip the first empty node
         internals = tree.get_nonterminals()[1:]
         clean()
@@ -360,6 +361,7 @@ def generate_consensus(base_cumulative_frequency, coverage_percent,
     and List[List[str, str, str, PrimerInfo]] for writing consensus.
     return PrimerWithInfo
     """
+
     def get_ambiguous_dict():
         data = dict(zip(ambiguous_data.values(), ambiguous_data.keys()))
         # 2:{'AC': 'M',}
@@ -416,9 +418,9 @@ def get_good_region(index, seq_count, arg):
     good_region = set()
     for i, j in zip(index, seq_count):
         if j >= arg.resolution:
-            good_region.update(range(i-arg.max_primer, i-n))
-            good_region.update(range(i+arg.min_product,
-                                     i-arg.max_primer+arg.max_product))
+            good_region.update(range(i - arg.max_primer, i - n))
+            good_region.update(range(i + arg.min_product,
+                                     i - arg.max_primer + arg.max_product))
     return good_region
 
 
@@ -431,7 +433,7 @@ def find_continuous(consensus, good_region, min_len):
     start = 0
     for index, base in enumerate(consensus.sequence[:-min_len]):
         if base in skip or index not in good_region:
-            if (index-start) >= min_len:
+            if (index - start) >= min_len:
                 consensus.features.append(SeqFeature(FeatureLocation(
                     start, index), type='continuous', strand=1))
             start = index + 1
@@ -449,13 +451,13 @@ def find_primer(consensus, min_len, max_len):
     for feature in continuous:
         fragment = feature.extract(consensus)
         len_fragment = len(fragment)
-        for begin in range(len_fragment-max_len):
-            for p_len in range(min_len, max_len+1):
+        for begin in range(len_fragment - max_len):
+            for p_len in range(min_len, max_len + 1):
                 start = feature.location.start + begin
-                primer = consensus[start:start+p_len]
+                primer = consensus[start:start + p_len]
                 if primer.is_good_primer():
                     consensus.features.append(SeqFeature(
-                        FeatureLocation(start, start+p_len),
+                        FeatureLocation(start, start + p_len),
                         type='primer', strand=1))
                     primer.start = start
                     primer.update_id()
@@ -476,7 +478,8 @@ def count_and_draw(alignment, arg):
     max_product = arg.max_product
     step = arg.step
     out_file = join_path(arg.out, basename(arg.out_file))
-    # r_list, h_list, pi_list, t_list : count, normalized entropy, Pi, tree value
+    # r_list, h_list, pi_list, t_list : count, normalized entropy, Pi and
+    #  tree value
     r_list = list()
     h_list = list()
     pi_list = list()
@@ -491,15 +494,15 @@ def count_and_draw(alignment, arg):
         #     continue
         # exclude primer sequence
         resolution, entropy, pi, tree_value = get_resolution(
-            alignment, i, i+max_plus, arg.fast)
+            alignment, i, i + max_plus, arg.fast)
         r_list.append(resolution)
-        h_list.append(entropy/max_h)
+        h_list.append(entropy / max_h)
         pi_list.append(pi)
         t_list.append(tree_value)
         index.append(i)
 
     plt.style.use('seaborn-colorblind')
-    fig, ax1 = plt.subplots(figsize=(15+len(index)//5000, 10))
+    fig, ax1 = plt.subplots(figsize=(15 + len(index) // 5000, 10))
     plt.title('Resolution(window={} bp, step={} bp)\n'.format(
         max_product, step))
     plt.xlabel('Base')
@@ -521,10 +524,10 @@ def count_and_draw(alignment, arg):
     # ax2.yaxis.set_ticks(np.linspace(0, 10**_, num=11))
     ax2.legend(loc='upper right')
     # plt.yscale('log')
-    plt.savefig(out_file+'.pdf')
-    plt.savefig(out_file+'.png')
+    plt.savefig(out_file + '.pdf')
+    plt.savefig(out_file + '.png')
     # plt.show()
-    with open(out_file+'-Resolution.tsv', 'w') as _:
+    with open(out_file + '-Resolution.tsv', 'w') as _:
         _.write('Index,R,H,Pi,T\n')
         for i, r, h, pi, t in zip(index, r_list, h_list, pi_list, t_list):
             _.write('{},{:.2f},{:.2f},{:.2f},{:.2f}\n'.format(i, r, h, pi, t))
@@ -550,9 +553,9 @@ def validate(primer_candidate, db_file, n_seqs, arg):
     """
     query_file = arg.out_file + '.candidate.fasta'
     # SeqIO.write fasta file directly is prohibited. have to write fastq at
-    with open(query_file+'.fastq', 'w') as _:
+    with open(query_file + '.fastq', 'w') as _:
         SeqIO.write(primer_candidate, _, 'fastq')
-    SeqIO.convert(query_file+'.fastq', 'fastq', query_file, 'fasta')
+    SeqIO.convert(query_file + '.fastq', 'fastq', query_file, 'fasta')
     # build blast db
     run('makeblastdb -in {} -dbtype nucl'.format(db_file), shell=True,
         stdout=Tmp('wt'))
@@ -595,8 +598,8 @@ def validate(primer_candidate, db_file, n_seqs, arg):
         if coverage >= arg.coverage:
             blast_result[hit.query_id] = {
                 'coverage': coverage,
-                'avg_bitscore': sum_bitscore_raw/good_hits,
-                'avg_mismatch': sum_mismatch/good_hits,
+                'avg_bitscore': sum_bitscore_raw / good_hits,
+                'avg_mismatch': sum_mismatch / good_hits,
                 'mid_loc': mid_loc}
     primer_verified = list()
     for primer in primer_candidate:
@@ -611,7 +614,7 @@ def validate(primer_candidate, db_file, n_seqs, arg):
     primer_verified.sort(key=lambda x: x.start)
     blast_result_file.close()
     # clean makeblastdb files
-    for i in glob(db_file+'*'):
+    for i in glob(db_file + '*'):
         remove(i)
     return primer_verified
 
@@ -625,7 +628,7 @@ def pick_pair(primers, alignment, arg):
         # fragment plus one primer = max_product length
         end = location + arg.max_product - len(left)
         cluster = list()
-        for right in primers[(n_left+1):]:
+        for right in primers[(n_left + 1):]:
             if right.avg_mid_loc < begin:
                 continue
             if right.avg_mid_loc > end:
@@ -645,7 +648,7 @@ def pick_pair(primers, alignment, arg):
     print(len(pairs))
     pairs.sort(key=lambda x: x.start)
     for index in range(1, len(pairs)):
-        if pairs[index].start - pairs[index-1].start < arg.min_primer:
+        if pairs[index].start - pairs[index - 1].start < arg.min_primer:
             cluster.append(pairs[index])
         else:
             cluster.sort(key=lambda x: x.score, reverse=True)
@@ -671,7 +674,7 @@ def analyze(arg):
     start = timer()
     arg.out_file = splitext(arg.input)[0]
     print('Write configuration into json')
-    with open(arg.input+'.json', 'w') as out:
+    with open(arg.input + '.json', 'w') as out:
         json.dump(vars(arg), out, indent=4, sort_keys=True)
     # read from fasta, generate new fasta for makeblastdb
     name, alignment, db_file = prepare(arg.input)
@@ -683,8 +686,8 @@ def analyze(arg):
         return
     # generate consensus
     base_cumulative_frequency = count_base(alignment, rows, columns)
-    consensus = generate_consensus(base_cumulative_frequency, arg.coverage, rows,
-                                   arg.out_file+'.consensus.fastq')
+    consensus = generate_consensus(base_cumulative_frequency, arg.coverage,
+                                   rows, arg.out_file + '.consensus.fastq')
     max_count, max_h, max_pi, t = get_resolution(alignment, 0, columns)
     n_gap = sum([i[5] for i in base_cumulative_frequency])
     gap_ratio = n_gap / rows / columns
@@ -736,7 +739,7 @@ def analyze(arg):
              '{:.2f},{:.2f},{:.2f},{},{:.2f},{:.2f},{:.2f},{:.2f},{},{},{},{}'
              '\n')
     _ = join_path(arg.out, basename(arg.out_file))
-    with open(_+'.fastq', 'w') as out1, open(_+'.csv', 'w') as out2:
+    with open(_ + '.fastq', 'w') as out1, open(_ + '.csv', 'w') as out2:
         out2.write(csv_title)
         for pair in pairs:
             line = style.format(
@@ -756,7 +759,7 @@ def analyze(arg):
     print('Parameters:')
     print('Found {} pairs of primers.'.format(len(pairs)))
     end = timer()
-    print('Cost {:.3f} seconds.'.format(end-start))
+    print('Cost {:.3f} seconds.'.format(end - start))
 
 
 def parse_args():
@@ -780,7 +783,7 @@ def parse_args():
     arg.add_argument('-no_uniq', action='store_true',
                      help='do not remove redundant records')
     output = arg.add_argument_group('Output')
-    output.add_argument('-out',  help='output directory')
+    output.add_argument('-out', help='output directory')
     output.add_argument('-rename', action='store_true',
                         help='try to rename gene')
     output.add_argument('-no_expand', default=False,
@@ -903,12 +906,12 @@ def download(arg, query):
         name = safe(arg.taxon)
     else:
         name = safe(arg.query)
-    file_name = join_path(arg.out, name+'.gb')
+    file_name = join_path(arg.out, name + '.gb')
     output = open(file_name, 'w')
     ret_start = 0
     ret_max = 1000
     while ret_start <= count:
-        print('{}-{}'.format(ret_start, ret_start+ret_max))
+        print('{}-{}'.format(ret_start, ret_start + ret_max))
         try:
             data = Entrez.efetch(db='nuccore',
                                  webenv=query_handle['WebEnv'],
@@ -983,7 +986,7 @@ def gene_rename(old_name):
 
 
 def safe(old):
-        return re.sub(r'\W', '_', old)
+    return re.sub(r'\W', '_', old)
 
 
 def get_taxon(order_family):
@@ -1014,12 +1017,12 @@ def write_seq(name, sequence_id, feature, whole_seq, path, arg):
     """
     Write fasta file.
     """
-    filename = join_path(path, name+'.fasta')
+    filename = join_path(path, name + '.fasta')
     sequence = feature.extract(whole_seq)
 
     with open(filename, 'a') as handle:
-        handle.write(sequence_id+'\n')
-        handle.write(str(sequence)+'\n')
+        handle.write(sequence_id + '\n')
+        handle.write(str(sequence) + '\n')
     if not arg.no_expand:
         if feature.location_operator == 'join':
             loc = feature.location.parts
@@ -1028,7 +1031,7 @@ def write_seq(name, sequence_id, feature, whole_seq, path, arg):
             sorted(loc, key=lambda x: x.start)
             new_loc = sum([
                 # avoid IndexError
-                FeatureLocation(max(0, loc[0].start-arg.expand_n),
+                FeatureLocation(max(0, loc[0].start - arg.expand_n),
                                 loc[0].end, loc[0].strand),
                 *loc[1:-1],
                 FeatureLocation(loc[-1].start,
@@ -1039,8 +1042,8 @@ def write_seq(name, sequence_id, feature, whole_seq, path, arg):
         sequence = feature.extract(whole_seq)
         filename2 = join_path(path, 'expand.{}.fasta'.format(name))
         with open(filename2, 'a') as handle:
-            handle.write(sequence_id+'\n')
-            handle.write(str(sequence)+'\n')
+            handle.write(sequence_id + '\n')
+            handle.write(str(sequence) + '\n')
         return filename2
     return filename
 
@@ -1107,7 +1110,7 @@ def get_spacer(genes):
     # sorted according to sequence starting postion
     genes.sort(key=lambda x: int(x[1].location.start))
     for n, present in enumerate(genes[1:], 1):
-        before = genes[n-1]
+        before = genes[n - 1]
         # use sort to handle complex location relationship of two fragments
         location = [before[1].location.start, before[1].location.end,
                     present[1].location.start, present[1].location.end]
@@ -1133,7 +1136,7 @@ def divide(gbfile, arg):
     mkdir(groupby_gene)
     groupby_name = '{}-groupby_name'.format(gbfile.replace('.gb', ''))
     mkdir(groupby_name)
-    handle_raw = open(gbfile+'.fasta', 'w')
+    handle_raw = open(gbfile + '.fasta', 'w')
     wrote_by_gene = set()
     wrote_by_name = set()
 
@@ -1197,7 +1200,7 @@ def divide(gbfile, arg):
             name_str = '{}_genome'.format(arg.organelle)
         record.id = '|'.join([name_str, taxon, accession, specimen])
         record.description = ''
-        filename = join_path(groupby_name, name_str+'.fasta')
+        filename = join_path(groupby_name, name_str + '.fasta')
         with open(filename, 'a') as out:
             SeqIO.write(record, out, 'fasta')
             wrote_by_name.add(filename)
@@ -1209,7 +1212,7 @@ def divide(gbfile, arg):
     if unknown in wrote_by_name:
         wrote_by_name.remove(unknown)
     end = timer()
-    print('Divide done with {:.3f}s.'.format(end-start))
+    print('Divide done with {:.3f}s.'.format(end - start))
     return list(wrote_by_gene), list(wrote_by_name)
 
 
@@ -1245,7 +1248,7 @@ def mafft(files):
         print('Aligning {}'.format(fasta))
         out = fasta + '.aln'
         _ = ('mafft --thread {} --reorder --quiet --adjustdirection '
-             '{} > {}'.format(cores-1, fasta, out))
+             '{} > {}'.format(cores - 1, fasta, out))
         m = run(_, shell=True)
         if m.returncode == 0:
             result.append(out)
@@ -1256,7 +1259,10 @@ def mafft(files):
 
 
 def main():
-    """Get data from Genbank.
+    """
+    1. Get data from Genbank.
+    2. Divide according to annotation.
+    3. Analyze.
     """
     arg = parse_args()
     check_tools()
