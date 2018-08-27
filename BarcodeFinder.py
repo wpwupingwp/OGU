@@ -32,7 +32,7 @@ rcParams['font.size'] = 16
 
 
 class PrimerWithInfo(SeqRecord):
-    def __init__(self, seq='', quality='', start=0, coverage=0, avg_bitscore=0,
+    def __init__(self, seq='', quality=None, start=0, coverage=0, avg_bitscore=0,
                  mid_loc=None, avg_mismatch=0, detail=0,
                  reverse_complement=False):
         # store str
@@ -41,12 +41,13 @@ class PrimerWithInfo(SeqRecord):
 
         """
         primer3.setGlobals seems have no effect on calcTm, so I have to replace
-        all ambiguous base to G to get an approximate value. Othervise calcTm()
+        all ambiguous base to G to get an approximate value. Otherwise calcTm()
         will generate -99999 if there is ambiguous base.
         """
         self.g_seq = re.sub(r'[^ATCG]', 'G', self.sequence)
         self.quality = self.letter_annotations['solexa_quality'] = quality
         self.start = self.annotations['start'] = start
+        self.end = self.annotations['end'] = start + self.__len__() - 1
         self.tm = self.annotations['tm'] = primer3.calcTm(self.g_seq)
         self.coverage = self.annotations['coverage'] = coverage
         self.avg_bitscore = self.annotations['avg_bitscore'] = avg_bitscore
@@ -54,7 +55,6 @@ class PrimerWithInfo(SeqRecord):
         self.avg_mid_loc = 0
         self.avg_mismatch = self.annotations['avg_mismatch'] = avg_mismatch
         self.detail = self.annotations['detail'] = detail
-        self.end = self.annotations['end'] = start + self.__len__() - 1
         self.is_reverse_complement = reverse_complement
         self.description = ''
         self.hairpin_tm = 0
@@ -94,7 +94,7 @@ class PrimerWithInfo(SeqRecord):
             return False
         return True
 
-    def reverse_complement(self):
+    def reverse_complement(self, **kwargs):
         table = str.maketrans('ACGTMRWSYKVHDBXN', 'TGCAKYWSRMBDHVXN')
         new_seq = str.translate(self.sequence, table)[::-1]
         new_quality = self.quality[::-1]
@@ -139,13 +139,13 @@ class Pair:
         # pairs use mid_loc from BLAST as start/end
         self.start = int(self.left.avg_mid_loc)
         self.end = int(self.right.avg_mid_loc)
-        self.resolution = 0
+        self.have_heterodimer = False
+        self.heterodimer_tm = 0.0
+        self.resolution = 0.0
         self.tree_value = 0.0
         self.entropy = 0.0
-        self.have_heterodimer = False
-        self.resolution = 0
-        self.entropy = 0
         self.pi = 0.0
+        self.score = 0.0
         self.get_score()
 
     def __str__(self):
@@ -191,10 +191,10 @@ class Pair:
         return self
 
 
-class BlastResult():
-    __slots = ['query_id', 'hit_id', 'query_seq', 'ident_num', 'mismatch_num',
+class BlastResult:
+    __slots = ('query_id', 'hit_id', 'query_seq', 'ident_num', 'mismatch_num',
                'bitscore_raw', 'query_start', 'query_end', 'hit_start',
-               'hit_end']
+               'hit_end')
 
     def __init__(self, line):
         record = line.strip().split('\t')
@@ -283,9 +283,15 @@ def count_base(alignment, rows, columns):
 
 
 def get_quality(data, rows):
+    """
+
+    :param data:
+    :param rows:
+    :return:
+    """
     # use fastq-illumina format
     max_q = 62
-    factor = max_q/rows
+    factor = max_q / rows
     # use min to avoid KeyError
     quality_value = [min(max_q, int(i*factor))-1 for i in data]
     return quality_value
@@ -323,8 +329,8 @@ def get_resolution(alignment, start, end, fast=False):
     aln_file = '{}-{}.aln.tmp'.format(start, end)
 
     def clean():
-        for i in glob(aln_file+'*'):
-            remove(i)
+        for _ in glob(aln_file+'*'):
+            remove(_)
     if not fast:
         with open(aln_file, 'wb') as aln:
             for index, row in enumerate(alignment[:, start:end]):
@@ -348,18 +354,18 @@ def get_resolution(alignment, start, end, fast=False):
 
 
 def generate_consensus(base_cumulative_frequency, coverage_percent,
-                       rows, columns, output):
+                       rows, output):
     """
     Given base count info, return List[index, base, quality]
-    and List[List[str, str, str, PrimerInfo]] for writing conesensus.
+    and List[List[str, str, str, PrimerInfo]] for writing consensus.
     return PrimerWithInfo
     """
     def get_ambiguous_dict():
         data = dict(zip(ambiguous_data.values(), ambiguous_data.keys()))
         # 2:{'AC': 'M',}
         data_with_len = defaultdict(lambda: dict())
-        for key in data:
-            data_with_len[len(key)][key] = data[key]
+        for i in data:
+            data_with_len[len(i)][i] = data[i]
         return data_with_len
 
     ambiguous_dict = get_ambiguous_dict()
@@ -396,9 +402,9 @@ def generate_consensus(base_cumulative_frequency, coverage_percent,
                         base = ambiguous_dict[length][key]
                         finish = True
                         most.append([location, base, count])
-    quality = [i[2] for i in most]
+    quality_raw = [i[2] for i in most]
     consensus = PrimerWithInfo(start=1, seq=''.join([i[1] for i in most]),
-                               quality=get_quality(quality, rows))
+                               quality=get_quality(quality_raw, rows))
     SeqIO.write(consensus, output, 'fastq')
     return consensus
 
@@ -457,7 +463,7 @@ def find_primer(consensus, min_len, max_len):
     return primers, consensus
 
 
-def count_and_draw(alignment, consensus, arg):
+def count_and_draw(alignment, arg):
     """
     Given alignment(numpy array), return unique sequence count List[float].
     Calculate Shannon Index based on
@@ -470,12 +476,12 @@ def count_and_draw(alignment, consensus, arg):
     max_product = arg.max_product
     step = arg.step
     out_file = join_path(arg.out, basename(arg.out_file))
-    # R, H, Pi, T : count, normalized entropy, Pi, tree value
-    R = list()
-    H = list()
-    Pi = list()
-    T = list()
-    max_H = np.log2(rows)
+    # r_list, h_list, pi_list, t_list : count, normalized entropy, Pi, tree value
+    r_list = list()
+    h_list = list()
+    pi_list = list()
+    t_list = list()
+    max_h = np.log2(rows)
     index = list()
     max_plus = max_product - min_primer * 2
     max_range = columns - max_product
@@ -486,10 +492,10 @@ def count_and_draw(alignment, consensus, arg):
         # exclude primer sequence
         resolution, entropy, pi, tree_value = get_resolution(
             alignment, i, i+max_plus, arg.fast)
-        R.append(resolution)
-        H.append(entropy/max_H)
-        Pi.append(pi)
-        T.append(tree_value)
+        r_list.append(resolution)
+        h_list.append(entropy/max_h)
+        pi_list.append(pi)
+        t_list.append(tree_value)
         index.append(i)
 
     plt.style.use('seaborn-colorblind')
@@ -500,16 +506,16 @@ def count_and_draw(alignment, consensus, arg):
     # plt.xticks(np.linspace(0, max_range, 21))
     if not arg.fast:
         ax1.set_ylabel('Normalized Shannon Index / Resolution / TreeValue')
-        ax1.plot(index, T, label='TreeValue', alpha=0.8)
+        ax1.plot(index, t_list, label='TreeValue', alpha=0.8)
     else:
         ax1.set_ylabel('Normalized Shannon Index / Resolution')
 
-    ax1.plot(index, H, label='Shannon Index', alpha=0.8)
-    ax1.plot(index, R, label='Resolution', alpha=0.8)
+    ax1.plot(index, h_list, label='Shannon Index', alpha=0.8)
+    ax1.plot(index, r_list, label='Resolution', alpha=0.8)
     ax1.legend(loc='lower left')
     ax1.yaxis.set_ticks(np.linspace(0, 1, num=11))
     ax2 = ax1.twinx()
-    ax2.plot(index, Pi, 'k-', label=r'$\pi$', alpha=0.8)
+    ax2.plot(index, pi_list, 'k-', label=r'$\pi$', alpha=0.8)
     ax2.set_ylabel(r'$\pi$', rotation=-90, labelpad=20)
     # _ = round(np.log10(max(Pi))) + 1
     # ax2.yaxis.set_ticks(np.linspace(0, 10**_, num=11))
@@ -520,9 +526,9 @@ def count_and_draw(alignment, consensus, arg):
     # plt.show()
     with open(out_file+'-Resolution.tsv', 'w') as _:
         _.write('Index,R,H,Pi,T\n')
-        for i, r, h, pi, t in zip(index, R, H, Pi, T):
+        for i, r, h, pi, t in zip(index, r_list, h_list, pi_list, t_list):
             _.write('{},{:.2f},{:.2f},{:.2f},{:.2f}\n'.format(i, r, h, pi, t))
-    return R, H, Pi, T, index
+    return r_list, h_list, pi_list, t_list, index
 
 
 def parse_blast_tab(filename):
@@ -561,7 +567,7 @@ def validate(primer_candidate, db_file, n_seqs, arg):
                 max_hsps=1,
                 outfmt='"7 {}"'.format(fmt),
                 out=blast_result_file.name)
-    stdout, stderr = cmd()
+    cmd()
     blast_result = dict()
     # because SearchIO.parse is slow, use parse_blast_result()
     for query in parse_blast_tab(blast_result_file.name):
@@ -571,6 +577,7 @@ def validate(primer_candidate, db_file, n_seqs, arg):
         sum_mismatch = 0
         good_hits = 0
         mid_loc = dict()
+        hit = query[0]
         for hit in query:
             min_positive = len(hit.query_seq) - arg.mismatch
             hsp_bitscore_raw = hit.bitscore_raw
@@ -676,10 +683,9 @@ def analyze(arg):
         return
     # generate consensus
     base_cumulative_frequency = count_base(alignment, rows, columns)
-    consensus = generate_consensus(
-        base_cumulative_frequency, arg.coverage, rows, columns,
-        arg.out_file+'.consensus.fastq')
-    max_count, max_H, max_Pi, max_T = get_resolution(alignment, 0, columns)
+    consensus = generate_consensus(base_cumulative_frequency, arg.coverage, rows,
+                                   arg.out_file+'.consensus.fastq')
+    max_count, max_h, max_pi, t = get_resolution(alignment, 0, columns)
     n_gap = sum([i[5] for i in base_cumulative_frequency])
     gap_ratio = n_gap / rows / columns
     summary = join_path(arg.out, 'Summary.csv')
@@ -689,17 +695,17 @@ def analyze(arg):
                     'TreeValue,ShannonIndex,Pi\n')
             s.write('{},{},{},{:.2%},{:.6f},{:.6f},{:.6f},{:.6f}\n'.format(
                 basename(arg.input), rows, columns, gap_ratio,
-                max_count, max_T, max_H, max_Pi))
+                max_count, t, max_h, max_pi))
     else:
         with open(summary, 'a') as s:
             s.write('{},{},{},{:.2%},{:.4f},{:.4f},{:.4f},{:.6f}\n'.format(
                 basename(arg.input), rows, columns, gap_ratio,
-                max_count, max_T, max_H, max_Pi))
+                max_count, t, max_h, max_pi))
     if max_count < arg.resolution:
         print('Too low resolution of {} !'.format(arg.input))
         return
     # count resolution
-    (seq_count, H, Pi, T, index) = count_and_draw(alignment, consensus, arg)
+    (seq_count, H, Pi, T, index) = count_and_draw(alignment, arg)
     # exit if resolution lower than given threshold.
     assert len(seq_count) != 0, 'Problematic Input !'
     # find candidate
@@ -1046,6 +1052,7 @@ def get_feature_name(feature, arg):
     Return: [name, feature.type]
     """
     name = None
+    misc_feature = None
     if feature.type == 'gene':
         if 'gene' in feature.qualifiers:
             gene = feature.qualifiers['gene'][0].replace(' ', '_')
@@ -1057,7 +1064,6 @@ def get_feature_name(feature, arg):
                 ' ', '_')
             name = safe(product)
     elif feature.type == 'misc_feature':
-        misc_feature = None
         if 'product' in feature.qualifiers:
             misc_feature = feature.qualifiers['product'][0].replace(
                 ' ', '_')
@@ -1096,10 +1102,7 @@ def get_feature_name(feature, arg):
     return name, feature.type
 
 
-def get_spacer(genes, arg):
-    """
-    List: [[name, SeqFeature],]
-    """
+def get_spacer(genes):
     spacers = list()
     # sorted according to sequence starting postion
     genes.sort(key=lambda x: int(x[1].location.start))
@@ -1173,7 +1176,7 @@ def divide(gbfile, arg):
             wrote_by_gene.add(wrote)
 
         # extract spacer
-        spacers = get_spacer(genes, arg)
+        spacers = get_spacer(genes)
         for spacer in spacers:
             sequence_id = '>' + '|'.join([spacer.id, taxon,
                                           accession, specimen])
