@@ -829,11 +829,14 @@ def get_resolution(alignment, start, end, fast=False):
             for index, row in enumerate(alignment[:, start:end]):
                 aln.write(b'>' + str(index).encode('utf-8') + b'\n' + b''.join(
                     row) + b'\n')
-        iqtree = run('iqtree -s {} -m JC -fast -czb'.format(aln_file),
-                     stdout=Tmp('wt'), shell=True)
+        with open(devnull, 'w') as f:
+            iqtree = run('iqtree -s {} -m JC -fast -czb'.format(aln_file),
+                         stdout=f, stderr=f, shell=True)
+
         # just return 0 if there is error
         if iqtree.returncode != 0:
-            tprint('Cannot get tree_value of {}-{}!'.format(start, end))
+            tprint('Cannot get tree_value of region {}-{} bp!'.format(
+                start, end))
             clean()
             return resolution, entropy, pi, 0
         tree = Phylo.read(aln.name + '.treefile', 'newick')
@@ -1049,8 +1052,9 @@ def validate(primer_candidate, db_file, n_seqs, arg):
         SeqIO.write(primer_candidate, _, 'fastq')
     SeqIO.convert(query_file + '.fastq', 'fastq', query_file, 'fasta')
     # build blast db
-    run('makeblastdb -in {} -dbtype nucl'.format(db_file), shell=True,
-        stdout=Tmp('wt'))
+    with open(devnull, 'w') as f:
+        run('makeblastdb -in {} -dbtype nucl'.format(db_file),
+            shell=True, stdout=f)
     # blast
     tprint('Validate with BLAST.')
     blast_result_file = Tmp('wt')
@@ -1063,6 +1067,7 @@ def validate(primer_candidate, db_file, n_seqs, arg):
                 max_hsps=1,
                 outfmt='"7 {}"'.format(fmt),
                 out=blast_result_file.name)
+    # hide output
     cmd()
     blast_result = dict()
     # because SearchIO.parse is slow, use parse_blast_result()
