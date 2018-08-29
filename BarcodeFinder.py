@@ -11,7 +11,6 @@ from os.path import basename, exists, splitext
 from os.path import join as join_path
 from subprocess import run
 from tempfile import NamedTemporaryFile as Tmp
-from timeit import default_timer as timer
 
 import numpy as np
 import primer3
@@ -301,7 +300,6 @@ def tprint(string):
 
 
 def check_tools():
-    print('Checking dependencies ..')
     f = open(devnull, 'w')
     for tools in ('mafft', 'iqtree', 'blastn'):
         check = run('{} --help'.format(tools), shell=True, stdout=f, stderr=f)
@@ -309,7 +307,6 @@ def check_tools():
         # to simplify code, use "--help" and accept 1 as returncode
         if check.returncode not in (0, 1):
             raise Exception('{} not found! Please install it!'.format(tools))
-        print('{} OK.'.format(tools))
     f.close()
 
 
@@ -336,7 +333,7 @@ def get_query_string(arg):
 
 
 def download(arg, query):
-    tprint('Your query:\n\t', query)
+    tprint('Your query:\n\t{}'.format(query))
     Entrez.email = arg.email
     query_handle = Entrez.read(Entrez.esearch(db='nuccore', term=query,
                                               usehistory='y'))
@@ -546,8 +543,6 @@ def get_feature_name(feature, arg):
         #     name = 'ITS_2'
     else:
         pass
-        # print('Cannot handle feature:')
-        # print(feature)
     return name, feature.type
 
 
@@ -731,7 +726,7 @@ def prepare(fasta):
     # check sequence length
     length_check = [len(i[1]) for i in data]
     if len(set(length_check)) != 1:
-        print('{} does not have uniform width!'.format(fasta))
+        tprint('{} does not have uniform width!'.format(fasta))
         return None, None, None
 
     # Convert List to numpy array.
@@ -838,7 +833,7 @@ def get_resolution(alignment, start, end, fast=False):
                      stdout=Tmp('wt'), shell=True)
         # just return 0 if there is error
         if iqtree.returncode != 0:
-            print('Cannot get tree_value of {}-{}!'.format(start, end))
+            tprint('Cannot get tree_value of {}-{}!'.format(start, end))
             clean()
             return resolution, entropy, pi, 0
         tree = Phylo.read(aln.name + '.treefile', 'newick')
@@ -1057,6 +1052,7 @@ def validate(primer_candidate, db_file, n_seqs, arg):
     run('makeblastdb -in {} -dbtype nucl'.format(db_file), shell=True,
         stdout=Tmp('wt'))
     # blast
+    tprint('Validate with BLAST.')
     blast_result_file = Tmp('wt')
     fmt = 'qseqid sseqid qseq nident mismatch score qstart qend sstart send'
     cmd = Blast(num_threads=len(sched_getaffinity(0)),
@@ -1142,7 +1138,6 @@ def pick_pair(primers, alignment, arg):
     # remove close located primers
     less_pairs = list()
     cluster = [pairs[0], ]
-    print(len(pairs))
     pairs.sort(key=lambda x: x.start)
     for index in range(1, len(pairs)):
         if pairs[index].start - pairs[index - 1].start < arg.min_primer:
@@ -1153,14 +1148,16 @@ def pick_pair(primers, alignment, arg):
             cluster.clear()
     cluster.sort(key=lambda x: x.score, reverse=True)
     less_pairs.extend(cluster[:arg.top_n])
-    print(len(less_pairs))
+    tprint('{} pairs of redundant primers were removed'.format(
+        len(pairs) - len(less_pairs)))
     good_pairs = list()
     for i in less_pairs:
         i.add_info(alignment)
         if i.resolution >= arg.resolution:
             good_pairs.append(i)
     good_pairs.sort(key=lambda x: x.score, reverse=True)
-    print(len(good_pairs))
+    tprint('Successfully found {} pairs of validated primers'.format(
+        len(good_pairs)))
     return good_pairs
 
 
@@ -1171,8 +1168,6 @@ def analyze(arg):
     arg.out_file = splitext(arg.input)[0]
     with open(arg.input + '.json', 'w') as out:
         json.dump(vars(arg), out, indent=4, sort_keys=True)
-        tprint('Parameters of analysis were dumped into {}'.format(
-            arg.input + '.json'))
     # read from fasta, generate new fasta for makeblastdb
     name, alignment, db_file = prepare(arg.input)
     if name is None:
@@ -1184,8 +1179,10 @@ def analyze(arg):
         return
     # generate consensus
     base_cumulative_frequency = count_base(alignment, rows, columns)
+    tprint('Generate consensus.')
     consensus = generate_consensus(base_cumulative_frequency, arg.coverage,
                                    rows, arg.out_file + '.consensus.fastq')
+    tprint('Evaluate whole alignment.')
     max_count, max_h, max_pi, t = get_resolution(alignment, 0, columns)
     n_gap = sum([i[5] for i in base_cumulative_frequency])
     gap_ratio = n_gap / rows / columns
@@ -1206,27 +1203,33 @@ def analyze(arg):
         tprint('Too low resolution of {} !'.format(arg.input))
         return
     # count resolution
+    tprint('Sliding window analyze.')
     (seq_count, H, Pi, T, index) = count_and_draw(alignment, arg)
     # exit if resolution lower than given threshold.
     assert len(seq_count) != 0, 'Problematic Input !'
     # find candidate
     good_region = get_good_region(index, seq_count, arg)
     consensus = find_continuous(consensus, good_region, arg.min_primer)
+    tprint('Find candidate primer pairs')
     primer_candidate, consensus = find_primer(consensus, arg.min_primer,
                                               arg.max_primer)
     if len(primer_candidate) == 0:
         tprint('Cannot find primers in {}. Try to loose options!'.format(
             arg.input))
+        return
+    tprint('Found {} pairs of candidate primers'.format(len(primer_candidate)))
     # validate
     primer_verified = validate(primer_candidate, db_file, rows, arg)
     if len(primer_verified) == 0:
         tprint('Cannot find primers in {}. Try to loose options!'.format(
             arg.input))
+        return
     # pick pair
     pairs = pick_pair(primer_verified, alignment, arg)
     if len(pairs) == 0:
         tprint('Cannot find primers in {}. Try to loose options!'.format(
             arg.input))
+        return
     # output
     csv_title = ('Score,Sequences,AvgProductLength,StdEV,MinProductLength,'
                  'MaxProductLength,Coverage,Resolution,TreeValue,Entropy,'
@@ -1252,7 +1255,7 @@ def analyze(arg):
             out2.write(line)
             SeqIO.write(pair.left, out1, 'fastq')
             SeqIO.write(pair.right, out1, 'fastq')
-    tprint('Found {} pairs of primers.'.format(len(pairs)))
+    tprint('Primers info were written into {}'.format(_))
 
 
 def main():
