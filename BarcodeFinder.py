@@ -296,6 +296,10 @@ def parse_args():
         return parsed
 
 
+def tprint(string):
+    print(datetime.now().time(), string, sep='\t')
+
+
 def check_tools():
     print('Checking dependencies ..')
     f = open(devnull, 'w')
@@ -332,17 +336,17 @@ def get_query_string(arg):
 
 
 def download(arg, query):
-    print('Your query:')
-    print(query)
+    tprint('Your query:\n\t', query)
     Entrez.email = arg.email
     query_handle = Entrez.read(Entrez.esearch(db='nuccore', term=query,
                                               usehistory='y'))
     count = int(query_handle['Count'])
-    print('{} records found.'.format(count))
-    print('Downloading... Ctrl+C to quit')
+    tprint('{} records found.'.format(count))
+    tprint('Downloading... Ctrl+C to quit')
     json_file = join_path(arg.out, 'query.json')
     with open(json_file, 'w') as _:
         json.dump(query_handle, _, indent=4, sort_keys=True)
+    tprint('Query info were dumped into {}/query.json'.format(arg.out))
 
     if arg.query is None:
         name = safe(arg.taxon)
@@ -353,7 +357,7 @@ def download(arg, query):
     ret_start = 0
     ret_max = 1000
     while ret_start <= count:
-        print('{}-{}'.format(ret_start, ret_start + ret_max))
+        tprint('{}-{}'.format(ret_start, ret_start + ret_max))
         try:
             data = Entrez.efetch(db='nuccore',
                                  webenv=query_handle['WebEnv'],
@@ -365,10 +369,10 @@ def download(arg, query):
             output.write(data.read())
         # just retry if connection failed
         except IOError:
-            print('Retrying...')
+            tprint('Retrying...')
             continue
         ret_start += 1000
-    print('Done.')
+    tprint('Download finished.')
     return file_name
 
 
@@ -573,7 +577,6 @@ def divide(gbfile, arg):
     """
     Given genbank file, return divided fasta files.
     """
-    start = timer()
     groupby_gene = '{}-groupby_gene'.format(gbfile.replace('.gb', ''))
     mkdir(groupby_gene)
     groupby_name = '{}-groupby_name'.format(gbfile.replace('.gb', ''))
@@ -605,12 +608,12 @@ def divide(gbfile, arg):
             if name is None:
                 continue
             if len(name) > 50:
-                print('Too long name: {}.'.format(name))
+                tprint('Too long name: {}.'.format(name))
                 name = name[:50] + '...'
             # skip abnormal annotation
             if len(feature) > 20000:
-                print('Skip abnormal annotaion of {}!'.format(name))
-                print('Accession: ', accession)
+                tprint('Skip abnormal annotaion of {}(Accession {})!'.format(
+                    name, accession))
                 continue
             if feature_type == 'gene':
                 genes.append([name, feature])
@@ -653,8 +656,7 @@ def divide(gbfile, arg):
     unknown = join_path(groupby_name, 'Unknown.fasta')
     if unknown in wrote_by_name:
         wrote_by_name.remove(unknown)
-    end = timer()
-    print('Divide done with {:.3f}s.'.format(end - start))
+    tprint('Divide done.')
     return list(wrote_by_gene), list(wrote_by_name)
 
 
@@ -685,16 +687,15 @@ def mafft(files):
     result = list()
     # get available CPU cores
     cores = len(sched_getaffinity(0))
-    print('Start mafft ...')
     for fasta in files:
-        print('Aligning {}'.format(fasta))
+        tprint('Aligning {}'.format(fasta))
         out = fasta + '.aln'
         _ = ('mafft --thread {} --reorder --quiet --adjustdirection '
              '{} > {}'.format(cores - 1, fasta, out))
         m = run(_, shell=True)
         if m.returncode == 0:
             result.append(out)
-    print('Done with mafft.')
+    tprint('Alignment done.')
     for i in glob('_order*'):
         remove(i)
     return result
@@ -1167,18 +1168,19 @@ def analyze(arg):
     """
     Automatic design primer for DNA barcode.
     """
-    start = timer()
     arg.out_file = splitext(arg.input)[0]
-    print('Write configuration into json')
     with open(arg.input + '.json', 'w') as out:
         json.dump(vars(arg), out, indent=4, sort_keys=True)
+        tprint('Parameters of analysis were dumped into {}'.format(
+            arg.input + '.json'))
     # read from fasta, generate new fasta for makeblastdb
     name, alignment, db_file = prepare(arg.input)
     if name is None:
         return
     rows, columns = alignment.shape
+    # tree require more than 4 sequences
     if rows < 4:
-        print('Too few sequence in {} (less than 4)!'.format(arg.input))
+        tprint('Too few sequence in {} (less than 4)!'.format(arg.input))
         return
     # generate consensus
     base_cumulative_frequency = count_base(alignment, rows, columns)
@@ -1201,7 +1203,7 @@ def analyze(arg):
                 basename(arg.input), rows, columns, gap_ratio,
                 max_count, t, max_h, max_pi))
     if max_count < arg.resolution:
-        print('Too low resolution of {} !'.format(arg.input))
+        tprint('Too low resolution of {} !'.format(arg.input))
         return
     # count resolution
     (seq_count, H, Pi, T, index) = count_and_draw(alignment, arg)
@@ -1213,17 +1215,17 @@ def analyze(arg):
     primer_candidate, consensus = find_primer(consensus, arg.min_primer,
                                               arg.max_primer)
     if len(primer_candidate) == 0:
-        print('Cannot find primers in {}. Try to loose options!'.format(
+        tprint('Cannot find primers in {}. Try to loose options!'.format(
             arg.input))
     # validate
     primer_verified = validate(primer_candidate, db_file, rows, arg)
     if len(primer_verified) == 0:
-        print('Cannot find primers in {}. Try to loose options!'.format(
+        tprint('Cannot find primers in {}. Try to loose options!'.format(
             arg.input))
     # pick pair
     pairs = pick_pair(primer_verified, alignment, arg)
     if len(pairs) == 0:
-        print('Cannot find primers in {}. Try to loose options!'.format(
+        tprint('Cannot find primers in {}. Try to loose options!'.format(
             arg.input))
     # output
     csv_title = ('Score,Sequences,AvgProductLength,StdEV,MinProductLength,'
@@ -1250,12 +1252,7 @@ def analyze(arg):
             out2.write(line)
             SeqIO.write(pair.left, out1, 'fastq')
             SeqIO.write(pair.right, out1, 'fastq')
-    print('Input alignment:')
-    print('\t{}: {} rows, {} columns'.format(arg.input, rows, columns))
-    print('Parameters:')
-    print('Found {} pairs of primers.'.format(len(pairs)))
-    end = timer()
-    print('Cost {:.3f} seconds.'.format(end - start))
+    tprint('Found {} pairs of primers.'.format(len(pairs)))
 
 
 def main():
@@ -1264,18 +1261,27 @@ def main():
     2. Divide according to annotation.
     3. Analyze.
     """
+    tprint('Welcome to BarcodeFinder!')
     arg = parse_args()
+
+    def analyze_wrapper(files):
+        for aln in files:
+            tprint('Analyze {}.'.format(aln))
+            arg.input = aln
+            analyze(arg)
+
     check_tools()
     mkdir(arg.out)
     if arg.aln is not None:
-        for i in list(glob(arg.aln)):
-            arg.input = i
-            analyze(arg)
+        analyze_wrapper(list(glob(arg.aln)))
         return
     user_data = list(glob(arg.fasta))
     query = get_query_string(arg)
+    tprint('Generate query for Genbank.')
     if query is not None:
+        tprint('Download data from Genbank.')
         gbfile = download(arg, query)
+        tprint('Divide data by annotation.')
         wrote_by_gene, wrote_by_name = divide(gbfile, arg)
         wrote_by_gene.extend(user_data)
         wrote_by_name.extend(user_data)
@@ -1287,21 +1293,21 @@ def main():
     if arg.no_uniq:
         pass
     else:
+        tprint('Remove redundant sequences.')
         wrote_by_gene = uniq(wrote_by_gene)
         wrote_by_name = uniq(wrote_by_name)
+    tprint('Aligning sequences.')
     if arg.max_len > 10000:
         # less than two records will cause empty output, which was omit
         aligned = mafft(wrote_by_gene)
     else:
         aligned = mafft(wrote_by_name)
+    analyze_wrapper(aligned)
     if arg.stop == 2:
         return
-    for aln in aligned:
-        print(aln)
-        arg.input = aln
-        analyze(arg)
-    for i in vars(arg).items():
-        print('\t{}: {}'.format(i[0].capitalize(), i[1]))
+    tprint('Finished. You can find output in {}.'.format(arg.out))
+    tprint('Summary info were written into {}.'.format(
+        join_path(arg.out, 'Summary.csv')))
     return
 
 
