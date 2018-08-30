@@ -233,6 +233,7 @@ def parse_args():
     output.add_argument('-expand_n', type=int, default=200,
                         help='expand length')
     filters = arg.add_argument_group('Filters')
+    filters.add_argument('-gene', type=str, help='gene name')
     filters.add_argument('-group',
                          choices=('animals', 'plants', 'fungi', 'protists',
                                   'bacteria', 'archaea', 'viruses'),
@@ -277,7 +278,7 @@ def parse_args():
         parsed.min_len = 10000
         parsed.max_len = 1000000
     if (parsed.query is None and parsed.taxon is None and parsed.fasta == ''
-            and parsed.aln is None):
+            and parsed.aln is None and parsed.gene is None):
         arg.print_help()
         raise ValueError('Please check your input!')
     if parsed.out is None:
@@ -316,6 +317,8 @@ def get_query_string(arg):
         condition.append('{}[filter]'.format(arg.group))
     if arg.query is not None:
         condition.append('"{}"'.format(arg.query))
+    if arg.gene is not None:
+        condition.append('"{}"[gene]'.format(arg.gene))
     if arg.molecular is not None:
         d = {'DNA': 'biomol_genomic[PROP]',
              'RNA': 'biomol_mrna[PROP]'}
@@ -343,8 +346,6 @@ def download(arg, query):
     json_file = join_path(arg.out, 'query.json')
     with open(json_file, 'w') as _:
         json.dump(query_handle, _, indent=4, sort_keys=True)
-    tprint('Query info were dumped into {}/query.json'.format(arg.out))
-
     if arg.query is None:
         name = safe(arg.taxon)
     else:
@@ -354,7 +355,7 @@ def download(arg, query):
     ret_start = 0
     ret_max = 1000
     while ret_start <= count:
-        tprint('{}-{}'.format(ret_start, ret_start + ret_max))
+        tprint('{:4d}-{:4d}'.format(ret_start, ret_start + ret_max))
         try:
             data = Entrez.efetch(db='nuccore',
                                  webenv=query_handle['WebEnv'],
@@ -697,7 +698,10 @@ def mafft(files):
 
 
 def average(x):
-    return sum(x) / len(x)
+    if len(x) == 0:
+        return 0
+    else:
+        return sum(x) / len(x)
 
 
 def prepare(fasta):
@@ -1171,7 +1175,7 @@ def analyze(arg):
     Automatic design primer for DNA barcode.
     """
     arg.out_file = splitext(arg.input)[0]
-    with open(arg.input + '.json', 'w') as out:
+    with open(join_path(arg.out, basename(arg.input) + '.json'), 'w') as out:
         json.dump(vars(arg), out, indent=4, sort_keys=True)
     # read from fasta, generate new fasta for makeblastdb
     name, alignment, db_file = prepare(arg.input)
@@ -1211,7 +1215,8 @@ def analyze(arg):
     tprint('Sliding window analyze.')
     (seq_count, H, Pi, T, index) = count_and_draw(alignment, arg)
     # exit if resolution lower than given threshold.
-    assert len(seq_count) != 0, 'Problematic Input !'
+    if len(seq_count) == 0:
+        tprint('Problematic Input of {}.!'.format(arg.input))
     # find candidate
     good_region = get_good_region(index, seq_count, arg)
     consensus = find_continuous(consensus, good_region, arg.min_primer)
@@ -1222,7 +1227,7 @@ def analyze(arg):
         tprint('Cannot find primers in {}. Try to loose options!'.format(
             arg.input))
         return
-    tprint('Found {} pairs of candidate primers'.format(len(primer_candidate)))
+    tprint('Found {} candidate primers'.format(len(primer_candidate)))
     # validate
     primer_verified = validate(primer_candidate, db_file, rows, arg)
     if len(primer_verified) == 0:
@@ -1260,7 +1265,7 @@ def analyze(arg):
             out2.write(line)
             SeqIO.write(pair.left, out1, 'fastq')
             SeqIO.write(pair.right, out1, 'fastq')
-    tprint('Primers info were written into {}'.format(_))
+    tprint('Primers info were written into {}.csv'.format(_))
 
 
 def main():
