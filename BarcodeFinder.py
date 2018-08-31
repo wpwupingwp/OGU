@@ -710,10 +710,10 @@ def prepare(fasta):
     Given fasta format alignment filename, return a numpy array for sequence:
     Generate fasta file without gap for makeblastdb, return file name.
     """
-    no_gap = 'no_gap.fasta'
+    no_gap_file = 'no_gap.fasta'
     data = list()
     record = ['id', 'sequence']
-    with open(fasta, 'r') as raw, open(no_gap, 'w') as no_gap:
+    with open(fasta, 'r') as raw, open(no_gap_file, 'w') as no_gap:
         for line in raw:
             no_gap.write(line.replace('-', ''))
             if line.startswith('>'):
@@ -725,7 +725,6 @@ def prepare(fasta):
                 record.append(line.strip().upper())
         # add last sequence
         data.append([record[0], ''.join(record[1:])])
-        # generate no-gap fasta
     # skip head['id', 'seq']
     data = data[1:]
     # check sequence length
@@ -741,8 +740,8 @@ def prepare(fasta):
     sequence = np.array([list(i[1]) for i in data], dtype=np.bytes_, order='F')
     interleaved = 'interleaved.fasta'
     # try to avoid makeblastdb error
-    SeqIO.convert(no_gap, 'fasta', interleaved, 'fasta')
-    remove(no_gap)
+    SeqIO.convert(no_gap_file, 'fasta', interleaved, 'fasta')
+    remove(no_gap_file)
     return name, sequence, interleaved
 
 
@@ -824,6 +823,10 @@ def get_resolution(alignment, start, end, fast=False):
     pi = (2 / (n * (n - 1)) * sum_d_ij) / m
     # tree value
     aln_file = '{}-{}.aln.tmp'.format(start, end)
+
+    def clean():
+        for _ in glob(aln_file + '*'):
+            remove(_)
     if not fast:
         with open(aln_file, 'wb') as aln:
             for index, row in enumerate(alignment[:, start:end]):
@@ -836,13 +839,13 @@ def get_resolution(alignment, start, end, fast=False):
         if iqtree.returncode != 0:
             tprint('Cannot get tree_value of region {}-{} bp!'.format(
                 start, end))
+            clean()
             return resolution, entropy, pi, 0
         tree = Phylo.read(aln_file + '.treefile', 'newick')
         # skip the first empty node
         internals = tree.get_nonterminals()[1:]
         tree_value = len(internals) / len(tree.get_terminals())
-        for _ in glob(aln_file + '*'):
-            remove(_)
+        clean()
     else:
         tree_value = 0
     return resolution, entropy, pi, tree_value
