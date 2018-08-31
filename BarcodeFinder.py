@@ -10,7 +10,6 @@ from os import devnull, mkdir, remove, sched_getaffinity
 from os.path import basename, exists, splitext
 from os.path import join as join_path
 from subprocess import run
-from tempfile import NamedTemporaryFile as Tmp
 
 import numpy as np
 import primer3
@@ -711,10 +710,10 @@ def prepare(fasta):
     Given fasta format alignment filename, return a numpy array for sequence:
     Generate fasta file without gap for makeblastdb, return file name.
     """
-    no_gap = Tmp('wt')
+    no_gap = 'no_gap.fasta'
     data = list()
     record = ['id', 'sequence']
-    with open(fasta, 'r') as raw:
+    with open(fasta, 'r') as raw, open(no_gap, 'w') as no_gap:
         for line in raw:
             no_gap.write(line.replace('-', ''))
             if line.startswith('>'):
@@ -740,11 +739,11 @@ def prepare(fasta):
     # new = np.hstack((name, seq)) -> is slower
     name = np.array([[i[0]] for i in data], dtype=np.bytes_)
     sequence = np.array([list(i[1]) for i in data], dtype=np.bytes_, order='F')
-    organize_no_gap = Tmp('wt', delete=False)
+    interleaved = 'interleaved.fasta'
     # try to avoid makeblastdb error
-    SeqIO.convert(no_gap.name, 'fasta', organize_no_gap.name, 'fasta')
-    no_gap.close()
-    return name, sequence, organize_no_gap.name
+    SeqIO.convert(no_gap, 'fasta', interleaved, 'fasta')
+    remove(no_gap)
+    return name, sequence, interleaved
 
 
 def count_base(alignment, rows, columns):
@@ -825,11 +824,6 @@ def get_resolution(alignment, start, end, fast=False):
     pi = (2 / (n * (n - 1)) * sum_d_ij) / m
     # tree value
     aln_file = '{}-{}.aln.tmp'.format(start, end)
-
-    def clean():
-        for _ in glob(aln_file + '*'):
-            remove(_)
-
     if not fast:
         with open(aln_file, 'wb') as aln:
             for index, row in enumerate(alignment[:, start:end]):
@@ -838,18 +832,17 @@ def get_resolution(alignment, start, end, fast=False):
         with open(devnull, 'w') as f:
             iqtree = run('iqtree -s {} -m JC -fast -czb'.format(aln_file),
                          stdout=f, stderr=f, shell=True)
-
         # just return 0 if there is error
         if iqtree.returncode != 0:
             tprint('Cannot get tree_value of region {}-{} bp!'.format(
                 start, end))
-            clean()
             return resolution, entropy, pi, 0
-        tree = Phylo.read(aln.name + '.treefile', 'newick')
+        tree = Phylo.read(aln_file + '.treefile', 'newick')
         # skip the first empty node
         internals = tree.get_nonterminals()[1:]
-        clean()
         tree_value = len(internals) / len(tree.get_terminals())
+        for _ in glob(aln_file + '*'):
+            remove(_)
     else:
         tree_value = 0
     return resolution, entropy, pi, tree_value
@@ -1066,7 +1059,7 @@ def validate(primer_candidate, db_file, n_seqs, arg):
             return []
     # blast
     tprint('Validate with BLAST.')
-    blast_result_file = Tmp('wt')
+    blast_result_file = 'blast.result.tsv'
     fmt = 'qseqid sseqid qseq nident mismatch score qstart qend sstart send'
     cmd = Blast(num_threads=len(sched_getaffinity(0)),
                 query=query_file,
@@ -1075,12 +1068,12 @@ def validate(primer_candidate, db_file, n_seqs, arg):
                 evalue=1e-2,
                 max_hsps=1,
                 outfmt='"7 {}"'.format(fmt),
-                out=blast_result_file.name)
+                out=blast_result_file)
     # hide output
     cmd()
     blast_result = dict()
     # because SearchIO.parse is slow, use parse_blast_result()
-    for query in parse_blast_tab(blast_result_file.name):
+    for query in parse_blast_tab(blast_result_file):
         if len(query) == 0:
             continue
         sum_bitscore_raw = 0
@@ -1119,10 +1112,10 @@ def validate(primer_candidate, db_file, n_seqs, arg):
             primer.update_id()
             primer_verified.append(primer)
     primer_verified.sort(key=lambda x: x.start)
-    blast_result_file.close()
     # clean makeblastdb files
     for i in glob(db_file + '*'):
         remove(i)
+    remove(blast_result_file)
     return primer_verified
 
 
@@ -1183,6 +1176,7 @@ def analyze(arg):
     # read from fasta, generate new fasta for makeblastdb
     name, alignment, db_file = prepare(arg.input)
     if name is None:
+        tprint('Bad fasta file {}.'.format(arg.input))
         return
     rows, columns = alignment.shape
     # tree require more than 4 sequences
