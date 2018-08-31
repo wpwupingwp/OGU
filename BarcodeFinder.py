@@ -297,7 +297,9 @@ def parse_args():
 
 
 def tprint(string):
-    print(datetime.now().time(), string, sep='\t')
+    s = '{}\t{}'.format(datetime.now().time(), string)
+    print(s, flush=True)
+    log_handle.write(s + '\n')
 
 
 def check_tools():
@@ -343,7 +345,7 @@ def download(arg, query):
     count = int(query_handle['Count'])
     tprint('{} records found.'.format(count))
     tprint('Downloading... Ctrl+C to quit')
-    json_file = join_path(arg.out, 'query.json')
+    json_file = join_path(arg.out, 'Query.json')
     with open(json_file, 'w') as _:
         json.dump(query_handle, _, indent=4, sort_keys=True)
     if arg.query is None:
@@ -1057,8 +1059,11 @@ def validate(primer_candidate, db_file, n_seqs, arg):
     SeqIO.convert(query_file + '.fastq', 'fastq', query_file, 'fasta')
     # build blast db
     with open(devnull, 'w') as f:
-        run('makeblastdb -in {} -dbtype nucl'.format(db_file),
-            shell=True, stdout=f)
+        _ = run('makeblastdb -in {} -dbtype nucl'.format(db_file),
+                shell=True, stdout=f)
+        if _.returncode != 0:
+            tprint('makeblastdb error!')
+            return []
     # blast
     tprint('Validate with BLAST.')
     blast_result_file = Tmp('wt')
@@ -1175,8 +1180,6 @@ def analyze(arg):
     Automatic design primer for DNA barcode.
     """
     arg.out_file = splitext(arg.input)[0]
-    with open(join_path(arg.out, basename(arg.input) + '.json'), 'w') as out:
-        json.dump(vars(arg), out, indent=4, sort_keys=True)
     # read from fasta, generate new fasta for makeblastdb
     name, alignment, db_file = prepare(arg.input)
     if name is None:
@@ -1274,8 +1277,12 @@ def main():
     2. Divide according to annotation.
     3. Analyze.
     """
-    tprint('Welcome to BarcodeFinder!')
     arg = parse_args()
+    mkdir(arg.out)
+    global log_handle
+    log_handle = open(join_path(arg.out, 'Log.txt'), 'w')
+    tprint('Welcome to BarcodeFinder!')
+    check_tools()
 
     def analyze_wrapper(files):
         for aln in files:
@@ -1283,8 +1290,6 @@ def main():
             arg.input = aln
             analyze(arg)
 
-    check_tools()
-    mkdir(arg.out)
     if arg.aln is not None:
         analyze_wrapper(list(glob(arg.aln)))
         return
@@ -1321,6 +1326,11 @@ def main():
     tprint('Finished. You can find output in {}.'.format(arg.out))
     tprint('Summary info were written into {}.'.format(
         join_path(arg.out, 'Summary.csv')))
+    _ = join_path(arg.out, 'Options.json')
+    with open(_, 'w') as out:
+        json.dump(vars(arg), out, indent=4, sort_keys=True)
+    tprint('Options were dumped into {}.'.format(_))
+    log_handle.close()
     return
 
 
