@@ -206,6 +206,7 @@ def parse_args():
     arg = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description=main.__doc__)
+    # to be continue
     arg.add_argument('-continue', action='store_true',
                      help='continue broken download process')
     arg.add_argument('-email', default='',
@@ -223,6 +224,9 @@ def parse_args():
     arg.add_argument('-no_uniq', action='store_true',
                      help='do not remove redundant records')
     output = arg.add_argument_group('Output')
+    output.add_argument('-no_frag', action='store_true',
+                        help='analyze whole sequence rather than divided'
+                        ' fragment')
     output.add_argument('-out', help='output directory')
     output.add_argument('-rename', action='store_true',
                         help='try to rename gene')
@@ -779,12 +783,6 @@ def count_base(alignment, rows, columns):
 
 
 def get_quality(data, rows):
-    """
-
-    :param data:
-    :param rows:
-    :return:
-    """
     # use fastq-illumina format
     max_q = 62
     factor = max_q / rows
@@ -1312,7 +1310,7 @@ def main():
         wrote_by_gene = uniq(wrote_by_gene)
         wrote_by_name = uniq(wrote_by_name)
     tprint('Aligning sequences.')
-    if arg.max_len > 10000:
+    if not arg.no_frag or arg.max_len > 10000:
         # less than two records will cause empty output, which was omit
         aligned = mafft(wrote_by_gene)
     else:
