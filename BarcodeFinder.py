@@ -276,6 +276,8 @@ def parse_args():
     options.add_argument('-tmax', '--max_product', type=int, default=500,
                          help='maximum product length(include primer)')
     parsed = arg.parse_args()
+    parsed.db_file = 'interleaved.fasta'
+    parsed.no_gap_file = 'no_gap.fasta'
     if parsed.organelle is not None:
         # 10k to 1m seems enough
         parsed.min_len = 10000
@@ -709,15 +711,14 @@ def average(x):
         return sum(x) / len(x)
 
 
-def prepare(fasta):
+def prepare(arg):
     """
     Given fasta format alignment filename, return a numpy array for sequence:
     Generate fasta file without gap for makeblastdb, return file name.
     """
-    no_gap_file = 'no_gap.fasta'
     data = list()
     record = ['id', 'sequence']
-    with open(fasta, 'r') as raw, open(no_gap_file, 'w') as no_gap:
+    with open(arg.input, 'r') as raw, open(arg.no_gap_file, 'w') as no_gap:
         for line in raw:
             no_gap.write(line.replace('-', ''))
             if line.startswith('>'):
@@ -734,7 +735,7 @@ def prepare(fasta):
     # check sequence length
     length_check = [len(i[1]) for i in data]
     if len(set(length_check)) != 1:
-        tprint('{} does not have uniform width!'.format(fasta))
+        tprint('{} does not have uniform width!'.format(arg.input))
         return None, None, None
 
     # Convert List to numpy array.
@@ -742,10 +743,18 @@ def prepare(fasta):
     # new = np.hstack((name, seq)) -> is slower
     name = np.array([[i[0]] for i in data], dtype=np.bytes_)
     sequence = np.array([list(i[1]) for i in data], dtype=np.bytes_, order='F')
+
+    if name is None:
+        tprint('Bad fasta file {}.'.format(arg.input))
+        name = None
+    # tree require more than 4 sequences
+    if len(sequence) < 4:
+        tprint('Too few sequence in {} (less than 4)!'.format(arg.input))
+        name = None
     interleaved = 'interleaved.fasta'
+    # for clean
     # try to avoid makeblastdb error
-    SeqIO.convert(no_gap_file, 'fasta', interleaved, 'fasta')
-    remove(no_gap_file)
+    SeqIO.convert(arg.no_gap_file, 'fasta', interleaved, 'fasta')
     return name, sequence, interleaved
 
 
@@ -1175,15 +1184,10 @@ def analyze(arg):
     """
     arg.out_file = splitext(arg.input)[0]
     # read from fasta, generate new fasta for makeblastdb
-    name, alignment, db_file = prepare(arg.input)
+    name, alignment, db_file = prepare(arg)
     if name is None:
-        tprint('Bad fasta file {}.'.format(arg.input))
         return
     rows, columns = alignment.shape
-    # tree require more than 4 sequences
-    if rows < 4:
-        tprint('Too few sequence in {} (less than 4)!'.format(arg.input))
-        return
     # generate consensus
     base_cumulative_frequency = count_base(alignment, rows, columns)
     tprint('Generate consensus.')
@@ -1284,6 +1288,12 @@ def main():
             tprint('Analyze {}.'.format(aln))
             arg.input = aln
             analyze(arg)
+        # dirty work
+        try:
+            remove(arg.no_gap_file)
+            remove(arg.db_file)
+        except FileNotFoundError:
+            pass
 
     if arg.aln is not None:
         analyze_wrapper(list(glob(arg.aln)))
