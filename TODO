@@ -1,6 +1,6 @@
 #1. integrate gb2fasta
 #2. integrate batch_query
-3. integrate uniq
+# 3. integrate uniq
 4. integrate remove-long
 #5. use Shannon Index
 # 6. pick primer pair
@@ -12,8 +12,8 @@
 # 12. use tree_value or not, mafft seems give 1.0 always
 #13. too slow for chloroplast genome, 10 samples, 6 hours
 14. difflib
-15. log
-16. give fragment name by gb file
+# 15. log
+# 16. give fragment name by gb file
 #17. use time.test2 to profile
 #18. too much primer candidate
 #19. update_id for Pair
@@ -24,9 +24,9 @@
 24. delta G
 #25. integrate mafft
 # 26. matK.aln use 89 seconds, need profiling (now 7s)
-27. clean output file
-28. print hint
-29. reorder functions
+# 27. clean output file
+# 28. print hint
+# 29. reorder functions
 30. package
 31. update to pip
 32. requirement
