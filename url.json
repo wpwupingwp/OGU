@@ -1,5 +1,5 @@
 {
- "linux": {
+ "Linux": {
   "blast": "ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ncbi-blast-2.7.1+-x64-linux.tar.gz",
   "iqtree": "https://github.com/Cibiv/IQ-TREE/releases/download/v1.6.7/iqtree-1.6.7-Linux.tar.gz",
   "mafft": "https://mafft.cbrc.jp/alignment/software/mafft-7.407-linux.tgz"
@@ -9,7 +9,7 @@
   "iqtree": "https://github.com/Cibiv/IQ-TREE/releases/download/v1.6.7/iqtree-1.6.7-MacOSX.zip",
   "mafft": "https://mafft.cbrc.jp/alignment/software/mafft-7.407-mac.zip"
  },
- "windows": {
+ "Windows": {
   "blast": "ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ncbi-blast-2.7.1+-win64.exe",
   "iqtree": "https://github.com/Cibiv/IQ-TREE/releases/download/v1.6.7/iqtree-1.6.7-Windows.zip",
   "mafft": "https://mafft.cbrc.jp/alignment/software/mafft-7.409-win64-signed.zip"
