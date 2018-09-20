@@ -330,8 +330,21 @@ def check_tools():
 
 
 def download_software(sys):
-    with open('url.json', 'r') as _:
-        urls = json.load(_)
+    # althrough dirty, but save one file to make folder clean
+    blast_url = ('ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/'
+                 'ncbi-blast-2.7.1+')
+    iqtree_url = ('https://github.com/Cibiv/IQ-TREE/release/download/v1.6.7'
+                  'iqtree-1.6.7')
+    mafft_url = 'https://mafft.cbrc.jp/alignment/software/mafft'
+    urls = {'Linux': {'blast': blast_url+'-x64-linux.tar.gz',
+                      'iqtree': iqtree_url+'-Linux.tar.gz',
+                      'mafft': mafft_url+'-7.407-linux.tgz'},
+            'macos': {'blast': blast_url+'.dmg',
+                      'iqtree': iqtree_url+'-MacOSX.zip',
+                      'mafft': mafft_url+'-7.407-mac.zip'},
+            'Windows': {'blast': blast_url+'-win64.exe',
+                        'iqtree': iqtree_url+'-Windows.zip',
+                        'mafft': mafft_url+'-7.409-win64-signed.zip'}}
     for software in urls[sys]:
         url = urls[sys][software]
     filename = url.split('/')[-1]
@@ -340,8 +353,7 @@ def download_software(sys):
         with open(filename, 'wb') as out:
             out.write(down.read())
     else:
-        tprint('Cannot download {}.'.format(software))
-        raise Exception
+        raise Exception('Cannot download {}.'.format(software))
     try:
         unpack_archive(filename)
     except ReadError:
