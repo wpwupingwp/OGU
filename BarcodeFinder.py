@@ -1325,9 +1325,9 @@ def main():
         aligned = mafft(wrote_by_gene)
     else:
         aligned = mafft(wrote_by_name)
-    analyze_wrapper(aligned)
     if arg.stop == 2:
         return
+    analyze_wrapper(aligned)
     tprint('Finished. You can find output in {}.'.format(arg.out))
     tprint('Summary info were written into {}.'.format(
         join_path(arg.out, 'Summary.csv')))

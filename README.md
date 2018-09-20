@@ -18,16 +18,66 @@ stable network and inexpensive net fee when downloading large size of data.
 Assume that you alreadly installed python3 (3.5 or above), firstly, 
 install BarcodeFinder.
 ```
+# as administator
 pip3 install BarcodeFinder
-```
-If you do not have administrator privilege, then use this instead:
-```
+# normal user
 pip3 install BarcodeFinder --user
 ```
-If you want to update from old version:
+Secondly, you need to install dependent software and python modules.
+You can use install.py to help you:
 ```
-pip3 install -U BarcodeFinder
+# Windows
+cd {BarcodeFinder path}
+python install.py
+# Linux and macos
+cd {BarcodeFinder path}
+python3 install.py
 ```
-Secondly, you need to install BLAST, IQTREE and MAFFT if you have not yet.
-You can install them manually.
-For Microsoft Windows users,
+Here "BarcodeFinder path
+##!@#$!@#$!
+This program may help you to install all of them. Note that for Windows user,
+you need to manually run BLAST installer and make sure that you added
+installation path into _PATH_ enviroment variable..
+## Usage
+### Windows
+python BarcodeFinder.py 
+### Quick examples
+Download all rbcL sequences of plants:
+```
+# Windows
+python BarcodeFinder.py -query rbcL -group plants -stop 1 -out rbcL
+# Linux and macos
+python3 BarcodeFinder.py -query rbcL -group plants -stop 1 -out rbcL
+```
+Download all ITS sequences of Rosa and do preprocess:
+```
+# Windows
+python BarcodeFinder.py -query "internal transcribed spacer" -taxon Rosa -stop 2 -out Rosa_its
+# Linux and macos
+python3 BarcodeFinder.py -query "internal transcribed spacer" -taxon Rosa -stop 2 -out Rosa_its
+```
+Download all Rosaceae chloroplast genome sequences, plus your data  as fasta 
+format, then do analyze:
+```
+# Windows
+python BarcodeFinder.py -organelle chloroplast -taxon Rosaceae -out Poaceae_cpg -fasta my_data.fasta
+# Linux and macos
+python3 BarcodeFinder.py -organelle chloroplast -taxon Rosaceae -out Poaceae_cpg -fasta my_data.fasta
+```
+Download sequences of Zea mays, set length between 100 bp and 3000 bp, plus
+your aligned data, then do analyze:
+```
+# Windows
+python BarcodeFinder.py -taxon "Zea mays" -min_len 100 -max_len 3000 -out Zea_mays -aln my_data.aln
+# Linux and macos
+python3 BarcodeFinder.py -taxon "Zea mays" -min_len 100 -max_len 3000 -out Zea_mays -aln my_data.aln
+```
+Download all Oryza chloroplast genomes, divide them into fragments, and skip
+analyze:
+```
+# Windows
+python BarcodeFinder.py -taxon Oryza -organelle chloroplast -stop 2 -out Oryza_cp
+# Linux and macos
+python3 BarcodeFinder.py -taxon Oryza -organelle chloroplast -stop 2 -out Oryza_cp
+```
+
