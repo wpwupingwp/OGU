@@ -6,10 +6,14 @@ import re
 from collections import defaultdict
 from datetime import datetime
 from glob import glob
-from os import devnull, mkdir, remove, sched_getaffinity
-from os.path import basename, exists, splitext
+from os import (devnull, environ, mkdir, pathsep, remove, sched_getaffinity,
+                sep)
+from os.path import abspath, basename, exists, splitext
 from os.path import join as join_path
+from platform import system
+from shutil import unpack_archive, ReadError
 from subprocess import run
+from urllib import request
 
 import numpy as np
 import primer3
@@ -308,14 +312,87 @@ def tprint(string):
 
 
 def check_tools():
+    if exists('PATH.json'):
+        with open('PATH.json', 'r') as path_file:
+            exists_path = path_file.read().strip()
+            environ['PATH'] = pathsep.join([exists_path, environ['PATH']])
     f = open(devnull, 'w')
+    ok = True
     for tools in ('mafft', 'iqtree', 'blastn'):
         check = run('{} --help'.format(tools), shell=True, stdout=f, stderr=f)
         # mafft return 1 if "--help", BLAST do not have --help
         # to simplify code, use "--help" and accept 1 as returncode
         if check.returncode not in (0, 1):
-            raise Exception('{} not found! Please install it!'.format(tools))
+            ok = False
+    if not ok:
+        deploy()
     f.close()
+
+
+def download_software(sys):
+    with open('url.json', 'r') as _:
+        urls = json.load(_)
+    for software in urls[sys]:
+        url = urls[sys][software]
+    filename = url.split('/')[-1]
+    down = request.urlopen(url)
+    if down.status == 200:
+        with open(filename, 'wb') as out:
+            out.write(down.read())
+    else:
+        tprint('Cannot download {}.'.format(software))
+        raise Exception
+    try:
+        unpack_archive(filename)
+    except ReadError:
+        pass
+    return True
+
+
+def deploy(software):
+    sys = system()
+    if sys == 'Windows':
+        download_software(sys, software)
+        run('ncbi-blast-2.7.1+-win64.exe', shell=True)
+        environ['PATH'] = pathsep.join([
+            abspath('mafft-win'), abspath('iqtree-1.6.7-Windows'+sep+'bin'),
+            environ['PATH']])
+    elif sys == 'Linux':
+        ok = False
+        for pack_mgr in ('apt', 'dnf', 'yum', 'pkg'):
+            r = run('{} install ncbi-blast+ iqtree mafft'.format(pack_mgr),
+                    shell=True)
+            if r.returncode == 0:
+                ok = True
+                break
+        if not ok:
+            download_software(sys, software)
+            environ['PATH'] = pathsep.join([
+                abspath('mafft-linux64'),
+                abspath('iqtree-1.6.7-Linux'+sep+'bin'),
+                abspath('ncbi-blast-2.7.1+'+sep+'bin'), environ['PATH']])
+    elif sys == 'Apple':
+        r = run('brew --help', shell=True)
+        if r.returncode != 0:
+            r2 = run('/usr/bin/ruby -e "$(curl -fsSL https://raw.'
+                     'githubusercontent.com/Homebrew/install/master/install)"',
+                     shell=True)
+            r3 = run('brew install blast mafft brewsci/science/iqtree',
+                     shell=True)
+            if r2.returncode != r3.returncode != 0:
+                raise Exception('Cannot install brew')
+        else:
+            r3 = run('brew install blast mafft brewsci/science/iqtree',
+                     shell=True)
+        if r3.returncode != 0:
+            download_software(sys)
+            environ['PATH'] = pathsep.join([
+                abspath('mafft-mac'), abspath('iqtree-1.6.7-MacOSX'+sep+'bin'),
+                abspath('ncbi-blast-2.7.1+'+sep+'bin'), environ['PATH']])
+    with open('PATH.json', 'w') as path_out:
+        json.dump(environ['PATH'], path_out)
+    return environ['PATH']
+
 
 
 def get_query_string(arg):
