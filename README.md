@@ -2,12 +2,12 @@
 Automatic discover novel DNA barcode with universal primers.
 ## Prerequisite
 ### Software
-* [Python3](https://www.python.org/downloads/)(3.5 or above)
-* [BLAST](ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/)
-* [IQTREE](http://www.iqtree.org/)
-* [MAFFT](https://mafft.cbrc.jp/alignment/software/)
+* Python3
+* BLAST+
+* IQTREE
+* MAFFT
 ### Python module
-* biopython
+* Biopython
 * matplotlib
 * numpy
 * primer3-py
@@ -15,8 +15,12 @@ Automatic discover novel DNA barcode with universal primers.
 The data retrive function requires Internet connection. Please ensure you have
 stable network and inexpensive net fee when downloading large size of data.
 ## Installation
-Assume that you alreadly installed python3 (3.5 or above), firstly, 
-install BarcodeFinder.
+Assume that you alreadly installed [Python3](https://www.python.org/downloads/)
+(3.5 or above). Firstly, install BarcodeFinder.
+The easiest way is to download 
+[BarcodeFinder.py](https://github.com/wpwupingwp/BarcodeFinder) and put it 
+into wherever you want.
+If you would like to use pip, then:
 ```
 # as administator
 pip3 install BarcodeFinder
@@ -24,23 +28,51 @@ pip3 install BarcodeFinder
 pip3 install BarcodeFinder --user
 ```
 Secondly, you need to install dependent software and python modules.
-You can use install.py to help you:
+Althrough BarcodeFinder has assistant function to automaticly install 
+dependent softwares and modules if it cannot find them. However, it is 
+highly recommended to follow official installation procedure to make it 
+easy for management and give you a clean working directory.
+For Linux user, if you have root privileges, just use your package manager:
 ```
-# Windows
-cd {BarcodeFinder path}
-python install.py
-# Linux and macos
-cd {BarcodeFinder path}
-python3 install.py
+# Ubuntu and Debian
+sudo apt install mafft ncbi-blast+ iqtree
+# Fedora
+sudo dnf install mafft ncbi-blast+ iqtree
+# Fedora 2
+sudo yum install mafft ncbi-blast+ iqtree
+# ArchLinux
+sudo pacman -S mafft ncbi-blast+ iqtree
+# FreeBSD
+sudo pkg install mafft ncbi-blast+ iqtree
 ```
-Here "BarcodeFinder path
-##!@#$!@#$!
-This program may help you to install all of them. Note that for Windows user,
-you need to manually run BLAST installer and make sure that you added
-installation path into _PATH_ enviroment variable..
+For MacOSX user, assume you have root privileges, if you do not have 
+*brew*, install it:
+```
+/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+```
+Then:
+```
+brew install blast mafft brewsci/science/iqtree
+```
+If you are Windows user or you do not have root privileges, follow these
+instructions:
+1. BLAST+
+* [Windows](https://www.ncbi.nlm.nih.gov/books/NBK52637/)
+* [Linux and MacOSX](https://www.ncbi.nlm.nih.gov/books/NBK52640/)
+2. MAFFT
+* [Windows](https://mafft.cbrc.jp/alignment/software/windows.html)
+Choose "All-in-one version", download and unzip. Then follow the step in
+BLAST+ installation manual to set _PATH_.
+* [Linux](https://mafft.cbrc.jp/alignment/software/linux.html)
+Choose "Protable package", download and unzip. Then follow the instruction of
+BLAST+ to set _PATH_.
+* [MacOSX](https://mafft.cbrc.jp/alignment/software/macosx.html)
+Choose "All-in-one version", download and unzip. Then follow the step in
+BLAST+ installation manual to set _PATH_.
+3. IQTREE
+[Download](http://www.iqtree.org/#download) according to your OS.
+Unzip and add the path of subfolder *bin* into _PATH_
 ## Usage
-### Windows
-python BarcodeFinder.py 
 ### Quick examples
 Download all rbcL sequences of plants:
 ```
