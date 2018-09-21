@@ -1384,10 +1384,8 @@ def main():
         except FileNotFoundError:
             pass
 
-    if arg.aln is not None:
-        analyze_wrapper(list(glob(arg.aln)))
-        return
-    user_data = list(glob(arg.fasta))
+    wrote_by_gene = list()
+    wrote_by_name = list()
     query = get_query_string(arg)
     tprint('Generate query for Genbank.')
     if query is not None:
@@ -1395,11 +1393,16 @@ def main():
         gbfile = download(arg, query)
         tprint('Divide data by annotation.')
         wrote_by_gene, wrote_by_name = divide(gbfile, arg)
+    if arg.fasta is not None:
+        user_data = list(glob(arg.fasta))
         wrote_by_gene.extend(user_data)
         wrote_by_name.extend(user_data)
-    else:
-        wrote_by_gene = user_data[::]
-        wrote_by_name = user_data[::]
+    if arg.aln is not None:
+        user_aln = list(glob(arg.aln))
+        wrote_by_gene.extend(user_aln)
+        wrote_by_name.extend(user_aln)
+    if len(wrote_by_gene) == 0 and len(wrote_by_name) == 0:
+        raise Exception('Empty input!')
     if arg.stop == 1:
         return
     if arg.no_uniq:
