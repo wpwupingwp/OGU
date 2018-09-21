@@ -220,7 +220,7 @@ def parse_args():
     arg.add_argument('-aln', default=None,
                      help='aligned fasta files to analyze')
     arg.add_argument('-query', help='query text')
-    arg.add_argument('-stop', choices=(1, 2, 3), default=3,
+    arg.add_argument('-stop', type=int, choices=(1, 2, 3), default=3,
                      help=('Stop after which step:\n'
                            '\t1. Download\n'
                            '\t2. Preprocess data\n'
