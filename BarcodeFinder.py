@@ -1378,6 +1378,10 @@ def main():
     mkdir(arg.out)
     global log_handle
     log_handle = open(join_path(arg.out, 'Log.txt'), 'w')
+    _ = join_path(arg.out, 'Options.json')
+    with open(_, 'w') as out:
+        json.dump(vars(arg), out, indent=4, sort_keys=True)
+    tprint('Options were dumped into {}.'.format(_))
     tprint('Welcome to BarcodeFinder!')
     check_tools()
 
@@ -1437,10 +1441,6 @@ def main():
     tprint('Finished. You can find output in {}.'.format(arg.out))
     tprint('Summary info were written into {}.'.format(
         join_path(arg.out, 'Summary.csv')))
-    _ = join_path(arg.out, 'Options.json')
-    with open(_, 'w') as out:
-        json.dump(vars(arg), out, indent=4, sort_keys=True)
-    tprint('Options were dumped into {}.'.format(_))
     log_handle.close()
     return
 
