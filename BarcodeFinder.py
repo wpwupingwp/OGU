@@ -210,13 +210,13 @@ def parse_args():
     arg = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description=main.__doc__)
+    arg.add_argument('-email', help='email address for querying Genbank')
+    arg.add_argument('-aln', help='aligned fasta files to analyze')
     # to be continue
     arg.add_argument('-continue', action='store_true',
                      help='continue broken download process')
-    arg.add_argument('-fasta', default='',
-                     help='unaligned fasta format data to add')
-    arg.add_argument('-aln', default=None,
-                     help='aligned fasta files to analyze')
+    arg.add_argument('-fasta', help='unaligned fasta format data to add')
+    arg.add_argument('-gb', help='genbank files')
     arg.add_argument('-query', help='query text')
     arg.add_argument('-stop', type=int, choices=(1, 2, 3), default=3,
                      help=('Stop after which step:\n'
@@ -284,8 +284,8 @@ def parse_args():
         # 10k to 1m seems enough
         parsed.min_len = 10000
         parsed.max_len = 1000000
-    if (parsed.query is None and parsed.taxon is None and parsed.fasta == ''
-            and parsed.aln is None and parsed.gene is None):
+    if not any([parsed.query, parsed.taxon, parsed.gene, parsed.fasta,
+                parsed.aln, parsed.gb]):
         arg.print_help()
         raise ValueError('Please check your input!')
     if parsed.out is None:
@@ -430,6 +430,12 @@ def get_query_string(arg):
 
 def download(arg, query):
     tprint('Your query:\n\t{}'.format(query))
+    if arg.email is None:
+        Entrez.email = 'guest@example.com'
+        tprint('You did not provide email address, use'
+               ' {} instead.'.format(Entrez.email))
+    else:
+        Entrez.email = arg.email
     query_handle = Entrez.read(Entrez.esearch(db='nuccore', term=query,
                                               usehistory='y'))
     count = int(query_handle['Count'])
@@ -1389,6 +1395,12 @@ def main():
         gbfile = download(arg, query)
         tprint('Divide data by annotation.')
         wrote_by_gene, wrote_by_name = divide(gbfile, arg)
+    if arg.gb is not None:
+        for i in list(glob(arg.gb)):
+            tprint('Divide {}.'.format(i))
+            by_gene, by_name = divide(i, arg)
+            wrote_by_gene.extend(by_gene)
+            wrote_by_name.extend(by_name)
     if arg.fasta is not None:
         user_data = list(glob(arg.fasta))
         wrote_by_gene.extend(user_data)
