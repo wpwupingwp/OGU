@@ -672,9 +672,12 @@ def divide(gbfile, arg):
     Given genbank file, return divided fasta files.
     """
     groupby_gene = '{}-groupby_gene'.format(gbfile.replace('.gb', ''))
-    mkdir(groupby_gene)
     groupby_name = '{}-groupby_name'.format(gbfile.replace('.gb', ''))
-    mkdir(groupby_name)
+    try:
+        mkdir(groupby_gene)
+        mkdir(groupby_name)
+    except FileExistsError:
+        pass
     handle_raw = open(gbfile + '.fasta', 'w')
     wrote_by_gene = set()
     wrote_by_name = set()
@@ -1389,7 +1392,6 @@ def main():
     wrote_by_gene = list()
     wrote_by_name = list()
     query = get_query_string(arg)
-    tprint('Generate query for Genbank.')
     if query is not None:
         tprint('Download data from Genbank.')
         gbfile = download(arg, query)
