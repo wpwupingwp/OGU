@@ -23,6 +23,10 @@ from Bio.Data.IUPACData import ambiguous_dna_values as ambiguous_data
 from Bio.Seq import Seq
 from Bio.SeqFeature import SeqFeature, FeatureLocation
 from Bio.SeqRecord import SeqRecord
+from matplotlib import use as mpl_use
+if environ.get('DISPLAY', '') == '':
+    print('Cannot find DISPLAY. use Agg backend instead.')
+    mpl_use('Agg')
 from matplotlib import pyplot as plt
 from matplotlib import rcParams
 
