@@ -391,7 +391,7 @@ def deploy(software):
             r3 = run('brew install blast mafft brewsci/science/iqtree',
                      shell=True)
             if r2.returncode != r3.returncode != 0:
-                raise Exception('Cannot install brew')
+                raise Exception('Cannot install brew.')
         else:
             r3 = run('brew install blast mafft brewsci/science/iqtree',
                      shell=True)
@@ -944,7 +944,7 @@ def get_resolution(alignment, start, end, fast=False):
                          stdout=f, stderr=f, shell=True)
         # just return 0 if there is error
         if iqtree.returncode != 0:
-            tprint('Cannot get tree_value of region {}-{} bp!'.format(
+            tprint('Too much gap in the region {}-{} bp.'.format(
                 start, end))
             clean()
             return resolution, entropy, pi, 0
