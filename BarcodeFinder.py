@@ -406,7 +406,6 @@ def deploy(software):
     return environ['PATH']
 
 
-
 def get_query_string(arg):
     condition = list()
     if arg.group is not None:

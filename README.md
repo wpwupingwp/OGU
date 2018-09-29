@@ -1,22 +1,33 @@
 # BarcodeFinder
-Automatic discover novel DNA barcode with universal primers.
-Barcodefinder does three things step by step.
-## Collect data.
+BarcodeFinder could automatically discover novel DNA barcode with universal
+primers. It does three things step by step.
+* Collect data.
 It can automatically retrieve data from NCBI Genbank with user
 provided restriction, such as gene name, taxonomy, sequence name and
-organelle. Also, it can integrate user provided sequences or alignment.
-## Preprocess data
+organelle. Also, it can integrate user provided sequences or alignments.
+* Preprocess data
 Barcodefinder utilizes annotation information in data to divide sequence into
-fragments (gene, spacer, intron) because data collected from Genbank may not
-be "uniform", i.e., you can find a gene's upstream and downstream sequences
-in one record but only gene sequence in another record. The situation becomes
-worse for intergenic spacers, that various annotation style may cause troubles
-in following analysis.
+fragments (gene, spacer, intron),  because data collected from Genbank may not
+be "uniform". For instance, you can find a gene's upstream and downstream
+sequences in one record but only gene sequence in another record. The situation
+becomes worse for intergenic spacers, that various annotation style may cause
+troubles in following analysis.
 Given that one gene or spacer for one species may be sequenced several times,
-by default, BarcodeFinder remove redundant sequences to left only one record
+by default, BarcodeFinder removes redundant sequences to left only one record
 for each species. This behavior can be changed as you wish.
-## Quick examples
-Download all rbcL sequences of plants:
+Then, _mafft_ was called to do alignment. Each sequence's direction were adjusted
+and all sequences were reordered.
+* Analyze
+Firstly, BarcodeFinder
+BarcodeFinder renames all sequences in this model:
+```
+gene|order|family|genus|species|accesion_id
+```
+Here _gene_ means fragment's name.
+The last thing in this step is to
+* Analyze
+
+test
 ## Prerequisite
 ### Software
 * Python3
@@ -90,6 +101,24 @@ BLAST+ installation manual to set _PATH_.
 [Download](http://www.iqtree.org/#download) according to your OS.
 Unzip and add the path of subfolder *bin* into _PATH_
 ## Usage
+The basic usage looks like this:
+```
+# Windows
+python BarcodeFinder.py [data] -[options] -out [out_folder]
+# Linux and MacOS
+python3 BarcodeFinder.py [data] -[options] -out [out_folder]
+```
+*[data]* means input. It can be Genbank query, fasta file names, alignments or
+combinations.
+
+```
+# Windows
+python Barcodefinder.py -h
+# Linux and MacOS
+python3 Barcodefinder.py -h
+```
+
+## Quick examples
 ```
 # Windows
 python BarcodeFinder.py -query rbcL -group plants -stop 1 -out rbcL
