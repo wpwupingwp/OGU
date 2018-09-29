@@ -216,9 +216,6 @@ def parse_args():
         description=main.__doc__)
     arg.add_argument('-email', help='email address for querying Genbank')
     arg.add_argument('-aln', help='aligned fasta files to analyze')
-    # to be continue
-    arg.add_argument('-continue', action='store_true',
-                     help='continue broken download process')
     arg.add_argument('-fasta', help='unaligned fasta format data to add')
     arg.add_argument('-gb', help='genbank files')
     arg.add_argument('-query', help='query text')
