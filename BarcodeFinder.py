@@ -213,8 +213,6 @@ def parse_args():
     # to be continue
     arg.add_argument('-continue', action='store_true',
                      help='continue broken download process')
-    arg.add_argument('-email', default='',
-                     help='email address used by NCBI Genbank')
     arg.add_argument('-fasta', default='',
                      help='unaligned fasta format data to add')
     arg.add_argument('-aln', default=None,
@@ -432,7 +430,6 @@ def get_query_string(arg):
 
 def download(arg, query):
     tprint('Your query:\n\t{}'.format(query))
-    Entrez.email = arg.email
     query_handle = Entrez.read(Entrez.esearch(db='nuccore', term=query,
                                               usehistory='y'))
     count = int(query_handle['Count'])
