@@ -452,9 +452,14 @@ def download(arg, query):
     file_name = join_path(arg.out, name + '.gb')
     output = open(file_name, 'w')
     ret_start = 0
-    ret_max = 1000
+    if count >= 1000:
+        ret_max = 1000
+    elif count >= 100:
+        ret_max = 100
+    else:
+        ret_max = 10
     while ret_start <= count:
-        tprint('{:4d}-{:4d}'.format(ret_start, ret_start + ret_max))
+        tprint('{:d}--{:d}'.format(ret_start, ret_start + ret_max))
         try:
             data = Entrez.efetch(db='nuccore',
                                  webenv=query_handle['WebEnv'],
@@ -468,7 +473,7 @@ def download(arg, query):
         except IOError:
             tprint('Retrying...')
             continue
-        ret_start += 1000
+        ret_start += ret_max
     tprint('Download finished.')
     return file_name
 
