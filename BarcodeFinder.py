@@ -387,7 +387,7 @@ def deploy(software):
                 ok = True
                 break
         if not ok:
-            download_software(sys, software)
+            download_software(url)
     elif sys == 'macOSX':
         brew_ok = False
         ok = False
@@ -408,7 +408,7 @@ def deploy(software):
             if r3.returncode == 0:
                 ok = True
         if not ok:
-                download_software(sys, software)
+                download_software(url)
     environ['PATH'] = pathsep.join([urls[sys][software]['path'],
                                     environ['PATH']])
     with open('PATH.json', 'w') as path_out:
@@ -499,9 +499,10 @@ def gene_rename(old_name):
     s = re.compile(r'(\d+\.?\d?)(s|rrn|rdna)')
     if lower.startswith('trn'):
         pattern = re.compile(r'([atcgu]{3})')
-        try:
-            codon = Seq(re.search(pattern, lower).group(1))
-        except AttributeError:
+        search = re.search(pattern, lower)
+        if search is not None:
+            codon = Seq(search.group(1))
+        else:
             return old_name, 'bad_name'
         try:
             new_name = 'trn{}{}'.format(codon.reverse_complement().translate(),
@@ -511,9 +512,10 @@ def gene_rename(old_name):
         gene_type = 'tRNA'
     elif lower.startswith('rrn'):
         pattern = re.compile(r'(\d+\.?\d?)')
-        try:
-            number = re.search(pattern, lower).group(1)
-        except AttributeError:
+        search = re.search(pattern, lower)
+        if search is not None:
+            number = search.group(1)
+        else:
             return old_name, 'bad_name'
         new_name = 'rrn{}'.format(number)
         gene_type = 'rRNA'
@@ -526,10 +528,13 @@ def gene_rename(old_name):
                              '[^a-z0-9]*'
                              '(?P<suffix>[a-z]|[0-9]+)')
         match = re.search(pattern, lower)
-        try:
-            gene = match.group('gene')
-            suffix = match.group('suffix')
-        except ValueError:
+        if match is not None:
+            try:
+                gene = match.group('gene')
+                suffix = match.group('suffix')
+            except ValueError:
+                return old_name, 'bad_name'
+        else:
             return old_name, 'bad_name'
         new_name = '{}{}'.format(gene, suffix.upper())
         # captitalize last letter
