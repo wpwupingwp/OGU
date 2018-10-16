@@ -316,43 +316,23 @@ def check_tools():
             exists_path = path_file.read().strip()
             environ['PATH'] = pathsep.join([exists_path, environ['PATH']])
     f = open(devnull, 'w')
-    ok = True
     for tools in ('mafft', 'iqtree', 'blastn'):
         check = run('{} --help'.format(tools), shell=True, stdout=f, stderr=f)
         # mafft return 1 if "--help", BLAST do not have --help
         # to simplify code, use "--help" and accept 1 as returncode
         if check.returncode not in (0, 1):
-            ok = False
-    if not ok:
-        deploy()
+            deploy(tools)
     f.close()
 
 
-def download_software(sys):
-    # althrough dirty, but save one file to make folder clean
-    blast_url = ('ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/'
-                 'ncbi-blast-2.7.1+')
-    iqtree_url = ('https://github.com/Cibiv/IQ-TREE/release/download/v1.6.7'
-                  'iqtree-1.6.7')
-    mafft_url = 'https://mafft.cbrc.jp/alignment/software/mafft'
-    urls = {'Linux': {'blast': blast_url+'-x64-linux.tar.gz',
-                      'iqtree': iqtree_url+'-Linux.tar.gz',
-                      'mafft': mafft_url+'-7.407-linux.tgz'},
-            'macos': {'blast': blast_url+'.dmg',
-                      'iqtree': iqtree_url+'-MacOSX.zip',
-                      'mafft': mafft_url+'-7.407-mac.zip'},
-            'Windows': {'blast': blast_url+'-win64.exe',
-                        'iqtree': iqtree_url+'-Windows.zip',
-                        'mafft': mafft_url+'-7.409-win64-signed.zip'}}
-    for software in urls[sys]:
-        url = urls[sys][software]
+def download_software(url):
     filename = url.split('/')[-1]
     down = request.urlopen(url)
     if down.status == 200:
         with open(filename, 'wb') as out:
             out.write(down.read())
     else:
-        raise Exception('Cannot download {}.'.format(software))
+        raise Exception('Cannot download {}.'.format(filename))
     try:
         unpack_archive(filename)
     except ReadError:
@@ -361,45 +341,76 @@ def download_software(sys):
 
 
 def deploy(software):
+    tprint('Try to install {}. Please consider to install it following'
+           'official instruction to avoid potential error.')
     sys = system()
+    # url dict
+    blast_url = ('ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/'
+                 'ncbi-blast-2.7.1+')
+    iqtree_url = ('https://github.com/Cibiv/IQ-TREE/release/download/v1.6.7'
+                  'iqtree-1.6.7')
+    mafft_url = 'https://mafft.cbrc.jp/alignment/software/mafft'
+    # windows blast path not sure
+    urls = {'Linux':
+            {'blast': {'url': blast_url+'-x64-linux.tar.gz',
+                       'path': abspath('ncbi-blast-2.7.1+'+sep+'bin')},
+             'iqtree': {'url': iqtree_url+'-Linux.tar.gz',
+                        'path': abspath('iqtree-1.6.7-Linux'+sep+'bin')},
+             'mafft': {'url': mafft_url+'-7.407-linux.tgz',
+                       'path': abspath('mafft-linux64')}},
+            'macOSX':
+            {'blast': {'url': blast_url+'.dmg',
+                       'path': abspath('ncbi-blast-2.7.1+'+sep+'bin')},
+             'iqtree': {'url': iqtree_url+'-MacOSX.zip',
+                        'path': abspath('iqtree-1.6.7-MacOSX'+sep+'bin')},
+             'mafft': {'url': mafft_url+'-7.407-mac.zip',
+                       'path': abspath('mafft-mac')}},
+            'Windows':
+            {'blast': {'url': blast_url+'-win64.exe',
+                       'path': abspath('.')},
+             'iqtree': {'url': iqtree_url+'-Windows.zip',
+                        'path': abspath('iqtree-1.6.7-Windows'+sep+'bin')},
+             'mafft': {'url': mafft_url+'-7.409-win64-signed.zip',
+                       'path': abspath('mafft-win')}}}
+    url = urls[sys][software]['url']
+    # down
     if sys == 'Windows':
-        download_software(sys, software)
-        run('ncbi-blast-2.7.1+-win64.exe', shell=True)
-        environ['PATH'] = pathsep.join([
-            abspath('mafft-win'), abspath('iqtree-1.6.7-Windows'+sep+'bin'),
-            environ['PATH']])
+        download_software(url)
+        if software == 'blastn':
+            run('ncbi-blast-2.7.1+-win64.exe', shell=True)
     elif sys == 'Linux':
         ok = False
         for pack_mgr in ('apt', 'dnf', 'yum', 'pkg'):
-            r = run('{} install ncbi-blast+ iqtree mafft'.format(pack_mgr),
-                    shell=True)
+            r = run('sudo {} install ncbi-blast+ iqtree mafft'.format(
+                pack_mgr), shell=True)
             if r.returncode == 0:
                 ok = True
                 break
         if not ok:
             download_software(sys, software)
-            environ['PATH'] = pathsep.join([
-                abspath('mafft-linux64'),
-                abspath('iqtree-1.6.7-Linux'+sep+'bin'),
-                abspath('ncbi-blast-2.7.1+'+sep+'bin'), environ['PATH']])
-    elif sys == 'Apple':
+    elif sys == 'macOSX':
+        brew_ok = False
+        ok = False
         r = run('brew --help', shell=True)
-        if r.returncode != 0:
+        if r.returncode == 0:
+            brew_ok = True
+        else:
             r2 = run('/usr/bin/ruby -e "$(curl -fsSL https://raw.'
                      'githubusercontent.com/Homebrew/install/master/install)"',
                      shell=True)
+            if r2.returncode == 0:
+                brew_ok = True
+            else:
+                tprint('Cannot install brew.')
+        if brew_ok:
             r3 = run('brew install blast mafft brewsci/science/iqtree',
                      shell=True)
-            if r2.returncode != r3.returncode != 0:
-                raise Exception('Cannot install brew.')
-        else:
-            r3 = run('brew install blast mafft brewsci/science/iqtree',
-                     shell=True)
-        if r3.returncode != 0:
-            download_software(sys)
-            environ['PATH'] = pathsep.join([
-                abspath('mafft-mac'), abspath('iqtree-1.6.7-MacOSX'+sep+'bin'),
-                abspath('ncbi-blast-2.7.1+'+sep+'bin'), environ['PATH']])
+            if r3.returncode == 0:
+                ok = True
+        if not ok:
+                download_software(sys, software)
+    environ['PATH'] = pathsep.join([urls[sys][software]['path'],
+                                    environ['PATH']])
     with open('PATH.json', 'w') as path_out:
         json.dump(environ['PATH'], path_out)
     return environ['PATH']
