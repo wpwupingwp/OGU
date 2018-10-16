@@ -13,7 +13,7 @@ from os.path import join as join_path
 from platform import system
 from shutil import unpack_archive, ReadError
 from subprocess import run
-from urllib import request
+from urllib.request import urlopen
 
 import numpy as np
 import primer3
@@ -327,7 +327,7 @@ def check_tools():
 
 def download_software(url):
     filename = url.split('/')[-1]
-    down = request.urlopen(url)
+    down = urlopen(url)
     if down.status == 200:
         with open(filename, 'wb') as out:
             out.write(down.read())
