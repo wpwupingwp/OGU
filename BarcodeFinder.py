@@ -255,28 +255,28 @@ def parse_args():
                          choices=('mitochondrion', 'plastid', 'chloroplast'),
                          help='organelle type')
     options = arg.add_argument_group('Analyze')
-    options.add_argument('-a', '--ambiguous_base_n', type=int, default=4,
+    options.add_argument('-a', dest='ambiguous_base_n', type=int, default=4,
                          help='number of ambiguous bases')
-    options.add_argument('-c', '--coverage', type=float, default=0.6,
+    options.add_argument('-c', dest='coverage', type=float, default=0.6,
                          help='minium coverage of base and primer')
-    options.add_argument('-f', '--fast', action='store_true', default=False,
+    options.add_argument('-f', dest='fast', action='store_true', default=False,
                          help='faster evaluate variance by omit tree_value')
-    options.add_argument('-j', '--json', help='configuration json file')
-    options.add_argument('-m', '--mismatch', type=int, default=4,
+    options.add_argument('-j', dest='json', help='configuration json file')
+    options.add_argument('-m', dest='mismatch', type=int, default=4,
                          help='maximum mismatch bases in primer')
-    options.add_argument('-pmin', '--min_primer', type=int, default=18,
+    options.add_argument('-pmin', dest='min_primer', type=int, default=18,
                          help='minimum primer length')
-    options.add_argument('-pmax', '--max_primer', type=int, default=24,
+    options.add_argument('-pmax', dest='max_primer', type=int, default=24,
                          help='maximum primer length')
-    options.add_argument('-r', '--resolution', type=float, default=0.5,
+    options.add_argument('-r', dest='resolution', type=float, default=0.5,
                          help='minium resolution')
-    options.add_argument('-s', '--step', type=int, default=50,
+    options.add_argument('-s', dest='step', type=int, default=50,
                          help='step size')
-    options.add_argument('-t', '--top_n', type=int, default=1,
+    options.add_argument('-t', dest='top_n', type=int, default=1,
                          help='keep n primers for each high varient region')
-    options.add_argument('-tmin', '--min_product', type=int, default=300,
+    options.add_argument('-tmin', dest='min_product', type=int, default=300,
                          help='minimum product length(include primer)')
-    options.add_argument('-tmax', '--max_product', type=int, default=500,
+    options.add_argument('-tmax', dest='max_product', type=int, default=500,
                          help='maximum product length(include primer)')
     parsed = arg.parse_args()
     parsed.db_file = 'interleaved.fasta'
@@ -1382,11 +1382,6 @@ def analyze(arg):
 
 
 def main():
-    """
-    1. Get data from Genbank.
-    2. Divide according to annotation.
-    3. Analyze.
-    """
     arg = parse_args()
     mkdir(arg.out)
     global log_handle
