@@ -604,7 +604,7 @@ def write_seq(name, sequence_id, feature, whole_seq, path, arg):
             feature.location = new_loc
         feature.type = 'expand'
         sequence = feature.extract(whole_seq)
-        filename2 = join_path(path, 'expand.{}.fasta'.format(name))
+        filename2 = join_path(path, '{}.expand.fasta'.format(name))
         with open(filename2, 'a') as handle:
             handle.write(sequence_id + '\n')
             handle.write(str(sequence) + '\n')
@@ -642,7 +642,7 @@ def get_feature_name(feature, arg):
             # 'IGS' in misc_feature) and len(misc_feature) < 100):
             name = safe(misc_feature)
             name = name.replace('intergenic_spacer_region',
-                                'intergenic_spacer')
+                                'IGS')
     elif feature.type == 'misc_RNA':
         if 'product' in feature.qualifiers:
             misc_feature = feature.qualifiers['product'][0].replace(
@@ -1123,8 +1123,8 @@ def count_and_draw(alignment, arg):
 
     plt.style.use('seaborn-colorblind')
     fig, ax1 = plt.subplots(figsize=(15 + len(index) // 5000, 10))
-    plt.title('Resolution(window={} bp, step={} bp)\n'.format(
-        max_product, step))
+    plt.title('Resolution of {} (window={} bp, step={} bp)\n'.format(
+        basename(arg.input).split('.')[0], max_product, step))
     plt.xlabel('Base')
     # plt.xticks(np.linspace(0, max_range, 21))
     if not arg.fast:
@@ -1319,12 +1319,12 @@ def analyze(arg):
             s.write('Name,Sequences,Length,GapRatio,ObservedResolution,'
                     'TreeValue,ShannonIndex,Pi\n')
             s.write('{},{},{},{:.2%},{:.6f},{:.6f},{:.6f},{:.6f}\n'.format(
-                basename(arg.input), rows, columns, gap_ratio,
+                basename(arg.input).split('.')[0], rows, columns, gap_ratio,
                 max_count, t, max_h, max_pi))
     else:
         with open(summary, 'a') as s:
             s.write('{},{},{},{:.2%},{:.4f},{:.4f},{:.4f},{:.6f}\n'.format(
-                basename(arg.input), rows, columns, gap_ratio,
+                basename(arg.input).split('.')[0], rows, columns, gap_ratio,
                 max_count, t, max_h, max_pi))
     if max_count < arg.resolution:
         tprint('Too low resolution of {} !'.format(arg.input))
