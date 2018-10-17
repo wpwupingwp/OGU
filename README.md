@@ -1,6 +1,6 @@
 # BarcodeFinder
 BarcodeFinder could automatically discover novel DNA barcode with universal
-primers. It does three things step by step.
+primers. It does three things as listed below.
 * Collect data.
 It can automatically retrieve data from NCBI Genbank with user
 provided restriction, such as gene name, taxonomy, sequence name and
@@ -11,26 +11,32 @@ fragments (gene, spacer, intron),  because data collected from Genbank may not
 be "uniform". For instance, you can find a gene's upstream and downstream
 sequences in one record but only gene sequence in another record. The situation
 becomes worse for intergenic spacers, that various annotation style may cause
-troubles in following analysis.
+endless trouble in following analysis.
 Given that one gene or spacer for one species may be sequenced several times,
 by default, BarcodeFinder removes redundant sequences to left only one record
 for each species. This behavior can be changed as you wish.
-Then, _mafft_ was called to do alignment. Each sequence's direction were adjusted
+Then, _mafft_ was called for alignment. Each sequence's direction were adjusted
 and all sequences were reordered.
 * Analyze
-Firstly, BarcodeFinder
-BarcodeFinder renames all sequences in this model:
-```
-gene|order|family|genus|species|accesion_id
-```
-Here _gene_ means fragment's name.
-The last thing in this step is to
-* Analyze
-
-test
+Firstly, BarcodeFinder iterately evaluate variance of each alignment by
+calculating Pi, Shannon Index, observed resolution, tree value and terminal
+branch length, etc. If the result is lower than given threshold, i.e., it does
+not have efficient resolution, this alignment were skipped.
+Next, a sliding-window scan will be performed for those alignments passed the
+test. The high-variance region (variance "hotspot") were picked and its
+upstream/downstream region were used to find primer.
+In those conserved region for finding primers, consensus sequences were
+generated and with the help of primer3, candidate primers were selected.
+After BLAST validation, suitable primers were combined to form serveral primer
+pairs. According to the limit of PCR product's length, only pairs with wanted
+length were left. Note that gaps were removed to calculated real length
+instead of alignment length. The resolution of the subalignment were
+recalculated to remove false positive primer pairs.
+Finally, primer pairs were reorderd by score to make it easy for user to find
+"best" primer pairs they want.
 ## Prerequisite
 ### Software
-* Python3
+* Python3 (3.5 or above)
 * BLAST+
 * IQTREE
 * MAFFT
@@ -104,12 +110,22 @@ Unzip and add the path of subfolder *bin* into _PATH_
 The basic usage looks like this:
 ```
 # Windows
-python BarcodeFinder.py [data] -[options] -out [out_folder]
+python BarcodeFinder.py [input] -[options] -out [out_folder]
 # Linux and MacOS
-python3 BarcodeFinder.py [data] -[options] -out [out_folder]
+python3 BarcodeFinder.py [input] -[options] -out [out_folder]
 ```
+### Input
+BarcodeFinder accepts:
+1. Genbank query. You can use "-query" or combine with other filters.
+2. Unaligned fasta files. Each file were considered to be one locus to
+   evaluate variance.
+3. Alignments (fasta format).
+For _2_ and _3_, ambiguous bases were allowed in sequence.
+### Options
+
 *[data]* means input. It can be Genbank query, fasta file names, alignments or
-combinations.
+combinations. If you want to use "\*" or "?" to represent a series of files,
+make sure to use _"_ to quote it. Also, if 
 
 ```
 # Windows
@@ -118,6 +134,13 @@ python Barcodefinder.py -h
 python3 Barcodefinder.py -h
 ```
 
+## Output
+BarcodeFinder renames all sequences in this model:
+```
+gene|order|family|genus|species|accesion_id
+```
+Here _gene_ means fragment's name.
+The last thing in this step is to
 ## Quick examples
 ```
 # Windows
