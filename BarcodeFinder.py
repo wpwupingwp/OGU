@@ -469,7 +469,7 @@ def download(arg, query):
         ret_max = 100
     else:
         ret_max = 10
-    while ret_start <= count:
+    while ret_start < count:
         tprint('{:d}--{:d}'.format(ret_start, ret_start + ret_max))
         try:
             data = Entrez.efetch(db='nuccore',
