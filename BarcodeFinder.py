@@ -214,70 +214,69 @@ def parse_args():
     arg = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description=main.__doc__)
-    arg.add_argument('-email', help='email address for querying Genbank')
     arg.add_argument('-aln', help='aligned fasta files to analyze')
     arg.add_argument('-fasta', help='unaligned fasta format data to add')
     arg.add_argument('-gb', help='genbank files')
-    arg.add_argument('-query', help='query text')
+    arg.add_argument('-j', dest='json', help='configuration json file')
     arg.add_argument('-stop', type=int, choices=(1, 2, 3), default=3,
                      help=('Stop after which step:\n'
                            '\t1. Download\n'
                            '\t2. Preprocess data\n'
                            '\t3. Analyze\n'))
-    arg.add_argument('-no_uniq', action='store_true',
-                     help='do not remove redundant records')
-    output = arg.add_argument_group('Output')
-    output.add_argument('-no_frag', action='store_true',
-                        help='analyze whole sequence rather than divided'
-                        ' fragment')
-    output.add_argument('-out', help='output directory')
-    output.add_argument('-rename', action='store_true',
-                        help='try to rename gene')
-    output.add_argument('-no_expand', default=False,
-                        action='store_true',
-                        help='do not expand upstream/downstream')
-    output.add_argument('-expand_n', type=int, default=200,
-                        help='expand length')
-    filters = arg.add_argument_group('Filters')
-    filters.add_argument('-gene', type=str, help='gene name')
-    filters.add_argument('-group',
+    arg.add_argument('-out', help='output directory')
+    genbank = arg.add_argument_group('Genbank')
+    genbank.add_argument('-email', help='email address for querying Genbank')
+    genbank.add_argument('-gene', type=str, help='gene name')
+    genbank.add_argument('-group',
                          choices=('animals', 'plants', 'fungi', 'protists',
                                   'bacteria', 'archaea', 'viruses'),
                          help='Species kind')
-    filters.add_argument('-min_len', default=100, type=int,
+    genbank.add_argument('-min_len', default=100, type=int,
                          help='minium length')
-    filters.add_argument('-max_len', default=10000, type=int,
+    genbank.add_argument('-max_len', default=10000, type=int,
                          help='maximum length')
-    filters.add_argument('-molecular', choices=('DNA', 'RNA'),
+    genbank.add_argument('-molecular', choices=('DNA', 'RNA'),
                          help='molecular type')
-    filters.add_argument('-taxon', help='Taxonomy name')
-    filters.add_argument('-organelle',
+    genbank.add_argument('-organelle',
                          choices=('mitochondrion', 'plastid', 'chloroplast'),
                          help='organelle type')
-    options = arg.add_argument_group('Analyze')
-    options.add_argument('-a', dest='ambiguous_base_n', type=int, default=4,
-                         help='number of ambiguous bases')
-    options.add_argument('-c', dest='coverage', type=float, default=0.6,
-                         help='minium coverage of base and primer')
-    options.add_argument('-f', dest='fast', action='store_true', default=False,
-                         help='faster evaluate variance by omit tree_value')
-    options.add_argument('-j', dest='json', help='configuration json file')
-    options.add_argument('-m', dest='mismatch', type=int, default=4,
-                         help='maximum mismatch bases in primer')
-    options.add_argument('-pmin', dest='min_primer', type=int, default=18,
-                         help='minimum primer length')
-    options.add_argument('-pmax', dest='max_primer', type=int, default=24,
-                         help='maximum primer length')
-    options.add_argument('-r', dest='resolution', type=float, default=0.5,
-                         help='minium resolution')
-    options.add_argument('-s', dest='step', type=int, default=50,
-                         help='step size')
-    options.add_argument('-t', dest='top_n', type=int, default=1,
-                         help='keep n primers for each high varient region')
-    options.add_argument('-tmin', dest='min_product', type=int, default=300,
-                         help='minimum product length(include primer)')
-    options.add_argument('-tmax', dest='max_product', type=int, default=500,
-                         help='maximum product length(include primer)')
+    genbank.add_argument('-query', help='query text')
+    genbank.add_argument('-taxon', help='Taxonomy name')
+    pre = arg.add_argument_group('Preprocess')
+    pre.add_argument('-expand_n', type=int, default=200, help='expand length')
+    pre.add_argument('-no_expand', default=False, action='store_true',
+                     help='do not expand upstream/downstream')
+    pre.add_argument('-no_frag', action='store_true',
+                     help='analyze whole sequence instead of divided fragment')
+    pre.add_argument('-no_uniq', action='store_true',
+                     help='do not remove redundant records')
+    pre.add_argument('-rename', action='store_true', help='try to rename gene')
+    evaluate = arg.add_argument_group('Evaluate')
+    evaluate.add_argument('-f', dest='fast', action='store_true',
+                          default=False,
+                          help='faster evaluate variance by omit tree_value'
+                          'and terminal branch length')
+    evaluate.add_argument('-s', dest='step', type=int, default=50,
+                          help='step length for sliding-window scan')
+    primer = arg.add_argument_group('Primer')
+    primer.add_argument('-a', dest='ambiguous_base_n', type=int, default=4,
+                        help='number of ambiguous bases')
+    primer.add_argument('-c', dest='coverage', type=float, default=0.6,
+                        help='minium coverage of base and primer')
+    primer.add_argument('-m', dest='mismatch', type=int, default=4,
+                        help='maximum mismatch bases in primer')
+    primer.add_argument('-pmin', dest='min_primer', type=int, default=18,
+                        help='minimum primer length')
+    primer.add_argument('-pmax', dest='max_primer', type=int, default=24,
+                        help='maximum primer length')
+    primer.add_argument('-r', dest='resolution', type=float, default=0.5,
+                        help='minium resolution')
+    primer.add_argument('-t', dest='top_n', type=int, default=1,
+                        help='keep n primers for each high varient region')
+    primer.add_argument('-tmin', dest='min_product', type=int, default=300,
+                        help='minimum product length(include primer)')
+    primer.add_argument('-tmax', dest='max_product', type=int, default=500,
+                        help='maximum product length(include primer)')
     parsed = arg.parse_args()
     parsed.db_file = 'interleaved.fasta'
     parsed.no_gap_file = 'no_gap.fasta'
