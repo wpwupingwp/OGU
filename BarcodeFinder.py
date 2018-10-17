@@ -731,7 +731,7 @@ def divide(gbfile, arg):
                 name = name[:50] + '...'
             # skip abnormal annotation
             if len(feature) > 20000:
-                tprint('Skip abnormal annotaion of {}(Accession {})!'.format(
+                tprint('Skip abnormal annotaion of {}(Accession {}).'.format(
                     name, accession))
                 continue
             if feature_type == 'gene':
@@ -745,6 +745,10 @@ def divide(gbfile, arg):
         # extract spacer
         spacers = get_spacer(genes)
         for spacer in spacers:
+            if len(spacer) > 20000:
+                tprint('Skip too long spacer of {}(Accession {}).'.format(
+                    name, accession))
+                continue
             sequence_id = '>' + '|'.join([spacer.id, taxon,
                                           accession, specimen])
             wrote = write_seq(spacer.id, sequence_id, spacer, whole_seq,
