@@ -2,10 +2,12 @@
 BarcodeFinder could automatically discover novel DNA barcodes with universal
 primers. It does three things as listed below.
 * Collect data
+
     It can automatically retrieve data from NCBI Genbank with restrictions
     that user provided, such as gene name, taxonomy, sequence name and
     organelle.  Also, it can integrate user provided sequences or alignments.
 * Preprocess data
+
     Barcodefinder utilizes annotation information in data to divide sequence
     into fragments (gene, spacer, misc_feature), because data collected from
     Genbank may not be "uniform". For instance, you can find one gene's
@@ -19,6 +21,7 @@ primers. It does three things as listed below.
     Then, _mafft_ was called for alignment. Each sequence's direction were
     adjusted and all sequences were reordered.
 * Analyze
+
     Firstly, BarcodeFinder evaluate variance of each alignment by calculating
     Pi, Shannon Index, observed resolution, tree value and terminal branch
     length, etc. If the result is lower than given threshold, i.e., it does
