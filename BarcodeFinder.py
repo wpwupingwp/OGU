@@ -294,7 +294,7 @@ def parse_args():
     # arg.print_help()
     # overwrite options by given json
     if parsed.json is not None:
-        with open(parsed.json, 'r') as _:
+        with open(parsed.json, 'r', encoding='utf-8') as _:
             config = json.load(_)
         d_parsed = vars(parsed)
         new_arg = argparse.Namespace(**config, **d_parsed)
@@ -311,10 +311,10 @@ def tprint(string):
 
 def check_tools():
     if exists('PATH.json'):
-        with open('PATH.json', 'r') as path_file:
+        with open('PATH.json', 'r', encoding='utf-8') as path_file:
             exists_path = path_file.read().strip()
             environ['PATH'] = pathsep.join([exists_path, environ['PATH']])
-    f = open(devnull, 'w')
+    f = open(devnull, 'w', encoding='utf-8')
     for tools in ('mafft', 'iqtree', 'blastn'):
         check = run('{} --help'.format(tools), shell=True, stdout=f, stderr=f)
         # mafft return 1 if "--help", BLAST do not have --help
@@ -410,7 +410,7 @@ def deploy(software):
                 download_software(url)
     environ['PATH'] = pathsep.join([urls[sys][software]['path'],
                                     environ['PATH']])
-    with open('PATH.json', 'w') as path_out:
+    with open('PATH.json', 'w', encoding='utf-8') as path_out:
         json.dump(environ['PATH'], path_out)
     return environ['PATH']
 
@@ -453,14 +453,14 @@ def download(arg, query):
     tprint('{} records found.'.format(count))
     tprint('Downloading... Ctrl+C to quit')
     json_file = join_path(arg.out, 'Query.json')
-    with open(json_file, 'w') as _:
+    with open(json_file, 'w', encoding='utf-8') as _:
         json.dump(query_handle, _, indent=4, sort_keys=True)
     if arg.query is None:
         name = safe(arg.taxon)
     else:
         name = safe(arg.query)
     file_name = join_path(arg.out, name + '.gb')
-    output = open(file_name, 'w')
+    output = open(file_name, 'w', encoding='utf-8')
     ret_start = 0
     if count >= 1000:
         ret_max = 1000
@@ -583,7 +583,7 @@ def write_seq(name, sequence_id, feature, whole_seq, path, arg):
     filename = join_path(path, name + '.fasta')
     sequence = feature.extract(whole_seq)
 
-    with open(filename, 'a') as handle:
+    with open(filename, 'a', encoding='utf-8') as handle:
         handle.write(sequence_id + '\n')
         handle.write(str(sequence) + '\n')
     if not arg.no_expand:
@@ -604,7 +604,7 @@ def write_seq(name, sequence_id, feature, whole_seq, path, arg):
         feature.type = 'expand'
         sequence = feature.extract(whole_seq)
         filename2 = join_path(path, '{}.expand.fasta'.format(name))
-        with open(filename2, 'a') as handle:
+        with open(filename2, 'a', encoding='utf-8') as handle:
             handle.write(sequence_id + '\n')
             handle.write(str(sequence) + '\n')
         return filename2
@@ -699,7 +699,7 @@ def divide(gbfile, arg):
         mkdir(groupby_name)
     except FileExistsError:
         pass
-    handle_raw = open(gbfile + '.fasta', 'w')
+    handle_raw = open(gbfile + '.fasta', 'w', encoding='utf-8')
     wrote_by_gene = set()
     wrote_by_name = set()
 
@@ -768,7 +768,7 @@ def divide(gbfile, arg):
         record.id = '|'.join([name_str, taxon, accession, specimen])
         record.description = ''
         filename = join_path(groupby_name, name_str + '.fasta')
-        with open(filename, 'a') as out:
+        with open(filename, 'a', encoding='utf-8') as out:
             SeqIO.write(record, out, 'fasta')
             wrote_by_name.add(filename)
         # write raw fasta
@@ -790,7 +790,7 @@ def uniq(files):
     for fasta in files:
         raw = SeqIO.parse(fasta, 'fasta')
         new = fasta + '.uniq'
-        new_handle = open(new, 'w')
+        new_handle = open(new, 'w', encoding='utf-8')
         names = set()
         for record in raw:
             # gene|order|family|genus|species|specimen
@@ -837,7 +837,8 @@ def prepare(arg):
     """
     data = list()
     record = ['id', 'sequence']
-    with open(arg.input, 'r') as raw, open(arg.no_gap_file, 'w') as no_gap:
+    with open(arg.input, 'r', encoding='utf-8') as raw, open(
+            arg.no_gap_file, 'w', encoding='utf-8') as no_gap:
         for line in raw:
             no_gap.write(line.replace('-', ''))
             if line.startswith('>'):
@@ -958,7 +959,7 @@ def get_resolution(alignment, start, end, fast=False):
             for index, row in enumerate(alignment[:, start:end]):
                 aln.write(b'>' + str(index).encode('utf-8') + b'\n' + b''.join(
                     row) + b'\n')
-        with open(devnull, 'w') as f:
+        with open(devnull, 'w', encoding='utf-8') as f:
             iqtree = run('iqtree -s {} -m JC -fast -czb'.format(aln_file),
                          stdout=f, stderr=f, shell=True)
         # just return 0 if there is error
@@ -1150,7 +1151,7 @@ def count_and_draw(alignment, arg):
     plt.savefig(out_file + '.pdf')
     plt.savefig(out_file + '.png')
     # plt.show()
-    with open(out_file + '-Resolution.tsv', 'w') as _:
+    with open(out_file + '-Resolution.tsv', 'w', encoding='utf-8') as _:
         _.write('Index,R,H,Pi,T\n')
         for i, r, h, pi, t in zip(index, r_list, h_list, pi_list, t_list):
             _.write('{},{:.2f},{:.2f},{:.2f},{:.2f}\n'.format(i, r, h, pi, t))
@@ -1159,7 +1160,7 @@ def count_and_draw(alignment, arg):
 
 def parse_blast_tab(filename):
     query = list()
-    with open(filename, 'r') as raw:
+    with open(filename, 'r', encoding='utf-8') as raw:
         for line in raw:
             if line.startswith('# BLAST'):
                 yield query
@@ -1176,11 +1177,11 @@ def validate(primer_candidate, db_file, n_seqs, arg):
     """
     query_file = arg.out_file + '.candidate.fasta'
     # SeqIO.write fasta file directly is prohibited. have to write fastq at
-    with open(query_file + '.fastq', 'w') as _:
+    with open(query_file + '.fastq', 'w', encoding='utf-8') as _:
         SeqIO.write(primer_candidate, _, 'fastq')
     SeqIO.convert(query_file + '.fastq', 'fastq', query_file, 'fasta')
     # build blast db
-    with open(devnull, 'w') as f:
+    with open(devnull, 'w', encoding='utf-8') as f:
         _ = run('makeblastdb -in {} -dbtype nucl'.format(db_file),
                 shell=True, stdout=f)
         if _.returncode != 0:
@@ -1318,14 +1319,14 @@ def analyze(arg):
     gap_ratio = n_gap / rows / columns
     summary = join_path(arg.out, 'Summary.csv')
     if not exists(summary):
-        with open(summary, 'w') as s:
+        with open(summary, 'w', encoding='utf-8') as s:
             s.write('Name,Sequences,Length,GapRatio,ObservedResolution,'
                     'TreeValue,ShannonIndex,Pi\n')
             s.write('{},{},{},{:.2%},{:.6f},{:.6f},{:.6f},{:.6f}\n'.format(
                 basename(arg.input).split('.')[0], rows, columns, gap_ratio,
                 max_count, t, max_h, max_pi))
     else:
-        with open(summary, 'a') as s:
+        with open(summary, 'a', encoding='utf-8') as s:
             s.write('{},{},{},{:.2%},{:.4f},{:.4f},{:.4f},{:.6f}\n'.format(
                 basename(arg.input).split('.')[0], rows, columns, gap_ratio,
                 max_count, t, max_h, max_pi))
@@ -1371,7 +1372,8 @@ def analyze(arg):
              '{:.2f},{:.2f},{:.2f},{},{:.2f},{:.2f},{:.2f},{:.2f},{},{},{},{}'
              '\n')
     _ = join_path(arg.out, basename(arg.out_file))
-    with open(_ + '.fastq', 'w') as out1, open(_ + '.csv', 'w') as out2:
+    with open(_ + '.fastq', 'w', encoding='utf-8') as out1, open(
+            _ + '.csv', 'w', encoding='utf-8') as out2:
         out2.write(csv_title)
         for pair in pairs:
             line = style.format(
@@ -1393,9 +1395,9 @@ def main():
     arg = parse_args()
     mkdir(arg.out)
     global log_handle
-    log_handle = open(join_path(arg.out, 'Log.txt'), 'w')
+    log_handle = open(join_path(arg.out, 'Log.txt'), 'w', encoding='utf-8')
     _ = join_path(arg.out, 'Options.json')
-    with open(_, 'w') as out:
+    with open(_, 'w', encoding='utf-8') as out:
         json.dump(vars(arg), out, indent=4, sort_keys=True)
     tprint('Options were dumped into {}.'.format(_))
     tprint('Welcome to BarcodeFinder!')
