@@ -692,14 +692,15 @@ def divide(gbfile, arg):
     """
     Given genbank file, return divided fasta files.
     """
-    groupby_gene = '{}-groupby_gene'.format(gbfile.replace('.gb', ''))
-    groupby_name = '{}-groupby_name'.format(gbfile.replace('.gb', ''))
+    groupby_gene = join_path(arg.out, gbfile+'-groupby_gene')
+    groupby_name = join_path(arg.out, gbfile+'-groupby_name')
     try:
         mkdir(groupby_gene)
         mkdir(groupby_name)
     except FileExistsError:
         pass
-    handle_raw = open(gbfile + '.fasta', 'w', encoding='utf-8')
+    raw_fasta = join_path(arg.out, gbfile+'.fasta')
+    handle_raw = open(raw_fasta, 'w', encoding='utf-8')
     wrote_by_gene = set()
     wrote_by_name = set()
 
@@ -709,6 +710,7 @@ def divide(gbfile, arg):
         order, family = get_taxon(order_family)
         organism = record.annotations['organism'].replace(' ', '_')
         genus, *species = organism.split('_')
+        # species name may contain other characters
         taxon = '{}|{}|{}|{}'.format(order, family, genus, '_'.join(species))
         accession = record.annotations['accessions'][0]
         try:
