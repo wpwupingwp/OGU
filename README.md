@@ -1,22 +1,22 @@
 # BarcodeFinder
-BarcodeFinder could automatically discover novel DNA barcode with universal
+BarcodeFinder could automatically discover novel DNA barcodes with universal
 primers. It does three things as listed below.
 * Collect data.
-It can automatically retrieve data from NCBI Genbank with user
-provided restriction, such as gene name, taxonomy, sequence name and
-organelle. Also, it can integrate user provided sequences or alignments.
+It can automatically retrieve data from NCBI Genbank with restrictions that
+user provided, such as gene name, taxonomy, sequence name and organelle.
+Also, it can integrate user provided sequences or alignments.
 * Preprocess data
 Barcodefinder utilizes annotation information in data to divide sequence into
-fragments (gene, spacer, intron),  because data collected from Genbank may not
-be "uniform". For instance, you can find a gene's upstream and downstream
-sequences in one record but only gene sequence in another record. The situation
-becomes worse for intergenic spacers, that various annotation style may cause
-endless trouble in following analysis.
+fragments (gene, spacer, misc_feature), because data collected from Genbank
+may not be "uniform". For instance, you can find one gene's upstream and
+downstream sequences in one record but only gene sequence in another record.
+The situation becomes worse for intergenic spacers, that various annotation
+style may cause endless trouble in following analysis.
 Given that one gene or spacer for one species may be sequenced several times,
 by default, BarcodeFinder removes redundant sequences to left only one record
-for each species. This behavior can be changed as you wish.
-Then, _mafft_ was called for alignment. Each sequence's direction were adjusted
-and all sequences were reordered.
+for each species. This behavior can be changed as you wish. Then, _mafft_ was
+called for alignment. Each sequence's direction were adjusted and all
+sequences were reordered.
 * Analyze
 Firstly, BarcodeFinder iterately evaluate variance of each alignment by
 calculating Pi, Shannon Index, observed resolution, tree value and terminal
@@ -155,7 +155,7 @@ python BarcodeFinder.py -query "internal transcribed spacer" -taxon Rosa -stop 2
 # Linux and macos
 python3 BarcodeFinder.py -query "internal transcribed spacer" -taxon Rosa -stop 2 -out Rosa_its
 ```
-Download all Rosaceae chloroplast genome sequences, plus your data  as fasta
+Download all Rosaceae chloroplast genome sequences, plus your data as fasta
 format, then do analyze:
 ```
 # Windows
