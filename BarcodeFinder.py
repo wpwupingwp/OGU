@@ -244,6 +244,10 @@ def parse_args():
     genbank.add_argument('-taxon', help='Taxonomy name')
     pre = arg.add_argument_group('Preprocess')
     pre.add_argument('-expand_n', type=int, default=200, help='expand length')
+    pre.add_argument('-max_name_len', default=50,
+                     help='maximum length of feature name')
+    pre.add_argument('-max_seq_len', default=20000,
+                     help='maximum length of sequence')
     pre.add_argument('-no_expand', default=False, action='store_true',
                      help='do not expand upstream/downstream')
     pre.add_argument('-no_frag', action='store_true',
@@ -727,11 +731,11 @@ def divide(gbfile, arg):
             # skip unsupport feature
             if name is None:
                 continue
-            if len(name) > 50:
+            if len(name) > arg.max_name_len:
                 tprint('Too long name: {}.'.format(name))
-                name = name[:50] + '...'
+                name = name[:arg.max_name_len] + '...'
             # skip abnormal annotation
-            if len(feature) > 20000:
+            if len(feature) > arg.max_seq_len:
                 tprint('Skip abnormal annotaion of {}(Accession {}).'.format(
                     name, accession))
                 continue
