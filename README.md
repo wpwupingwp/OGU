@@ -59,21 +59,18 @@ large size of data.
 ## Installation
 Assume that you already installed [Python3](https://www.python.org/downloads/)
 (3.5 or above). Firstly, install BarcodeFinder.
-The easiest way is to download [BarcodeFinder.py](https://github.com/wpwupingwp/BarcodeFinder)
-and put it into wherever you want.
-
-If you would like to use pip, then:
+The easiest way is to use pip:
 ```
-# as administator
+# As administator
 pip3 install BarcodeFinder
-# normal user
+# Normal user
 pip3 install BarcodeFinder --user
 ```
-Secondly, you need to install dependent software and python modules. Although
+Secondly, you need to install dependent software and python modules.
 BarcodeFinder has assistant function to automatically install dependent
-software and modules if it cannot find them. However, it is highly recommended
-to follow official installation procedure to make it easy for management and
-give you a clean working directory.
+software if it cannot find them. However, it is *highly recommended* to follow
+official installation procedure to make it easy for management and give you a
+clean working directory.
 
 For Linux user, if you have root privileges, just use your package manager:
 ```
@@ -117,7 +114,9 @@ instructions:
 Download installer according to your OS. Unzip and add the path of subfolder
 *bin* into _PATH_
 ## Usage
-The basic usage looks like this:
+BarcodeFinder is a command line program. Once you open your command line
+(Windows) or
+terminal (Linux and MacOS)
 ```
 # Windows
 python BarcodeFinder.py [input] -[options] -out [out_folder]
@@ -135,7 +134,7 @@ Note that ambiguous bases were allowed in sequence. If you want to use "\*" or
 "?" to represent a series of files, make sure to use _"_ to quote it. For
 example, "\*.fasta"(include qutation mark) means all fasta files in the
 folder.
-## Output
+### Output
 # to be continue
 BarcodeFinder renames all sequences in this model:
 ```
