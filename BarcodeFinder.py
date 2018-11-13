@@ -751,8 +751,8 @@ def divide(gbfile, arg):
         spacers = get_spacer(genes)
         for spacer in spacers:
             if len(spacer) > 20000:
-                tprint('Skip too long spacer of {}(Accession {}).'.format(
-                    name, accession))
+                tprint('Spacer {} too long (Accession {}).'.format(
+                    spacer.id, accession))
                 continue
             sequence_id = '>' + '|'.join([spacer.id, taxon,
                                           accession, specimen])
