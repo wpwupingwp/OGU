@@ -696,14 +696,14 @@ def divide(gbfile, arg):
     """
     Given genbank file, return divided fasta files.
     """
-    groupby_gene = join_path(arg.out, gbfile+'-groupby_gene')
-    groupby_name = join_path(arg.out, gbfile+'-groupby_name')
+    groupby_gene = gbfile + '-groupby_gene'
+    groupby_name = gbfile + '-groupby_name'
     try:
         mkdir(groupby_gene)
         mkdir(groupby_name)
     except FileExistsError:
         pass
-    raw_fasta = join_path(arg.out, gbfile+'.fasta')
+    raw_fasta = gbfile + '.fasta'
     handle_raw = open(raw_fasta, 'w', encoding='utf-8')
     wrote_by_gene = set()
     wrote_by_name = set()
