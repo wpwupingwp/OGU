@@ -792,19 +792,22 @@ def divide(gbfile, arg):
 
 def uniq(files, arg):
     uniq_files = list()
-    info = defaultdict(lambda: list())
     for fasta in files:
+        info = defaultdict(lambda: list())
         for index, record in enumerate(SeqIO.parse(fasta, 'fasta')):
             # gene|order|family|genus|species|specimen
             name = ' '.join(record.id.split('|')[3:5])
             length = len(record)
+            # skip empty file
+            if length == 0:
+                continue
             info[name].append([index, length])
         if arg.uniq == 'first':
             # keep only the first record
             keep = {info[i][0][0] for i in info}
         elif arg.uniq == 'longest':
             for i in info:
-                info[i] = sort(info[i], key=lambda x: x[1], reverse=True)
+                info[i] = sorted(info[i], key=lambda x: x[1], reverse=True)
             keep = {info[i][0][0] for i in info}
         elif arg.uniq == 'random':
             for i in info:
@@ -1322,6 +1325,9 @@ def analyze(arg):
     if name is None:
         return
     rows, columns = alignment.shape
+    if columns == 0:
+        tprint('Empty file {}'.format(arg.input))
+        return
     # generate consensus
     base_cumulative_frequency = count_base(alignment, rows, columns)
     tprint('Generate consensus.')
