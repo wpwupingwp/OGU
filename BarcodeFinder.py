@@ -11,6 +11,7 @@ from os import (devnull, environ, mkdir, pathsep, remove, sched_getaffinity,
 from os.path import abspath, basename, exists, splitext
 from os.path import join as join_path
 from platform import system
+from random import choice
 from shutil import unpack_archive, ReadError
 from subprocess import run
 from urllib.request import urlopen
@@ -789,25 +790,31 @@ def divide(gbfile, arg):
     return list(wrote_by_gene), list(wrote_by_name)
 
 
-def uniq(files):
-    """
-    Only keep first record with same id.
-    """
+def uniq(files, arg):
     uniq_files = list()
+    info = defaultdict(lambda: list())
     for fasta in files:
-        raw = SeqIO.parse(fasta, 'fasta')
-        new = fasta + '.uniq'
-        new_handle = open(new, 'w', encoding='utf-8')
-        names = set()
-        for record in raw:
+        for index, record in enumerate(SeqIO.parse(fasta, 'fasta')):
             # gene|order|family|genus|species|specimen
             name = ' '.join(record.id.split('|')[3:5])
-            if name in names:
-                pass
-            else:
-                SeqIO.write(record, new_handle, 'fasta')
-                names.add(name)
-        new_handle.close()
+            length = len(record)
+            info[name].append([index, length])
+        if arg.uniq == 'first':
+            # keep only the first record
+            keep = {info[i][0][0] for i in info}
+        elif arg.uniq == 'longest':
+            for i in info:
+                info[i] = sort(info[i], key=lambda x: x[1], reverse=True)
+            keep = {info[i][0][0] for i in info}
+        elif arg.uniq == 'random':
+            for i in info:
+                info[i] = choice(info[i])
+            keep = {info[i][0] for i in info}
+        new = fasta + '.uniq'
+        with open(new, 'w', encoding='utf-8') as out:
+            for index, record in enumerate(SeqIO.parse(fasta, 'fasta')):
+                if index in keep:
+                    SeqIO.write(record, out, 'fasta')
         uniq_files.append(new)
     return uniq_files
 
@@ -1442,12 +1449,13 @@ def main():
         wrote_by_name.extend(user_data)
     if len(wrote_by_gene) == 0 and len(wrote_by_name) == 0:
         raise Exception('Empty input!')
-    if arg.no_uniq:
-        pass
+    to be continue, wrong place
+    if arg.uniq == 'no':
+        tprint('Skip removing redundant sequences.')
     else:
-        tprint('Remove redundant sequences.')
-        wrote_by_gene = uniq(wrote_by_gene)
-        wrote_by_name = uniq(wrote_by_name)
+        tprint('Remove redundant sequences by "{}".'.format(arg.uniq))
+        wrote_by_gene = uniq(wrote_by_gene, arg)
+        wrote_by_name = uniq(wrote_by_name, arg)
     if arg.stop == 1:
         return
     tprint('Aligning sequences.')
