@@ -254,9 +254,9 @@ def parse_args():
     pre.add_argument('-no_frag', action='store_true',
                      help='analyze whole sequence instead of divided fragment')
     pre.add_argument('-rename', action='store_true', help='try to rename gene')
-    pre.add_arguments('-uniq', choices=('longest', 'random', 'first', 'no'),
-                      default='first',
-                      help='method to remove redundant sequences')
+    pre.add_argument('-uniq', choices=('longest', 'random', 'first', 'no'),
+                     default='first',
+                     help='method to remove redundant sequences')
     evaluate = arg.add_argument_group('Evaluate')
     evaluate.add_argument('-f', dest='fast', action='store_true',
                           default=False,
@@ -293,7 +293,7 @@ def parse_args():
     if not any([parsed.query, parsed.taxon, parsed.gene, parsed.fasta,
                 parsed.aln, parsed.gb]):
         arg.print_help()
-        raise ValueError('Please check your input!')
+        raise ValueError('Empty input!')
     if parsed.out is None:
         parsed.out = datetime.now().isoformat().replace(':', '-')
 
@@ -1447,8 +1447,8 @@ def main():
         user_data = list(glob(arg.fasta))
         wrote_by_gene.extend(user_data)
         wrote_by_name.extend(user_data)
-    if any([wrote_by_gene, wrote_by_name, arg.aln]):
-        raise Exception('Empty input!')
+    if not any([wrote_by_gene, wrote_by_name, arg.aln]):
+        raise Exception('Data is empty, please check your input!')
     if arg.uniq == 'no':
         tprint('Skip removing redundant sequences.')
     else:
