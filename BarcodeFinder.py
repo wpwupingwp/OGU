@@ -1447,9 +1447,8 @@ def main():
         user_data = list(glob(arg.fasta))
         wrote_by_gene.extend(user_data)
         wrote_by_name.extend(user_data)
-    if len(wrote_by_gene) == 0 and len(wrote_by_name) == 0:
+    if any([wrote_by_gene, wrote_by_name, arg.aln]):
         raise Exception('Empty input!')
-    to be continue, wrong place
     if arg.uniq == 'no':
         tprint('Skip removing redundant sequences.')
     else:
