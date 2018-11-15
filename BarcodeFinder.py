@@ -252,9 +252,10 @@ def parse_args():
                      help='do not expand upstream/downstream')
     pre.add_argument('-no_frag', action='store_true',
                      help='analyze whole sequence instead of divided fragment')
-    pre.add_argument('-no_uniq', action='store_true',
-                     help='do not remove redundant records')
     pre.add_argument('-rename', action='store_true', help='try to rename gene')
+    pre.add_arguments('-uniq', choices=('longest', 'random', 'first', 'no'),
+                      default='first',
+                      help='method to remove redundant sequences')
     evaluate = arg.add_argument_group('Evaluate')
     evaluate.add_argument('-f', dest='fast', action='store_true',
                           default=False,
@@ -1439,26 +1440,25 @@ def main():
         user_data = list(glob(arg.fasta))
         wrote_by_gene.extend(user_data)
         wrote_by_name.extend(user_data)
-    if arg.aln is not None:
-        user_aln = list(glob(arg.aln))
-        wrote_by_gene.extend(user_aln)
-        wrote_by_name.extend(user_aln)
     if len(wrote_by_gene) == 0 and len(wrote_by_name) == 0:
         raise Exception('Empty input!')
-    if arg.stop == 1:
-        return
     if arg.no_uniq:
         pass
     else:
         tprint('Remove redundant sequences.')
         wrote_by_gene = uniq(wrote_by_gene)
         wrote_by_name = uniq(wrote_by_name)
+    if arg.stop == 1:
+        return
     tprint('Aligning sequences.')
     if not arg.no_frag or arg.max_len > 10000:
         # less than two records will cause empty output, which was omit
         aligned = mafft(wrote_by_gene)
     else:
         aligned = mafft(wrote_by_name)
+    if arg.aln is not None:
+        user_aln = list(glob(arg.aln))
+        aligned.extend(user_aln)
     if arg.stop == 2:
         return
     analyze_wrapper(aligned)
