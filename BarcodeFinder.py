@@ -1325,9 +1325,6 @@ def analyze(arg):
     if name is None:
         return
     rows, columns = alignment.shape
-    if columns == 0:
-        tprint('Empty file {}'.format(arg.input))
-        return
     # generate consensus
     base_cumulative_frequency = count_base(alignment, rows, columns)
     tprint('Generate consensus.')
