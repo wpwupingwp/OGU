@@ -35,3 +35,5 @@
 #35. rps12
 #36. output path
 #37. utf-8
+38. use namedtuple
+39. BiopythonParserWarning: Expected sequence length 491, found 1083 (U58558.1).
