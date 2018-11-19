@@ -1169,7 +1169,7 @@ def count_and_draw(alignment, arg):
     plt.savefig(out_file + '.pdf')
     plt.savefig(out_file + '.png')
     # plt.show()
-    with open(out_file + '-Resolution.tsv', 'w', encoding='utf-8') as _:
+    with open(out_file + '.resolution.tsv', 'w', encoding='utf-8') as _:
         _.write('Index,R,H,Pi,T\n')
         for i, r, h, pi, t in zip(index, r_list, h_list, pi_list, t_list):
             _.write('{},{:.2f},{:.2f},{:.2f},{:.2f}\n'.format(i, r, h, pi, t))
