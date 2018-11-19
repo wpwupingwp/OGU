@@ -37,3 +37,4 @@
 #37. utf-8
 38. use namedtuple
 39. BiopythonParserWarning: Expected sequence length 491, found 1083 (U58558.1).
+40. add animal order

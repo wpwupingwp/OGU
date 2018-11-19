@@ -134,7 +134,68 @@ Note that ambiguous bases were allowed in sequence. If you want to use "\*" or
 "?" to represent a series of files, make sure to use _"_ to quote it. For
 example, "\*.fasta"(include qutation mark) means all fasta files in the
 folder.
+### Sequence ID
+BarcodeFinder use uniform sequence ID in all fasta files it generated.
+```
+SeqName|Order|Family|Genus|Species|Accession|SpecimenID
+# example
+rbcL|Poales|Poaceae|Oryza|longistaminata|MF998442|TAN:GB60B-2014
+```
+The order of the seven fields is fixed. Each field was seperated by the
+vertical bar ("|"). The space character(" ") was disallowed and it was
+replaced by underscore("\_").
+Because of technical issue, the order rank may be empty for animals.
+* SeqName
+
+    It means the name of sequences. Usually it its the gene name. For spacer,
+    it is "geneA_geneB" that use underscore("\_") to connect two gene's name.
+
+    Note that the original gene name in genbank file were renamed to try to
+    fix part of annotation error. You can use raw name by set "-no_rename"
+    option.
+
+    If a valid sequence name could not be found in annotation of genbank file,
+    BarcodeFinder will use "Unknown" instead.
+* Order
+
+    The order name of the species. 
+* Family
+
+    The family name of the species.
+* Genus
+
+    The genus name of the species, i.e., the first part of the scientific
+    name.
+* Species
+
+    The specific epithet of the species, i.e., the second part of the
+    scientific name of the species. It may contains subspecies name.
+* Accession
+
+    The Genbank Accession number of the sequence. Do not contain version
+    number.
+* SpecimenID
+
+    The ID of specimen of the sequence. May be empty.
+
 ### Output
+All results will be put in the output folder. If you didn't set output path by
+"-out", BarcodeFinder will create a folder named by current time, for example, 
+"2018-11-19T16-41-59.330217".
+* _a_.gb
+    
+    The raw genbank file. The _a_ comes from the keyword of query.
+* _a_.gb.fasta
+
+    The converted fasta file of the ".gb" file.
+* _b_.expand.fasta.uniq.csv
+* _b_.fasta.uniq.resolution.tsv
+* _b_.fasta.uniq.csv
+* _b_.fasta.uniq.fastq
+* _b_.fasta.uniq.pdf
+* _b_.fasta.uniq.png
+
+
 # to be continue
 BarcodeFinder renames all sequences in this model:
 ```
