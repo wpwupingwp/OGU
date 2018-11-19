@@ -597,7 +597,7 @@ def write_seq(name, sequence_id, feature, whole_seq, path, arg):
             loc = feature.location.parts
             # ensure increasing order
             # parts do not have sort method
-            sorted(loc, key=lambda x: x.start)
+            loc.sort(key=lambda x: x.start)
             new_loc = sum([
                 # avoid IndexError
                 FeatureLocation(max(0, loc[0].start - arg.expand_n),
