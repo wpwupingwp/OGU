@@ -159,8 +159,8 @@ class Pair:
     def __str__(self):
         return (
             'Pair(score={:.2f}, product={:.0f}, start={}, end={}, left={}, '
-            'right={}, resolution={:.2%}, coverage={:.2%}, delta_tm={:.2f}, '
-            'have_heterodimer={})'.format(
+            'right={}, observerd_resolution={:.2%}, coverage={:.2%},'
+            'delta_tm={:.2f}, have_heterodimer={})'.format(
                 self.score, average(list(self.length.values())), self.start,
                 self.end, self.left.seq, self.right.seq, self.resolution,
                 self.coverage, self.delta_tm, self.have_heterodimer))
@@ -1180,7 +1180,8 @@ def count_and_draw(alignment, arg):
         _.write('Index,R_O,E_H,Pi,R_T,Avg_L\n')
         for i, r, h, pi, t, l in zip(index, r_list, h_list, pi_list, t_list,
                                      l_list):
-            _.write('{},{:.2f},{:.2f},{:.2f},{:.2f},{:.2f}\n'.format(i, r, h,
+            # iqtree blmin is 1e-6
+            _.write('{},{:.6f},{:.6f},{:.6f},{:.6f},{:.6f}\n'.format(i, r, h,
                                                                      pi, t, l))
     return r_list, h_list, pi_list, t_list, l_list, index
 
@@ -1395,13 +1396,16 @@ def analyze(arg):
         return
     # output
     csv_title = ('Score,Sequences,AvgProductLength,StdEV,MinProductLength,'
-                 'MaxProductLength,Coverage,Resolution,TreeValue,Entropy,'
-                 'LeftSeq,LeftTm,LeftAvgBitscore,LeftAvgMismatch,RightSeq,'
-                 'RightTm,RightAvgBitscore,RightAvgMismatch,DeltaTm,'
-                 'AlnStart,AlnEnd,AvgSeqStart,AvgSeqEnd\n')
-    style = ('{:.2f},{},{:.0f},{:.0f},{},{},{:.2%},{:.2%},{:.2f},{:.2f},{},'
-             '{:.2f},{:.2f},{:.2f},{},{:.2f},{:.2f},{:.2f},{:.2f},{},{},{},{}'
-             '\n')
+                 'MaxProductLength,'
+                 'Coverage,Resolution,TreeValue,AvgTerminalBranchLen,Entropy,'
+                 'LeftSeq,LeftTm,LeftAvgBitscore,LeftAvgMismatch,'
+                 'RightSeq,RightTm,RightAvgBitscore,RightAvgMismatch,'
+                 'DeltaTm,AlnStart,AlnEnd,AvgSeqStart,AvgSeqEnd\n')
+    style = ('{:.2f},{},{:.0f},{:.0f},{},{},'
+             '{:.2%},{:.2%},{:.6f},{:.6f},{:.6f},'
+             '{},{:.2f},{:.2f},{:.2f},'
+             '{},{:.2f},{:.2f},{:.2f},'
+             '{:.2f},{},{},{},{}\n')
     _ = join_path(arg.out, basename(arg.out_file))
     with open(_ + '.fastq', 'w', encoding='utf-8') as out1, open(
             _ + '.csv', 'w', encoding='utf-8') as out2:
@@ -1410,12 +1414,15 @@ def analyze(arg):
             line = style.format(
                 pair.score, rows, average(list(pair.length.values())),
                 np.std(list(pair.length.values())), min(pair.length.values()),
-                max(pair.length.values()), pair.coverage,
-                pair.resolution, pair.tree_value, pair.entropy, pair.left.seq,
-                pair.left.tm, pair.left.avg_bitscore, pair.left.avg_mismatch,
+                max(pair.length.values()),
+                pair.coverage, pair.resolution, pair.tree_value,
+                pair.avg_terminal_len, pair.entropy,
+                pair.left.seq, pair.left.tm, pair.left.avg_bitscore,
+                pair.left.avg_mismatch,
                 pair.right.seq, pair.right.tm, pair.right.avg_bitscore,
-                pair.right.avg_mismatch, pair.delta_tm, pair.left.start,
-                pair.right.end, pair.start, pair.end)
+                pair.right.avg_mismatch,
+                pair.delta_tm, pair.left.start, pair.right.end, pair.start,
+                pair.end)
             out2.write(line)
             SeqIO.write(pair.left, out1, 'fastq')
             SeqIO.write(pair.right, out1, 'fastq')
