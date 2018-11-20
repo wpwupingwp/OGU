@@ -251,7 +251,7 @@ def parse_args():
                      help='maximum length of feature name')
     pre.add_argument('-max_seq_len', default=20000,
                      help='maximum length of sequence')
-    pre.add_argument('-no_frag', action='store_true',
+    pre.add_argument('-no_divide', action='store_true',
                      help='analyze whole sequence instead of divided fragment')
     pre.add_argument('-rename', action='store_true', help='try to rename gene')
     pre.add_argument('-uniq', choices=('longest', 'random', 'first', 'no'),
@@ -1482,7 +1482,7 @@ def main():
     if arg.stop == 1:
         return
     tprint('Aligning sequences.')
-    if not arg.no_frag or arg.max_len > 10000:
+    if not arg.no_divide or arg.max_len > 10000:
         # less than two records will cause empty output, which was omit
         aligned = mafft(wrote_by_gene)
     else:
