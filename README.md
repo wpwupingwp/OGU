@@ -59,6 +59,7 @@ large size of data.
 ## Installation
 Assume that you already installed [Python3](https://www.python.org/downloads/)
 (3.5 or above). Firstly, install BarcodeFinder.
+
 The easiest way is to use pip:
 ```
 # As administator
@@ -132,7 +133,7 @@ BarcodeFinder accepts:
 4. Genbank format files.
 Note that ambiguous bases were allowed in sequence. If you want to use "\*" or
 "?" to represent a series of files, make sure to use _"_ to quote it. For
-example, "\*.fasta"(include qutation mark) means all fasta files in the
+example, "\*.fasta" (include qutation mark) means all fasta files in the
 folder.
 ### Sequence ID
 BarcodeFinder use uniform sequence ID in all fasta files it generated.
@@ -142,13 +143,13 @@ SeqName|Order|Family|Genus|Species|Accession|SpecimenID
 rbcL|Poales|Poaceae|Oryza|longistaminata|MF998442|TAN:GB60B-2014
 ```
 The order of the seven fields is fixed. Each field was seperated by the
-vertical bar ("|"). The space character(" ") was disallowed and it was
-replaced by underscore("\_").
+vertical bar ("|"). The space character (" ") was disallowed and it was
+replaced by underscore ("\_").
 Because of technical issue, the order rank may be empty for animals.
 * SeqName
 
     It means the name of sequences. Usually it its the gene name. For spacer,
-    it is "geneA_geneB" that use underscore("\_") to connect two gene's name.
+    it is "geneA_geneB" that use underscore ("\_") to connect two gene's name.
 
     Note that the original gene name in genbank file were renamed to try to
     fix part of annotation error. You can use raw name by set "-no_rename"
@@ -158,7 +159,7 @@ Because of technical issue, the order rank may be empty for animals.
     BarcodeFinder will use "Unknown" instead.
 * Order
 
-    The order name of the species. 
+    The order name of the species.
 * Family
 
     The family name of the species.
@@ -180,17 +181,18 @@ Because of technical issue, the order rank may be empty for animals.
 
 ### Output
 All results will be put in the output folder. If you didn't set output path by
-"-out", BarcodeFinder will create a folder named by current time, for example, 
+"-out", BarcodeFinder will create a folder named by current time, for example,
 "2018-11-19T16-41-59.330217".
 * _a_.gb
-    
+
     The raw genbank file. The _a_ comes from the keyword of query.
 * _a_.gb.fasta
 
     The converted fasta file of the ".gb" file.
 * _b_.fasta.uniq.csv
 
-    The list of primer pairs. CSV(comma-separated values text) format.
+    The list of primer pairs. CSV (comma-separated values text) format. The _b_
+    is the name of the fragment (usually gene or spacer).
 
     Its title:
     ```
@@ -201,7 +203,7 @@ All results will be put in the output folder. If you didn't set output path by
 
         The score of this primer pair. Usually the higher, the better.
     * Sequences
-        
+
         How many sequences were used to find this primer pair.
 
     * AvgProductLength
@@ -254,8 +256,8 @@ All results will be put in the output folder. If you didn't set output path by
 
         Sequence of forward primer. The direction is 5' to 3'.
     * LeftTm
-        
-        The melting temperature of forward primer. The unit is Celcius(°C).
+
+        The melting temperature of forward primer. The unit is Celcius (°C).
     * LeftAvgBitscore
 
         The average of raw bitscore of forward primer which is calculated by
@@ -268,8 +270,8 @@ All results will be put in the output folder. If you didn't set output path by
 
         Sequence of reverse primer. The direction is 5' to 3'.
     * RightTm
-        
-        The melting temperature of reverse primer. The unit is Celcius(°C).
+
+        The melting temperature of reverse primer. The unit is Celcius (°C).
     * RightAvgBitscore
 
         The average of raw bitscore of reverse primer which is calculated by
@@ -279,16 +281,16 @@ All results will be put in the output folder. If you didn't set output path by
         The average number of mismatch bases of reverse primer which is
         counted by BLAST.
     * DeltaTm
-        
+
         The difference of melting temperature of forward and reverse primer.
         High DeltaTm may result in failure of PCR amplified.
     * AlnStart
 
-        The location of beginning of forward primer(5', leftmost of primer
+        The location of beginning of forward primer (5', leftmost of primer
         pairs) in the whole alignment.
     * AlnEnd
 
-        The location of end of reverse primer(5', rightmost of primer pairs)
+        The location of end of reverse primer (5', rightmost of primer pairs)
         in the whole alignment.
     * AvgSeqStart
 
@@ -301,21 +303,104 @@ All results will be put in the output folder. If you didn't set output path by
     The primer pairs were sorted by *Score*. Since the score may not fully
     satisfying user's specific consideration, it is suggested to choose primer
     pairs manually if the first primer pair failed on PCR experiment.
-* _b_.fasta.uniq.variance.tsv
-* _b_.fasta.uniq.csv
 * _b_.fasta.uniq.fastq
+
+    The fastq format file of primer's sequence. It contains two sequences and
+    the direction is 5' to 3'. The first is the forward primer and the second
+    is the reverse primer. The quality of each base equal to its proportion of
+    the column in the alignment. Note that it may contains amibiguous base if
+    you did not disable it.
 * _b_.fasta.uniq.pdf
+
+    The PDF format of the figure of sliding-window scan result of the
+    alignment.
 * _b_.fasta.uniq.png
-* _b_.expand.fasta.uniq.csv
 
+    The PNG format of the figure of sliding-window scan result of the
+    alignment.
+* _b_.fasta.uniq.variance.tsv
 
-# to be continue
-BarcodeFinder renames all sequences in this model:
-```
-gene|order|family|genus|species|accesion_id
-```
-Here *gene* means fragment's name.
-The last thing in this step is to
+    The CSV format of sliding-window scan result. The *"Index"* means the
+    location of the base in the alignment. Note that the value DO NOT means
+    the variance of the column of the base but the fragment started from this
+    column.
+
+* _b_.expand.fasta.uniq.\*
+
+    By default, BarcodeFinder expands the alignment to its upstream/downstream
+    to try to find suitable primer pairs for amplifed whole length of the
+    target fragment. The filename contains "expand" does not ensure the final
+    primers located in upstream/downstream. It only means BarcodeFinder used
+    "expanded" data. *Users can use "-expand 0" to skip it.*
+* Log.txt
+
+    The log file. Contains all information printed in screen.
+* Options.json
+
+    The JSON file stored all options user inputed. It may be used by set
+    "-json filename" to reduce input for similar run of the program.
+* Summary.csv
+
+    The summary of all ".fasta.uniq.csv" files which only contains information
+    about the variance of each fragment. The only new field, *GapRatio*, means
+    the ratio of the gap ("-") in the alignment. Higher value means the
+    sequences may be too variaty that the alignment is not reliable.
+* _b_-groupby_name
+
+    The folder contains *"undivided"* sequences and intermediate results.
+    Actually it is "roughly divided" sequences. The original genbank file was
+    firstly divided into different fasta files if the genbank record contained
+    different content. Usualy one genbank record contains serveral annotated
+    region (multiple genes, for example). If two records contains same series
+    of annotation (same order), they were put into same fasta file. Each file
+    contains the intact sequence in the related genbank record.
+
+* _b_-groupby_gene
+
+    The folder contains divided sequences and intermediate results. After
+    divided step occured in _b_-groupby_name, BarcodeFinder then divided each
+    *cluster* of genbank records to several fasta files that each file
+    contains only one region of the annotation. For instance, a record in
+    "rbcL.gb" file may also contains atpB gene's sequence. In this folder,
+    however, BarcodeFinder ensures that each fasta file contains only one
+    locus, one gene, one spacer or one misc_feature. The "rbcL.fasta" file
+    does not contains any upstream/downstream sequence (except for ".expand"
+    files) and "atpB_rbcL.fasta" does not have even one base of atpB or rbcL
+    gene but only the spacer (assume that the annotation is precise).
+
+    User can skip this divided step by set "-no_divide" to use the whole
+    sequence for analysis. Note that it DOES NOT skip the first step of the
+    dividing.
+
+    These two folders usually can be ignored. However, sometimes, user may
+    utilize one of these intermediate result:
+    * _b_.fasta
+
+        The raw fasta file directly converted from genbank file.
+    * _b_.fasta.uniq
+
+        Redundant sequences were removed.
+    * _b_.fasta.uniq.aln
+
+        The alignment of the fasta file.
+    * _b_.fasta.uniq.aln.candidate.fasta
+
+        The candidate primers. It may contains thousands of records. Do not
+        recommend to pay attention to it.
+    * _b_.fasta.uniq.aln.candidate.fasta.fastq
+
+        Still, the candidate primers. This time it has quality which equals to
+        base's proportion in the column of the alignment.
+    * _b_.fasta.uniq.consensus.fastq
+
+        The fastq format of the consensus sequence of the alignment.
+        Note that it contains aligment gap ("-").
+        Although this may be the
+        most useful file in the folder, it is NOT RECOMMENDED to directly use
+        it as the consensus sequence of the alignment because the
+        consensus-genrating algorithm were optimized for primer design that it
+        may be different with the _"real"_ consensus.
+
 ### Options
 # to be continue
 ```
