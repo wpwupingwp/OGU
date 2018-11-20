@@ -245,13 +245,12 @@ def parse_args():
     genbank.add_argument('-query', help='query text')
     genbank.add_argument('-taxon', help='Taxonomy name')
     pre = arg.add_argument_group('Preprocess')
-    pre.add_argument('-expand_n', type=int, default=200, help='expand length')
+    pre.add_argument('-expand', type=int, default=200,
+                     help='expand length of upstream/downstream')
     pre.add_argument('-max_name_len', default=50,
                      help='maximum length of feature name')
     pre.add_argument('-max_seq_len', default=20000,
                      help='maximum length of sequence')
-    pre.add_argument('-no_expand', default=False, action='store_true',
-                     help='do not expand upstream/downstream')
     pre.add_argument('-no_frag', action='store_true',
                      help='analyze whole sequence instead of divided fragment')
     pre.add_argument('-rename', action='store_true', help='try to rename gene')
@@ -593,7 +592,7 @@ def write_seq(name, sequence_id, feature, whole_seq, path, arg):
     with open(filename, 'a', encoding='utf-8') as handle:
         handle.write(sequence_id + '\n')
         handle.write(str(sequence) + '\n')
-    if not arg.no_expand:
+    if arg.expand != 0:
         if feature.location_operator == 'join':
             loc = feature.location.parts
             # ensure increasing order
@@ -601,11 +600,11 @@ def write_seq(name, sequence_id, feature, whole_seq, path, arg):
             loc.sort(key=lambda x: x.start)
             new_loc = sum([
                 # avoid IndexError
-                FeatureLocation(max(0, loc[0].start - arg.expand_n),
+                FeatureLocation(max(0, loc[0].start - arg.expand),
                                 loc[0].end, loc[0].strand),
                 *loc[1:-1],
                 FeatureLocation(loc[-1].start,
-                                min(len(whole_seq), loc[-1].end+arg.expand_n),
+                                min(len(whole_seq), loc[-1].end+arg.expand),
                                 loc[-1].strand)])
             feature.location = new_loc
         feature.type = 'expand'
