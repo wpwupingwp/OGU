@@ -412,36 +412,48 @@ All results will be put in the output folder. If you didn't set output path by
 #### General
 * -aln filename
 
-    Alignment files user provided. The filename could be one
-    file, or a series of files. You can use "?" and "\*" to represent one or
-    any characters. *Be sure to use quotation mark* to quote it. For example,
-    "a\*.alignment" means any file start with letter "a" and end with
-    ".alignment".
+    Alignment files user provided. The filename could be one file, or a series
+    of files. You can use "?" and "\*" to represent one or any characters. *Be
+    sure to use quotation mark* to quote it. For example, "a\*.alignment"
+    means any file start with letter "a" and end with ".alignment".
 
     Only support fasta format. Ambiguous base and gap ("-") were supported.
 
--fasta filename : User provided unaligned fasta files. Also support "\*" and
-    "?". If you want to use "-uniq" function, please rename your sequences.
-    See the format of sequence ID above.
+* -fasta filename
 
--gb filename : User provided genbank file or files.
+    User provided unaligned fasta files. Also support "\*" and "?". If you
+    want to use "-uniq" function, please rename your sequences.  See the
+    format of sequence ID above.
 
--json filename : JSON file BarcodeFinder generated which stored all options
-    user inputed. It may be used to reduce input for similar run of the program.
-    Note that other options user provied with "-json filename" will cover old
-    value in the JSON file.
+* -gb filename
 
--stop value : To break the running of BarcodeFinder in the specific step.
-    BarcodeFinder provided all-in-one solution to find novel DNA barcode.
-    However, some user may only want to use one module. The *value* could be
-    * 1 -- Only collect data and do preprocess (download, divide, remove
-      redundant, rename, expand).
-    * 2 -- Do step 1, and then analyze the variance. Do not design primers.
-    * 3 -- Do all things (which have no effect).
+    User provided genbank file or files.
 
--out value : The output folder's name. All results will be put in the output
-    folder. If you didn't set output path by "-out", BarcodeFinder will create a
-    folder named by current time, for example, "2018-11-19T16-41-59.330217".
+* -json filename
+
+    JSON file BarcodeFinder generated which stored all options user inputed.
+    It may be used to reduce input for similar run of the program.  Note that
+    other options user provied with "-json filename" will cover old value in
+    the JSON file.
+
+* -stop value
+
+    To break the running of BarcodeFinder in the specific step. BarcodeFinder
+    provided all-in-one solution to find novel DNA barcode.  However, some
+    user may only want to use one module. The *value* could be
+    * 1
+        Only collect data and do preprocess (download, divide, remove
+        redundant, rename, expand).
+    * 2
+        Do step 1, and then analyze the variance. Do not design primers.
+    * 3 
+        Do all things (which have no effect).
+
+* -out value
+
+    The output folder's name. All results will be put in the output folder. If
+    you didn't set output path by "-out", BarcodeFinder will create a folder
+    named by current time, for example, "2018-11-19T16-41-59.330217".
 
     BarcodeFinder does not overwrite existing folder with same name.
 
@@ -450,24 +462,30 @@ All results will be put in the output folder. If you didn't set output path by
     characters. :)
  
 #### Genbank
--email address : BarcodeFinder use Biopython to handle the communication
-    between user and NCBI Genbank database. The database requires user to
-    provide an email address in case of abnormal situation that NCBI want to
-    contact you. The default address is empty. 
+* -email address
+
+    BarcodeFinder use Biopython to handle the communication between user and
+    NCBI Genbank database. The database requires user to provide an email
+    address in case of abnormal situation that NCBI want to contact you. The
+    default address is empty. 
 
     _However, for convenience of the user, BarcodeFinder will use
     "guest@example.com" if user did not provide the email._
 
--gene name: The gene's name user wants to query in Genbank. The "OR" and "AND"
-    were allowed. Make sure to use quotation mark. For instance, "atpB OR
-    rbcL" (include quotation mark) means gene atpB or rbcL.
+* -gene name
+
+    The gene's name user wants to query in Genbank. The "OR" and "AND" were
+    allowed. Make sure to use quotation mark. For instance, "atpB OR rbcL"
+    (include quotation mark) means gene atpB or rbcL.
 
     HOWEVER, the "-gene" options usually does not behave like what we thought.
     If you query "rbcL[gene]" in Genbank, most of the time, NCBI still gives
     you other gene's records.
 
--group value : To restrict group of species, or the *kingdom*, the value could
-    be
+* -group value
+
+    To restrict group of species, or the *kingdom*, the value could be
+
     * animals
     * plants
     * fungi
@@ -482,20 +500,27 @@ All results will be put in the output folder. If you didn't set output path by
     records from Genbank. Please ensure you have stable and unexpensive
     Internet connection. The default *value* is empty.
 
--min_len number : The minium length of the records downloaded from Genbank.
-    The default value is 100 (bp). The *number* must be integer.
+* -min_len number
 
--max_len number : The maximum length of the records downloaded from Genbank.
-    The default value is 10000 (bp). The *number* must be integer.
+    The minium length of the records downloaded from Genbank.  The default
+    value is 100 (bp). The *number* must be integer.
+
+* -max_len number
+
+    The maximum length of the records downloaded from Genbank.  The default
+    value is 10000 (bp). The *number* must be integer.
 
     If you set "-organelle" option, the range of the length will becomes 10000
     to 1000000 (bp).
 
--molecular type : The molecular type, could be DNA or RNA. The default *type*
-    is empty.
+* -molecular type
 
--organelle type : Ask BarcodeFinder to download only organelle genomes. The
-    *type* could be 
+    The molecular type, could be DNA or RNA. The default *type* is empty.
+
+* -organelle type
+
+    Ask BarcodeFinder to download only organelle genomes. The *type* could be 
+
     * mitochondrion
     * plastid
     * chloroplast
@@ -504,18 +529,20 @@ All results will be put in the output folder. If you didn't set output path by
     change "-min_len" and "-max_len" but other options. The default value is
     empty.
 
--query string : The query string user provied. It behaves same with the query
-    you typed in the Search Box in NCBI Genbank's webpage.
+* -query string
+    The query string user provied. It behaves same with the query you typed in
+    the Search Box in NCBI Genbank's webpage.
     
     Make sure to follow NCBI's grammer of query. Please do not forget
     quotation mark if it has more than one word. The default *string* is
     empty.
 
--taxon taxonomy : The taxonomy name. It could be any taxonomy rank. From
-    kingdom (same with "-group") to species or subspecies, as long as you
-    input correct name (scientific name of species or taxonomic group, latin,
-    NOT ENGLISH), it will restriced query to your target taxonomy unit. Make
-    sure to use quotation mark if *taxonomy* has more than one word.
+* -taxon taxonomy
+    The taxonomy name. It could be any taxonomy rank. From kingdom (same with
+    "-group") to species or subspecies, as long as you input correct name
+    (scientific name of species or taxonomic group, latin, NOT ENGLISH), it
+    will restriced query to your target taxonomy unit. Make sure to use
+    quotation mark if *taxonomy* has more than one word.
 
 #### Preprocess
 Preprocess:
