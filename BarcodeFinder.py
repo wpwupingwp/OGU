@@ -125,8 +125,8 @@ class PrimerWithInfo(SeqRecord):
 class Pair:
     # save memory
     __slots__ = ['left', 'right', 'delta_tm', 'coverage', 'start', 'end',
-                 'resolution', 'tree_value', 'entropy', 'have_heterodimer',
-                 'heterodimer_tm', 'pi', 'score', 'length']
+                 'resolution', 'tree_value', 'avg_terminal_len', 'entropy',
+                 'have_heterodimer', 'heterodimer_tm', 'pi', 'score', 'length']
 
     def __init__(self, left, right, alignment):
         rows, columns = alignment.shape
@@ -150,6 +150,7 @@ class Pair:
         self.heterodimer_tm = 0.0
         self.resolution = 0.0
         self.tree_value = 0.0
+        self.avg_terminal_len = 0.0
         self.entropy = 0.0
         self.pi = 0.0
         self.score = 0.0
@@ -183,8 +184,8 @@ class Pair:
             self.right = self.right.reverse_complement()
         # include end base, use alignment loc for slice
         (self.resolution, self.entropy, self.pi,
-         self.tree_value) = get_resolution(alignment, self.left.start,
-                                           self.right.end + 1)
+         self.tree_value, self.avg_terminal_len) = get_resolution(
+             alignment, self.left.start, self.right.end + 1)
         self.heterodimer_tm = primer3.calcHeterodimer(self.left.g_seq,
                                                       self.right.g_seq).tm
         if max(self.heterodimer_tm, self.left.tm,
@@ -951,6 +952,8 @@ def get_resolution(alignment, start, end, fast=False):
         return 0, 0, 0, 0
     item, count = np.unique(subalign, return_counts=True, axis=0)
     resolution = len(count) / rows
+    tree_value = 0
+    avg_terminal_branch_len = 0
     # entropy
     entropy = 0
     for j in count:
@@ -985,15 +988,17 @@ def get_resolution(alignment, start, end, fast=False):
             tprint('Too much gap in the region {}-{} bp.'.format(
                 start, end))
             clean()
-            return resolution, entropy, pi, 0
-        tree = Phylo.read(aln_file + '.treefile', 'newick')
-        # skip the first empty node
-        internals = tree.get_nonterminals()[1:]
-        tree_value = len(internals) / len(tree.get_terminals())
-        clean()
-    else:
-        tree_value = 0
-    return resolution, entropy, pi, tree_value
+        else:
+            tree = Phylo.read(aln_file + '.treefile', 'newick')
+            # skip the first empty node
+            internals = tree.get_nonterminals()[1:]
+            terminals = tree.get_terminals()
+            sum_terminal_branch_len = sum([i.branch_length for i in terminals])
+            # miss stdev, to be continued
+            avg_terminal_branch_len = sum_terminal_branch_len / len(terminals)
+            tree_value = len(internals) / len(terminals)
+            clean()
+    return resolution, entropy, pi, tree_value, avg_terminal_branch_len
 
 
 def generate_consensus(base_cumulative_frequency, coverage_percent,
@@ -1126,6 +1131,7 @@ def count_and_draw(alignment, arg):
     h_list = list()
     pi_list = list()
     t_list = list()
+    l_list = list()
     max_h = np.log2(rows)
     index = list()
     max_plus = max_product - min_primer * 2
@@ -1135,12 +1141,13 @@ def count_and_draw(alignment, arg):
         # if consensus.sequence[i] in ('-', 'N'):
         #     continue
         # exclude primer sequence
-        resolution, entropy, pi, tree_value = get_resolution(
+        resolution, entropy, pi, tree_value, avg_t_branch_len = get_resolution(
             alignment, i, i + max_plus, arg.fast)
         r_list.append(resolution)
         h_list.append(entropy / max_h)
         pi_list.append(pi)
         t_list.append(tree_value)
+        l_list.append(avg_t_branch_len)
         index.append(i)
 
     plt.style.use('seaborn-colorblind')
@@ -1158,7 +1165,9 @@ def count_and_draw(alignment, arg):
     ax1.yaxis.set_ticks(np.linspace(0, 1, num=11))
     ax2 = ax1.twinx()
     ax2.plot(index, pi_list, 'k-', label=r'$\pi$', alpha=0.8)
-    ax2.set_ylabel(r'$\pi$', rotation=-90, labelpad=20)
+    ax2.plot(index, l_list, label='Average Terminal Branch Length', alpha=0.8)
+    ax2.set_ylabel(r'$\pi$ and Average Branch Length',
+                   rotation=-90, labelpad=20)
     # _ = round(np.log10(max(Pi))) + 1
     # ax2.yaxis.set_ticks(np.linspace(0, 10**_, num=11))
     ax2.legend(loc='upper right')
@@ -1167,10 +1176,12 @@ def count_and_draw(alignment, arg):
     plt.savefig(out_file + '.png')
     # plt.show()
     with open(out_file + '.variance.tsv', 'w', encoding='utf-8') as _:
-        _.write('Index,R_O,E_H,Pi,R_T\n')
-        for i, r, h, pi, t in zip(index, r_list, h_list, pi_list, t_list):
-            _.write('{},{:.2f},{:.2f},{:.2f},{:.2f}\n'.format(i, r, h, pi, t))
-    return r_list, h_list, pi_list, t_list, index
+        _.write('Index,R_O,E_H,Pi,R_T,Avg_L\n')
+        for i, r, h, pi, t, l in zip(index, r_list, h_list, pi_list, t_list,
+                                     l_list):
+            _.write('{},{:.2f},{:.2f},{:.2f},{:.2f},{:.2f}\n'.format(i, r, h,
+                                                                     pi, t, l))
+    return r_list, h_list, pi_list, t_list, l_list, index
 
 
 def parse_blast_tab(filename):
@@ -1329,28 +1340,32 @@ def analyze(arg):
     consensus = generate_consensus(base_cumulative_frequency, arg.coverage,
                                    rows, arg.out_file + '.consensus.fastq')
     tprint('Evaluate whole alignment.')
-    max_count, max_h, max_pi, t = get_resolution(alignment, 0, columns)
+    max_count, max_h, max_pi, max_t, max_l = get_resolution(alignment, 0,
+                                                            columns)
+    tprint('Average terminal branch length {}.'.format(max_l))
     n_gap = sum([i[5] for i in base_cumulative_frequency])
     gap_ratio = n_gap / rows / columns
     summary = join_path(arg.out, 'Summary.csv')
     if not exists(summary):
         with open(summary, 'w', encoding='utf-8') as s:
             s.write('Name,Sequences,Length,GapRatio,ObservedResolution,'
-                    'TreeValue,ShannonIndex,Pi\n')
-            s.write('{},{},{},{:.2%},{:.6f},{:.6f},{:.6f},{:.6f}\n'.format(
-                basename(arg.input).split('.')[0], rows, columns, gap_ratio,
-                max_count, t, max_h, max_pi))
+                    'TreeResolution,ShannonIndex,AvgTerminalBranchLen,Pi\n')
+            s.write('{},{},{},{:.2%},{:.6f},{:.6f},{:.6f},{:.6f},{:.6f}'
+                    '\n'.format(basename(arg.input).split('.')[0], rows,
+                                columns, gap_ratio, max_count, max_t, max_h,
+                                max_l, max_pi))
     else:
         with open(summary, 'a', encoding='utf-8') as s:
-            s.write('{},{},{},{:.2%},{:.4f},{:.4f},{:.4f},{:.6f}\n'.format(
-                basename(arg.input).split('.')[0], rows, columns, gap_ratio,
-                max_count, t, max_h, max_pi))
+            s.write('{},{},{},{:.2%},{:.6f},{:.6f},{:.6f},{:.6f},{:.6f}'
+                    '\n'.format(basename(arg.input).split('.')[0], rows,
+                                columns, gap_ratio, max_count, max_t, max_h,
+                                max_l, max_pi))
     if max_count < arg.resolution:
         tprint('Too low resolution of {} !'.format(arg.input))
         return
     # count resolution
     tprint('Sliding window analyze.')
-    (seq_count, H, Pi, T, index) = count_and_draw(alignment, arg)
+    (seq_count, H, Pi, T, L, index) = count_and_draw(alignment, arg)
     # exit if resolution lower than given threshold.
     if len(seq_count) == 0:
         tprint('Problematic Input of {}.!'.format(arg.input))

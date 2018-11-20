@@ -234,17 +234,18 @@ All results will be put in the output folder. If you didn't set output path by
         between 0 and 1.
     * TreeValue
 
-    <img src="https://latex.codecogs.com/svg.latex?\dpi{300}&space;R_{T}=\frac{n_{internal}}{n_{terminal}}" title="R_{T}=\frac{n_{internal}}{n_{terminal}}" />
+        <img src="https://latex.codecogs.com/svg.latex?\dpi{300}&space;R_{T}=\frac{n_{internal}}{n_{terminal}}" title="R_{T}=\frac{n_{internal}}{n_{terminal}}" />
 
         The *tree resolution* of the sub-alignment, which is equal to number
         of internal nodes of phylogenetic tree construted from the alignment
         divided by number of terminal nodes. The value is between 0 and 1.
     * Entropy
 
-    <img src="https://latex.codecogs.com/svg.latex?\dpi{300}&space;E_{H}&space;=&space;\frac{-&space;\sum_{i=1}^{k}{p_{i}&space;\log(p_{i})}}{\log(k)}" title="E_{H} = \frac{- \sum_{i=1}^{k}{p_{i} \log(p_{i})}}{\log(k)}" />
+        <img src="https://latex.codecogs.com/svg.latex?\dpi{300}&space;E_{H}&space;=&space;\frac{-&space;\sum_{i=1}^{k}{p_{i}&space;\log(p_{i})}}{\log(k)}" title="E_{H} = \frac{- \sum_{i=1}^{k}{p_{i} \log(p_{i})}}{\log(k)}" />
 
-        The Shannon equitability index of the sub-alignment. The value
-        is between 0 and 1.
+        The Shannon equitability index of the sub-alignment. The value is
+        between 0 and 1.
+    * 
 
 
 * _b_.fasta.uniq.resolution.tsv
