@@ -188,12 +188,57 @@ All results will be put in the output folder. If you didn't set output path by
 * _a_.gb.fasta
 
     The converted fasta file of the ".gb" file.
-* _b_.expand.fasta.uniq.csv
+* _b_.fasta.uniq.csv
+
+    The list of primer pairs.
+    Its title:
+    ```
+    Score,Sequences,AvgProductLength,StdEV,MinProductLength,MaxProductLength,Coverage,Resolution,TreeValue,Entropy,LeftSeq,LeftTm,LeftAvgBitscore,LeftAvgMismatch,RightSeq,RightTm,RightAvgBitscore,RightAvgMismatch,DeltaTm,AlnStart,AlnEnd,AvgSeqStart,AvgSeqEnd
+    995.01,21,356,2,351,361,100.00%,52.38%,0.71,2.84,CTCTACTTTCTTATCTAGGACTTC,47.68,24.00,0.00,TATCAACTCATTAAAGAAAATGGG,47.46,23.62,0.00,0.22,301,710,287,668
+    ```
+
+    * Score
+
+        The score of this primer pair. Usually the higher, the better.
+    * Sequences
+        
+        How many sequences were used to find this primer pair.
+
+    * AvgProductLength
+
+        The average length of amplified DNA fragment by this pair of primer.
+        Integer.
+    * StdEV
+
+        The standard deviation of the AvgProductLength. Higher number means
+        the primer may amplified different length of DNA fragment. Lower
+        number or even zero means close length, i.e., much more conservative.
+    * MinProductLength
+
+        The minimum length of amplified fragment.
+    * MaxProductLength
+
+        The maximum length of amplified fragment. Note that all these four
+        fields were calculated by given sequences that may not cover
+        exception.
+    * Coverage
+
+        The coverage of this primer pair for sequences it used. Calculated by
+        BLAST result. High coverage means it is much more "universal".
+    * Resolution
+
+        The *observed resolution* of this fragment. From 0 to 1. 
+        <img src="https://latex.codecogs.com/gif.latex?R_{o}=\frac{n_{uniq}}{n_{total}}" title="R_{o}=\frac{n_{uniq}}{n_{total}}" />
+        Which is equal to number of uniq sequences divided by number of total
+        sequences.
+
+
 * _b_.fasta.uniq.resolution.tsv
 * _b_.fasta.uniq.csv
 * _b_.fasta.uniq.fastq
 * _b_.fasta.uniq.pdf
 * _b_.fasta.uniq.png
+* _b_.expand.fasta.uniq.csv
 
 
 # to be continue
