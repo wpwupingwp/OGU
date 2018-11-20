@@ -1177,12 +1177,12 @@ def count_and_draw(alignment, arg):
     plt.savefig(out_file + '.png')
     # plt.show()
     with open(out_file + '.variance.tsv', 'w', encoding='utf-8') as _:
-        _.write('Index,R_O,E_H,Pi,R_T,Avg_L\n')
-        for i, r, h, pi, t, l in zip(index, r_list, h_list, pi_list, t_list,
-                                     l_list):
+        _.write('Index,Resolution,TreeValue,AvgTerminalBranchLen,Entropy,Pi\n')
+        for i, r, t, l, h, pi in zip(index, r_list, t_list, l_list, h_list,
+                                     pi_list):
             # iqtree blmin is 1e-6
-            _.write('{},{:.6f},{:.6f},{:.6f},{:.6f},{:.6f}\n'.format(i, r, h,
-                                                                     pi, t, l))
+            _.write('{},{:.6f},{:.6f},{:.6f},{:.6f},{:.6f}\n'.format(i, r, t,
+                                                                     l, h, pi))
     return r_list, h_list, pi_list, t_list, l_list, index
 
 
