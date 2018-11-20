@@ -194,7 +194,6 @@ All results will be put in the output folder. If you didn't set output path by
     Its title:
     ```
     Score,Sequences,AvgProductLength,StdEV,MinProductLength,MaxProductLength,Coverage,Resolution,TreeValue,Entropy,LeftSeq,LeftTm,LeftAvgBitscore,LeftAvgMismatch,RightSeq,RightTm,RightAvgBitscore,RightAvgMismatch,DeltaTm,AlnStart,AlnEnd,AvgSeqStart,AvgSeqEnd
-    995.01,21,356,2,351,361,100.00%,52.38%,0.71,2.84,CTCTACTTTCTTATCTAGGACTTC,47.68,24.00,0.00,TATCAACTCATTAAAGAAAATGGG,47.46,23.62,0.00,0.22,301,710,287,668
     ```
 
     * Score
@@ -227,11 +226,25 @@ All results will be put in the output folder. If you didn't set output path by
         BLAST result. High coverage means it is much more "universal".
     * Resolution
 
-        The *observed resolution* of this fragment. From 0 to 1. 
-
         <img src="https://latex.codecogs.com/svg.latex?\dpi{300}&space;R_{o}=\frac{n_{uniq}}{n_{total}}" title="R_{o}=\frac{n_{uniq}}{n_{total}}" />
-        Which is equal to number of uniq sequences divided by number of total
-        sequences.
+
+        The *observed resolution* of the sub-alignment sliced by the primer
+        pair, which is equal to number of uniq sequences divided by number of
+        total sequences. The value is
+        between 0 and 1.
+    * TreeValue
+
+    <img src="https://latex.codecogs.com/svg.latex?\dpi{300}&space;R_{T}=\frac{n_{internal}}{n_{terminal}}" title="R_{T}=\frac{n_{internal}}{n_{terminal}}" />
+
+        The *tree resolution* of the sub-alignment, which is equal to number
+        of internal nodes of phylogenetic tree construted from the alignment
+        divided by number of terminal nodes. The value is between 0 and 1.
+    * Entropy
+
+    <img src="https://latex.codecogs.com/svg.latex?\dpi{300}&space;E_{H}&space;=&space;\frac{-&space;\sum_{i=1}^{k}{p_{i}&space;\log(p_{i})}}{\log(k)}" title="E_{H} = \frac{- \sum_{i=1}^{k}{p_{i} \log(p_{i})}}{\log(k)}" />
+
+        The Shannon equitability index of the sub-alignment. The value
+        is between 0 and 1.
 
 
 * _b_.fasta.uniq.resolution.tsv
