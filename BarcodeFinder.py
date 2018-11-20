@@ -1165,9 +1165,10 @@ def count_and_draw(alignment, arg):
     ax1.yaxis.set_ticks(np.linspace(0, 1, num=11))
     ax2 = ax1.twinx()
     ax2.plot(index, pi_list, 'k-', label=r'$\pi$', alpha=0.8)
-    ax2.plot(index, l_list, label='Average Terminal Branch Length', alpha=0.8)
-    ax2.set_ylabel(r'$\pi$ and Average Branch Length',
-                   rotation=-90, labelpad=20)
+    ax2.plot(index, l_list, linestyle='--',
+             label='Average Terminal Branch Length', alpha=0.8)
+    ax2.set_ylabel(r'$\pi$ and Average Branch Length', rotation=-90,
+                   labelpad=20)
     # _ = round(np.log10(max(Pi))) + 1
     # ax2.yaxis.set_ticks(np.linspace(0, 10**_, num=11))
     ax2.legend(loc='upper right')
