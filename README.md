@@ -228,7 +228,8 @@ All results will be put in the output folder. If you didn't set output path by
     * Resolution
 
         The *observed resolution* of this fragment. From 0 to 1. 
-        <img src="https://latex.codecogs.com/gif.latex?R_{o}=\frac{n_{uniq}}{n_{total}}" title="R_{o}=\frac{n_{uniq}}{n_{total}}" />
+
+        <img src="https://latex.codecogs.com/svg.latex?\dpi{300}&space;R_{o}=\frac{n_{uniq}}{n_{total}}" title="R_{o}=\frac{n_{uniq}}{n_{total}}" />
         Which is equal to number of uniq sequences divided by number of total
         sequences.
 
