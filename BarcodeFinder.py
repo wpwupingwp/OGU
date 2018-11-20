@@ -1111,7 +1111,7 @@ def count_and_draw(alignment, arg):
     """
     Given alignment(numpy array), return unique sequence count List[float].
     Calculate Shannon Index based on
-    http://www.tiem.utk.edu/~gross/bioed/bealsmodules/shannonDI.html
+    www.itl.nist.gov/div898/software/dataplot/refman2/auxillar/shannon.htm
     return List[float]
     All calculation excludes primer sequence.
     """
@@ -1145,18 +1145,15 @@ def count_and_draw(alignment, arg):
 
     plt.style.use('seaborn-colorblind')
     fig, ax1 = plt.subplots(figsize=(15 + len(index) // 5000, 10))
-    plt.title('Resolution of {} (window={} bp, step={} bp)\n'.format(
+    plt.title('Variance of {} (window={} bp, step={} bp)\n'.format(
         basename(arg.input).split('.')[0], max_product, step))
     plt.xlabel('Base')
     # plt.xticks(np.linspace(0, max_range, 21))
     if not arg.fast:
-        ax1.set_ylabel('Normalized Shannon Index / Resolution / TreeValue')
-        ax1.plot(index, t_list, label='TreeValue', alpha=0.8)
-    else:
-        ax1.set_ylabel('Normalized Shannon Index / Resolution')
-
-    ax1.plot(index, h_list, label='Shannon Index', alpha=0.8)
-    ax1.plot(index, r_list, label='Resolution', alpha=0.8)
+        ax1.plot(index, t_list, label='Tree Resolution', alpha=0.8)
+    ax1.set_ylabel('Resolution')
+    ax1.plot(index, h_list, label='Shannon Equitability Index', alpha=0.8)
+    ax1.plot(index, r_list, label='Observed Resolution', alpha=0.8)
     ax1.legend(loc='lower left')
     ax1.yaxis.set_ticks(np.linspace(0, 1, num=11))
     ax2 = ax1.twinx()
@@ -1169,8 +1166,8 @@ def count_and_draw(alignment, arg):
     plt.savefig(out_file + '.pdf')
     plt.savefig(out_file + '.png')
     # plt.show()
-    with open(out_file + '.resolution.tsv', 'w', encoding='utf-8') as _:
-        _.write('Index,R,H,Pi,T\n')
+    with open(out_file + '.variance.tsv', 'w', encoding='utf-8') as _:
+        _.write('Index,R_O,E_H,Pi,R_T\n')
         for i, r, h, pi, t in zip(index, r_list, h_list, pi_list, t_list):
             _.write('{},{:.2f},{:.2f},{:.2f},{:.2f}\n'.format(i, r, h, pi, t))
     return r_list, h_list, pi_list, t_list, index
