@@ -23,9 +23,9 @@ primers. It does three things as listed below.
 * Analyze
 
     Firstly, BarcodeFinder evaluate variance of each alignment by calculating
-    Pi, Shannon Index, observed resolution, tree value and terminal branch
-    length, etc. If the result is lower than given threshold, i.e., it does
-    not have efficient resolution, this alignment were skipped.
+    Pi, Shannon Index, observed resolution, tree resolution and average
+    terminal branch length, etc. If the result is lower than given threshold,
+    i.e., it does not have efficient resolution, this alignment were skipped.
 
     Next, a sliding-window scan will be performed for those alignments passed
     the test. The high-variance region (variance "hotspot") were picked and
@@ -405,30 +405,119 @@ All results will be put in the output folder. If you didn't set output path by
 
 ### Options
 #### Help
-#### General options
-optional arguments:
-  -h, --help            show this help message and exit
-  -aln ALN              aligned fasta files to analyze (default: None)
-  -fasta FASTA          unaligned fasta format data to add (default: None)
-  -gb GB                genbank files (default: None)
-  -j JSON               configuration json file (default: None)
-  -stop {1,2,3}         Stop after which step: 1. Download 2. Preprocess data
-                        3. Analyze (default: 3)
-  -out OUT              output directory (default: None)
+* -h
 
-Genbank:
-  -email EMAIL          email address for querying Genbank (default: None)
-  -gene GENE            gene name (default: None)
-  -group {animals,plants,fungi,protists,bacteria,archaea,viruses}
-                        Species kind (default: None)
-  -min_len MIN_LEN      minium length (default: 100)
-  -max_len MAX_LEN      maximum length (default: 10000)
-  -molecular {DNA,RNA}  molecular type (default: None)
-  -organelle {mitochondrion,plastid,chloroplast}
-                        organelle type (default: None)
-  -query QUERY          query text (default: None)
-  -taxon TAXON          Taxonomy name (default: None)
+    Print help message of the program. It is highly recommended to use this
+    option to see the usage of options and their default value.
+#### General
+* -aln filename
 
+    Alignment files user provided. The filename could be one
+    file, or a series of files. You can use "?" and "\*" to represent one or
+    any characters. *Be sure to use quotation mark* to quote it. For example,
+    "a\*.alignment" means any file start with letter "a" and end with
+    ".alignment".
+
+    Only support fasta format. Ambiguous base and gap ("-") were supported.
+
+-fasta filename : User provided unaligned fasta files. Also support "\*" and
+    "?". If you want to use "-uniq" function, please rename your sequences.
+    See the format of sequence ID above.
+
+-gb filename : User provided genbank file or files.
+
+-json filename : JSON file BarcodeFinder generated which stored all options
+    user inputed. It may be used to reduce input for similar run of the program.
+    Note that other options user provied with "-json filename" will cover old
+    value in the JSON file.
+
+-stop value : To break the running of BarcodeFinder in the specific step.
+    BarcodeFinder provided all-in-one solution to find novel DNA barcode.
+    However, some user may only want to use one module. The *value* could be
+    * 1 -- Only collect data and do preprocess (download, divide, remove
+      redundant, rename, expand).
+    * 2 -- Do step 1, and then analyze the variance. Do not design primers.
+    * 3 -- Do all things (which have no effect).
+
+-out value : The output folder's name. All results will be put in the output
+    folder. If you didn't set output path by "-out", BarcodeFinder will create a
+    folder named by current time, for example, "2018-11-19T16-41-59.330217".
+
+    BarcodeFinder does not overwrite existing folder with same name.
+
+    It is HIGHLY RECOMMENDED to use only letter, number and underscore ("_")
+    in the folder name to avoid mysterious error caused by other Unicode
+    characters. :)
+ 
+#### Genbank
+-email address : BarcodeFinder use Biopython to handle the communication
+    between user and NCBI Genbank database. The database requires user to
+    provide an email address in case of abnormal situation that NCBI want to
+    contact you. The default address is empty. 
+
+    _However, for convenience of the user, BarcodeFinder will use
+    "guest@example.com" if user did not provide the email._
+
+-gene name: The gene's name user wants to query in Genbank. The "OR" and "AND"
+    were allowed. Make sure to use quotation mark. For instance, "atpB OR
+    rbcL" (include quotation mark) means gene atpB or rbcL.
+
+    HOWEVER, the "-gene" options usually does not behave like what we thought.
+    If you query "rbcL[gene]" in Genbank, most of the time, NCBI still gives
+    you other gene's records.
+
+-group value : To restrict group of species, or the *kingdom*, the value could
+    be
+    * animals
+    * plants
+    * fungi
+    * protists
+    * bacteria
+    * archaea
+    * viruses
+
+    Make sure do not have typo. 
+    
+    If use this option, BarcodeFinder may possibly download a huge number of
+    records from Genbank. Please ensure you have stable and unexpensive
+    Internet connection. The default *value* is empty.
+
+-min_len number : The minium length of the records downloaded from Genbank.
+    The default value is 100 (bp). The *number* must be integer.
+
+-max_len number : The maximum length of the records downloaded from Genbank.
+    The default value is 10000 (bp). The *number* must be integer.
+
+    If you set "-organelle" option, the range of the length will becomes 10000
+    to 1000000 (bp).
+
+-molecular type : The molecular type, could be DNA or RNA. The default *type*
+    is empty.
+
+-organelle type : Ask BarcodeFinder to download only organelle genomes. The
+    *type* could be 
+    * mitochondrion
+    * plastid
+    * chloroplast
+
+    Make sure do not have typo. This option have higher privilege, which will
+    change "-min_len" and "-max_len" but other options. The default value is
+    empty.
+
+-query string : The query string user provied. It behaves same with the query
+    you typed in the Search Box in NCBI Genbank's webpage.
+    
+    Make sure to follow NCBI's grammer of query. Please do not forget
+    quotation mark if it has more than one word. The default *string* is
+    empty.
+
+-taxon taxonomy : The taxonomy name. It could be any taxonomy rank. From
+    kingdom (same with "-group") to species or subspecies, as long as you
+    input correct name (scientific name of species or taxonomic group, latin,
+    NOT ENGLISH), it will restriced query to your target taxonomy unit. Make
+    sure to use quotation mark if *taxonomy* has more than one word.
+
+#### Preprocess
 Preprocess:
   -expand EXPAND        expand length of upstream/downstream (default: 200)
   -max_name_len MAX_NAME_LEN
@@ -440,11 +529,14 @@ Preprocess:
   -rename               try to rename gene (default: False)
   -uniq {longest,random,first,no}
                         method to remove redundant sequences (default: first)
-
+#### Evaluate
 Evaluate:
   -f                    faster evaluate variance by omit tree_valueand
                         terminal branch length (default: False)
   -s STEP               step length for sliding-window scan (default: 50)
+
+#### Primer Design
+
 
 Primer:
   -a AMBIGUOUS_BASE_N   number of ambiguous bases (default: 4)
@@ -458,12 +550,6 @@ Primer:
   -tmin MIN_PRODUCT     minimum product length(include primer) (default: 300)
   -tmax MAX_PRODUCT     maximum product length(include primer) (default: 500)
 
-```
-# Windows
-python Barcodefinder.py -h
-# Linux and MacOS
-python3 Barcodefinder.py -h
-```
 ## Quick examples
 1. Download all _rbcL_ sequences of plants and do pre-process:
 ```
