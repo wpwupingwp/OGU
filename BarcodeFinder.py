@@ -1155,20 +1155,21 @@ def count_and_draw(alignment, arg):
     plt.title('Variance of {} (window={} bp, step={} bp)\n'.format(
         basename(arg.input).split('.')[0], max_product, step))
     plt.xlabel('Base')
+    ax1.yaxis.set_ticks(np.linspace(0, 1, num=11))
+    ax2 = ax1.twinx()
+    ax2.set_ylabel(r'$\pi$', rotation=-90, labelpad=20)
     # plt.xticks(np.linspace(0, max_range, 21))
     if not arg.fast:
         ax1.plot(index, t_list, label='Tree Resolution', alpha=0.8)
+        ax2.plot(index, l_list, linestyle='--',
+                 label='Average Terminal Branch Length', alpha=0.8)
+        ax2.set_ylabel(r'$\pi$ and Average Branch Length', rotation=-90,
+                       labelpad=20)
     ax1.set_ylabel('Resolution')
     ax1.plot(index, h_list, label='Shannon Equitability Index', alpha=0.8)
     ax1.plot(index, r_list, label='Observed Resolution', alpha=0.8)
     ax1.legend(loc='lower left')
-    ax1.yaxis.set_ticks(np.linspace(0, 1, num=11))
-    ax2 = ax1.twinx()
     ax2.plot(index, pi_list, 'k-', label=r'$\pi$', alpha=0.8)
-    ax2.plot(index, l_list, linestyle='--',
-             label='Average Terminal Branch Length', alpha=0.8)
-    ax2.set_ylabel(r'$\pi$ and Average Branch Length', rotation=-90,
-                   labelpad=20)
     # _ = round(np.log10(max(Pi))) + 1
     # ax2.yaxis.set_ticks(np.linspace(0, 10**_, num=11))
     ax2.legend(loc='upper right')
