@@ -131,6 +131,7 @@ BarcodeFinder accepts:
    evaluate variance.
 3. Alignments (fasta format).
 4. Genbank format files.
+
 Note that ambiguous bases were allowed in sequence. If you want to use "\*" or
 "?" to represent a series of files, make sure to use _"_ to quote it. For
 example, "\*.fasta" (include qutation mark) means all fasta files in the
@@ -300,6 +301,7 @@ All results will be put in the output folder. If you didn't set output path by
 
         The average end of forward primer in the original sequences.
         *ONLY USED FOR DEBUG*.
+
     The primer pairs were sorted by *Score*. Since the score may not fully
     satisfying user's specific consideration, it is suggested to choose primer
     pairs manually if the first primer pair failed on PCR experiment.
@@ -360,13 +362,14 @@ All results will be put in the output folder. If you didn't set output path by
     The folder contains divided sequences and intermediate results. After
     divided step occured in _b_-groupby_name, BarcodeFinder then divided each
     *cluster* of genbank records to several fasta files that each file
-    contains only one region of the annotation. For instance, a record in
-    "rbcL.gb" file may also contains atpB gene's sequence. In this folder,
-    however, BarcodeFinder ensures that each fasta file contains only one
-    locus, one gene, one spacer or one misc_feature. The "rbcL.fasta" file
-    does not contains any upstream/downstream sequence (except for ".expand"
-    files) and "atpB_rbcL.fasta" does not have even one base of atpB or rbcL
-    gene but only the spacer (assume that the annotation is precise).
+    contains only one region (one locus, one gene one spacer or one
+    misc_feature) of the annotation.
+
+    For instance, a record in "rbcL.gb" file may also contains atpB gene's
+    sequence. The "rbcL.fasta" file does not contains any upstream/downstream
+    sequence (except for ".expand" files) and "atpB_rbcL.fasta" does not have
+    even one base of atpB or rbcL gene but only the spacer (assume that the
+    annotation is precise).
 
     User can skip this divided step by set "-no_divide" to use the whole
     sequence for analysis. Note that it DOES NOT skip the first step of the
@@ -393,16 +396,68 @@ All results will be put in the output folder. If you didn't set output path by
         base's proportion in the column of the alignment.
     * _b_.fasta.uniq.consensus.fastq
 
-        The fastq format of the consensus sequence of the alignment.
-        Note that it contains aligment gap ("-").
-        Although this may be the
-        most useful file in the folder, it is NOT RECOMMENDED to directly use
-        it as the consensus sequence of the alignment because the
+        The fastq format of the consensus sequence of the alignment.  Note
+        that it contains aligment gap ("-").  Although this may be the most
+        useful file in the folder, it is NOT RECOMMENDED to directly use it as
+        the consensus sequence of the alignment because the
         consensus-genrating algorithm were optimized for primer design that it
         may be different with the _"real"_ consensus.
 
 ### Options
-# to be continue
+#### Help
+#### General options
+optional arguments:
+  -h, --help            show this help message and exit
+  -aln ALN              aligned fasta files to analyze (default: None)
+  -fasta FASTA          unaligned fasta format data to add (default: None)
+  -gb GB                genbank files (default: None)
+  -j JSON               configuration json file (default: None)
+  -stop {1,2,3}         Stop after which step: 1. Download 2. Preprocess data
+                        3. Analyze (default: 3)
+  -out OUT              output directory (default: None)
+
+Genbank:
+  -email EMAIL          email address for querying Genbank (default: None)
+  -gene GENE            gene name (default: None)
+  -group {animals,plants,fungi,protists,bacteria,archaea,viruses}
+                        Species kind (default: None)
+  -min_len MIN_LEN      minium length (default: 100)
+  -max_len MAX_LEN      maximum length (default: 10000)
+  -molecular {DNA,RNA}  molecular type (default: None)
+  -organelle {mitochondrion,plastid,chloroplast}
+                        organelle type (default: None)
+  -query QUERY          query text (default: None)
+  -taxon TAXON          Taxonomy name (default: None)
+
+Preprocess:
+  -expand EXPAND        expand length of upstream/downstream (default: 200)
+  -max_name_len MAX_NAME_LEN
+                        maximum length of feature name (default: 50)
+  -max_seq_len MAX_SEQ_LEN
+                        maximum length of sequence (default: 20000)
+  -no_divide            analyze whole sequence instead of divided fragment
+                        (default: False)
+  -rename               try to rename gene (default: False)
+  -uniq {longest,random,first,no}
+                        method to remove redundant sequences (default: first)
+
+Evaluate:
+  -f                    faster evaluate variance by omit tree_valueand
+                        terminal branch length (default: False)
+  -s STEP               step length for sliding-window scan (default: 50)
+
+Primer:
+  -a AMBIGUOUS_BASE_N   number of ambiguous bases (default: 4)
+  -c COVERAGE           minium coverage of base and primer (default: 0.6)
+  -m MISMATCH           maximum mismatch bases in primer (default: 4)
+  -pmin MIN_PRIMER      minimum primer length (default: 18)
+  -pmax MAX_PRIMER      maximum primer length (default: 24)
+  -r RESOLUTION         minium resolution (default: 0.5)
+  -t TOP_N              keep n primers for each high varient region (default:
+                        1)
+  -tmin MIN_PRODUCT     minimum product length(include primer) (default: 300)
+  -tmax MAX_PRODUCT     maximum product length(include primer) (default: 500)
+
 ```
 # Windows
 python Barcodefinder.py -h
