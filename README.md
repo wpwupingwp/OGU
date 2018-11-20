@@ -190,10 +190,11 @@ All results will be put in the output folder. If you didn't set output path by
     The converted fasta file of the ".gb" file.
 * _b_.fasta.uniq.csv
 
-    The list of primer pairs.
+    The list of primer pairs. CSV(comma-separated values text) format.
+
     Its title:
     ```
-    Score,Sequences,AvgProductLength,StdEV,MinProductLength,MaxProductLength,Coverage,Resolution,TreeValue,Entropy,LeftSeq,LeftTm,LeftAvgBitscore,LeftAvgMismatch,RightSeq,RightTm,RightAvgBitscore,RightAvgMismatch,DeltaTm,AlnStart,AlnEnd,AvgSeqStart,AvgSeqEnd
+    Score,Sequences,AvgProductLength,StdEV,MinProductLength,MaxProductLength,Coverage,Resolution,TreeValue,AvgTerminalBranchLen,Entropy,LeftSeq,LeftTm,LeftAvgBitscore,LeftAvgMismatch,RightSeq,RightTm,RightAvgBitscore,RightAvgMismatch,DeltaTm,AlnStart,AlnEnd,AvgSeqStart,AvgSeqEnd
     ```
 
     * Score
@@ -239,16 +240,68 @@ All results will be put in the output folder. If you didn't set output path by
         The *tree resolution* of the sub-alignment, which is equal to number
         of internal nodes of phylogenetic tree construted from the alignment
         divided by number of terminal nodes. The value is between 0 and 1.
+
+    * AvgTerminalBranchLen
+
+        The average of sum of terminal branch's length.
     * Entropy
 
         <img src="https://latex.codecogs.com/svg.latex?\dpi{300}&space;E_{H}&space;=&space;\frac{-&space;\sum_{i=1}^{k}{p_{i}&space;\log(p_{i})}}{\log(k)}" title="E_{H} = \frac{- \sum_{i=1}^{k}{p_{i} \log(p_{i})}}{\log(k)}" />
 
         The Shannon equitability index of the sub-alignment. The value is
         between 0 and 1.
-    * 
+    * LeftSeq
 
+        Sequence of forward primer. The direction is 5' to 3'.
+    * LeftTm
+        
+        The melting temperature of forward primer. The unit is Celcius(°C).
+    * LeftAvgBitscore
 
-* _b_.fasta.uniq.resolution.tsv
+        The average of raw bitscore of forward primer which is calculated by
+        BLAST.
+    * LeftAvgMismatch
+
+        The average number of mismatch bases of forward primer which is
+        counted by BLAST.
+    * RightSeq
+
+        Sequence of reverse primer. The direction is 5' to 3'.
+    * RightTm
+        
+        The melting temperature of reverse primer. The unit is Celcius(°C).
+    * RightAvgBitscore
+
+        The average of raw bitscore of reverse primer which is calculated by
+        BLAST.
+    * RightAvgMismatch
+
+        The average number of mismatch bases of reverse primer which is
+        counted by BLAST.
+    * DeltaTm
+        
+        The difference of melting temperature of forward and reverse primer.
+        High DeltaTm may result in failure of PCR amplified.
+    * AlnStart
+
+        The location of beginning of forward primer(5', leftmost of primer
+        pairs) in the whole alignment.
+    * AlnEnd
+
+        The location of end of reverse primer(5', rightmost of primer pairs)
+        in the whole alignment.
+    * AvgSeqStart
+
+        The average beginning of forward primer in the original sequences.
+        *ONLY USED FOR DEBUG*.
+    * AvgSeqEnd
+
+        The average end of forward primer in the original sequences.
+        *ONLY USED FOR DEBUG*.
+    The primer pairs were sorted by *Score*. Since the score may not fully
+    satisfying user's specific consideration, it is suggested to choose primer
+    pairs manually if the first primer pair failed on PCR experiment.
+* _b_.fasta.uniq.variance.tsv
 * _b_.fasta.uniq.csv
 * _b_.fasta.uniq.fastq
 * _b_.fasta.uniq.pdf
