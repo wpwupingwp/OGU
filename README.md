@@ -1,3 +1,24 @@
+# Table of Contents
+   * [Introduction](#introduction)
+   * [Prerequisite](#prerequisite)
+      * [Software](#software)
+      * [Python module](#python-module)
+      * [Internet](#internet)
+   * [Installation](#installation)
+   * [Usage](#usage)
+      * [Quick examples](#quick-examples)
+      * [Input](#input)
+      * [Sequence ID](#sequence-id)
+      * [Output](#output)
+   * [Options](#options)
+      * [Help](#help)
+      * [General](#general)
+      * [Genbank](#genbank)
+      * [Preprocess](#preprocess)
+      * [Evaluate](#evaluate)
+      * [Primer Design](#primer-design)
+   * [Performance](#performance)
+
 # Introduction
 BarcodeFinder could automatically discover novel DNA barcodes with universal
 primers. It does three things as listed below.
@@ -747,3 +768,13 @@ All results will be put in the output folder. If you didn't set output path by
     For instance, if you want the amplified length smaller than 800 and
     greater than 500, maybe you could consider to set "-tmin" to 550 and
     "-tmax" to 750.
+
+# Performance
+For taxon that not very large and few fragments, BarcodeFinder could finish
+the task in *minutes*. For large taxon (such as Asteraceae family or the whole
+plants kingdom) and multiple fragments (such as chloroplast genomes) the time
+may be hours -- in a PC.
+
+BarcodeFinder requires few memory (less than 1GB for large taxon) and CPU (one
+core is enough). It can run in normal PC very well. Multiple CPU cores may be
+helpful for the alignment and tree construction steps.
