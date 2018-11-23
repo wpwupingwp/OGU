@@ -1,4 +1,3 @@
-<div toc align="center">
 # Table of Contents
    * [Introduction](#introduction)
    * [Prerequisite](#prerequisite)
@@ -19,7 +18,6 @@
       * [Evaluate](#evaluate)
       * [Primer Design](#primer-design)
    * [Performance](#performance)
-</div>
 # Introduction
 BarcodeFinder could automatically discover novel DNA barcodes with universal
 primers. It does three things as listed below.
