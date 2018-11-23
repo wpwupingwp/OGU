@@ -216,16 +216,17 @@ def parse_args():
     arg = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description=main.__doc__)
-    arg.add_argument('-aln', help='aligned fasta files to analyze')
-    arg.add_argument('-fasta', help='unaligned fasta format data to add')
-    arg.add_argument('-gb', help='genbank files')
-    arg.add_argument('-j', dest='json', help='configuration json file')
-    arg.add_argument('-stop', type=int, choices=(1, 2, 3), default=3,
-                     help=('Stop after which step:\n'
-                           '\t1. Download\n'
-                           '\t2. Preprocess data\n'
-                           '\t3. Analyze\n'))
-    arg.add_argument('-out', help='output directory')
+    general = arg.add_argument_group('General')
+    general.add_argument('-aln', help='aligned fasta files to analyze')
+    general.add_argument('-fasta', help='unaligned fasta format data to add')
+    general.add_argument('-gb', help='genbank files')
+    general.add_argument('-json', dest='json', help='configuration json file')
+    general.add_argument('-stop', type=int, choices=(1, 2, 3), default=3,
+                         help=('Stop after which step:\n'
+                               '\t1. Download and divide\n'
+                               '\t2. Analyze variance\n'
+                               '\t3. Primer design'))
+    general.add_argument('-out', help='output directory')
     genbank = arg.add_argument_group('Genbank')
     genbank.add_argument('-email', help='email address for querying Genbank')
     genbank.add_argument('-gene', type=str, help='gene name')

@@ -39,3 +39,4 @@
 39. BiopythonParserWarning: Expected sequence length 491, found 1083 (U58558.1).
 40. add animal order
 41. use avg to calc tm
+42. stop 1 for divide, 2 for analyze, 3 for primer design

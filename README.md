@@ -502,15 +502,15 @@ All results will be put in the output folder. If you didn't set output path by
     records from Genbank. Please ensure you have stable and unexpensive
     Internet connection. The default *value* is empty.
 
-* -min_len number
+* -min_len value
 
     The minium length of the records downloaded from Genbank.  The default
-    value is 100 (bp). The *number* must be integer.
+    *value* is 100 (bp). The *number* must be integer.
 
-* -max_len number
+* -max_len value
 
     The maximum length of the records downloaded from Genbank.  The default
-    value is 10000 (bp). The *number* must be integer.
+    *value* is 10000 (bp). The *number* must be integer.
 
     If you set "-organelle" option, the range of the length will becomes 10000
     to 1000000 (bp).
@@ -528,7 +528,7 @@ All results will be put in the output folder. If you didn't set output path by
     * chloroplast
 
     Make sure do not have typo. This option have higher privilege, which will
-    change "-min_len" and "-max_len" but other options. The default value is
+    change "-min_len" and "-max_len" and other options. The default value is
     empty.
 
 * -query string
@@ -549,24 +549,24 @@ All results will be put in the output folder. If you didn't set output path by
     quotation mark if *taxonomy* has more than one word.
 
 #### Preprocess
-* -expand number
+* -expand value
 
-    The expand length of upstream/downstream. The default value is 200 (bp).
+    The expand length of upstream/downstream. The default *value* is 200 (bp).
     If set, BarcodeFinder will expand the sequence to its upstream/downstream
     after dividing step to find primer candidates. Set the *number* to 0 to
     skip.
-* -max_name_len number
+* -max_name_len value
 
     The maximum length of feature name. Some annotation's feature name  in
     genbank file is too long and usually they are not target sequence user
     wanted. By setting this option, Barcodefinder will truncate annotation's
-    feature name if too long. By default the *number* is 50.
-* -max_seq_len number
+    feature name if too long. By default the *value* is 50.
+* -max_seq_len value
 
     The maximum length of sequence of one annotation. Some annotation's
     sequence is too long (for instance, one gene have two exons and its intron
     is longer than 10 Kb), This option will skip those long sequences. By
-    default the *number* is 20000 (20 KB).
+    default the *value* is 20000 (20 KB).
 
     Note that this option is different with "-max_len". This option limits the
     length of one annotation's sequence. The "-max_len" limits the whole
@@ -591,8 +591,6 @@ All results will be put in the output folder. If you didn't set output path by
     but have variant name.
 
     It is also a boolen type. The default is not to rename.
-
-
 * -uniq method
 {longest,random,first,no}
     The method to remove redundant sequences. BarcodeFinder will remove
@@ -617,6 +615,7 @@ All results will be put in the output folder. If you didn't set output path by
         Skip this step, all sequences will be kept.
 #### Evaluate
 * -f
+
     If set, BarcodeFinder will skip the calculation of "tree resolution" and
     "average terminal branch length" to reduce running time.
     
@@ -626,23 +625,85 @@ All results will be put in the output folder. If you didn't set output path by
     are too many, you can set this option to reduce time. The "tree
     resolution" and "average terminal branch length" will become 0 in the
     result file.
-* -s STEP               step length for sliding-window scan (default: 50)
-
+* -s value
+    The step length for sliding-window scan. The default *value* is 50. If
+    the input data is too big, extreamly small *value* (such as 1 or 2) may
+    cause too much time, especially when the "-f" option were not used at the
+    same time.
 #### Primer Design
+* -a value
 
+    The maximum number of ambiguous bases allowed in one primer. The default
+    *value* is 4.
+* -c value
 
-Primer:
-  -a AMBIGUOUS_BASE_N   number of ambiguous bases (default: 4)
-  -c COVERAGE           minium coverage of base and primer (default: 0.6)
-  -m MISMATCH           maximum mismatch bases in primer (default: 4)
-  -pmin MIN_PRIMER      minimum primer length (default: 18)
-  -pmax MAX_PRIMER      maximum primer length (default: 24)
-  -r RESOLUTION         minium resolution (default: 0.5)
-  -t TOP_N              keep n primers for each high varient region (default:
-                        1)
-  -tmin MIN_PRODUCT     minimum product length(include primer) (default: 300)
-  -tmax MAX_PRODUCT     maximum product length(include primer) (default: 500)
+    The minimum coverage of base and primer. The default *value* is 0.6 (60%).
+    It was used to remove primer candidates if its coverage among all
+    sequences were smaller than threshold. The coverage of primers were
+    calculated by BLAST.
 
+    Also it was used to generate consensus sequence. For one column, if the
+    proportion of one type of base (A, T, C, G) is smaller than the threshold,
+    the program will try to use ambiguous base which represent two type of
+    bases, and then three, then four ("N").
+* -m value
+
+    The maximum number of mismatch bases in primer. This options was used to
+    remove primer candidates if the BLAST results show that it has too much
+    mismatch. The default *value* is 4.
+* -pmin value
+
+    The minimum length of the primer length. The default *value* is 18.
+* -pmax value
+
+    The maximum length of the primer length. The default *value* is 24.
+* -r value
+
+    The minimum *observed resolution* of the fragments or primer pairs. The
+    default *value* is 0.5. It was used to skip conserved fragment (alignment
+    or sub-alignment defined by a pair of primer).
+
+    BarcodeFinder use *observed resolution* instead of others is because,
+    * speed
+
+        The calculation of *observed resolution* is very fast.
+    * accuracy
+
+        Because of the exist of possible alignment error, the *observed
+        resolution* may be higher than other evaluate method's result. Hence
+        it was used to be the lower bound. That is to say, the program
+        considers that if a fragment has low *observed resolution*, its *tree
+        resolution* may not satisfy the requirement, either.
+
+    By set it to 0, BarcodeFinder can skip this step of filteration.
+    Meanwhile, the running time may be high.
+* -t value
+
+    Only keep *value* pairs of primers for each high varient region. The
+    default *value* is 1, i.e., only keep the _best_ primer pair. Which is the
+    best is according to *Score* it got as desciribed before. To get much more
+    choice you can set "-t" to more than 1.
+* -tmin value
+
+    The minimum product length (include primer). The default *value* is 300
+    (bp). Note this limit the PCR product's length instead of sub-alignment's
+    length.
+* -tmax value
+
+    The maximum product length (include primer). The default *value* is 500
+    (bp). Note that it limit the length of PCR product given by the primer
+    pair instead of the alignment.
+
+    The "-tmin" and "-tmax" were used to screen primer candidates. It use
+    BLAST result to set the location of primer on each template sequence and
+    calculate average length of the product. Because of the variance
+    that same locus may have differenct length in different species, plus
+    with the strecthing of the alignment that gaps were added during the
+    aligning, please consider to add some *margin* for these two options.
+
+    For instance, if you want the amplified length smaller than 800 and
+    greater than 500, maybe you could consider to set "-tmin" to 550 and
+    "-tmax" to 750.
 ## Quick examples
 1. Download all _rbcL_ sequences of plants and do pre-process:
 ```
