@@ -86,8 +86,8 @@ sudo pacman -S mafft ncbi-blast+ iqtree
 # FreeBSD
 sudo pkg install mafft ncbi-blast+ iqtree
 ```
-For MacOS user, assume you have root privileges, if you do not have
-*brew*, install it:
+For MacOS user, assume you have root privileges, if you do not have *brew*,
+install it:
 ```
 /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 ```
@@ -98,9 +98,11 @@ brew install blast mafft brewsci/science/iqtree
 If you are Windows user or you do not have root privileges, follow these
 instructions:
 1. BLAST+
+
     * [Windows](https://www.ncbi.nlm.nih.gov/books/NBK52637/)
     * [Linux and MacOS](https://www.ncbi.nlm.nih.gov/books/NBK52640/)
 2. MAFFT
+
     * [Windows](https://mafft.cbrc.jp/alignment/software/windows.html)
 
         Choose "All-in-one version", download and unzip. Then follow the step
@@ -114,18 +116,58 @@ instructions:
         Choose "All-in-one version", download and unzip. Then follow the step
         in BLAST+ installation manual to set _PATH_.
 3. IQTREE
-[Download](http://www.iqtree.org/#download)
-Download installer according to your OS. Unzip and add the path of subfolder
-*bin* into _PATH_
+
+    * [Download](http://www.iqtree.org/#download)
+
+        Download installer according to your OS. Unzip and add the path of
+        subfolder *bin* into _PATH_
 # Usage
 BarcodeFinder is a command line program. Once you open your command line
-(Windows) or
-terminal (Linux and MacOS)
+(Windows) or terminal (Linux and MacOS), just type the command:
 ```
 # Windows
 python BarcodeFinder.py [input] -[options] -out [out_folder]
 # Linux and MacOS
 python3 BarcodeFinder.py [input] -[options] -out [out_folder]
+```
+## Quick examples
+1. Download all _rbcL_ sequences of plants and do pre-process:
+```
+# Windows
+python BarcodeFinder.py -query rbcL -group plants -stop 1 -out rbcL
+# Linux and macos
+python3 BarcodeFinder.py -query rbcL -group plants -stop 1 -out rbcL
+```
+2. Download all ITS sequences of _Rosa_ and do pre-process:
+```
+# Windows
+python BarcodeFinder.py -query "internal transcribed spacer" -taxon Rosa -stop 2 -out Rosa_its
+# Linux and macos
+python3 BarcodeFinder.py -query "internal transcribed spacer" -taxon Rosa -stop 2 -out Rosa_its
+```
+3. Download all Rosaceae chloroplast genome sequences, plus your own data.
+   Then do analyze:
+```
+# Windows
+python BarcodeFinder.py -organelle chloroplast -taxon Rosaceae -out Poaceae_cpg -fasta my_data.fasta
+# Linux and macos
+python3 BarcodeFinder.py -organelle chloroplast -taxon Rosaceae -out Poaceae_cpg -fasta my_data.fasta
+```
+4. Download sequences of _Zea mays_, set length between 100 bp and 3000 bp,
+   plus your aligned data, then do analyze:
+```
+# Windows
+python BarcodeFinder.py -taxon "Zea mays" -min_len 100 -max_len 3000 -out Zea_mays -aln my_data.aln
+# Linux and macos
+python3 BarcodeFinder.py -taxon "Zea mays" -min_len 100 -max_len 3000 -out Zea_mays -aln my_data.aln
+```
+5. Download all _Oryza_ chloroplast genomes, divide them into fragments, and
+   skip analyze:
+```
+# Windows
+python BarcodeFinder.py -taxon Oryza -organelle chloroplast -stop 2 -out Oryza_cp
+# Linux and macos
+python3 BarcodeFinder.py -taxon Oryza -organelle chloroplast -stop 2 -out Oryza_cp
 ```
 ## Input
 BarcodeFinder accepts:
@@ -148,8 +190,8 @@ rbcL|Poales|Poaceae|Oryza|longistaminata|MF998442|TAN:GB60B-2014
 ```
 The order of the seven fields is fixed. Each field was seperated by the
 vertical bar ("|"). The space character (" ") was disallowed and it was
-replaced by underscore ("\_").
-Because of technical issue, the order rank may be empty for animals.
+replaced by underscore ("\_").  Because of technical issue, the order rank may
+be empty for animals.
 * SeqName
 
     It means the name of sequences. Usually it its the gene name. For spacer,
@@ -592,7 +634,7 @@ All results will be put in the output folder. If you didn't set output path by
 
     It is also a boolen type. The default is not to rename.
 * -uniq method
-{longest,random,first,no}
+
     The method to remove redundant sequences. BarcodeFinder will remove
     redundant sequences to ensure only one sequence for one species by
     default. You can change its behaviour by set different method.
@@ -626,6 +668,7 @@ All results will be put in the output folder. If you didn't set output path by
     resolution" and "average terminal branch length" will become 0 in the
     result file.
 * -s value
+
     The step length for sliding-window scan. The default *value* is 50. If
     the input data is too big, extreamly small *value* (such as 1 or 2) may
     cause too much time, especially when the "-f" option were not used at the
@@ -704,42 +747,3 @@ All results will be put in the output folder. If you didn't set output path by
     For instance, if you want the amplified length smaller than 800 and
     greater than 500, maybe you could consider to set "-tmin" to 550 and
     "-tmax" to 750.
-# Quick examples
-1. Download all _rbcL_ sequences of plants and do pre-process:
-```
-# Windows
-python BarcodeFinder.py -query rbcL -group plants -stop 1 -out rbcL
-# Linux and macos
-python3 BarcodeFinder.py -query rbcL -group plants -stop 1 -out rbcL
-```
-2. Download all ITS sequences of _Rosa_ and do pre-process:
-```
-# Windows
-python BarcodeFinder.py -query "internal transcribed spacer" -taxon Rosa -stop 2 -out Rosa_its
-# Linux and macos
-python3 BarcodeFinder.py -query "internal transcribed spacer" -taxon Rosa -stop 2 -out Rosa_its
-```
-3. Download all Rosaceae chloroplast genome sequences, plus your own data.
-   Then do analyze:
-```
-# Windows
-python BarcodeFinder.py -organelle chloroplast -taxon Rosaceae -out Poaceae_cpg -fasta my_data.fasta
-# Linux and macos
-python3 BarcodeFinder.py -organelle chloroplast -taxon Rosaceae -out Poaceae_cpg -fasta my_data.fasta
-```
-4. Download sequences of _Zea mays_, set length between 100 bp and 3000 bp,
-   plus your aligned data, then do analyze:
-```
-# Windows
-python BarcodeFinder.py -taxon "Zea mays" -min_len 100 -max_len 3000 -out Zea_mays -aln my_data.aln
-# Linux and macos
-python3 BarcodeFinder.py -taxon "Zea mays" -min_len 100 -max_len 3000 -out Zea_mays -aln my_data.aln
-```
-5. Download all _Oryza_ chloroplast genomes, divide them into fragments, and
-   skip analyze:
-```
-# Windows
-python BarcodeFinder.py -taxon Oryza -organelle chloroplast -stop 2 -out Oryza_cp
-# Linux and macos
-python3 BarcodeFinder.py -taxon Oryza -organelle chloroplast -stop 2 -out Oryza_cp
-```
