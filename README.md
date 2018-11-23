@@ -141,33 +141,33 @@ python3 BarcodeFinder.py -query rbcL -group plants -stop 1 -out rbcL
 2. Download all ITS sequences of _Rosa_ and do pre-process:
 ```
 # Windows
-python BarcodeFinder.py -query "internal transcribed spacer" -taxon Rosa -stop 2 -out Rosa_its
+python BarcodeFinder.py -query "internal transcribed spacer" -taxon Rosa -stop 1 -out Rosa_its
 # Linux and macos
-python3 BarcodeFinder.py -query "internal transcribed spacer" -taxon Rosa -stop 2 -out Rosa_its
+python3 BarcodeFinder.py -query "internal transcribed spacer" -taxon Rosa -stop 1 -out Rosa_its
 ```
 3. Download all Rosaceae chloroplast genome sequences, plus your own data.
-   Then do analyze:
+   Then do pre-process and evaluation of variance (do not design primers):
 ```
 # Windows
-python BarcodeFinder.py -organelle chloroplast -taxon Rosaceae -out Poaceae_cpg -fasta my_data.fasta
+python BarcodeFinder.py -organelle chloroplast -taxon Rosaceae -out Poaceae_cpg -fasta my_data.fasta -stop 2
 # Linux and macos
-python3 BarcodeFinder.py -organelle chloroplast -taxon Rosaceae -out Poaceae_cpg -fasta my_data.fasta
+python3 BarcodeFinder.py -organelle chloroplast -taxon Rosaceae -out Poaceae_cpg -fasta my_data.fasta stop 2
 ```
 4. Download sequences of _Zea mays_, set length between 100 bp and 3000 bp,
-   plus your aligned data, then do analyze:
+   plus your aligned data, then do full analysis:
 ```
 # Windows
 python BarcodeFinder.py -taxon "Zea mays" -min_len 100 -max_len 3000 -out Zea_mays -aln my_data.aln
 # Linux and macos
 python3 BarcodeFinder.py -taxon "Zea mays" -min_len 100 -max_len 3000 -out Zea_mays -aln my_data.aln
 ```
-5. Download all _Oryza_ chloroplast genomes, divide them into fragments, and
-   skip analyze:
+5. Download all _Oryza_ chloroplast genomes, keep the longest sequence for
+   each species and do full analysis:
 ```
 # Windows
-python BarcodeFinder.py -taxon Oryza -organelle chloroplast -stop 2 -out Oryza_cp
+python BarcodeFinder.py -taxon Oryza -organelle chloroplast -uniq longest -out Oryza_cp
 # Linux and macos
-python3 BarcodeFinder.py -taxon Oryza -organelle chloroplast -stop 2 -out Oryza_cp
+python3 BarcodeFinder.py -taxon Oryza -organelle chloroplast -uniq longest -out Oryza_cp
 ```
 ## Input
 BarcodeFinder accepts:
