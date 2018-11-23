@@ -102,14 +102,17 @@ instructions:
     * [Linux and MacOS](https://www.ncbi.nlm.nih.gov/books/NBK52640/)
 2. MAFFT
     * [Windows](https://mafft.cbrc.jp/alignment/software/windows.html)
-    Choose "All-in-one version", download and unzip. Then follow the step in
-    BLAST+ installation manual to set _PATH_.
+
+        Choose "All-in-one version", download and unzip. Then follow the step
+        in BLAST+ installation manual to set _PATH_.
     * [Linux](https://mafft.cbrc.jp/alignment/software/linux.html)
-    Choose "Portable package", download and unzip. Then follow the instruction
-    of BLAST+ to set _PATH_.
+
+        Choose "Portable package", download and unzip. Then follow the
+        instruction of BLAST+ to set _PATH_.
     * [MacOS](https://mafft.cbrc.jp/alignment/software/macosx.html)
-    Choose "All-in-one version", download and unzip. Then follow the step in
-    BLAST+ installation manual to set _PATH_.
+
+        Choose "All-in-one version", download and unzip. Then follow the step
+        in BLAST+ installation manual to set _PATH_.
 3. IQTREE
 [Download](http://www.iqtree.org/#download)
 Download installer according to your OS. Unzip and add the path of subfolder
@@ -179,7 +182,6 @@ Because of technical issue, the order rank may be empty for animals.
 * SpecimenID
 
     The ID of specimen of the sequence. May be empty.
-
 ### Output
 All results will be put in the output folder. If you didn't set output path by
 "-out", BarcodeFinder will create a folder named by current time, for example,
@@ -530,6 +532,7 @@ All results will be put in the output folder. If you didn't set output path by
     empty.
 
 * -query string
+
     The query string user provied. It behaves same with the query you typed in
     the Search Box in NCBI Genbank's webpage.
     
@@ -538,6 +541,7 @@ All results will be put in the output folder. If you didn't set output path by
     empty.
 
 * -taxon taxonomy
+
     The taxonomy name. It could be any taxonomy rank. From kingdom (same with
     "-group") to species or subspecies, as long as you input correct name
     (scientific name of species or taxonomic group, latin, NOT ENGLISH), it
@@ -545,22 +549,84 @@ All results will be put in the output folder. If you didn't set output path by
     quotation mark if *taxonomy* has more than one word.
 
 #### Preprocess
-Preprocess:
-  -expand EXPAND        expand length of upstream/downstream (default: 200)
-  -max_name_len MAX_NAME_LEN
-                        maximum length of feature name (default: 50)
-  -max_seq_len MAX_SEQ_LEN
-                        maximum length of sequence (default: 20000)
-  -no_divide            analyze whole sequence instead of divided fragment
-                        (default: False)
-  -rename               try to rename gene (default: False)
-  -uniq {longest,random,first,no}
-                        method to remove redundant sequences (default: first)
+* -expand number
+
+    The expand length of upstream/downstream. The default value is 200 (bp).
+    If set, BarcodeFinder will expand the sequence to its upstream/downstream
+    after dividing step to find primer candidates. Set the *number* to 0 to
+    skip.
+* -max_name_len number
+
+    The maximum length of feature name. Some annotation's feature name  in
+    genbank file is too long and usually they are not target sequence user
+    wanted. By setting this option, Barcodefinder will truncate annotation's
+    feature name if too long. By default the *number* is 50.
+* -max_seq_len number
+
+    The maximum length of sequence of one annotation. Some annotation's
+    sequence is too long (for instance, one gene have two exons and its intron
+    is longer than 10 Kb), This option will skip those long sequences. By
+    default the *number* is 20000 (20 KB).
+
+    Note that this option is different with "-max_len". This option limits the
+    length of one annotation's sequence. The "-max_len" limits the whole
+    sequence's length of one genbank record. 
+
+    For organelle genome's analysis, if you  set "-no_divide" option, this
+    option will be ignored.
+* -no_divide
+
+    If set, analyze whole sequence instead of divided fragment. By default,
+    BarcodeFinder divided one genbank records to several fragments according
+    to its annotation. 
+
+    Note that this option is boolen type. It DOES NOT followed with a *value*.
+* -rename
+
+    If set, the program will try to rename genes. For instance, "rbcl" will be
+    renamed to "rbcL", and "tRNA UAC" will be renamed to "trnVuac", which
+    consists of "trn", the amino acid's letter and transcribed codon. This may
+    be helpful if the annotation has nonstandard uppercase/lowercase or naming
+    format. So it can merge same sequences to one file which are same locus
+    but have variant name.
+
+    It is also a boolen type. The default is not to rename.
+
+
+* -uniq method
+{longest,random,first,no}
+    The method to remove redundant sequences. BarcodeFinder will remove
+    redundant sequences to ensure only one sequence for one species by
+    default. You can change its behaviour by set different method.
+    * longest
+
+        Keep the longest sequence for one species. The program will compare
+        sequence's length for the same species' same locus.
+    * random
+
+        The program will randomly pick one sequence for one species's one
+        locus if there are more than one sequence.
+    * first
+
+        According to records' order in the original genbank file, only the
+        first sequence of the same species' same locus will be kept. Others
+        will be directly ignored. This is the default option because of the
+        consideration of performance.
+    * no
+
+        Skip this step, all sequences will be kept.
 #### Evaluate
-Evaluate:
-  -f                    faster evaluate variance by omit tree_valueand
-                        terminal branch length (default: False)
-  -s STEP               step length for sliding-window scan (default: 50)
+* -f
+    If set, BarcodeFinder will skip the calculation of "tree resolution" and
+    "average terminal branch length" to reduce running time.
+    
+    Although the program has been optimized greatly, the phylogenetic tree's
+    inference could be time-consuming if there are too many species (for
+    instance, 10000). If you want to analyze organelle genome and the species
+    are too many, you can set this option to reduce time. The "tree
+    resolution" and "average terminal branch length" will become 0 in the
+    result file.
+* -s STEP               step length for sliding-window scan (default: 50)
 
 #### Primer Design
 
