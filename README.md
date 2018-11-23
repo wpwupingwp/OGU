@@ -1,4 +1,4 @@
-# BarcodeFinder
+# Introduction
 BarcodeFinder could automatically discover novel DNA barcodes with universal
 primers. It does three things as listed below.
 * Collect data
@@ -41,22 +41,22 @@ primers. It does three things as listed below.
 
     Finally, primer pairs were reordered by score to make it easy for user to
     find "best" primer pairs they want.
-## Prerequisite
-### Software
+# Prerequisite
+## Software
 * Python3 (3.5 or above)
 * BLAST+
 * IQTREE
 * MAFFT
-### Python module
+## Python module
 * Biopython
 * matplotlib
 * numpy
 * primer3-py
-### Internet
+## Internet
 The data retrieve function requires Internet connection. Please ensure you
 have stable network and reasonable Internet traffic charge for downloading
 large size of data.
-## Installation
+# Installation
 Assume that you already installed [Python3](https://www.python.org/downloads/)
 (3.5 or above). Firstly, install BarcodeFinder.
 
@@ -117,7 +117,7 @@ instructions:
 [Download](http://www.iqtree.org/#download)
 Download installer according to your OS. Unzip and add the path of subfolder
 *bin* into _PATH_
-## Usage
+# Usage
 BarcodeFinder is a command line program. Once you open your command line
 (Windows) or
 terminal (Linux and MacOS)
@@ -127,7 +127,7 @@ python BarcodeFinder.py [input] -[options] -out [out_folder]
 # Linux and MacOS
 python3 BarcodeFinder.py [input] -[options] -out [out_folder]
 ```
-### Input
+## Input
 BarcodeFinder accepts:
 1. Genbank query. You can use "-query" or combine with other filters.
 2. Unaligned fasta files. Each file were considered to be one locus to
@@ -139,7 +139,7 @@ Note that ambiguous bases were allowed in sequence. If you want to use "\*" or
 "?" to represent a series of files, make sure to use _"_ to quote it. For
 example, "\*.fasta" (include qutation mark) means all fasta files in the
 folder.
-### Sequence ID
+## Sequence ID
 BarcodeFinder use uniform sequence ID in all fasta files it generated.
 ```
 SeqName|Order|Family|Genus|Species|Accession|SpecimenID
@@ -182,7 +182,7 @@ Because of technical issue, the order rank may be empty for animals.
 * SpecimenID
 
     The ID of specimen of the sequence. May be empty.
-### Output
+## Output
 All results will be put in the output folder. If you didn't set output path by
 "-out", BarcodeFinder will create a folder named by current time, for example,
 "2018-11-19T16-41-59.330217".
@@ -405,13 +405,13 @@ All results will be put in the output folder. If you didn't set output path by
         consensus-genrating algorithm were optimized for primer design that it
         may be different with the _"real"_ consensus.
 
-### Options
-#### Help
+# Options
+## Help
 * -h
 
     Print help message of the program. It is highly recommended to use this
     option to see the usage of options and their default value.
-#### General
+## General
 * -aln filename
 
     Alignment files user provided. The filename could be one file, or a series
@@ -463,7 +463,7 @@ All results will be put in the output folder. If you didn't set output path by
     in the folder name to avoid mysterious error caused by other Unicode
     characters. :)
  
-#### Genbank
+## Genbank
 * -email address
 
     BarcodeFinder use Biopython to handle the communication between user and
@@ -548,7 +548,7 @@ All results will be put in the output folder. If you didn't set output path by
     will restriced query to your target taxonomy unit. Make sure to use
     quotation mark if *taxonomy* has more than one word.
 
-#### Preprocess
+## Preprocess
 * -expand value
 
     The expand length of upstream/downstream. The default *value* is 200 (bp).
@@ -613,7 +613,7 @@ All results will be put in the output folder. If you didn't set output path by
     * no
 
         Skip this step, all sequences will be kept.
-#### Evaluate
+## Evaluate
 * -f
 
     If set, BarcodeFinder will skip the calculation of "tree resolution" and
@@ -630,7 +630,7 @@ All results will be put in the output folder. If you didn't set output path by
     the input data is too big, extreamly small *value* (such as 1 or 2) may
     cause too much time, especially when the "-f" option were not used at the
     same time.
-#### Primer Design
+## Primer Design
 * -a value
 
     The maximum number of ambiguous bases allowed in one primer. The default
@@ -704,7 +704,7 @@ All results will be put in the output folder. If you didn't set output path by
     For instance, if you want the amplified length smaller than 800 and
     greater than 500, maybe you could consider to set "-tmin" to 550 and
     "-tmax" to 750.
-## Quick examples
+# Quick examples
 1. Download all _rbcL_ sequences of plants and do pre-process:
 ```
 # Windows
