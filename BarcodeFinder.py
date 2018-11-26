@@ -14,8 +14,8 @@ from platform import system
 from random import choice
 from shutil import unpack_archive, ReadError
 from subprocess import run
-from urllib.error import HTTPError
 from urllib.request import urlopen
+from urllib.error import HTTPError
 
 import numpy as np
 import primer3
@@ -337,7 +337,8 @@ def download_software(url):
     try:
         down = urlopen(url)
     except HTTPError:
-        raise ('Cannot download {}.'.format(filename))
+        tprint('Cannot download {}.'.format(filename))
+        raise
     with open(filename, 'wb') as out:
         out.write(down.read())
     try:
