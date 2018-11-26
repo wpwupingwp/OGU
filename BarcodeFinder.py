@@ -355,7 +355,7 @@ def deploy(software):
     # url dict
     blast_url = ('ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/'
                  'ncbi-blast-2.7.1+')
-    iqtree_url = ('https://github.com/Cibiv/IQ-TREE/release/download/v1.6.8/'
+    iqtree_url = ('https://github.com/Cibiv/IQ-TREE/releases/download/v1.6.8/'
                   'iqtree-1.6.8')
     mafft_url = 'https://mafft.cbrc.jp/alignment/software/mafft'
     # windows blast path not sure
