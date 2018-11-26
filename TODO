@@ -30,7 +30,7 @@
 30. package
 31. update to pip
 32. requirement
-33. readme
+#33. readme
 #34. figure title as gene name
 #35. rps12
 #36. output path
@@ -40,3 +40,4 @@
 40. add animal order
 41. use avg to calc tm
 42. stop 1 for divide, 2 for analyze, 3 for primer design
+#43. TypeError: unique() got an unexpected keyword argument 'axis'

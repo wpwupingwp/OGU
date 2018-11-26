@@ -222,10 +222,10 @@ def parse_args():
     general.add_argument('-gb', help='genbank files')
     general.add_argument('-json', dest='json', help='configuration json file')
     general.add_argument('-stop', type=int, choices=(1, 2, 3), default=3,
-                         help=('Stop after which step:\n'
-                               '\t1. Download and divide\n'
-                               '\t2. Analyze variance\n'
-                               '\t3. Primer design'))
+                         help=('Stop after which step:'
+                               '\t1. Download and divide;'
+                               '\t2. Analyze variance;'
+                               '\t3. Primer design.'))
     general.add_argument('-out', help='output directory')
     genbank = arg.add_argument_group('Genbank')
     genbank.add_argument('-email', help='email address for querying Genbank')
@@ -333,12 +333,12 @@ def check_tools():
 
 def download_software(url):
     filename = url.split('/')[-1]
-    down = urlopen(url)
-    if down.status == 200:
-        with open(filename, 'wb') as out:
-            out.write(down.read())
-    else:
-        raise Exception('Cannot download {}.'.format(filename))
+    try:
+        down = urlopen(url)
+    except Exception:
+        raise ('Cannot download {}.'.format(filename))
+    with open(filename, 'wb') as out:
+        out.write(down.read())
     try:
         unpack_archive(filename)
     except ReadError:
