@@ -328,6 +328,7 @@ def check_tools():
         # mafft return 1 if "--help", BLAST do not have --help
         # to simplify code, use "--help" and accept 1 as returncode
         if check.returncode not in (0, 1):
+            tprint('Cannot find {}. Try to install.'.format(tools))
             deploy(tools)
     f.close()
 
