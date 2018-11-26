@@ -41,3 +41,4 @@
 41. use avg to calc tm
 42. stop 1 for divide, 2 for analyze, 3 for primer design
 #43. TypeError: unique() got an unexpected keyword argument 'axis'
+44. time usage, memory usage
