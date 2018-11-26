@@ -323,13 +323,18 @@ def check_tools():
             exists_path = path_file.read().strip()
             environ['PATH'] = pathsep.join([exists_path, environ['PATH']])
     f = open(devnull, 'w', encoding='utf-8')
+    installed = list()
     for tools in ('mafft', 'iqtree', 'blastn'):
         check = run('{} --help'.format(tools), shell=True, stdout=f, stderr=f)
         # mafft return 1 if "--help", BLAST do not have --help
         # to simplify code, use "--help" and accept 1 as returncode
         if check.returncode not in (0, 1):
             tprint('Cannot find {}. Try to install.'.format(tools))
-            deploy(tools)
+            install_path = deploy(tools)
+            installed.append(install_path)
+    environ['PATH'] = pathsep.join([environ['PATH'], *installed])
+    with open('PATH.json', 'w', encoding='utf-8') as path_out:
+        json.dump(environ['PATH'], path_out)
     f.close()
 
 
@@ -421,11 +426,7 @@ def deploy(software):
     if software == 'mafft':
         rename(join_path(urls[sys]['mafft']['path'], 'mafft.bat'),
                join_path(urls[sys]['mafft']['path'], 'mafft'))
-    environ['PATH'] = pathsep.join([urls[sys][software]['path'],
-                                    environ['PATH']])
-    with open('PATH.json', 'w', encoding='utf-8') as path_out:
-        json.dump(environ['PATH'], path_out)
-    return environ['PATH']
+    return urls[sys][software]['path']
 
 
 def get_query_string(arg):
