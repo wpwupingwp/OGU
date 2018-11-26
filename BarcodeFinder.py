@@ -6,8 +6,8 @@ import re
 from collections import defaultdict
 from datetime import datetime
 from glob import glob
-from os import (devnull, environ, mkdir, pathsep, remove, sched_getaffinity,
-                sep)
+from os import (devnull, environ, mkdir, pathsep, remove, rename,
+                sched_getaffinity, sep)
 from os.path import abspath, basename, exists, splitext
 from os.path import join as join_path
 from platform import system
@@ -417,6 +417,9 @@ def deploy(software):
                 ok = True
         if not ok:
                 download_software(url)
+    if software == 'mafft':
+        rename(join_path(urls[sys]['mafft']['path'], 'mafft.bat'),
+               join_path(urls[sys]['mafft']['path'], 'mafft'))
     environ['PATH'] = pathsep.join([urls[sys][software]['path'],
                                     environ['PATH']])
     with open('PATH.json', 'w', encoding='utf-8') as path_out:
