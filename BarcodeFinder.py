@@ -338,7 +338,7 @@ def download_software(url):
         down = urlopen(url)
     except HTTPError:
         tprint('Cannot download {}.'.format(filename))
-        raise
+        raise Exception('')
     with open(filename, 'wb') as out:
         out.write(down.read())
     try:
