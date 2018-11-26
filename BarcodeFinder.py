@@ -318,10 +318,10 @@ def tprint(string):
 
 
 def check_tools():
-    if exists('PATH.json'):
-        with open('PATH.json', 'r', encoding='utf-8') as path_file:
+    if exists('PATH.txt'):
+        with open('PATH.txt', 'r', encoding='utf-8') as path_file:
             exists_path = path_file.read().strip()
-            environ['PATH'] = pathsep.join([exists_path, environ['PATH']])
+            environ['PATH'] = pathsep.join([environ['PATH'], exists_path])
     f = open(devnull, 'w', encoding='utf-8')
     installed = list()
     for tools in ('mafft', 'iqtree', 'blastn'):
@@ -333,8 +333,8 @@ def check_tools():
             install_path = deploy(tools)
             installed.append(install_path)
     environ['PATH'] = pathsep.join([environ['PATH'], *installed])
-    with open('PATH.json', 'w', encoding='utf-8') as path_out:
-        json.dump(environ['PATH'], path_out)
+    with open('PATH.txt', 'w', encoding='utf-8') as path_out:
+        path_out.write(environ['PATH'] + '\n')
     f.close()
 
 
