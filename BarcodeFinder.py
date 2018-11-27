@@ -566,7 +566,7 @@ def safe(old):
     return re.sub(r'\W', '_', old)
 
 
-def get_taxon(order_family):
+def get_taxon(order_family, order_exceptions):
     """
     From Zhang guojin
     order end with ales
@@ -581,11 +581,9 @@ def get_taxon(order_family):
     order = ''
     family = ''
     for item in order_family:
-        if item.endswith('ales'):
+        if item.endswith('ales') or item in order_exceptions:
             order = item
-        elif item.endswith('aceae'):
-            family = item
-        elif item in family_exception:
+        elif item.endswith('aceae') or item in family_exception:
             family = item
     return order, family
 
@@ -718,11 +716,17 @@ def divide(gbfile, arg):
     handle_raw = open(raw_fasta, 'w', encoding='utf-8')
     wrote_by_gene = set()
     wrote_by_name = set()
-
+    # read order exceptions that not end with "ales"
+    order_exceptions = list()
+    with open('orders.txt', 'r') as _:
+        for line in _:
+            if not line.startswith('#'):
+                order_exceptions.append(line.strip())
+    # divide gb
     for record in SeqIO.parse(gbfile, 'gb'):
         # only accept gene, product, and spacer in misc_features.note
         order_family = record.annotations['taxonomy']
-        order, family = get_taxon(order_family)
+        order, family = get_taxon(order_family, order_exceptions)
         organism = record.annotations['organism'].replace(' ', '_')
         genus, *species = organism.split('_')
         # species name may contain other characters
