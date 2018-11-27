@@ -224,7 +224,7 @@ def parse_args():
     general.add_argument('-json', dest='json', help='configuration json file')
     general.add_argument('-stop', type=int, choices=(1, 2, 3), default=3,
                          help=('Stop after which step:'
-                               '\t1. Download and divide;'
+                               '\t1. Download and pre-process;'
                                '\t2. Analyze variance;'
                                '\t3. Primer design.'))
     general.add_argument('-out', help='output directory')
@@ -948,6 +948,7 @@ def uniq(files, arg):
     uniq_files = list()
     for fasta in files:
         info = defaultdict(lambda: list())
+        keep = dict()
         for index, record in enumerate(SeqIO.parse(fasta, 'fasta')):
             # gene|order|family|genus|species|specimen
             name = ' '.join(record.id.split('|')[3:5])
@@ -1524,7 +1525,11 @@ def analyze(arg):
     # exit if resolution lower than given threshold.
     if len(seq_count) == 0:
         tprint('Problematic Input of {}.!'.format(arg.input))
-    # find candidate
+    # stop if do not want to design primer
+    if arg.stop == 2:
+        return
+    # find ncandidate
+    tprint('Start finding primers of {}.'.format(arg.input))
     good_region = get_good_region(index, seq_count, arg)
     consensus = find_continuous(consensus, good_region, arg.min_primer)
     tprint('Find candidate primer pairs')
@@ -1643,8 +1648,6 @@ def main():
     if arg.aln is not None:
         user_aln = list(glob(arg.aln))
         aligned.extend(user_aln)
-    if arg.stop == 2:
-        return
     analyze_wrapper(aligned)
     tprint('Finished. You can find output in {}.'.format(arg.out))
     tprint('Summary info were written into {}.'.format(
