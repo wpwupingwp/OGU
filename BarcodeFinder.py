@@ -567,24 +567,13 @@ def safe(old):
 
 
 def get_taxon(order_family, order_exceptions):
-    """
-    From Zhang guojin
-    order end with ales
-    family end with aceae except 8
-    http://duocet.ibiodiversity.net/index.php?title=%E4%BA%92%E7%94%A8%E5%90%8D
-    %E7%A7%B0&mobileaction=toggle_view_mobile"""
     # order|family|organims(genus|species)
-    family_exception_raw = (
-        'Umbelliferae,Palmae,Compositae,Cruciferae,Guttiferae,Leguminosae,'
-        'Leguminosae,Papilionaceae,Labiatae,Gramineae')
-    family_exception = family_exception_raw[0].split(',')
     order = ''
     family = ''
     for item in order_family:
         if item.endswith('ales') or item in order_exceptions:
             order = item
-        elif (item.endswith('aceae') or item.endswith('idae') or
-              item in family_exception):
+        elif item.endswith('aceae') or item.endswith('idae'):
             family = item
     return order, family
 
