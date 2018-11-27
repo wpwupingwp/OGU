@@ -704,8 +704,8 @@ def divide(gbfile, arg):
     Given genbank file, return divided fasta files.
     """
     # Use basename to avoid repeat arg.out if provide user's gb file
-    groupby_gene = join_path(arg.out, basename(gbfile) + '-groupby_gene')
-    groupby_name = join_path(arg.out, basename(gbfile) + '-groupby_name')
+    groupby_gene = join_path(arg.out, basename(gbfile).split('.')[0] + '-gene')
+    groupby_name = join_path(arg.out, basename(gbfile).split('.')[0] + '-name')
     try:
         mkdir(groupby_gene)
         mkdir(groupby_name)

@@ -1,7 +1,7 @@
 #1. integrate gb2fasta
 #2. integrate batch_query
 # 3. integrate uniq
-4. integrate remove-long
+#4. integrate remove-long
 #5. use Shannon Index
 # 6. pick primer pair
 # 7. too few primer found!!!!!!!!!!!!!
@@ -39,7 +39,7 @@
 39. BiopythonParserWarning: Expected sequence length 491, found 1083 (U58558.1).
 #40. add animal order
 41. use avg to calc tm
-42. stop 1 for divide, 2 for analyze, 3 for primer design
+#42. stop 1 for divide, 2 for analyze, 3 for primer design
 #43. TypeError: unique() got an unexpected keyword argument 'axis'
 44. time usage, memory usage
 45. >CBS|Primates|Hominidae|Homo|sapiens|X87816|
