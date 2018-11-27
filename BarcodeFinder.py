@@ -586,7 +586,6 @@ def get_taxon(order_family, order_exceptions):
         elif (item.endswith('aceae') or item.endswith('idae') or
               item in family_exception):
             family = item
-            break
     return order, family
 
 
