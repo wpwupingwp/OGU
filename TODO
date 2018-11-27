@@ -43,3 +43,4 @@
 #43. TypeError: unique() got an unexpected keyword argument 'axis'
 44. time usage, memory usage
 45. >CBS|Primates|Hominidae|Homo|sapiens|X87816|
+46. primer3-py is hard to install
