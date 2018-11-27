@@ -11,22 +11,23 @@ requires = ['biopython>=1.72',
             'primer3-py>=0.5.7']
 
 setuptools.setup(
-    name='BarcodeFinder',
-    version='0.9.10',
     author='Ping Wu',
     author_email='wpwupingwp@outlook.com',
     description='All-in-one solution for discovering novel DNA barcode',
+    install_requires=requires,
     license='AGPLv3',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    url='https://github.com/wpwupingwp/BarcodeFinder',
+    name='BarcodeFinder',
     packages=setuptools.find_packages(),
-    install_requires=requires,
+    py_modules=['BarcodeFinder'],
+    url='https://github.com/wpwupingwp/BarcodeFinder',
+    version='0.9.10',
     classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
         'Intended Audience :: Science/Research',
-        ('License :: OSI Approved :: GNU Affero General Public License'
+        ('License :: OSI Approved :: GNU Affero General Public License '
          'v3 (AGPLv3)'),
         'Operating System :: OS Independent',
         'Programming Language :: Python :: 3.5',
