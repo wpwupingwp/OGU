@@ -15,7 +15,7 @@ setuptools.setup(
     author_email='wpwupingwp@outlook.com',
     description='All-in-one solution for discovering novel DNA barcode',
     install_requires=requires,
-    license='AGPLv3',
+    license='GNU AGPL v3',
     long_description=long_description,
     long_description_content_type='text/markdown',
     name='BarcodeFinder',
@@ -27,8 +27,7 @@ setuptools.setup(
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
         'Intended Audience :: Science/Research',
-        ('License :: OSI Approved :: GNU Affero General Public License '
-         'v3 (AGPLv3)'),
+        'License :: OSI Approved :: GNU Affero General Public License v3',
         'Operating System :: OS Independent',
         'Programming Language :: Python :: 3.5',
         'Topic :: Scientific/Engineering :: Bio-Informatics'
