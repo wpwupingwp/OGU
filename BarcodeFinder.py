@@ -583,8 +583,10 @@ def get_taxon(order_family, order_exceptions):
     for item in order_family:
         if item.endswith('ales') or item in order_exceptions:
             order = item
-        elif item.endswith('aceae') or item in family_exception:
+        elif (item.endswith('aceae') or item.endswith('idae') or
+              item in family_exception):
             family = item
+            break
     return order, family
 
 
@@ -592,9 +594,18 @@ def write_seq(name, sequence_id, feature, whole_seq, path, arg):
     """
     Write fasta file.
     """
-    filename = join_path(path, name + '.fasta')
-    sequence = feature.extract(whole_seq)
 
+    def careful_extract(whole_seq):
+        try:
+            sequence = feature.extract(whole_seq)
+        except ValueError:
+            sequence = ''
+            tprint('Cannot extract sequence of {} from {}.'.format(
+                name, sequence_id))
+        return sequence
+
+    filename = join_path(path, name + '.fasta')
+    sequence = careful_extract(whole_seq)
     with open(filename, 'a', encoding='utf-8') as handle:
         handle.write(sequence_id + '\n')
         handle.write(str(sequence) + '\n')
@@ -614,7 +625,7 @@ def write_seq(name, sequence_id, feature, whole_seq, path, arg):
                                 loc[-1].strand)])
             feature.location = new_loc
         feature.type = 'expand'
-        sequence = feature.extract(whole_seq)
+        sequence = careful_extract(whole_seq)
         filename2 = join_path(path, '{}.expand.fasta'.format(name))
         with open(filename2, 'a', encoding='utf-8') as handle:
             handle.write(sequence_id + '\n')
