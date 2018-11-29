@@ -308,6 +308,32 @@ def tprint(string):
     log_handle.write(s + '\n')
 
 
+def average(x):
+    if len(x) == 0:
+        return 0
+    else:
+        return sum(x) / len(x)
+
+
+def safe(old):
+    """
+    Remove illegal character in file path or name.
+    """
+    return re.sub(r'\W', '_', old)
+
+
+def clean_path(old, arg):
+    """
+    Join path if the file is not under by-gene or by-uniq.
+    To make working folder clean.
+    """
+    split = old.split(sep)
+    if 'by-gene' not in split and 'by-name' not in split:
+        return join_path(arg.by_name_folder, basename(old))
+    else:
+        return old
+
+
 def calc_ambiguous_seq(func, seq, seq2=None):
     """
     Expand sequences with ambiguous bases to several clean sequences and apply
@@ -615,10 +641,6 @@ def gene_rename(old_name):
     if len(lower) >= 15:
         gene_type = 'suspicious_name'
     return new_name, gene_type
-
-
-def safe(old):
-    return re.sub(r'\W', '_', old)
 
 
 def get_taxon(order_family, order_exceptions):
@@ -1019,10 +1041,7 @@ def uniq(files, arg):
         elif arg.uniq == 'no':
             # keep all
             keep = {range(count + 1)}
-        if 'by-gene' not in fasta and 'by-name' not in fasta:
-            new = join_path(arg.by_name_folder, basename(fasta) + '.uniq')
-        else:
-            new = fasta + '.uniq'
+        new = clean_path(fasta, arg) + '.uniq'
         with open(new, 'w', encoding='utf-8') as out:
             for index, record in enumerate(SeqIO.parse(fasta, 'fasta')):
                 if index in keep:
@@ -1037,10 +1056,7 @@ def align(files, arg):
     cores = cpu_count() - 1
     for fasta in files:
         tprint('Aligning {}'.format(fasta))
-        if 'by-gene' not in fasta and 'by-name' not in fasta:
-            out = join_path(basename(arg.by_name_folder), fasta)
-        else:
-            out = fasta + '.aln'
+        out = clean_path(fasta, arg) + '.aln'
         _ = ('mafft --thread {} --reorder --quiet --adjustdirection '
              '{} > {}'.format(cores, fasta, out))
         m = run(_, shell=True)
@@ -1050,13 +1066,6 @@ def align(files, arg):
     for i in glob('_order*'):
         remove(i)
     return result
-
-
-def average(x):
-    if len(x) == 0:
-        return 0
-    else:
-        return sum(x) / len(x)
 
 
 def prepare(arg):
@@ -1537,11 +1546,11 @@ def pick_pair(primers, alignment, arg):
     return good_pairs
 
 
-def analyze(arg):
+def analyze(fasta, arg):
     """
     Automatic design primer for DNA barcode.
     """
-    arg.out_file = splitext(arg.input)[0]
+    arg.out_file = splitext(clean_path(arg.fasta, arg))[0]
     # read from fasta, generate new fasta for makeblastdb
     name, alignment, db_file = prepare(arg)
     if name is None:
@@ -1649,8 +1658,7 @@ def analyze_wrapper(files, arg):
     result = list()
     for aln in files:
         tprint('Analyze {}.'.format(aln))
-        arg.input = aln
-        result.append(analyze(arg))
+        result.append(analyze(aln, arg))
     # dirty work
     try:
         remove(arg.no_gap_file)
