@@ -81,10 +81,10 @@ class PrimerWithInfo(SeqRecord):
         poly = re.compile(r'([ATCG])\1\1\1\1')
         tandem = re.compile(r'([ATCG]{2})\1\1\1\1')
         # ref1. http://www.premierbiosoft.com/tech_notes/PCR_Primer_Design.html
-        if re.search(poly, self.seq) is not None:
+        if re.search(poly, str(self.seq)) is not None:
             self.detail = 'Poly(NNNNN) structure found'
             return False
-        if re.search(tandem, self.seq) is not None:
+        if re.search(tandem, str(self.seq)) is not None:
             self.detail = 'Tandom(NN*5) exist'
             return False
         self.hairpin_tm = calc_ambiguous_seq(calcHairpinTm, self.seq)
