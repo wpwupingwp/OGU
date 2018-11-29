@@ -295,14 +295,15 @@ def parse_args():
     if parsed.out is None:
         raw_time = datetime.now().isoformat()
         parsed.out = raw_time.replace(':', '-').split('.')[0]
-    parsed.by_gene_folder = join_path(arg.out, 'by-gene')
-    parsed.by_name_folder = join_path(arg.out, 'by-name')
+    parsed.by_gene_folder = join_path(parsed.out, 'by-gene')
+    parsed.by_name_folder = join_path(parsed.out, 'by-name')
     # load option.json may cause chaos, remove
     return parsed
 
 
 def tprint(string):
-    s = '{}\t{}'.format(datetime.now().time(), string)
+    now = datetime.now()
+    s = '{}:{}:{}   {}'.format(now.hour, now.minute, now.second, string)
     print(s, flush=True)
     log_handle.write(s + '\n')
 
@@ -1705,7 +1706,7 @@ def main():
     if arg.aln is not None:
         user_aln = list(glob(arg.aln))
         aligned.extend(user_aln)
-    analyze_wrapper(aligned)
+    analyze_wrapper(aligned, arg)
     tprint('Finished. You can find output in {}.'.format(arg.out))
     tprint('Summary info were written into {}.'.format(
         join_path(arg.out, 'Summary.csv')))
