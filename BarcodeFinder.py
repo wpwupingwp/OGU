@@ -1630,37 +1630,47 @@ def analyze(fasta, arg):
             fasta))
         return True
     # output
-    csv_title = ('Score,Sequences,AvgProductLength,StdEV,MinProductLength,'
-                 'MaxProductLength,'
+    locus = basename(arg.out_file).split('.')[0]
+    csv_title = ('Locus,Score,Sequences,AvgProductLength,StdEV,'
+                 'MinProductLength,MaxProductLength,'
                  'Coverage,Resolution,TreeValue,AvgTerminalBranchLen,Entropy,'
                  'LeftSeq,LeftTm,LeftAvgBitscore,LeftAvgMismatch,'
                  'RightSeq,RightTm,RightAvgBitscore,RightAvgMismatch,'
                  'DeltaTm,AlnStart,AlnEnd,AvgSeqStart,AvgSeqEnd\n')
-    style = ('{:.2f},{},{:.0f},{:.0f},{},{},'
+    style = ('{},{:.2f},{},{:.0f},{:.0f},{},{},'
              '{:.2%},{:.2%},{:.6f},{:.6f},{:.6f},'
              '{},{:.2f},{:.2f},{:.2f},'
              '{},{:.2f},{:.2f},{:.2f},'
              '{:.2f},{},{},{},{}\n')
-    _ = join_path(arg.out, basename(arg.out_file))
-    with open(_ + '.fastq', 'w', encoding='utf-8') as out1, open(
-            _ + '.csv', 'w', encoding='utf-8') as out2:
-        out2.write(csv_title)
-        for pair in pairs:
-            line = style.format(
-                pair.score, rows, average(list(pair.length.values())),
-                np.std(list(pair.length.values())), min(pair.length.values()),
-                max(pair.length.values()),
-                pair.coverage, pair.resolution, pair.tree_value,
-                pair.avg_terminal_len, pair.entropy,
-                pair.left.seq, pair.left.tm, pair.left.avg_bitscore,
-                pair.left.avg_mismatch,
-                pair.right.seq, pair.right.tm, pair.right.avg_bitscore,
-                pair.right.avg_mismatch,
-                pair.delta_tm, pair.left.start, pair.right.end, pair.start,
-                pair.end)
-            out2.write(line)
-            SeqIO.write(pair.left, out1, 'fastq')
-            SeqIO.write(pair.right, out1, 'fastq')
+    out1 = open(join_path(arg.out, locus) + '.fastq', 'w', encoding='utf-8')
+    out2 = open(join_path(arg.out, locus) + '.csv', 'w', encoding='utf-8')
+    # write primers to one file
+    out3_file = join_path(arg.out, 'Primers.csv')
+    if not exists(out3_file):
+        with open(out3_file, 'w', encoding='utf-8') as out3_title:
+            out3_title.write(csv_title)
+    out3 = open(out3_file, 'a', encoding='utf-8')
+    out2.write(csv_title)
+    for pair in pairs:
+        line = style.format(
+            locus, pair.score, rows, average(list(pair.length.values())),
+            np.std(list(pair.length.values())), min(pair.length.values()),
+            max(pair.length.values()),
+            pair.coverage, pair.resolution, pair.tree_value,
+            pair.avg_terminal_len, pair.entropy,
+            pair.left.seq, pair.left.tm, pair.left.avg_bitscore,
+            pair.left.avg_mismatch,
+            pair.right.seq, pair.right.tm, pair.right.avg_bitscore,
+            pair.right.avg_mismatch,
+            pair.delta_tm, pair.left.start, pair.right.end, pair.start,
+            pair.end)
+        out2.write(line)
+        out3.write(line)
+        SeqIO.write(pair.left, out1, 'fastq')
+        SeqIO.write(pair.right, out1, 'fastq')
+    out1.close()
+    out2.close()
+    out3.close()
     tprint('Primers info were written into {}.csv.'.format(arg.out_file))
     return True
 
@@ -1742,8 +1752,8 @@ def main():
     result = analyze_wrapper(aligned, arg)
     tprint('Finished. You can find output in {}.'.format(arg.out))
     if result:
-        tprint('Summary info were written into {}.'.format(join_path(
-            arg.out, 'Summary.csv')))
+        tprint('Summary info were written into {} and {}.'.format(join_path(
+            arg.out, 'Variance.csv'), join_path(arg.out, 'Primers.csv')))
     log_handle.close()
     # restore original PATH
     environ['PATH'] = original_path
