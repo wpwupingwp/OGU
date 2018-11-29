@@ -305,7 +305,8 @@ def parse_args():
 
 def tprint(string):
     now = datetime.now()
-    s = '{}:{}:{}   {}'.format(now.hour, now.minute, now.second, string)
+    s = '{:0>2d}:{:0>2d}:{:>02d}   {}'.format(now.hour, now.minute, now.second,
+                                              string)
     print(s, flush=True)
     log_handle.write(s + '\n')
 
@@ -1579,7 +1580,7 @@ def analyze(fasta, arg):
     tprint('Average terminal branch length {}.'.format(max_l))
     n_gap = sum([i[5] for i in base_cumulative_frequency])
     gap_ratio = n_gap / rows / columns
-    summary = join_path(arg.out, 'Summary.csv')
+    summary = join_path(arg.out, 'Variance.csv')
     if not exists(summary):
         with open(summary, 'w', encoding='utf-8') as s:
             s.write('Name,Sequences,Length,GapRatio,ObservedResolution,'
