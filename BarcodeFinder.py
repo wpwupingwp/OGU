@@ -6,6 +6,7 @@ import re
 from collections import defaultdict
 from datetime import datetime
 from glob import glob
+from itertools import product as cartesian_product
 from os import (devnull, environ, mkdir, pathsep, remove, rename,
                 sched_getaffinity, sep)
 from os.path import abspath, basename, exists, splitext
@@ -14,8 +15,8 @@ from platform import system
 from random import choice
 from shutil import unpack_archive, ReadError
 from subprocess import run
-from urllib.request import urlopen
 from urllib.error import HTTPError
+from urllib.request import urlopen
 
 import numpy as np
 import primer3
@@ -32,11 +33,11 @@ if environ.get('DISPLAY', '') == '':
 from matplotlib import pyplot as plt
 from matplotlib import rcParams
 
-rcParams['lines.linewidth'] = 1.5
-rcParams['axes.linewidth'] = 1.5
 rcParams['axes.labelsize'] = 16
+rcParams['axes.linewidth'] = 1.5
 rcParams['axes.titlesize'] = 25
 rcParams['font.size'] = 16
+rcParams['lines.linewidth'] = 1.5
 
 
 class PrimerWithInfo(SeqRecord):
@@ -314,6 +315,24 @@ def tprint(string):
     s = '{}\t{}'.format(datetime.now().time(), string)
     print(s, flush=True)
     log_handle.write(s + '\n')
+
+
+def calc_ambiguous_seq(func, seq):
+    """
+    Expand sequences with ambiguous bases to several clean sequences and apply
+    func to every sequence. Return average value.
+    """
+    seq_list = list()
+    for base in seq:
+        if base not in ambiguous_data:
+            tprint('Illegal base found ({} in {}). Replaced by'
+                   '"N"!'.format(base, seq))
+            base = 'N'
+        seq_list.append(ambiguous_data[base])
+    seq_product = list(cartesian_product(*seq_list))
+    seq_str = [''.join(i) for i in seq_product]
+    values = [func(i) for i in seq_str]
+    return average(values)
 
 
 def check_tools():
