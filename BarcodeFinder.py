@@ -1025,7 +1025,10 @@ def uniq(files, arg):
         count = 0
         for record in SeqIO.parse(fasta, 'fasta'):
             # gene|order|family|genus|species|specimen
-            name = ' '.join(record.id.split('|')[3:5])
+            if '|' in record.id:
+                name = ' '.join(record.id.split('|')[3:5])
+            else:
+                name = record.id
             length = len(record)
             # skip empty file
             if length != 0:
@@ -1066,6 +1069,8 @@ def align(files, arg):
         m = run(_, shell=True)
         if m.returncode == 0:
             result.append(out)
+        else:
+            tprint('Failed to align {}.'.format(fasta))
     tprint('Alignment done.')
     for i in glob('_order*'):
         remove(i)
@@ -1560,6 +1565,7 @@ def analyze(fasta, arg):
     # read from fasta, generate new fasta for makeblastdb
     name, alignment, db_file = prepare(fasta, arg)
     if name is None:
+        tprint('Invalid fasta file {}.'.format(fasta))
         return False
     rows, columns = alignment.shape
     # generate consensus
