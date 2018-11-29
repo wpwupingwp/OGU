@@ -535,7 +535,7 @@ def get_query_string(arg):
 
 
 def download(arg, query):
-    tprint('Your query:\n\t{}'.format(query))
+    tprint('Your query:\n\t{}.'.format(query))
     if arg.email is None:
         Entrez.email = 'guest@example.com'
         tprint('You did not provide email address, use'
@@ -546,7 +546,7 @@ def download(arg, query):
                                               usehistory='y'))
     count = int(query_handle['Count'])
     tprint('{} records found.'.format(count))
-    tprint('Downloading... Ctrl+C to quit')
+    tprint('Downloading... Ctrl+C to quit.')
     json_file = join_path(arg.out, 'Query.json')
     with open(json_file, 'w', encoding='utf-8') as _:
         json.dump(query_handle, _, indent=4, sort_keys=True)
@@ -1055,7 +1055,7 @@ def align(files, arg):
     # get available CPU cores
     cores = cpu_count() - 1
     for fasta in files:
-        tprint('Aligning {}'.format(fasta))
+        tprint('Aligning {}.'.format(fasta))
         out = clean_path(fasta, arg) + '.aln'
         _ = ('mafft --thread {} --reorder --quiet --adjustdirection '
              '{} > {}'.format(cores, fasta, out))
@@ -1433,8 +1433,8 @@ def validate(primer_candidate, db_file, n_seqs, arg):
         _ = run('makeblastdb -in {} -dbtype nucl'.format(db_file),
                 shell=True, stdout=f)
         if _.returncode != 0:
-            tprint('makeblastdb error!')
-            return []
+            tprint('Failed to run makeblastdb!')
+            return list()
     # blast
     tprint('Validate with BLAST.')
     blast_result_file = 'blast.result.tsv'
@@ -1533,7 +1533,7 @@ def pick_pair(primers, alignment, arg):
             cluster.clear()
     cluster.sort(key=lambda x: x.score, reverse=True)
     less_pairs.extend(cluster[:arg.top_n])
-    tprint('{} pairs of redundant primers were removed'.format(
+    tprint('{} pairs of redundant primers were removed.'.format(
         len(pairs) - len(less_pairs)))
     good_pairs = list()
     for i in less_pairs:
@@ -1541,7 +1541,7 @@ def pick_pair(primers, alignment, arg):
         if i.resolution >= arg.resolution:
             good_pairs.append(i)
     good_pairs.sort(key=lambda x: x.score, reverse=True)
-    tprint('Successfully found {} pairs of validated primers'.format(
+    tprint('Successfully found {} pairs of validated primers.'.format(
         len(good_pairs)))
     return good_pairs
 
@@ -1583,14 +1583,14 @@ def analyze(fasta, arg):
                                 columns, gap_ratio, max_count, max_t, max_h,
                                 max_l, max_pi))
     if max_count < arg.resolution:
-        tprint('Too low resolution of {} !'.format(arg.input))
+        tprint('Too low resolution of {}!'.format(arg.input))
         return False
     # count resolution
     tprint('Sliding window analyze.')
     (seq_count, H, Pi, T, L, index) = count_and_draw(alignment, arg)
     # exit if resolution lower than given threshold.
     if len(seq_count) == 0:
-        tprint('Problematic Input of {}.!'.format(arg.input))
+        tprint('Problematic Input of {}!'.format(arg.input))
     # stop if do not want to design primer
     if arg.stop == 2:
         return True
@@ -1598,14 +1598,14 @@ def analyze(fasta, arg):
     tprint('Start finding primers of {}.'.format(arg.input))
     good_region = get_good_region(index, seq_count, arg)
     consensus = find_continuous(consensus, good_region, arg.min_primer)
-    tprint('Find candidate primer pairs')
+    tprint('Filtering candidate primer pairs.')
     primer_candidate, consensus = find_primer(consensus, arg.min_primer,
                                               arg.max_primer)
     if len(primer_candidate) == 0:
-        tprint('Cannot find primers in {}. Try to loose options!'.format(
-            arg.input))
+        tprint('Cannot find primer candidates in {}. Try to loose'
+               'options!'.format(arg.input))
         return True
-    tprint('Found {} candidate primers'.format(len(primer_candidate)))
+    tprint('Found {} candidate primers.'.format(len(primer_candidate)))
     # validate
     primer_verified = validate(primer_candidate, db_file, rows, arg)
     if len(primer_verified) == 0:
@@ -1650,7 +1650,7 @@ def analyze(fasta, arg):
             out2.write(line)
             SeqIO.write(pair.left, out1, 'fastq')
             SeqIO.write(pair.right, out1, 'fastq')
-    tprint('Primers info were written into {}.csv'.format(_))
+    tprint('Primers info were written into {}.csv.'.format(_))
     return True
 
 
