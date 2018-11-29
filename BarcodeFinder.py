@@ -7,8 +7,8 @@ from collections import defaultdict
 from datetime import datetime
 from glob import glob
 from itertools import product as cartesian_product
-from os import (devnull, environ, mkdir, pathsep, remove, rename,
-                sched_getaffinity, sep)
+from os import (cpu_count, devnull, environ, mkdir, pathsep, remove, rename,
+                sep)
 from os.path import abspath, basename, exists, splitext
 from os.path import join as join_path
 from platform import system
@@ -356,11 +356,15 @@ def check_tools():
             environ['PATH'] = pathsep.join([environ['PATH'], exists_path])
     f = open(devnull, 'w', encoding='utf-8')
     installed = list()
-    for tools in ('mafft', 'iqtree', 'blastn'):
-        check = run('{} --help'.format(tools), shell=True, stdout=f, stderr=f)
-        # mafft return 1 if "--help", BLAST do not have --help
-        # to simplify code, use "--help" and accept 1 as returncode
-        if check.returncode not in (0, 1):
+    # blast use different option style, have to use dict
+    tools_cmd = {'mafft': 'mafft --version',
+                 'iqtree': 'iqtree --version',
+                 'blast': 'makeblastdb -version'}
+    for tools in tools_cmd:
+        check = run(tools_cmd[tools], shell=True, stdout=f, stderr=f)
+        # mafft --help return 0 or 1 in different version, use --version
+        # instead
+        if check.returncode != 0:
             tprint('Cannot find {}. Try to install.'.format(tools))
             install_path = deploy(tools)
             installed.append(install_path)
@@ -398,22 +402,22 @@ def deploy(software):
     mafft_url = 'https://mafft.cbrc.jp/alignment/software/mafft'
     # windows blast path not sure
     urls = {'Linux':
-            {'blastn': {'url': blast_url+'-x64-linux.tar.gz',
-                        'path': abspath('ncbi-blast-2.7.1+'+sep+'bin')},
+            {'blast': {'url': blast_url+'-x64-linux.tar.gz',
+                       'path': abspath('ncbi-blast-2.7.1+'+sep+'bin')},
              'iqtree': {'url': iqtree_url+'-Linux.tar.gz',
                         'path': abspath('iqtree-1.6.8-Linux'+sep+'bin')},
              'mafft': {'url': mafft_url+'-7.407-linux.tgz',
                        'path': abspath('mafft-linux64')}},
             'macOSX':
-            {'blastn': {'url': blast_url+'.dmg',
-                        'path': abspath('ncbi-blast-2.7.1+'+sep+'bin')},
+            {'blast': {'url': blast_url+'.dmg',
+                       'path': abspath('ncbi-blast-2.7.1+'+sep+'bin')},
              'iqtree': {'url': iqtree_url+'-MacOSX.zip',
                         'path': abspath('iqtree-1.6.8-MacOSX'+sep+'bin')},
              'mafft': {'url': mafft_url+'-7.407-mac.zip',
                        'path': abspath('mafft-mac')}},
             'Windows':
-            {'blastn': {'url': blast_url+'-win64.exe',
-                        'path': abspath('.')},
+            {'blast': {'url': blast_url+'-win64.exe',
+                       'path': abspath('.')},
              'iqtree': {'url': iqtree_url+'-Windows.zip',
                         'path': abspath('iqtree-1.6.8-Windows'+sep+'bin')},
              'mafft': {'url': mafft_url+'-7.409-win64-signed.zip',
@@ -1014,12 +1018,12 @@ def uniq(files, arg):
 def mafft(files):
     result = list()
     # get available CPU cores
-    cores = len(sched_getaffinity(0))
+    cores = cpu_count() - 1
     for fasta in files:
         tprint('Aligning {}'.format(fasta))
         out = fasta + '.aln'
         _ = ('mafft --thread {} --reorder --quiet --adjustdirection '
-             '{} > {}'.format(cores - 1, fasta, out))
+             '{} > {}'.format(cores, fasta, out))
         m = run(_, shell=True)
         if m.returncode == 0:
             result.append(out)
@@ -1407,7 +1411,7 @@ def validate(primer_candidate, db_file, n_seqs, arg):
     tprint('Validate with BLAST.')
     blast_result_file = 'blast.result.tsv'
     fmt = 'qseqid sseqid qseq nident mismatch score qstart qend sstart send'
-    cmd = Blast(num_threads=len(sched_getaffinity(0)),
+    cmd = Blast(num_threads=cpu_count() - 1,
                 query=query_file,
                 db=db_file,
                 task='blastn-short',
