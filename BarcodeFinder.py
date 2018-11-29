@@ -19,7 +19,7 @@ from urllib.error import HTTPError
 from urllib.request import urlopen
 
 import numpy as np
-import primer3
+from primer3 import calcTm, calcHairpinTm, calcHomodimerTm, calcHeterodimerTm
 from Bio import Entrez, Phylo, SeqIO
 from Bio.Blast.Applications import NcbiblastnCommandline as Blast
 from Bio.Data.IUPACData import ambiguous_dna_values as ambiguous_data
@@ -48,16 +48,12 @@ class PrimerWithInfo(SeqRecord):
         super().__init__(Seq(seq.upper()))
         self.sequence = str(self.seq)
 
-        """
-        primer3.setGlobals seems have no effect on calcTm, so I have to replace
-        all ambiguous base to G to get an approximate value. Otherwise calcTm()
-        will generate -99999 if there is ambiguous base.
-        """
-        self.g_seq = re.sub(r'[^ATCG]', 'G', self.sequence)
+        # primer3.setGlobals seems have no effect on calcTm, use
+        # calc_ambiguous_seq
         self.quality = self.letter_annotations['solexa_quality'] = quality
         self.start = self.annotations['start'] = start
         self.end = self.annotations['end'] = start + self.__len__() - 1
-        self.tm = self.annotations['tm'] = primer3.calcTm(self.g_seq)
+        self.tm = self.annotations['tm'] = calc_ambiguous_seq(calcTm, self.seq)
         self.coverage = self.annotations['coverage'] = coverage
         self.avg_bitscore = self.annotations['avg_bitscore'] = avg_bitscore
         self.mid_loc = self.annotations['mid_loc'] = mid_loc
@@ -85,14 +81,15 @@ class PrimerWithInfo(SeqRecord):
         poly = re.compile(r'([ATCG])\1\1\1\1')
         tandem = re.compile(r'([ATCG]{2})\1\1\1\1')
         # ref1. http://www.premierbiosoft.com/tech_notes/PCR_Primer_Design.html
-        if re.search(poly, self.g_seq) is not None:
+        if re.search(poly, self.seq) is not None:
             self.detail = 'Poly(NNNNN) structure found'
             return False
-        if re.search(tandem, self.g_seq) is not None:
+        if re.search(tandem, self.seq) is not None:
             self.detail = 'Tandom(NN*5) exist'
             return False
-        self.hairpin_tm = primer3.calcHairpinTm(self.g_seq)
-        self.homodimer_tm = primer3.calcHomodimerTm(self.g_seq)
+        self.hairpin_tm = calc_ambiguous_seq(calcHairpinTm, self.seq)
+        self.homodimer_tm = calc_ambiguous_seq(calcHomodimerTm,
+                                               self.seq)
         # primer3.calcHairpin or calcHomodimer usually return structure found
         # with low Tm. Here we compare structure_tm with sequence tm
         if self.hairpin_tm >= self.tm:
@@ -188,8 +185,8 @@ class Pair:
         (self.resolution, self.entropy, self.pi,
          self.tree_value, self.avg_terminal_len) = get_resolution(
              alignment, self.left.start, self.right.end + 1)
-        self.heterodimer_tm = primer3.calcHeterodimer(self.left.g_seq,
-                                                      self.right.g_seq).tm
+        self.heterodimer_tm = calc_ambiguous_seq(calcHeterodimerTm,
+                                                 self.left.seq, self.right.seq)
         if max(self.heterodimer_tm, self.left.tm,
                self.right.tm) == self.heterodimer_tm:
             self.have_heterodimer = True
@@ -317,21 +314,38 @@ def tprint(string):
     log_handle.write(s + '\n')
 
 
-def calc_ambiguous_seq(func, seq):
+def calc_ambiguous_seq(func, seq, seq2=None):
     """
     Expand sequences with ambiguous bases to several clean sequences and apply
-    func to every sequence. Return average value.
+    func to every sequence.
+    Return average value. Return 0 if len(seq) > 60 (from primer3)
     """
-    seq_list = list()
-    for base in seq:
-        if base not in ambiguous_data:
-            tprint('Illegal base found ({} in {}). Replaced by'
-                   '"N"!'.format(base, seq))
-            base = 'N'
-        seq_list.append(ambiguous_data[base])
-    seq_product = list(cartesian_product(*seq_list))
-    seq_str = [''.join(i) for i in seq_product]
-    values = [func(i) for i in seq_str]
+    # Seems primer3 only accept seqs shorter than 60 bp.
+    # Plus, too long seq will cost too much memory
+    len_limit = 60
+
+    def _expand(seq):
+        seq_list = list()
+        for base in seq:
+            # replace illegal base with 'N'
+            if base not in ambiguous_data:
+                base = 'N'
+            seq_list.append(ambiguous_data[base])
+        seq_product = list(cartesian_product(*seq_list))
+        seq_str = [''.join(i) for i in seq_product]
+        return seq_str
+
+    if len(seq) > len_limit:
+        return 0
+    seq_str = _expand(seq)
+    if seq2 is None:
+        values = [func(i) for i in seq_str]
+    else:
+        if len(seq2) > len_limit:
+            return 0
+        seq_str2 = _expand(seq2)
+        products = cartesian_product(seq_str, seq_str2)
+        values = [func(i[0], i[1]) for i in products]
     return average(values)
 
 
