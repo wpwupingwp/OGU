@@ -1535,7 +1535,7 @@ def analyze(arg):
     # read from fasta, generate new fasta for makeblastdb
     name, alignment, db_file = prepare(arg)
     if name is None:
-        return
+        return False
     rows, columns = alignment.shape
     # generate consensus
     base_cumulative_frequency = count_base(alignment, rows, columns)
@@ -1565,7 +1565,7 @@ def analyze(arg):
                                 max_l, max_pi))
     if max_count < arg.resolution:
         tprint('Too low resolution of {} !'.format(arg.input))
-        return
+        return False
     # count resolution
     tprint('Sliding window analyze.')
     (seq_count, H, Pi, T, L, index) = count_and_draw(alignment, arg)
@@ -1574,7 +1574,7 @@ def analyze(arg):
         tprint('Problematic Input of {}.!'.format(arg.input))
     # stop if do not want to design primer
     if arg.stop == 2:
-        return
+        return True
     # find ncandidate
     tprint('Start finding primers of {}.'.format(arg.input))
     good_region = get_good_region(index, seq_count, arg)
@@ -1585,20 +1585,20 @@ def analyze(arg):
     if len(primer_candidate) == 0:
         tprint('Cannot find primers in {}. Try to loose options!'.format(
             arg.input))
-        return
+        return True
     tprint('Found {} candidate primers'.format(len(primer_candidate)))
     # validate
     primer_verified = validate(primer_candidate, db_file, rows, arg)
     if len(primer_verified) == 0:
         tprint('Cannot find primers in {}. Try to loose options!'.format(
             arg.input))
-        return
+        return True
     # pick pair
     pairs = pick_pair(primer_verified, alignment, arg)
     if len(pairs) == 0:
         tprint('Cannot find primers in {}. Try to loose options!'.format(
             arg.input))
-        return
+        return True
     # output
     csv_title = ('Score,Sequences,AvgProductLength,StdEV,MinProductLength,'
                  'MaxProductLength,'
@@ -1632,18 +1632,22 @@ def analyze(arg):
             SeqIO.write(pair.left, out1, 'fastq')
             SeqIO.write(pair.right, out1, 'fastq')
     tprint('Primers info were written into {}.csv'.format(_))
+    return True
+
 
 def analyze_wrapper(files, arg):
+    result = list()
     for aln in files:
         tprint('Analyze {}.'.format(aln))
         arg.input = aln
-        analyze(arg)
+        result.append(analyze(arg))
     # dirty work
     try:
         remove(arg.no_gap_file)
         remove(arg.db_file)
     except FileNotFoundError:
         pass
+    return any(result)
 
 
 def main():
@@ -1706,10 +1710,11 @@ def main():
     if arg.aln is not None:
         user_aln = list(glob(arg.aln))
         aligned.extend(user_aln)
-    analyze_wrapper(aligned, arg)
+    result = analyze_wrapper(aligned, arg)
     tprint('Finished. You can find output in {}.'.format(arg.out))
-    tprint('Summary info were written into {}.'.format(
-        join_path(arg.out, 'Summary.csv')))
+    if result:
+        tprint('Summary info were written into {}.'.format(join_path(
+            arg.out, 'Summary.csv')))
     log_handle.close()
     # restore original PATH
     environ['PATH'] = original_path

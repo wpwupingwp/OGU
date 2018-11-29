@@ -27,9 +27,9 @@
 # 27. clean output file
 # 28. print hint
 # 29. reorder functions
-30. package
-31. update to pip
-32. requirement
+# 30. package
+# 31. update to pip
+# 32. requirement
 #33. readme
 #34. figure title as gene name
 #35. rps12
@@ -38,9 +38,10 @@
 38. use namedtuple
 39. BiopythonParserWarning: Expected sequence length 491, found 1083 (U58558.1).
 #40. add animal order
-41. use avg to calc tm
+# 41. use avg to calc tm
 #42. stop 1 for divide, 2 for analyze, 3 for primer design
 #43. TypeError: unique() got an unexpected keyword argument 'axis'
 44. time usage, memory usage
 45. >CBS|Primates|Hominidae|Homo|sapiens|X87816|
 46. primer3-py is hard to install
+47. merge primers result
