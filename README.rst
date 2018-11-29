@@ -1,6 +1,5 @@
-############
-Introduction
-############
+# Introduction
+
 BarcodeFinder could automatically discover novel DNA barcodes with universal
 primers. It does three things as listed below.
 
@@ -47,9 +46,8 @@ primers. It does three things as listed below.
     Finally, primer pairs were reordered by score to make it easy for user to
     find "best" primer pairs they want.
 
-############
-Prerequisite
-############
+# Prerequisite
+
 * Python3 (3.5 or above)
 * BLAST+
 * IQTREE
@@ -60,9 +58,7 @@ Prerequisite
 - numpy
 - primer3-py
 
-###################
-Project Information
-###################
+# Project Information
+
 The source code of *BarcodeFinder* is available under AGPLv3 license.
-For usage and details, please visit `BarcodeFinder on GitHub 
-<https://github.com/wpwupingwp/BarcodeFinder>`_
+For usage and details, please visit [BarcodeFinder on GitHub](https://github.com/wpwupingwp/BarcodeFinder).
