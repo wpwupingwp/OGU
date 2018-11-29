@@ -70,8 +70,6 @@ class PrimerWithInfo(SeqRecord):
         if isinstance(i, int):
             i = slice(i, i + 1)
         if isinstance(i, slice):
-            if self.seq is None:
-                raise ValueError('Empty sequence')
             answer = PrimerWithInfo(seq=str(self.seq[i]),
                                     quality=self.quality[i])
             answer.annotations = dict(self.annotations.items())
@@ -350,6 +348,11 @@ def calc_ambiguous_seq(func, seq, seq2=None):
 
 
 def check_tools():
+    """
+    Check dependent software, if not found, try to install.
+    Return original PATH.
+    Return None if failed.
+    """
     if exists('PATH.txt'):
         with open('PATH.txt', 'r', encoding='utf-8') as path_file:
             exists_path = path_file.read().strip()
@@ -357,9 +360,9 @@ def check_tools():
     f = open(devnull, 'w', encoding='utf-8')
     installed = list()
     # blast use different option style, have to use dict
-    tools_cmd = {'mafft': 'mafft --version',
-                 'iqtree': 'iqtree --version',
-                 'blast': 'makeblastdb -version'}
+    tools_cmd = {'MAFFT': 'mafft --version',
+                 'IQTREE': 'iqtree --version',
+                 'BLAST': 'makeblastdb -version'}
     for tools in tools_cmd:
         check = run(tools_cmd[tools], shell=True, stdout=f, stderr=f)
         # mafft --help return 0 or 1 in different version, use --version
@@ -367,20 +370,32 @@ def check_tools():
         if check.returncode != 0:
             tprint('Cannot find {}. Try to install.'.format(tools))
             install_path = deploy(tools)
+            if install_path is None:
+                tprint('Failed to install {}. Please try to manually install'
+                       'it (See README.md).'.format(tools))
+                return None
             installed.append(install_path)
-    environ['PATH'] = pathsep.join([environ['PATH'], *installed])
+    # do not edit original PATH
+    to_add = pathsep.join(installed)
+    original = str(environ['PATH'])
+    environ['PATH'] = pathsep.join([original, to_add])
     with open('PATH.txt', 'w', encoding='utf-8') as path_out:
-        path_out.write(environ['PATH'] + '\n')
+        path_out.write(to_add + '\n')
     f.close()
+    return original
 
 
 def download_software(url):
+    """
+    Download, return False if failed.
+    http_proxy may affect this function.
+    """
     filename = url.split('/')[-1]
     try:
         down = urlopen(url)
     except HTTPError:
         tprint('Cannot download {}.'.format(filename))
-        raise
+        return False
     with open(filename, 'wb') as out:
         out.write(down.read())
     try:
@@ -391,8 +406,12 @@ def download_software(url):
 
 
 def deploy(software):
+    """
+    According to system, install software.
+    return False if failed
+    """
     tprint('Try to install {}. Please consider to install it following '
-           'official instruction to avoid potential error.'.format(software))
+           'official instruction to get a CLEAN system.'.format(software))
     sys = system()
     # url dict
     blast_url = ('ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/'
@@ -402,31 +421,32 @@ def deploy(software):
     mafft_url = 'https://mafft.cbrc.jp/alignment/software/mafft'
     # windows blast path not sure
     urls = {'Linux':
-            {'blast': {'url': blast_url+'-x64-linux.tar.gz',
+            {'BLAST': {'url': blast_url+'-x64-linux.tar.gz',
                        'path': abspath('ncbi-blast-2.7.1+'+sep+'bin')},
-             'iqtree': {'url': iqtree_url+'-Linux.tar.gz',
+             'IQTREE': {'url': iqtree_url+'-Linux.tar.gz',
                         'path': abspath('iqtree-1.6.8-Linux'+sep+'bin')},
-             'mafft': {'url': mafft_url+'-7.407-linux.tgz',
+             'MAFFT': {'url': mafft_url+'-7.407-linux.tgz',
                        'path': abspath('mafft-linux64')}},
             'macOSX':
-            {'blast': {'url': blast_url+'.dmg',
+            {'BLAST': {'url': blast_url+'.dmg',
                        'path': abspath('ncbi-blast-2.7.1+'+sep+'bin')},
-             'iqtree': {'url': iqtree_url+'-MacOSX.zip',
+             'IQTREE': {'url': iqtree_url+'-MacOSX.zip',
                         'path': abspath('iqtree-1.6.8-MacOSX'+sep+'bin')},
-             'mafft': {'url': mafft_url+'-7.407-mac.zip',
+             'MAFFT': {'url': mafft_url+'-7.407-mac.zip',
                        'path': abspath('mafft-mac')}},
             'Windows':
-            {'blast': {'url': blast_url+'-win64.exe',
+            {'BLAST': {'url': blast_url+'-win64.exe',
                        'path': abspath('.')},
-             'iqtree': {'url': iqtree_url+'-Windows.zip',
+             'IQTREE': {'url': iqtree_url+'-Windows.zip',
                         'path': abspath('iqtree-1.6.8-Windows'+sep+'bin')},
-             'mafft': {'url': mafft_url+'-7.409-win64-signed.zip',
+             'MAFFT': {'url': mafft_url+'-7.409-win64-signed.zip',
                        'path': abspath('mafft-win')}}}
     url = urls[sys][software]['url']
     # down
     if sys == 'Windows':
-        download_software(url)
-        if software == 'blastn':
+        if not download_software(url):
+            return None
+        if software == 'BLAST':
             run('ncbi-blast-2.7.1+-win64.exe', shell=True)
     elif sys == 'Linux':
         ok = False
@@ -461,10 +481,11 @@ def deploy(software):
                 ok = True
         if not ok:
                 download_software(url)
-    if software == 'mafft':
+    # windows can omit .bat, linux cannot
+    if software == 'MAFFT' and sys != 'Windows':
         rename(join_path(urls[sys]['mafft']['path'], 'mafft.bat'),
                join_path(urls[sys]['mafft']['path'], 'mafft'))
-    return urls[sys][software]['path']
+    return abspath(urls[sys][software]['path'])
 
 
 def get_query_string(arg):
@@ -1635,7 +1656,10 @@ def main():
         json.dump(vars(arg), out, indent=4, sort_keys=True)
     tprint('Options were dumped into {}.'.format(_))
     tprint('Welcome to BarcodeFinder!')
-    check_tools()
+    original_path = check_tools()
+    if original_path is None:
+        tprint('Exit.')
+        return
 
     def analyze_wrapper(files):
         for aln in files:
@@ -1668,7 +1692,9 @@ def main():
         wrote_by_gene.extend(user_data)
         wrote_by_name.extend(user_data)
     if not any([wrote_by_gene, wrote_by_name, arg.aln]):
-        raise Exception('Data is empty, please check your input!')
+        tprint('Data is empty, please check your input!')
+        environ['PATH'] = original_path
+        return
     if arg.uniq == 'no':
         tprint('Skip removing redundant sequences.')
     else:
@@ -1676,6 +1702,7 @@ def main():
         wrote_by_gene = uniq(wrote_by_gene, arg)
         wrote_by_name = uniq(wrote_by_name, arg)
     if arg.stop == 1:
+        environ['PATH'] = original_path
         return
     tprint('Aligning sequences.')
     too_long = 10000
@@ -1692,6 +1719,8 @@ def main():
     tprint('Summary info were written into {}.'.format(
         join_path(arg.out, 'Summary.csv')))
     log_handle.close()
+    # restore original PATH
+    environ['PATH'] = original_path
     return
 
 
