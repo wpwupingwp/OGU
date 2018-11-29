@@ -248,7 +248,7 @@ def parse_args():
     pre.add_argument('-max_name_len', default=50,
                      help='maximum length of feature name')
     pre.add_argument('-max_seq_len', default=20000,
-                     help='maximum length of sequence')
+                     help='maximum length of feature sequence')
     pre.add_argument('-no_divide', action='store_true',
                      help='analyze whole sequence instead of divided fragment')
     pre.add_argument('-rename', action='store_true', help='try to rename gene')
@@ -975,7 +975,7 @@ def divide(gbfile, arg):
         # extract spacer
         spacers = get_spacer(genes)
         for spacer in spacers:
-            if len(spacer) > 20000:
+            if len(spacer) > arg.max_seq_len:
                 tprint('Spacer {} too long (Accession {}).'.format(
                     spacer.id, accession))
                 continue
@@ -1370,6 +1370,7 @@ def count_and_draw(alignment, arg):
         index.append(i)
 
     plt.style.use('seaborn-colorblind')
+    # how to find optimized size?
     fig, ax1 = plt.subplots(figsize=(15 + len(index) // 5000, 10))
     plt.title('Variance of {} (window={} bp, step={} bp)\n'.format(
         basename(arg.input).split('.')[0], max_product, step))
