@@ -996,14 +996,15 @@ def uniq(files, arg):
     for fasta in files:
         info = defaultdict(lambda: list())
         keep = dict()
-        for index, record in enumerate(SeqIO.parse(fasta, 'fasta')):
+        count = 0
+        for record in SeqIO.parse(fasta, 'fasta'):
             # gene|order|family|genus|species|specimen
             name = ' '.join(record.id.split('|')[3:5])
             length = len(record)
             # skip empty file
-            if length == 0:
-                continue
-            info[name].append([index, length])
+            if length != 0:
+                info[name].append([count, length])
+            count += 1
         if arg.uniq == 'first':
             # keep only the first record
             keep = {info[i][0][0] for i in info}
@@ -1015,7 +1016,13 @@ def uniq(files, arg):
             for i in info:
                 info[i] = choice(info[i])
             keep = {info[i][0] for i in info}
-        new = join_path(arg.by_name_folder, basename(fasta) + '.uniq')
+        elif arg.uniq == 'no':
+            # keep all
+            keep = {range(count + 1)}
+        if 'by-gene' not in fasta and 'by-name' not in fasta:
+            new = join_path(arg.by_name_folder, basename(fasta) + '.uniq')
+        else:
+            new = fasta + '.uniq'
         with open(new, 'w', encoding='utf-8') as out:
             for index, record in enumerate(SeqIO.parse(fasta, 'fasta')):
                 if index in keep:
@@ -1024,13 +1031,16 @@ def uniq(files, arg):
     return uniq_files
 
 
-def mafft(files):
+def align(files, arg):
     result = list()
     # get available CPU cores
     cores = cpu_count() - 1
     for fasta in files:
         tprint('Aligning {}'.format(fasta))
-        out = fasta + '.aln'
+        if 'by-gene' not in fasta and 'by-name' not in fasta:
+            out = join_path(basename(arg.by_name_folder), fasta)
+        else:
+            out = fasta + '.aln'
         _ = ('mafft --thread {} --reorder --quiet --adjustdirection '
              '{} > {}'.format(cores, fasta, out))
         m = run(_, shell=True)
@@ -1684,7 +1694,6 @@ def main():
             wrote_by_name.extend(by_name)
     if arg.fasta is not None:
         user_data = list(glob(arg.fasta))
-        wrote_by_gene.extend(user_data)
         wrote_by_name.extend(user_data)
     if not any([wrote_by_gene, wrote_by_name, arg.aln]):
         tprint('Data is empty, please check your input!')
@@ -1694,8 +1703,8 @@ def main():
         tprint('Skip removing redundant sequences.')
     else:
         tprint('Remove redundant sequences by "{}".'.format(arg.uniq))
-        wrote_by_gene = uniq(wrote_by_gene, arg)
-        wrote_by_name = uniq(wrote_by_name, arg)
+    wrote_by_gene = uniq(wrote_by_gene, arg)
+    wrote_by_name = uniq(wrote_by_name, arg)
     if arg.stop == 1:
         environ['PATH'] = original_path
         return
@@ -1703,9 +1712,9 @@ def main():
     tprint('Aligning sequences.')
     # only consider arg.no_divide and arg.fasta
     if arg.no_divide or arg.fasta:
-        aligned = mafft(wrote_by_name)
+        aligned = align(wrote_by_name, arg)
     else:
-        aligned = mafft(wrote_by_gene)
+        aligned = align(wrote_by_gene, arg)
     # assume that alignments user provided is clean and do not nead uniq
     if arg.aln is not None:
         user_aln = list(glob(arg.aln))
