@@ -282,8 +282,10 @@ def parse_args():
     primer.add_argument('-tmax', dest='max_product', type=int, default=500,
                         help='maximum product length(include primer)')
     parsed = arg.parse_args()
+    # temporary filename, omit one parameters in many functions
     parsed.db_file = 'interleaved.fasta'
     parsed.no_gap_file = 'no_gap.fasta'
+    parsed.out_file = ''
     if parsed.organelle is not None:
         # 10k to 1m seems enough
         parsed.min_len = 10000
@@ -638,6 +640,7 @@ def gene_rename(old_name):
                 new_name = '{}{}'.format(
                     ''.join(s[:-1]), ''.join(s[-1]).upper())
         gene_type = 'normal'
+    # too long to be valid name
     if len(lower) >= 15:
         gene_type = 'suspicious_name'
     return new_name, gene_type
@@ -691,7 +694,7 @@ def write_seq(name, sequence_id, feature, whole_seq, path, arg):
             feature.location = new_loc
         feature.type = 'expand'
         sequence = careful_extract(whole_seq)
-        filename2 = join_path(path, '{}.expand.fasta'.format(name))
+        filename2 = join_path(path, '{}.expand'.format(name))
         with open(filename2, 'a', encoding='utf-8') as handle:
             handle.write(sequence_id + '\n')
             handle.write(str(sequence) + '\n')
@@ -780,7 +783,8 @@ def divide(gbfile, arg):
     """
     Given genbank file, return divided fasta files.
     """
-    raw_fasta = join_path(arg.out, basename(gbfile) + '.fasta')
+    # put raw fasta into root of output folder, so not to use clean_path
+    raw_fasta = join_path(arg.out, splitext(basename(gbfile))[0] + '.fasta')
     handle_raw = open(raw_fasta, 'w', encoding='utf-8')
     wrote_by_gene = set()
     wrote_by_name = set()
@@ -1068,14 +1072,14 @@ def align(files, arg):
     return result
 
 
-def prepare(arg):
+def prepare(aln_fasta, arg):
     """
     Given fasta format alignment filename, return a numpy array for sequence:
     Generate fasta file without gap for makeblastdb, return file name.
     """
     data = list()
     record = ['id', 'sequence']
-    with open(arg.input, 'r', encoding='utf-8') as raw, open(
+    with open(aln_fasta, 'r', encoding='utf-8') as raw, open(
             arg.no_gap_file, 'w', encoding='utf-8') as no_gap:
         for line in raw:
             no_gap.write(line.replace('-', ''))
@@ -1093,7 +1097,7 @@ def prepare(arg):
     # check sequence length
     length_check = [len(i[1]) for i in data]
     if len(set(length_check)) != 1:
-        tprint('{} does not have uniform width!'.format(arg.input))
+        tprint('{} does not have uniform width!'.format(aln_fasta))
         return None, None, None
 
     # Convert List to numpy array.
@@ -1103,11 +1107,11 @@ def prepare(arg):
     sequence = np.array([list(i[1]) for i in data], dtype=np.bytes_, order='F')
 
     if name is None:
-        tprint('Bad fasta file {}.'.format(arg.input))
+        tprint('Bad fasta file {}.'.format(aln_fasta))
         name = None
     # tree require more than 4 sequences
     if len(sequence) < 4:
-        tprint('Too few sequence in {} (less than 4)!'.format(arg.input))
+        tprint('Too few sequence in {} (less than 4)!'.format(aln_fasta))
         name = None
     interleaved = 'interleaved.fasta'
     # for clean
@@ -1339,11 +1343,11 @@ def count_and_draw(alignment, arg):
     return List[float]
     All calculation excludes primer sequence.
     """
+    output = join_path(arg.out, basename(arg.out_file))
     rows, columns = alignment.shape
     min_primer = arg.min_primer
     max_product = arg.max_product
     step = arg.step
-    out_file = join_path(arg.out, basename(arg.out_file))
     # r_list, h_list, pi_list, t_list : count, normalized entropy, Pi and
     #  tree value
     r_list = list()
@@ -1373,7 +1377,7 @@ def count_and_draw(alignment, arg):
     # how to find optimized size?
     fig, ax1 = plt.subplots(figsize=(15 + len(index) // 5000, 10))
     plt.title('Variance of {} (window={} bp, step={} bp)\n'.format(
-        basename(arg.input).split('.')[0], max_product, step))
+        basename(arg.out_file).split('.')[0], max_product, step))
     plt.xlabel('Base')
     ax1.yaxis.set_ticks(np.linspace(0, 1, num=11))
     ax2 = ax1.twinx()
@@ -1394,10 +1398,10 @@ def count_and_draw(alignment, arg):
     # ax2.yaxis.set_ticks(np.linspace(0, 10**_, num=11))
     ax2.legend(loc='upper right')
     # plt.yscale('log')
-    plt.savefig(out_file + '.pdf')
-    plt.savefig(out_file + '.png')
+    plt.savefig(output + '.pdf')
+    plt.savefig(output + '.png')
     # plt.show()
-    with open(out_file + '.variance.tsv', 'w', encoding='utf-8') as _:
+    with open(output + '.variance.tsv', 'w', encoding='utf-8') as _:
         _.write('Index,Resolution,TreeValue,AvgTerminalBranchLen,Entropy,Pi\n')
         for i, r, t, l, h, pi in zip(index, r_list, t_list, l_list, h_list,
                                      pi_list):
@@ -1425,10 +1429,12 @@ def validate(primer_candidate, db_file, n_seqs, arg):
     Do BLAST. Parse BLAST result. Return List[PrimerWithInfo]
     """
     query_file = arg.out_file + '.candidate.fasta'
+    query_file_fastq = arg.out_file + '.candidate.fastq'
     # SeqIO.write fasta file directly is prohibited. have to write fastq at
-    with open(query_file + '.fastq', 'w', encoding='utf-8') as _:
+    # first.
+    with open(query_file_fastq, 'w', encoding='utf-8') as _:
         SeqIO.write(primer_candidate, _, 'fastq')
-    SeqIO.convert(query_file + '.fastq', 'fastq', query_file, 'fasta')
+    SeqIO.convert(query_file_fastq, 'fastq', query_file, 'fasta')
     # build blast db
     with open(devnull, 'w', encoding='utf-8') as f:
         _ = run('makeblastdb -in {} -dbtype nucl'.format(db_file),
@@ -1551,9 +1557,8 @@ def analyze(fasta, arg):
     """
     Automatic design primer for DNA barcode.
     """
-    arg.out_file = splitext(clean_path(arg.fasta, arg))[0]
     # read from fasta, generate new fasta for makeblastdb
-    name, alignment, db_file = prepare(arg)
+    name, alignment, db_file = prepare(fasta, arg)
     if name is None:
         return False
     rows, columns = alignment.shape
@@ -1574,29 +1579,27 @@ def analyze(fasta, arg):
             s.write('Name,Sequences,Length,GapRatio,ObservedResolution,'
                     'TreeResolution,ShannonIndex,AvgTerminalBranchLen,Pi\n')
             s.write('{},{},{},{:.2%},{:.6f},{:.6f},{:.6f},{:.6f},{:.6f}'
-                    '\n'.format(basename(arg.input).split('.')[0], rows,
-                                columns, gap_ratio, max_count, max_t, max_h,
-                                max_l, max_pi))
+                    '\n'.format(basename(fasta), rows, columns, gap_ratio,
+                                max_count, max_t, max_h, max_l, max_pi))
     else:
         with open(summary, 'a', encoding='utf-8') as s:
             s.write('{},{},{},{:.2%},{:.6f},{:.6f},{:.6f},{:.6f},{:.6f}'
-                    '\n'.format(basename(arg.input).split('.')[0], rows,
-                                columns, gap_ratio, max_count, max_t, max_h,
-                                max_l, max_pi))
+                    '\n'.format(basename(fasta), rows, columns, gap_ratio,
+                                max_count, max_t, max_h, max_l, max_pi))
     if max_count < arg.resolution:
-        tprint('Too low resolution of {}!'.format(arg.input))
+        tprint('Too low resolution of {}!'.format(fasta))
         return False
     # count resolution
     tprint('Sliding window analyze.')
     (seq_count, H, Pi, T, L, index) = count_and_draw(alignment, arg)
     # exit if resolution lower than given threshold.
     if len(seq_count) == 0:
-        tprint('Problematic Input of {}!'.format(arg.input))
+        tprint('Problematic Input of {}!'.format(fasta))
     # stop if do not want to design primer
     if arg.stop == 2:
         return True
     # find ncandidate
-    tprint('Start finding primers of {}.'.format(arg.input))
+    tprint('Start finding primers of {}.'.format(fasta))
     good_region = get_good_region(index, seq_count, arg)
     consensus = find_continuous(consensus, good_region, arg.min_primer)
     tprint('Filtering candidate primer pairs.')
@@ -1604,20 +1607,20 @@ def analyze(fasta, arg):
                                               arg.max_primer)
     if len(primer_candidate) == 0:
         tprint('Cannot find primer candidates in {}. Try to loose'
-               'options!'.format(arg.input))
+               'options!'.format(fasta))
         return True
     tprint('Found {} candidate primers.'.format(len(primer_candidate)))
     # validate
     primer_verified = validate(primer_candidate, db_file, rows, arg)
     if len(primer_verified) == 0:
         tprint('Cannot find primers in {}. Try to loose options!'.format(
-            arg.input))
+            fasta))
         return True
     # pick pair
     pairs = pick_pair(primer_verified, alignment, arg)
     if len(pairs) == 0:
         tprint('Cannot find primers in {}. Try to loose options!'.format(
-            arg.input))
+            fasta))
         return True
     # output
     csv_title = ('Score,Sequences,AvgProductLength,StdEV,MinProductLength,'
@@ -1651,7 +1654,7 @@ def analyze(fasta, arg):
             out2.write(line)
             SeqIO.write(pair.left, out1, 'fastq')
             SeqIO.write(pair.right, out1, 'fastq')
-    tprint('Primers info were written into {}.csv.'.format(_))
+    tprint('Primers info were written into {}.csv.'.format(arg.out_file))
     return True
 
 
@@ -1659,6 +1662,7 @@ def analyze_wrapper(files, arg):
     result = list()
     for aln in files:
         tprint('Analyze {}.'.format(aln))
+        arg.out_file = splitext(clean_path(aln, arg))[0]
         result.append(analyze(aln, arg))
     # dirty work
     try:
