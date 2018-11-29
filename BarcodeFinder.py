@@ -218,7 +218,6 @@ def parse_args():
     general.add_argument('-aln', help='aligned fasta files to analyze')
     general.add_argument('-fasta', help='unaligned fasta format data to add')
     general.add_argument('-gb', help='genbank files')
-    general.add_argument('-json', dest='json', help='configuration json file')
     general.add_argument('-stop', type=int, choices=(1, 2, 3), default=3,
                          help=('Stop after which step:'
                                '\t1. Download and pre-process;'
@@ -294,17 +293,12 @@ def parse_args():
         arg.print_help()
         raise ValueError('Empty input!')
     if parsed.out is None:
-        parsed.out = datetime.now().isoformat().replace(':', '-')
-
-    # overwrite options by given json
-    if parsed.json is not None:
-        with open(parsed.json, 'r', encoding='utf-8') as _:
-            config = json.load(_)
-        d_parsed = vars(parsed)
-        new_arg = argparse.Namespace(**config, **d_parsed)
-        return new_arg
-    else:
-        return parsed
+        raw_time = datetime.now().isoformat()
+        parsed.out = raw_time.replace(':', '-').split('.')[0]
+    parsed.by_gene_folder = join_path(arg.out, 'by-gene')
+    parsed.by_name_folder = join_path(arg.out, 'by-name')
+    # load option.json may cause chaos, remove
+    return parsed
 
 
 def tprint(string):
@@ -763,14 +757,6 @@ def divide(gbfile, arg):
     """
     Given genbank file, return divided fasta files.
     """
-    # Use basename to avoid repeat arg.out if provide user's gb file
-    groupby_gene = join_path(arg.out, basename(gbfile).split('.')[0] + '-gene')
-    groupby_name = join_path(arg.out, basename(gbfile).split('.')[0] + '-name')
-    try:
-        mkdir(groupby_gene)
-        mkdir(groupby_name)
-    except FileExistsError:
-        pass
     raw_fasta = join_path(arg.out, basename(gbfile) + '.fasta')
     handle_raw = open(raw_fasta, 'w', encoding='utf-8')
     wrote_by_gene = set()
@@ -1676,6 +1662,9 @@ def main():
 
     wrote_by_gene = list()
     wrote_by_name = list()
+    mkdir(arg.by_gene_folder)
+    mkdir(arg.by_name_folder)
+
     query = get_query_string(arg)
     if query is not None:
         tprint('Download data from Genbank.')
@@ -1712,6 +1701,7 @@ def main():
         aligned = mafft(wrote_by_gene)
     else:
         aligned = mafft(wrote_by_name)
+    # assume that alignments user provided is clean and do not nead uniq
     if arg.aln is not None:
         user_aln = list(glob(arg.aln))
         aligned.extend(user_aln)
