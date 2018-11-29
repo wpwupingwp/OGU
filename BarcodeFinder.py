@@ -946,7 +946,7 @@ def divide(gbfile, arg):
             feature_name.append(name)
             sequence_id = '>' + '|'.join([name, taxon, accession, specimen])
             wrote = write_seq(name, sequence_id, feature, whole_seq,
-                              groupby_gene, arg)
+                              arg.by_gene_folder, arg)
             wrote_by_gene.add(wrote)
 
         # extract spacer
@@ -959,7 +959,7 @@ def divide(gbfile, arg):
             sequence_id = '>' + '|'.join([spacer.id, taxon,
                                           accession, specimen])
             wrote = write_seq(spacer.id, sequence_id, spacer, whole_seq,
-                              groupby_gene, arg)
+                              arg.by_gene_folder, arg)
             wrote_by_gene.add(wrote)
         # write to group_by name, i.e., one gb record one fasta
         if 'ITS' in feature_name:
@@ -975,7 +975,7 @@ def divide(gbfile, arg):
             name_str = '{}_genome'.format(arg.organelle)
         record.id = '|'.join([name_str, taxon, accession, specimen])
         record.description = ''
-        filename = join_path(groupby_name, name_str + '.fasta')
+        filename = join_path(arg.by_name_folder, name_str + '.fasta')
         with open(filename, 'a', encoding='utf-8') as out:
             SeqIO.write(record, out, 'fasta')
             wrote_by_name.add(filename)
@@ -983,7 +983,7 @@ def divide(gbfile, arg):
         SeqIO.write(record, handle_raw, 'fasta')
 
     # skip analyze of Unknown.fasta
-    unknown = join_path(groupby_name, 'Unknown.fasta')
+    unknown = join_path(arg.by_name_folder, 'Unknown.fasta')
     if unknown in wrote_by_name:
         wrote_by_name.remove(unknown)
     tprint('Divide done.')
@@ -1014,7 +1014,7 @@ def uniq(files, arg):
             for i in info:
                 info[i] = choice(info[i])
             keep = {info[i][0] for i in info}
-        new = fasta + '.uniq'
+        new = join_path(arg.by_name_folder, basename(fasta) + '.uniq')
         with open(new, 'w', encoding='utf-8') as out:
             for index, record in enumerate(SeqIO.parse(fasta, 'fasta')):
                 if index in keep:
@@ -1632,10 +1632,27 @@ def analyze(arg):
             SeqIO.write(pair.right, out1, 'fastq')
     tprint('Primers info were written into {}.csv'.format(_))
 
+def analyze_wrapper(files, arg):
+    for aln in files:
+        tprint('Analyze {}.'.format(aln))
+        arg.input = aln
+        analyze(arg)
+    # dirty work
+    try:
+        remove(arg.no_gap_file)
+        remove(arg.db_file)
+    except FileNotFoundError:
+        pass
+
 
 def main():
+    # prepare
     arg = parse_args()
     mkdir(arg.out)
+    wrote_by_gene = list()
+    wrote_by_name = list()
+    mkdir(arg.by_gene_folder)
+    mkdir(arg.by_name_folder)
     global log_handle
     log_handle = open(join_path(arg.out, 'Log.txt'), 'w', encoding='utf-8')
     _ = join_path(arg.out, 'Options.json')
@@ -1647,24 +1664,7 @@ def main():
     if original_path is None:
         tprint('Exit.')
         return
-
-    def analyze_wrapper(files):
-        for aln in files:
-            tprint('Analyze {}.'.format(aln))
-            arg.input = aln
-            analyze(arg)
-        # dirty work
-        try:
-            remove(arg.no_gap_file)
-            remove(arg.db_file)
-        except FileNotFoundError:
-            pass
-
-    wrote_by_gene = list()
-    wrote_by_name = list()
-    mkdir(arg.by_gene_folder)
-    mkdir(arg.by_name_folder)
-
+    # collect and preprocess
     query = get_query_string(arg)
     if query is not None:
         tprint('Download data from Genbank.')
@@ -1694,13 +1694,13 @@ def main():
     if arg.stop == 1:
         environ['PATH'] = original_path
         return
+    # evaluate
     tprint('Aligning sequences.')
-    too_long = 10000
-    if not arg.no_divide or arg.max_len > too_long:
-        # less than two records will cause empty output, which was omit
-        aligned = mafft(wrote_by_gene)
-    else:
+    # only consider arg.no_divide and arg.fasta
+    if arg.no_divide or arg.fasta:
         aligned = mafft(wrote_by_name)
+    else:
+        aligned = mafft(wrote_by_gene)
     # assume that alignments user provided is clean and do not nead uniq
     if arg.aln is not None:
         user_aln = list(glob(arg.aln))
