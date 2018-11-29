@@ -43,7 +43,7 @@ rcParams['lines.linewidth'] = 1.5
 class PrimerWithInfo(SeqRecord):
     def __init__(self, seq='', quality=None, start=0, coverage=0,
                  avg_bitscore=0, mid_loc=None, avg_mismatch=0, detail=0,
-                 reverse_complement=False):
+                 is_reverse_complement=False):
         # store str
         super().__init__(Seq(seq.upper()))
         self.sequence = str(self.seq)
@@ -60,7 +60,7 @@ class PrimerWithInfo(SeqRecord):
         self.avg_mid_loc = 0
         self.avg_mismatch = self.annotations['avg_mismatch'] = avg_mismatch
         self.detail = self.annotations['detail'] = detail
-        self.is_reverse_complement = reverse_complement
+        self.is_reverse_complement = is_reverse_complement
         self.description = ''
         self.hairpin_tm = 0
         self.homodimer_tm = 0
@@ -98,7 +98,7 @@ class PrimerWithInfo(SeqRecord):
             return False
         return True
 
-    def reverse_complement(self, **kwargs):
+    def reverse_complement(self):
         table = str.maketrans('ACGTMRWSYKVHDBXN', 'TGCAKYWSRMBDHVXN')
         new_seq = str.translate(self.sequence, table)[::-1]
         new_quality = self.quality[::-1]
@@ -107,6 +107,7 @@ class PrimerWithInfo(SeqRecord):
                               start=self.start, coverage=self.coverage,
                               avg_bitscore=self.avg_bitscore,
                               mid_loc=self.mid_loc,
+                              is_reverse_complement=True,
                               detail=self.detail)
 
     def update_id(self):
