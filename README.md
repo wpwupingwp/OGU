@@ -78,20 +78,21 @@ have stable network and reasonable Internet traffic charge for downloading
 large size of data.
 # Installation
 Assume that you already installed [Python3](https://www.python.org/downloads/)
-(3.5 or above). Firstly, install BarcodeFinder.
+(3.5 or above, 3.6 is recommended). Firstly, install BarcodeFinder.
 
-The easiest way is to use pip:
+The easiest way is to use pip. Make sure your pip is not out of date (18.0 or
+newer), then
 ```
 # As administator
 pip3 install BarcodeFinder
 # Normal user
 pip3 install BarcodeFinder --user
 ```
-Secondly, you need to install dependent software and python modules.
-BarcodeFinder has assistant function to automatically install dependent
-software if it cannot find them. However, it is *highly recommended* to follow
-official installation procedure to make it easy for management and give you a
-clean working directory.
+Secondly, you need to install dependent software. BarcodeFinder has assistant
+function to automatically install dependent software if it cannot find them,
+i.e., you can skip this step as you wish. However, it is *highly recommended*
+to follow official installation procedure to make it easy for management and
+give you a clean working directory.
 
 For Linux user, if you have root privileges, just use your package manager:
 ```
@@ -146,48 +147,48 @@ BarcodeFinder is a command line program. Once you open your command line
 (Windows) or terminal (Linux and MacOS), just type the command:
 ```
 # Windows
-python BarcodeFinder.py [input] -[options] -out [out_folder]
+python -m BarcodeFinder [input] -[options] -out [out_folder]
 # Linux and MacOS
-python3 BarcodeFinder.py [input] -[options] -out [out_folder]
+python3 -m BarcodeFinder [input] -[options] -out [out_folder]
 ```
 ## Quick examples
 1. Download all _rbcL_ sequences of plants and do pre-process:
 ```
 # Windows
-python BarcodeFinder.py -query rbcL -group plants -stop 1 -out rbcL
+python -m BarcodeFinder -query rbcL -group plants -stop 1 -out rbcL
 # Linux and macOS
-python3 BarcodeFinder.py -query rbcL -group plants -stop 1 -out rbcL
+python3 -m BarcodeFinder -query rbcL -group plants -stop 1 -out rbcL
 ```
 2. Download all ITS sequences of _Rosa_ and do pre-process:
 ```
 # Windows
-python BarcodeFinder.py -query "internal transcribed spacer" -taxon Rosa -stop 1 -out Rosa_its
+python -m BarcodeFinder -query "internal transcribed spacer" -taxon Rosa -stop 1 -out Rosa_its
 # Linux and macOS
-python3 BarcodeFinder.py -query "internal transcribed spacer" -taxon Rosa -stop 1 -out Rosa_its
+python3 -m BarcodeFinder -query "internal transcribed spacer" -taxon Rosa -stop 1 -out Rosa_its
 ```
 3. Download all Rosaceae chloroplast genome sequences, plus your own data.
    Then do pre-process and evaluation of variance (do not design primers):
 ```
 # Windows
-python BarcodeFinder.py -organelle chloroplast -taxon Rosaceae -out Poaceae_cpg -fasta my_data.fasta -stop 2
+python -m BarcodeFinder -organelle chloroplast -taxon Rosaceae -out Poaceae_cpg -fasta my_data.fasta -stop 2
 # Linux and macOS
-python3 BarcodeFinder.py -organelle chloroplast -taxon Rosaceae -out Poaceae_cpg -fasta my_data.fasta stop 2
+python3 -m BarcodeFinder -organelle chloroplast -taxon Rosaceae -out Poaceae_cpg -fasta my_data.fasta stop 2
 ```
 4. Download sequences of _Zea mays_, set length between 100 bp and 3000 bp,
    plus your aligned data, then do full analysis:
 ```
 # Windows
-python BarcodeFinder.py -taxon "Zea mays" -min_len 100 -max_len 3000 -out Zea_mays -aln my_data.aln
+python -m BarcodeFinder -taxon "Zea mays" -min_len 100 -max_len 3000 -out Zea_mays -aln my_data.aln
 # Linux and macOS
-python3 BarcodeFinder.py -taxon "Zea mays" -min_len 100 -max_len 3000 -out Zea_mays -aln my_data.aln
+python3 -m BarcodeFinder -taxon "Zea mays" -min_len 100 -max_len 3000 -out Zea_mays -aln my_data.aln
 ```
 5. Download all _Oryza_ chloroplast genomes, keep the longest sequence for
    each species and do full analysis:
 ```
 # Windows
-python BarcodeFinder.py -taxon Oryza -organelle chloroplast -uniq longest -out Oryza_cp
+python -m BarcodeFinder -taxon Oryza -organelle chloroplast -uniq longest -out Oryza_cp
 # Linux and macOS
-python3 BarcodeFinder.py -taxon Oryza -organelle chloroplast -uniq longest -out Oryza_cp
+python3 -m BarcodeFinder -taxon Oryza -organelle chloroplast -uniq longest -out Oryza_cp
 ```
 ## Input
 BarcodeFinder accepts:
