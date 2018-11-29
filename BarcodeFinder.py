@@ -299,7 +299,6 @@ def parse_args():
     if parsed.out is None:
         parsed.out = datetime.now().isoformat().replace(':', '-')
 
-    # arg.print_help()
     # overwrite options by given json
     if parsed.json is not None:
         with open(parsed.json, 'r', encoding='utf-8') as _:
@@ -401,6 +400,8 @@ def deploy(software):
                 ok = True
                 break
         if not ok:
+            tprint('Cannot install {} to system, try to'
+                   'download.'.format(software))
             download_software(url)
     elif sys == 'macOSX':
         brew_ok = False
@@ -1640,7 +1641,8 @@ def main():
     if arg.stop == 1:
         return
     tprint('Aligning sequences.')
-    if not arg.no_divide or arg.max_len > 10000:
+    too_long = 10000
+    if not arg.no_divide or arg.max_len > too_long:
         # less than two records will cause empty output, which was omit
         aligned = mafft(wrote_by_gene)
     else:

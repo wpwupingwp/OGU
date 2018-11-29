@@ -8,7 +8,8 @@ with open('README.rst', 'r') as _:
 requires = ['biopython>=1.72',
             'matplotlib>=3.0.0',
             'numpy>=1.15.2',
-            'primer3-py>=0.5.7']
+            'primer3-py>=0.5.7',
+            'wheel>=0.32.3']
 
 setuptools.setup(
     author='Ping Wu',
@@ -30,6 +31,8 @@ setuptools.setup(
         'License :: OSI Approved :: GNU Affero General Public License v3',
         'Operating System :: OS Independent',
         'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
         'Topic :: Scientific/Engineering :: Bio-Informatics'
     ],
 )
