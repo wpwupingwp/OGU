@@ -255,10 +255,11 @@ All results will be put in the output folder. If you didn't set output path by
 * _a_.fasta
 
     The converted fasta file of the ".gb" file.
-* _b_.csv
+* _b_.primer.csv
 
-    The list of primer pairs. CSV (comma-separated values text) format. The _b_
-    is the name of the fragment (usually gene or spacer).
+    The list of primer pairs. CSV (comma-separated values
+    text) format. The _b_ is the name of the locus/fragment (usually gene or
+    spacer).
 
     Its title:
     ```
@@ -373,49 +374,41 @@ All results will be put in the output folder. If you didn't set output path by
     The primer pairs were sorted by *Score*. Since the score may not fully
     satisfying user's specific consideration, it is suggested to choose primer
     pairs manually if the first primer pair failed on PCR experiment.
-* _b_.fasta.uniq.fastq
+* _b_.primer.fastq
 
     The fastq format file of primer's sequence. It contains two sequences and
     the direction is 5' to 3'. The first is the forward primer and the second
     is the reverse primer. The quality of each base equal to its proportion of
     the column in the alignment. Note that it may contains amibiguous base if
     you did not disable it.
-* _b_.fasta.uniq.pdf
+* _b_.pdf
 
     The PDF format of the figure of sliding-window scan result of the
     alignment.
-* _b_.fasta.uniq.png
+* _b_.png
 
     The PNG format of the figure of sliding-window scan result of the
     alignment.
-* _b_.fasta.uniq.variance.tsv
+* _b_.variance.tsv
 
     The CSV format of sliding-window scan result. The *"Index"* means the
     location of the base in the alignment. Note that the value DO NOT means
     the variance of the column of the base but the fragment started from this
     column.
 
-* _b_.expand.fasta.uniq.\*
-
-    By default, BarcodeFinder expands the alignment to its upstream/downstream
-    to try to find suitable primer pairs for amplifed whole length of the
-    target fragment. The filename contains "expand" does not ensure the final
-    primers located in upstream/downstream. It only means BarcodeFinder used
-    "expanded" data. *Users can use "-expand 0" to skip it.*
 * Log.txt
 
     The log file. Contains all information printed in screen.
 * Options.json
 
-    The JSON file stored all options user inputed. It may be used by set
-    "-json filename" to reduce input for similar run of the program.
-* Summary.csv
+    The JSON file stored all options user inputed.
+* Loci.csv
 
-    The summary of all ".fasta.uniq.csv" files which only contains information
-    about the variance of each fragment. The only new field, *GapRatio*, means
-    the ratio of the gap ("-") in the alignment. Higher value means the
-    sequences may be too variaty that the alignment is not reliable.
-* _b_-groupby_name
+    The summary of all loci/fragments which only contains the variance
+    information of each fragment. The only new field, *GapRatio*, means the
+    ratio of the gap ("-") in the alignment. Higher value means the sequences
+    may be too variaty that the alignment is not reliable.
+* by_name
 
     The folder contains *"undivided"* sequences and intermediate results.
     Actually it is "roughly divided" sequences. The original genbank file was
@@ -425,10 +418,10 @@ All results will be put in the output folder. If you didn't set output path by
     of annotation (same order), they were put into same fasta file. Each file
     contains the intact sequence in the related genbank record.
 
-* _b_-groupby_gene
+* by_gene
 
     The folder contains divided sequences and intermediate results. After
-    divided step occured in _b_-groupby_name, BarcodeFinder then divided each
+    divided step occured in by_name, BarcodeFinder then divided each
     *cluster* of genbank records to several fasta files that each file
     contains only one region (one locus, one gene one spacer or one
     misc_feature) of the annotation.
@@ -446,23 +439,29 @@ All results will be put in the output folder. If you didn't set output path by
     These two folders usually can be ignored. However, sometimes, user may
     utilize one of these intermediate result:
     * _b_.fasta
+        The raw fasta file directly converted from genbank file which only
+        contains sequences of one locus/fragment.
+    * _b_.expand
 
-        The raw fasta file directly converted from genbank file.
-    * _b_.fasta.uniq
+        To design primers, BarcodeFinder automaticly extend the sequences to
+        its upstream/downstream. Users can use "-expand 0" to skip the
+        expansion. The following step generates files all have ".expand" in
+        their filename.
+    * _b_.uniq
 
         Redundant sequences were removed.
-    * _b_.fasta.uniq.aln
+    * _b_.uniq.aln
 
         The alignment of the fasta file.
-    * _b_.fasta.uniq.aln.candidate.fasta
+    * _b_.uniq.candidate.fasta
 
         The candidate primers. It may contains thousands of records. Do not
         recommend to pay attention to it.
-    * _b_.fasta.uniq.aln.candidate.fasta.fastq
+    * _b_.uniq.candidate.fastq
 
         Still, the candidate primers. This time it has quality which equals to
         base's proportion in the column of the alignment.
-    * _b_.fasta.uniq.consensus.fastq
+    * _b_.uniq.consensus.fastq
 
         The fastq format of the consensus sequence of the alignment.  Note
         that it contains aligment gap ("-").  Although this may be the most
@@ -496,13 +495,6 @@ All results will be put in the output folder. If you didn't set output path by
 * -gb filename
 
     User provided genbank file or files.
-
-* -json filename
-
-    JSON file BarcodeFinder generated which stored all options user inputed.
-    It may be used to reduce input for similar run of the program.  Note that
-    other options user provied with "-json filename" will cover old value in
-    the JSON file.
 
 * -stop value
 
@@ -638,7 +630,7 @@ All results will be put in the output folder. If you didn't set output path by
     length of one annotation's sequence. The "-max_len" limits the whole
     sequence's length of one genbank record. 
 
-    For organelle genome's analysis, if you  set "-no_divide" option, this
+    For organelle genome's analysis, if you set "-no_divide" option, this
     option will be ignored.
 * -no_divide
 

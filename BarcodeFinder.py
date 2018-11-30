@@ -1759,7 +1759,7 @@ def main():
     tprint('Finished. You can find output in {}.'.format(arg.out))
     if result:
         tprint('Summary info were written into {} and {}.'.format(join_path(
-            arg.out, 'Variance.csv'), join_path(arg.out, 'Primers.csv')))
+            arg.out, 'Loci.csv'), join_path(arg.out, 'Primers.csv')))
     log_handle.close()
     # restore original PATH
     environ['PATH'] = original_path
