@@ -74,6 +74,8 @@ class PrimerWithInfo(SeqRecord):
                                     quality=self.quality[i])
             answer.annotations = dict(self.annotations.items())
             return answer
+        else:
+            raise IndexError
 
     def is_good_primer(self):
         poly = re.compile(r'([ATCG])\1\1\1\1')
@@ -277,9 +279,9 @@ def parse_args():
                         help='minium resolution')
     primer.add_argument('-t', dest='top_n', type=int, default=1,
                         help='keep n primers for each high varient region')
-    primer.add_argument('-tmin', dest='min_product', type=int, default=300,
+    primer.add_argument('-tmin', dest='min_product', type=int, default=350,
                         help='minimum product length(include primer)')
-    primer.add_argument('-tmax', dest='max_product', type=int, default=500,
+    primer.add_argument('-tmax', dest='max_product', type=int, default=600,
                         help='maximum product length(include primer)')
     parsed = arg.parse_args()
     # temporary filename, omit one parameters in many functions
@@ -369,7 +371,9 @@ def calc_ambiguous_seq(func, seq, seq2=None):
         seq_str2 = _expand(seq2)
         products = cartesian_product(seq_str, seq_str2)
         values = [func(i[0], i[1]) for i in products]
-    return average(values)
+    # primer3 will return negative values sometime
+    values_positive = [max(0, i) for i in values]
+    return average(values_positive)
 
 
 def check_tools():
@@ -538,7 +542,7 @@ def get_query_string(arg):
 
 
 def download(arg, query):
-    tprint('Your query:\n\t{}.'.format(query))
+    tprint('Query:\t{}.'.format(query))
     if arg.email is None:
         Entrez.email = 'guest@example.com'
         tprint('You did not provide email address, use'
