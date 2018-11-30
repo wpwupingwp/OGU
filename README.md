@@ -252,19 +252,22 @@ All results will be put in the output folder. If you didn't set output path by
 * _a_.gb
 
     The raw genbank file. The _a_ comes from the keyword of query.
-* _a_.gb.fasta
+* _a_.fasta
 
     The converted fasta file of the ".gb" file.
-* _b_.fasta.uniq.csv
+* _b_.csv
 
     The list of primer pairs. CSV (comma-separated values text) format. The _b_
     is the name of the fragment (usually gene or spacer).
 
     Its title:
     ```
-    Score,Sequences,AvgProductLength,StdEV,MinProductLength,MaxProductLength,Coverage,Resolution,TreeValue,AvgTerminalBranchLen,Entropy,LeftSeq,LeftTm,LeftAvgBitscore,LeftAvgMismatch,RightSeq,RightTm,RightAvgBitscore,RightAvgMismatch,DeltaTm,AlnStart,AlnEnd,AvgSeqStart,AvgSeqEnd
+    Locus,Score,Sequences,AvgProductLength,StdEV,MinProductLength,MaxProductLength,Coverage,Resolution,TreeValue,AvgTerminalBranchLen,Entropy,LeftSeq,LeftTm,LeftAvgBitscore,LeftAvgMismatch,RightSeq,RightTm,RightAvgBitscore,RightAvgMismatch,DeltaTm,AlnStart,AlnEnd,AvgSeqStart,AvgSeqEnd
     ```
 
+    * Locus
+        
+        The name of locus/fragment.
     * Score
 
         The score of this primer pair. Usually the higher, the better.

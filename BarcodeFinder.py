@@ -53,7 +53,6 @@ class PrimerWithInfo(SeqRecord):
         self.quality = self.letter_annotations['solexa_quality'] = quality
         self.start = self.annotations['start'] = start
         self.end = self.annotations['end'] = start + self.__len__() - 1
-        self.tm = self.annotations['tm'] = calc_ambiguous_seq(calcTm, self.seq)
         self.coverage = self.annotations['coverage'] = coverage
         self.avg_bitscore = self.annotations['avg_bitscore'] = avg_bitscore
         self.mid_loc = self.annotations['mid_loc'] = mid_loc
@@ -88,8 +87,8 @@ class PrimerWithInfo(SeqRecord):
             self.detail = 'Tandom(NN*5) exist'
             return False
         self.hairpin_tm = calc_ambiguous_seq(calcHairpinTm, self.seq)
-        self.homodimer_tm = calc_ambiguous_seq(calcHomodimerTm,
-                                               self.seq)
+        self.homodimer_tm = calc_ambiguous_seq(calcHomodimerTm, self.seq)
+        self.tm = self.annotations['tm'] = calc_ambiguous_seq(calcTm, self.seq)
         # primer3.calcHairpin or calcHomodimer usually return structure found
         # with low Tm. Here we compare structure_tm with sequence tm
         if self.hairpin_tm >= self.tm:
