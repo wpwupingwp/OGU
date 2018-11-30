@@ -56,13 +56,15 @@ class PrimerWithInfo(SeqRecord):
         self.coverage = self.annotations['coverage'] = coverage
         self.avg_bitscore = self.annotations['avg_bitscore'] = avg_bitscore
         self.mid_loc = self.annotations['mid_loc'] = mid_loc
-        self.avg_mid_loc = 0
         self.avg_mismatch = self.annotations['avg_mismatch'] = avg_mismatch
         self.detail = self.annotations['detail'] = detail
-        self.is_reverse_complement = is_reverse_complement
-        self.description = ''
+        self.is_reverse_complement = self.annotations['is_reverse_complement'
+                                                      ] = False
+        self.description = self.annotations['description'] = ''
+        self.avg_mid_loc = 0
         self.hairpin_tm = 0
         self.homodimer_tm = 0
+        self.tm = 0
         self.update_id()
 
     def __getitem__(self, i):
@@ -1352,7 +1354,7 @@ def count_and_draw(alignment, arg):
     return List[float]
     All calculation excludes primer sequence.
     """
-    output = join_path(arg.out, basename(arg.out_file))
+    output = join_path(arg.out, basename(arg.out_file).split('.')[0])
     rows, columns = alignment.shape
     min_primer = arg.min_primer
     max_product = arg.max_product
@@ -1644,8 +1646,10 @@ def analyze(fasta, arg):
              '{},{:.2f},{:.2f},{:.2f},'
              '{},{:.2f},{:.2f},{:.2f},'
              '{:.2f},{},{},{},{}\n')
-    out1 = open(join_path(arg.out, locus) + '.fastq', 'w', encoding='utf-8')
-    out2 = open(join_path(arg.out, locus) + '.csv', 'w', encoding='utf-8')
+    out1 = open(join_path(arg.out, locus) + '.primer.fastq', 'w',
+                encoding='utf-8')
+    out2 = open(join_path(arg.out, locus) + '.primer.csv', 'w',
+                encoding='utf-8')
     # write primers to one file
     out3_file = join_path(arg.out, 'Primers.csv')
     if not exists(out3_file):
