@@ -1558,9 +1558,8 @@ def pick_pair(primers, alignment, arg):
         if i.resolution >= arg.resolution:
             good_pairs.append(i)
     good_pairs.sort(key=lambda x: x.score, reverse=True)
-    tprint('Successfully found {} pairs of validated primers.'.format(
-        len(good_pairs)))
-    return good_pairs
+    tprint('Successfully found validated primers.')
+    return good_pairs[:arg.top_n]
 
 
 def analyze(fasta, arg):
