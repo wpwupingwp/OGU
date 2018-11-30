@@ -1076,7 +1076,7 @@ def align(files, arg):
         if m.returncode == 0:
             result.append(out)
         else:
-            tprint('Failed to align {}.'.format(fasta))
+            tprint('Skip alignment of {}.'.format(fasta))
     tprint('Alignment done.')
     for i in glob('_order*'):
         remove(i)
@@ -1584,10 +1584,10 @@ def analyze(fasta, arg):
     tprint('Average terminal branch length {}.'.format(max_l))
     n_gap = sum([i[5] for i in base_cumulative_frequency])
     gap_ratio = n_gap / rows / columns
-    summary = join_path(arg.out, 'Variance.csv')
+    summary = join_path(arg.out, 'Loci.csv')
     if not exists(summary):
         with open(summary, 'w', encoding='utf-8') as s:
-            s.write('Name,Sequences,Length,GapRatio,ObservedResolution,'
+            s.write('Loci,Sequences,Length,GapRatio,ObservedResolution,'
                     'TreeResolution,ShannonIndex,AvgTerminalBranchLen,Pi\n')
             s.write('{},{},{},{:.2%},{:.6f},{:.6f},{:.6f},{:.6f},{:.6f}'
                     '\n'.format(basename(fasta), rows, columns, gap_ratio,
