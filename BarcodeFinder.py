@@ -444,7 +444,7 @@ def deploy(software):
            'official instruction to get a CLEAN system.'.format(software))
     sys = system()
     # url dict
-    blast_url = ('ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/'
+    blast_url = ('ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.7.1/'
                  'ncbi-blast-2.7.1+')
     iqtree_url = ('https://github.com/Cibiv/IQ-TREE/releases/download/v1.6.8/'
                   'iqtree-1.6.8')
