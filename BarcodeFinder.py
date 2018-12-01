@@ -1706,10 +1706,6 @@ def main():
     mkdir(arg.by_name_folder)
     global log_handle
     log_handle = open(join_path(arg.out, 'Log.txt'), 'w', encoding='utf-8')
-    _ = join_path(arg.out, 'Options.json')
-    with open(_, 'w', encoding='utf-8') as out:
-        json.dump(vars(arg), out, indent=4, sort_keys=True)
-    tprint('Options were dumped into {}.'.format(_))
     tprint('Welcome to BarcodeFinder!')
     original_path = check_tools()
     if original_path is None:
@@ -1760,6 +1756,10 @@ def main():
     if result:
         tprint('Summary info were written into {} and {}.'.format(join_path(
             arg.out, 'Loci.csv'), join_path(arg.out, 'Primers.csv')))
+    json_file = join_path(arg.out, 'Options.json')
+    with open(json_file, 'w', encoding='utf-8') as out:
+        json.dump(vars(arg), out, indent=4, sort_keys=True)
+    tprint('Options were dumped into {}.'.format(json_file))
     log_handle.close()
     # restore original PATH
     environ['PATH'] = original_path
