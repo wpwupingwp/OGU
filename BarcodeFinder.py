@@ -1411,6 +1411,7 @@ def count_and_draw(alignment, arg):
     # plt.yscale('log')
     plt.savefig(output + '.pdf')
     plt.savefig(output + '.png')
+    plt.close()
     # plt.show()
     with open(output + '.variance.tsv', 'w', encoding='utf-8') as _:
         _.write('Index,Resolution,TreeValue,AvgTerminalBranchLen,Entropy,Pi\n')
