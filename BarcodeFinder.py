@@ -157,7 +157,6 @@ class Pair:
         self.score = 0.0
         self.get_score()
 
-    @profile
     def __str__(self):
         return (
             'Pair(score={:.2f}, product={:.0f}, start={}, end={}, left={}, '
@@ -167,7 +166,6 @@ class Pair:
                 self.end, self.left.seq, self.right.seq, self.resolution,
                 self.coverage, self.delta_tm, self.have_heterodimer))
 
-    @profile
     def get_score(self):
         self.score = (average(list(self.length.values())) * 0.5
                       + self.coverage * 200
@@ -179,7 +177,6 @@ class Pair:
                       - self.delta_tm * 5 - self.left.avg_mismatch * 10
                       - self.right.avg_mismatch * 10)
 
-    @profile
     def add_info(self, alignment):
         """
         put slow steps here to save time
