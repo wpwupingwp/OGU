@@ -768,8 +768,13 @@ All results will be put in the output folder. If you didn't set output path by
 For taxon that not very large and few fragments, BarcodeFinder could finish
 the task in *minutes*. For large taxon (such as Asteraceae family or the whole
 plants kingdom) and multiple fragments (such as chloroplast genomes) the time
-may be hours -- in a PC.
+may be one hour or more -- in a PC/laptop.
 
-BarcodeFinder requires few memory (less than 1GB for large taxon) and CPU (one
-core is enough). It can run in normal PC very well. Multiple CPU cores may be
-helpful for the alignment and tree construction steps.
+BarcodeFinder requires few memory (usually less than 1GB, for large taxon
+BLAST may require more) and CPU (one core is enough). It can run in normal PC
+very well. Multiple CPU cores may be helpful for the alignment and tree
+construction steps.
+
+For Windows user, it's said that MAFFT [may be very slow due to anti-virus
+software](https://mafft.cbrc.jp/alignment/software/windows_without_cygwin.html).
+Please consider to follow [this instruction] (https://mafft.cbrc.jp/alignment/software/ubuntu_on_windows.html) to install Ubuntu on Windows and get better experiment.

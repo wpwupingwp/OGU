@@ -494,7 +494,8 @@ def deploy(software):
     elif sys == 'macOSX':
         brew_ok = False
         ok = False
-        r = run('brew --help', shell=True)
+        with open(devnull, 'w', encoding='utf-8') as f:
+            r = run('brew --help', shell=True, stdout=f, stderr=f)
         if r.returncode == 0:
             brew_ok = True
         else:
@@ -1071,9 +1072,10 @@ def align(files, arg):
     for fasta in files:
         tprint('Aligning {}.'.format(fasta))
         out = clean_path(fasta, arg) + '.aln'
-        _ = ('mafft --thread {} --reorder --quiet --adjustdirection '
-             '{} > {}'.format(cores, fasta, out))
-        m = run(_, shell=True)
+        with open(devnull, 'w', encoding='utf-8') as f:
+            _ = ('mafft --thread {} --reorder --quiet --adjustdirection '
+                 '{} > {}'.format(cores, fasta, out))
+            m = run(_, shell=True, stdout=f, stderr=f)
         if m.returncode == 0:
             result.append(out)
         else:
