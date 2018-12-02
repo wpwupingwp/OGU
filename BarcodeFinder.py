@@ -116,7 +116,7 @@ class PrimerWithInfo(SeqRecord):
     def update_id(self):
         self.end = self.annotations['end'] = self.start + self.__len__() - 1
         if self.mid_loc is not None and len(self.mid_loc) != 0:
-            self.avg_mid_loc = average(list(self.mid_loc.values()))
+            self.avg_mid_loc = int(average(list(self.mid_loc.values())))
         self.id = ('AvgMidLocation({:.0f})-Tm({:.2f})-Coverage({:.2%})-'
                    'AvgBitScore({:.2f})-Start({})-End({})'.format(
                     self.avg_mid_loc, self.tm, self.coverage,
@@ -145,8 +145,8 @@ class Pair:
         self.right.coverage = len(self.right.mid_loc) / rows
         self.coverage = len(common) / rows
         # pairs use mid_loc from BLAST as start/end
-        self.start = int(self.left.avg_mid_loc)
-        self.end = int(self.right.avg_mid_loc)
+        self.start = self.left.avg_mid_loc
+        self.end = self.right.avg_mid_loc
         self.have_heterodimer = False
         self.heterodimer_tm = 0.0
         self.resolution = 0.0
@@ -157,6 +157,7 @@ class Pair:
         self.score = 0.0
         self.get_score()
 
+    @profile
     def __str__(self):
         return (
             'Pair(score={:.2f}, product={:.0f}, start={}, end={}, left={}, '
@@ -166,6 +167,7 @@ class Pair:
                 self.end, self.left.seq, self.right.seq, self.resolution,
                 self.coverage, self.delta_tm, self.have_heterodimer))
 
+    @profile
     def get_score(self):
         self.score = (average(list(self.length.values())) * 0.5
                       + self.coverage * 200
@@ -177,6 +179,7 @@ class Pair:
                       - self.delta_tm * 5 - self.left.avg_mismatch * 10
                       - self.right.avg_mismatch * 10)
 
+    @profile
     def add_info(self, alignment):
         """
         put slow steps here to save time
@@ -312,6 +315,7 @@ def tprint(string):
                                               string)
     print(s, flush=True)
     log_handle.write(s + '\n')
+    log_handle.flush()
 
 
 def average(x):
@@ -351,7 +355,7 @@ def calc_ambiguous_seq(func, seq, seq2=None):
     len_limit = 60
 
     def _expand(seq):
-        seq_list = list()
+        seq_list = []
         for base in seq:
             # replace illegal base with 'N'
             if base not in ambiguous_data:
@@ -388,7 +392,7 @@ def check_tools():
             exists_path = path_file.read().strip()
             environ['PATH'] = pathsep.join([environ['PATH'], exists_path])
     f = open(devnull, 'w', encoding='utf-8')
-    installed = list()
+    installed = []
     # blast use different option style, have to use dict
     tools_cmd = {'MAFFT': 'mafft --version',
                  'IQTREE': 'iqtree --version',
@@ -519,7 +523,7 @@ def deploy(software):
 
 
 def get_query_string(arg):
-    condition = list()
+    condition = []
     if arg.group is not None:
         condition.append('{}[filter]'.format(arg.group))
     if arg.query is not None:
@@ -764,7 +768,7 @@ def get_feature_name(feature, arg):
 
 
 def get_spacer(genes):
-    spacers = list()
+    spacers = []
     # sorted according to sequence starting postion
     genes.sort(key=lambda x: int(x[1].location.start))
     for n, present in enumerate(genes[1:], 1):
@@ -958,8 +962,8 @@ def divide(gbfile, arg):
         except (IndexError, KeyError):
             specimen = ''
         whole_seq = record.seq
-        feature_name = list()
-        genes = list()
+        feature_name = []
+        genes = []
 
         for feature in record.features:
             name, feature_type = get_feature_name(feature, arg)
@@ -1024,7 +1028,7 @@ def divide(gbfile, arg):
 
 
 def uniq(files, arg):
-    uniq_files = list()
+    uniq_files = []
     for fasta in files:
         info = defaultdict(lambda: list())
         keep = dict()
@@ -1064,7 +1068,7 @@ def uniq(files, arg):
 
 
 def align(files, arg):
-    result = list()
+    result = []
     # get available CPU cores
     cores = cpu_count() - 1
     for fasta in files:
@@ -1088,7 +1092,7 @@ def prepare(aln_fasta, arg):
     Given fasta format alignment filename, return a numpy array for sequence:
     Generate fasta file without gap for makeblastdb, return file name.
     """
-    data = list()
+    data = []
     record = ['id', 'sequence']
     with open(aln_fasta, 'r', encoding='utf-8') as raw, open(
             arg.no_gap_file, 'w', encoding='utf-8') as no_gap:
@@ -1138,7 +1142,7 @@ def count_base(alignment, rows, columns):
     Return List[List[float, float, float, float, float, float, float]] for
     [A, T, C, G, N, GAP, OTHER].
     """
-    frequency = list()
+    frequency = []
     for index in range(columns):
         base, counts = np.unique(alignment[:, [index]], return_counts=True)
         count_dict = {b'A': 0, b'C': 0, b'G': 0, b'T': 0, b'M': 0, b'R': 0,
@@ -1252,7 +1256,7 @@ def generate_consensus(base_cumulative_frequency, coverage_percent,
         return data_with_len
 
     ambiguous_dict = get_ambiguous_dict()
-    most = list()
+    most = []
     coverage = rows * coverage_percent
 
     limit = coverage / 4
@@ -1326,7 +1330,7 @@ def find_primer(consensus, min_len, max_len):
     Find suitable primer in given consensus with features labeled as candidate
     primer, return List[PrimerWithInfo], consensus
     """
-    primers = list()
+    primers = []
     # skip good_region
     continuous = consensus.features
     for feature in continuous:
@@ -1361,13 +1365,13 @@ def count_and_draw(alignment, arg):
     step = arg.step
     # r_list, h_list, pi_list, t_list : count, normalized entropy, Pi and
     #  tree value
-    r_list = list()
-    h_list = list()
-    pi_list = list()
-    t_list = list()
-    l_list = list()
+    r_list = []
+    h_list = []
+    pi_list = []
+    t_list = []
+    l_list = []
     max_h = np.log2(rows)
-    index = list()
+    index = []
     max_plus = max_product - min_primer * 2
     max_range = columns - max_product
     for i in range(0, max_range, step):
@@ -1424,7 +1428,7 @@ def count_and_draw(alignment, arg):
 
 
 def parse_blast_tab(filename):
-    query = list()
+    query = []
     with open(filename, 'r', encoding='utf-8') as raw:
         for line in raw:
             if line.startswith('# BLAST'):
@@ -1453,7 +1457,7 @@ def validate(primer_candidate, db_file, n_seqs, arg):
                 shell=True, stdout=f)
         if _.returncode != 0:
             tprint('Failed to run makeblastdb!')
-            return list()
+            return []
     # blast
     tprint('Validate with BLAST.')
     blast_result_file = 'blast.result.tsv'
@@ -1498,7 +1502,7 @@ def validate(primer_candidate, db_file, n_seqs, arg):
                 'avg_bitscore': sum_bitscore_raw / good_hits,
                 'avg_mismatch': sum_mismatch / good_hits,
                 'mid_loc': mid_loc}
-    primer_verified = list()
+    primer_verified = []
     for primer in primer_candidate:
         i = primer.id
         if i in blast_result:
@@ -1517,14 +1521,16 @@ def validate(primer_candidate, db_file, n_seqs, arg):
 
 
 def pick_pair(primers, alignment, arg):
-    pairs = list()
+    pairs = []
     for n_left, left in enumerate(primers):
         # convert mid_loc to 5' location
-        location = left.avg_mid_loc - len(left) / 2
+        # use int to speedup, comparing of float seems slow
+        location = int(left.avg_mid_loc - len(left) / 2)
         begin = location + arg.min_product
         # fragment plus one primer = max_product length
         end = location + arg.max_product - len(left)
-        cluster = list()
+        # create [] is faster than list()
+        cluster = []
         for right in primers[(n_left + 1):]:
             if right.avg_mid_loc < begin:
                 continue
@@ -1540,7 +1546,7 @@ def pick_pair(primers, alignment, arg):
     if len(pairs) == 0:
         return []
     # remove close located primers
-    less_pairs = list()
+    less_pairs = []
     cluster = [pairs[0], ]
     pairs.sort(key=lambda x: x.start)
     for index in range(1, len(pairs)):
@@ -1554,7 +1560,7 @@ def pick_pair(primers, alignment, arg):
     less_pairs.extend(cluster[:arg.top_n])
     tprint('{} pairs of redundant primers were removed.'.format(
         len(pairs) - len(less_pairs)))
-    good_pairs = list()
+    good_pairs = []
     for i in less_pairs:
         i.add_info(alignment)
         if i.resolution >= arg.resolution:
@@ -1683,7 +1689,7 @@ def analyze(fasta, arg):
 
 
 def analyze_wrapper(files, arg):
-    result = list()
+    result = []
     for aln in files:
         tprint('Analyze {}.'.format(aln))
         arg.out_file = splitext(clean_path(aln, arg))[0]
@@ -1701,8 +1707,8 @@ def main():
     # prepare
     arg = parse_args()
     mkdir(arg.out)
-    wrote_by_gene = list()
-    wrote_by_name = list()
+    wrote_by_gene = []
+    wrote_by_name = []
     mkdir(arg.by_gene_folder)
     mkdir(arg.by_name_folder)
     global log_handle
