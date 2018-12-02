@@ -288,10 +288,6 @@ def parse_args():
     primer.add_argument('-tmax', dest='max_product', type=int, default=600,
                         help='maximum product length(include primer)')
     parsed = arg.parse_args()
-    # temporary filename, omit one parameters in many functions
-    parsed.db_file = 'interleaved.fasta'
-    parsed.no_gap_file = 'no_gap.fasta'
-    parsed.out_file = ''
     if parsed.organelle is not None:
         # 10k to 1m seems enough
         parsed.min_len = 10000
@@ -305,6 +301,10 @@ def parse_args():
         parsed.out = raw_time.replace(':', '-').split('.')[0]
     parsed.by_gene_folder = join_path(parsed.out, 'by-gene')
     parsed.by_name_folder = join_path(parsed.out, 'by-name')
+    # temporary filename, omit one parameters in many functions
+    parsed.db_file = join_path(parsed.out, 'interleaved.fasta')
+    parsed.no_gap_file = join_path(parsed.out, 'no_gap.fasta')
+    parsed.out_file = ''
     # load option.json may cause chaos, remove
     return parsed
 

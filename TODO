@@ -50,5 +50,5 @@
 50. test large data
 51. test quick example
 52. check memory usage of pick_pair
-53. no_gap.fasta should not be put on current workdir
+#53. no_gap.fasta should not be put on current workdir
 54. Pair's init seems slow
