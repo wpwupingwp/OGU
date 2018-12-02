@@ -219,8 +219,7 @@ be empty for animals.
     it is "geneA_geneB" that use underscore ("\_") to connect two gene's name.
 
     Note that the original gene name in genbank file were renamed to try to
-    fix part of annotation error. You can use raw name by set "-no_rename"
-    option.
+    fix part of annotation error. 
 
     If a valid sequence name could not be found in annotation of genbank file,
     BarcodeFinder will use "Unknown" instead.
@@ -647,6 +646,9 @@ All results will be put in the output folder. If you didn't set output path by
     be helpful if the annotation has nonstandard uppercase/lowercase or naming
     format. So it can merge same sequences to one file which are same locus
     but have variant name.
+
+    If you use Windows, please use this option to avoid confliction of
+    filename.
 
     It is also a boolen type. The default is not to rename.
 * -uniq method
