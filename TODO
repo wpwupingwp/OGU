@@ -53,3 +53,4 @@
 #53. no_gap.fasta should not be put on current workdir
 54. Pair's init seems slow
 55. score and sample number
+56. genaf for genome?
