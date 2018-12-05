@@ -579,9 +579,6 @@ All results will be put in the output folder. If you didn't set output path by
     The maximum length of the records downloaded from Genbank.  The default
     *value* is 10000 (bp). The *number* must be integer.
 
-    If you set "-organelle" option, the range of the length will becomes 10000
-    to 1000000 (bp).
-
 * -molecular type
 
     The molecular type, could be DNA or RNA. The default *type* is empty.
@@ -594,9 +591,16 @@ All results will be put in the output folder. If you didn't set output path by
     * plastid
     * chloroplast
 
-    Make sure do not have typo. This option have higher privilege, which will
-    change "-min_len" and "-max_len" and other options. The default value is
-    empty.
+    Make sure do not have typo. Note that when use "-organelle" option,
+    BarcodeFinder will *only download sequences in RefSeq database" by
+    automatically set "-refseq" to *True*. If you
+    want to download all organelle sequences please try to use "-query" option
+    combined with "-min_len" and "-max_len".
+
+    For instance, for all chloroplast sequences of Poaceae (not only in RefSeq):
+    ```
+    -taxon "Poaceae" -query "chloroplast[filter]" -min_len 50000 -max_len 100000
+    ```
 
 * -query string
 
@@ -607,6 +611,15 @@ All results will be put in the output folder. If you didn't set output path by
     quotation mark if it has more than one word. The default *string* is
     empty.
 
+* -refseq
+
+    Ask BarcodeFinder to only query sequences in RefSeq database.
+    [RefSeq](https://www.ncbi.nlm.nih.gov/refseq/about/) was
+    considered to have higher quality than other sequences in Genbank.
+
+    By default, use "-organelle" will automatically set this option to *True*.
+
+    Note that this option is boolen type. It DOES NOT followed with a *value*.
 * -taxon taxonomy
 
     The taxonomy name. It could be any taxonomy rank. From kingdom (same with

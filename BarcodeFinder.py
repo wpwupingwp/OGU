@@ -243,6 +243,8 @@ def parse_args():
     genbank.add_argument('-organelle',
                          choices=('mitochondrion', 'plastid', 'chloroplast'),
                          help='organelle type')
+    genbank.add_argument('-refseq', action='store_true',
+                         help='Only search in RefSeq database')
     genbank.add_argument('-query', help='query text')
     genbank.add_argument('-taxon', help='Taxonomy name')
     pre = arg.add_argument_group('Preprocess')
@@ -286,9 +288,8 @@ def parse_args():
                         help='maximum product length(include primer)')
     parsed = arg.parse_args()
     if parsed.organelle is not None:
-        # 10k to 1m seems enough
-        parsed.min_len = 10000
-        parsed.max_len = 1000000
+        # only get refseq for organelle
+        parsed.refseq = True
     if not any([parsed.query, parsed.taxon, parsed.group, parsed.gene,
                 parsed.fasta, parsed.aln, parsed.gb, parsed.organelle]):
         arg.print_help()
@@ -303,6 +304,7 @@ def parse_args():
     parsed.no_gap_file = join_path(parsed.out, 'no_gap.fasta')
     parsed.out_file = ''
     # load option.json may cause chaos, remove
+    print(parsed)
     return parsed
 
 
@@ -536,6 +538,8 @@ def get_query_string(arg):
         condition.append('"{}"[ORGANISM]'.format(arg.taxon))
     if arg.organelle is not None:
         condition.append('{}[filter]'.format(arg.organelle))
+    if arg.refseq:
+        condition.append('RefSeq[filter]')
     if len(condition) != 0:
         condition.append('("{}"[SLEN] : "{}"[SLEN])'.format(
             arg.min_len, arg.max_len))
