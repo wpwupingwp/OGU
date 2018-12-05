@@ -289,6 +289,8 @@ def parse_args():
     parsed = arg.parse_args()
     if parsed.organelle is not None:
         # only get refseq for organelle
+        parsed.min_len = None
+        parsed.max_len = None
         parsed.refseq = True
     if not any([parsed.query, parsed.taxon, parsed.group, parsed.gene,
                 parsed.fasta, parsed.aln, parsed.gb, parsed.organelle]):
@@ -539,13 +541,11 @@ def get_query_string(arg):
     if arg.organelle is not None:
         condition.append('{}[filter]'.format(arg.organelle))
     if arg.refseq:
-        condition.append('RefSeq[filter]')
-    if len(condition) != 0:
+        condition.append('refseq[filter]')
+    if not any([condition, arg.min_len, arg.max_len]):
         condition.append('("{}"[SLEN] : "{}"[SLEN])'.format(
             arg.min_len, arg.max_len))
-        return ' AND '.join(condition)
-    else:
-        return None
+    return ' AND '.join(condition)
 
 
 def download(arg, query):
