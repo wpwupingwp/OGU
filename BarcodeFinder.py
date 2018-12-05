@@ -560,10 +560,15 @@ def download(arg, query):
     json_file = join_path(arg.out, 'Query.json')
     with open(json_file, 'w', encoding='utf-8') as _:
         json.dump(query_handle, _, indent=4, sort_keys=True)
-    if arg.query is None:
-        name = safe(arg.taxon)
+    name_words = []
+    for i in (arg.group, arg.taxon, arg.organelle, arg.gene, arg.query):
+        if i is not None:
+            name_words.append(i)
+    if len(name_words) != 0:
+        name = safe('-'.join(name_words))
     else:
-        name = safe(arg.query)
+        name = 'sequence'
+    name = safe(name)
     file_name = join_path(arg.out, name + '.gb')
     output = open(file_name, 'w', encoding='utf-8')
     ret_start = 0
