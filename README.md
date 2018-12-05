@@ -88,6 +88,16 @@ pip3 install BarcodeFinder
 # Normal user
 pip3 install BarcodeFinder --user
 ```
+For some version of python (eg. python 3.7 or above), pip may ask user to
+provide compiler. If you do not have (especially for Windows user), we
+recommend [this](https://www.lfd.uci.edu/~gohlke/pythonlibs/) website. You can
+download compiled wheel file and use pip to install it:
+```
+# As administator
+pip3 install wheel_file_name
+# Normal user
+pip3 install wheel_file_name --user
+```
 Secondly, you need to install dependent software. BarcodeFinder has assistant
 function to automatically install dependent software if it cannot find them,
 i.e., you can skip this step as you wish. However, it is *highly recommended*
