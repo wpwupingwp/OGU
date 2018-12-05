@@ -287,11 +287,10 @@ def parse_args():
     primer.add_argument('-tmax', dest='max_product', type=int, default=600,
                         help='maximum product length(include primer)')
     parsed = arg.parse_args()
-    if parsed.organelle is not None:
-        # only get refseq for organelle
-        parsed.min_len = None
-        parsed.max_len = None
-        parsed.refseq = True
+    if parsed.refseq:
+        # no length limit for refseq
+        parsed.min_len == None
+        parsed.max_len == None
     if not any([parsed.query, parsed.taxon, parsed.group, parsed.gene,
                 parsed.fasta, parsed.aln, parsed.gb, parsed.organelle]):
         arg.print_help()
@@ -529,23 +528,35 @@ def get_query_string(arg):
     if arg.group is not None:
         condition.append('{}[filter]'.format(arg.group))
     if arg.query is not None:
-        condition.append('"{}"'.format(arg.query))
+        if ' ' in arg.query:
+            condition.append('"{}"'.format(arg.query))
+        else:
+            condition.append('{}'.format(arg.query))
     if arg.gene is not None:
-        condition.append('"{}"[gene]'.format(arg.gene))
+        if ' ' in arg.gene:
+            condition.append('"{}"[gene]'.format(arg.gene))
+        else:
+            condition.append('{}[gene]'.format(arg.gene))
     if arg.molecular is not None:
         d = {'DNA': 'biomol_genomic[PROP]',
              'RNA': 'biomol_mrna[PROP]'}
         condition.append(d[arg.molecular])
     if arg.taxon is not None:
-        condition.append('"{}"[ORGANISM]'.format(arg.taxon))
+        if ' ' in arg.taxon:
+            condition.append('"{}"[ORGANISM]'.format(arg.taxon))
+        else:
+            condition.append('{}[ORGANISM]'.format(arg.taxon))
     if arg.organelle is not None:
         condition.append('{}[filter]'.format(arg.organelle))
     if arg.refseq:
         condition.append('refseq[filter]')
-    if not any([condition, arg.min_len, arg.max_len]):
+    if arg.min_len is not None and arg.max_len is not None:
         condition.append('("{}"[SLEN] : "{}"[SLEN])'.format(
             arg.min_len, arg.max_len))
-    return ' AND '.join(condition)
+    if not condition:
+        return None
+    else:
+        return ' AND '.join(condition)
 
 
 def download(arg, query):

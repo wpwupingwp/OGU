@@ -176,13 +176,14 @@ python -m BarcodeFinder -query "internal transcribed spacer" -taxon Rosa -stop 1
 # Linux and macOS
 python3 -m BarcodeFinder -query "internal transcribed spacer" -taxon Rosa -stop 1 -out Rosa_its
 ```
-3. Download all Rosaceae chloroplast genome sequences, plus your own data.
-   Then do pre-process and evaluation of variance (do not design primers):
+3. Download all Rosaceae chloroplast genome sequences in RefSeq database, plus
+   your own data.  Then do pre-process and evaluation of variance (do not
+   design primers):
 ```
 # Windows
-python -m BarcodeFinder -organelle chloroplast -taxon Rosaceae -out Poaceae_cpg -fasta my_data.fasta -stop 2
+python -m BarcodeFinder -organelle chloroplast -refseq -taxon Rosaceae -out Poaceae_cpg -fasta my_data.fasta -stop 2
 # Linux and macOS
-python3 -m BarcodeFinder -organelle chloroplast -taxon Rosaceae -out Poaceae_cpg -fasta my_data.fasta stop 2
+python3 -m BarcodeFinder -organelle chloroplast -refseq -taxon Rosaceae -out Poaceae_cpg -fasta my_data.fasta stop 2
 ```
 4. Download sequences of _Zea mays_, set length between 100 bp and 3000 bp,
    plus your aligned data, then do full analysis:
@@ -192,13 +193,13 @@ python -m BarcodeFinder -taxon "Zea mays" -min_len 100 -max_len 3000 -out Zea_ma
 # Linux and macOS
 python3 -m BarcodeFinder -taxon "Zea mays" -min_len 100 -max_len 3000 -out Zea_mays -aln my_data.aln
 ```
-5. Download all _Oryza_ chloroplast genomes, keep the longest sequence for
-   each species and do full analysis:
+5. Download all _Oryza_ chloroplast genomes (not only in RefSeq database),
+   keep the longest sequence for each species and do full analysis:
 ```
 # Windows
-python -m BarcodeFinder -taxon Oryza -organelle chloroplast -uniq longest -out Oryza_cp
+python -m BarcodeFinder -taxon Oryza -organelle chloroplast -min_len 50000 -max_len 500000 -uniq longest -out Oryza_cp
 # Linux and macOS
-python3 -m BarcodeFinder -taxon Oryza -organelle chloroplast -uniq longest -out Oryza_cp
+python3 -m BarcodeFinder -taxon Oryza -organelle chloroplast -min_len 50000 -max_len 500000 -uniq longest -out Oryza_cp
 ```
 ## Input
 BarcodeFinder accepts:
@@ -229,7 +230,7 @@ be empty for animals.
     it is "geneA_geneB" that use underscore ("\_") to connect two gene's name.
 
     Note that the original gene name in genbank file were renamed to try to
-    fix part of annotation error. 
+    fix part of annotation error.
 
     If a valid sequence name could not be found in annotation of genbank file,
     BarcodeFinder will use "Unknown" instead.
@@ -276,7 +277,7 @@ All results will be put in the output folder. If you didn't set output path by
     ```
 
     * Locus
-        
+
         The name of locus/fragment.
     * Score
 
@@ -515,7 +516,7 @@ All results will be put in the output folder. If you didn't set output path by
         redundant, rename, expand).
     * 2
         Do step 1, and then analyze the variance. Do not design primers.
-    * 3 
+    * 3
         Do all things (which have no effect).
 
 * -out value
@@ -529,14 +530,14 @@ All results will be put in the output folder. If you didn't set output path by
     It is HIGHLY RECOMMENDED to use only letter, number and underscore ("_")
     in the folder name to avoid mysterious error caused by other Unicode
     characters. :)
- 
+
 ## Genbank
 * -email address
 
     BarcodeFinder use Biopython to handle the communication between user and
     NCBI Genbank database. The database requires user to provide an email
     address in case of abnormal situation that NCBI want to contact you. The
-    default address is empty. 
+    default address is empty.
 
     _However, for convenience of the user, BarcodeFinder will use
     "guest@example.com" if user did not provide the email._
@@ -563,8 +564,8 @@ All results will be put in the output folder. If you didn't set output path by
     * archaea
     * viruses
 
-    Make sure do not have typo. 
-    
+    Make sure do not have typo.
+
     If use this option, BarcodeFinder may possibly download a huge number of
     records from Genbank. Please ensure you have stable and unexpensive
     Internet connection. The default *value* is empty.
@@ -585,28 +586,31 @@ All results will be put in the output folder. If you didn't set output path by
 
 * -organelle type
 
-    Ask BarcodeFinder to download only organelle genomes. The *type* could be 
+    Add "organelle[filter]" in query that sequence was limited on given
+    organelle type. The *type* could be
 
     * mitochondrion
     * plastid
     * chloroplast
 
-    Make sure do not have typo. Note that when use "-organelle" option,
-    BarcodeFinder will *only download sequences in RefSeq database" by
-    automatically set "-refseq" to *True*. If you
-    want to download all organelle sequences please try to use "-query" option
-    combined with "-min_len" and "-max_len".
+    Usually users only want organelle genome instead of fragment. One solution
+    is to set "-min_len" and "-max_len" to use length filter to get genomes.
+    Another simple solution is to only use RefSeq by adding "-refseq" option.
 
-    For instance, for all chloroplast sequences of Poaceae (not only in RefSeq):
+    For instance,
     ```
-    -taxon "Poaceae" -query "chloroplast[filter]" -min_len 50000 -max_len 100000
+    # all chloroplast sequences of Poaceae (not only in RefSeq)
+    -taxon Poaceae -organelle chloroplast -min_len 50000 -max_len 300000
+    # all chloroplast sequences of Poaceae (only in RefSeq)
+    -taxon Poaceae -organelle chloroplast -refseq
     ```
 
+    Make sure do not have typo.
 * -query string
 
     The query string user provied. It behaves same with the query you typed in
     the Search Box in NCBI Genbank's webpage.
-    
+
     Make sure to follow NCBI's grammer of query. Please do not forget
     quotation mark if it has more than one word. The default *string* is
     empty.
@@ -617,7 +621,15 @@ All results will be put in the output folder. If you didn't set output path by
     [RefSeq](https://www.ncbi.nlm.nih.gov/refseq/about/) was
     considered to have higher quality than other sequences in Genbank.
 
-    By default, use "-organelle" will automatically set this option to *True*.
+    If use this option, "-min_seq" and "-max_seq" will be removed to set no
+    limit on sequence length. If user really want to set length limit when
+    using "-refseq", user could put this filter into query string:
+    ```
+    # Get all Poaceae sequence in RefSeq, sequences should be 1000 to 10000 bp
+    -query refseq[filter] -taxon Poaceae -min_len 1000 -max_len 10000
+    ```
+
+    Usually, this option will be combined with "-organelle" to get high quality organelle genomes.
 
     Note that this option is boolen type. It DOES NOT followed with a *value*.
 * -taxon taxonomy
@@ -650,7 +662,7 @@ All results will be put in the output folder. If you didn't set output path by
 
     Note that this option is different with "-max_len". This option limits the
     length of one annotation's sequence. The "-max_len" limits the whole
-    sequence's length of one genbank record. 
+    sequence's length of one genbank record.
 
     For organelle genome's analysis, if you set "-no_divide" option, this
     option will be ignored.
@@ -658,7 +670,7 @@ All results will be put in the output folder. If you didn't set output path by
 
     If set, analyze whole sequence instead of divided fragment. By default,
     BarcodeFinder divided one genbank records to several fragments according
-    to its annotation. 
+    to its annotation.
 
     Note that this option is boolen type. It DOES NOT followed with a *value*.
 * -rename
@@ -701,7 +713,7 @@ All results will be put in the output folder. If you didn't set output path by
 
     If set, BarcodeFinder will skip the calculation of "tree resolution" and
     "average terminal branch length" to reduce running time.
-    
+
     Although the program has been optimized greatly, the phylogenetic tree's
     inference could be time-consuming if there are too many species (for
     instance, 10000). If you want to analyze organelle genome and the species
