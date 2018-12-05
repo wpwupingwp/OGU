@@ -289,8 +289,8 @@ def parse_args():
         # 10k to 1m seems enough
         parsed.min_len = 10000
         parsed.max_len = 1000000
-    if not any([parsed.query, parsed.taxon, parsed.gene, parsed.fasta,
-                parsed.aln, parsed.gb]):
+    if not any([parsed.query, parsed.taxon, parsed.group, parsed.gene,
+                parsed.fasta, parsed.aln, parsed.gb, parsed.organelle]):
         arg.print_help()
         raise ValueError('Empty input!')
     if parsed.out is None:
