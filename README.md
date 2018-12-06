@@ -78,7 +78,7 @@ have stable network and reasonable Internet traffic charge for downloading
 large size of data.
 # Installation
 Assume that you already installed [Python3](https://www.python.org/downloads/)
-(3.5 or above, 3.6 is recommended). Firstly, install BarcodeFinder.
+(3.5 or above, *3.6* is recommended). Firstly, install BarcodeFinder.
 
 The easiest way is to use pip. Make sure your pip is not out of date (18.0 or
 newer), then
