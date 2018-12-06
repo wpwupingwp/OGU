@@ -305,7 +305,6 @@ def parse_args():
     parsed.no_gap_file = join_path(parsed.out, 'no_gap.fasta')
     parsed.out_file = ''
     # load option.json may cause chaos, remove
-    print(parsed)
     return parsed
 
 
