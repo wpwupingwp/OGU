@@ -629,7 +629,8 @@ All results will be put in the output folder. If you didn't set output path by
     -query refseq[filter] -taxon Poaceae -min_len 1000 -max_len 10000
     ```
 
-    Usually, this option will be combined with "-organelle" to get high quality organelle genomes.
+    Usually, this option will be combined with "-organelle" to get high
+    quality organelle genomes.
 
     Note that this option is boolen type. It DOES NOT followed with a *value*.
 * -taxon taxonomy

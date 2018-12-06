@@ -8,6 +8,7 @@ with open('README.rst', 'r') as _:
 requires = ['biopython>=1.72',
             'matplotlib>=3.0.0',
             'numpy>=1.15.2',
+            'pip>=18',
             'primer3-py>=0.5.7',
             'wheel>=0.32.3']
 
