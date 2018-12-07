@@ -460,7 +460,7 @@ def deploy(software):
                         'path': abspath('iqtree-1.6.8-Linux'+sep+'bin')},
              'MAFFT': {'url': mafft_url+'-7.407-linux.tgz',
                        'path': abspath('mafft-linux64')}},
-            'macOSX':
+            'Darwin':
             {'BLAST': {'url': blast_url+'.dmg',
                        'path': abspath('ncbi-blast-2.7.1+'+sep+'bin')},
              'IQTREE': {'url': iqtree_url+'-MacOSX.zip',
@@ -493,28 +493,14 @@ def deploy(software):
             tprint('Cannot install {} to system, try to'
                    'download.'.format(software))
             download_software(url)
-    elif sys == 'macOSX':
-        brew_ok = False
-        ok = False
+    elif sys == 'Darwin':
         with open(devnull, 'w', encoding='utf-8') as f:
             r = run('brew --help', shell=True, stdout=f, stderr=f)
         if r.returncode == 0:
-            brew_ok = True
+            run('brew install blast mafft brewsci/science/iqtree', shell=True)
         else:
-            r2 = run('/usr/bin/ruby -e "$(curl -fsSL https://raw.'
-                     'githubusercontent.com/Homebrew/install/master/install)"',
-                     shell=True)
-            if r2.returncode == 0:
-                brew_ok = True
-            else:
-                tprint('Cannot install brew.')
-        if brew_ok:
-            r3 = run('brew install blast mafft brewsci/science/iqtree',
-                     shell=True)
-            if r3.returncode == 0:
-                ok = True
-        if not ok:
-                download_software(url)
+            tprint('Cannot install brew.')
+            download_software(url)
     # windows can omit .bat, linux cannot
     if software == 'MAFFT' and sys != 'Windows':
         rename(join_path(urls[sys]['mafft']['path'], 'mafft.bat'),
