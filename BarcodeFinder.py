@@ -1084,7 +1084,7 @@ def uniq(files, arg):
 def align(files, arg):
     result = []
     # get available CPU cores
-    cores = cpu_count() - 1
+    cores = max(1, cpu_count() - 1)
     for fasta in files:
         tprint('Aligning {}.'.format(fasta))
         out = clean_path(fasta, arg) + '.aln'
