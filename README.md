@@ -122,6 +122,8 @@ install it:
 ```
 /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 ```
+If you find any error occured, install Xcode in App Store then retry.
+
 Then:
 ```
 brew install blast mafft brewsci/science/iqtree
