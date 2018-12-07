@@ -25,7 +25,7 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     py_modules=['BarcodeFinder'],
     url='https://github.com/wpwupingwp/BarcodeFinder',
-    version='0.9.16',
+    version='0.9.17',
     classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',

@@ -1477,7 +1477,7 @@ def validate(primer_candidate, db_file, n_seqs, arg):
     tprint('Validate with BLAST.')
     blast_result_file = 'blast.result.tsv'
     fmt = 'qseqid sseqid qseq nident mismatch score qstart qend sstart send'
-    cmd = Blast(num_threads=cpu_count() - 1,
+    cmd = Blast(num_threads=max(1, cpu_count() - 1),
                 query=query_file,
                 db=db_file,
                 task='blastn-short',
