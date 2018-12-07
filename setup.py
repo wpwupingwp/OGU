@@ -6,6 +6,7 @@ with open('README.rst', 'r') as _:
     long_description = _.read()
 
 requires = ['biopython>=1.72',
+            'certifi>=2018.11.29',
             'matplotlib>=3.0.0',
             'numpy>=1.15.2',
             'pip>=18',
@@ -24,7 +25,7 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     py_modules=['BarcodeFinder'],
     url='https://github.com/wpwupingwp/BarcodeFinder',
-    version='0.9.14.1',
+    version='0.9.15',
     classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',

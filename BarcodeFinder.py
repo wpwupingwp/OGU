@@ -425,6 +425,7 @@ def download_software(url):
     """
     filename = url.split('/')[-1]
     try:
+        tprint('Downloading {}...'.format(filename))
         down = urlopen(url)
     except HTTPError:
         tprint('Cannot download {}.'.format(filename))
@@ -461,7 +462,7 @@ def deploy(software):
              'MAFFT': {'url': mafft_url+'-7.407-linux.tgz',
                        'path': abspath('mafft-linux64')}},
             'Darwin':
-            {'BLAST': {'url': blast_url+'.dmg',
+            {'BLAST': {'url': blast_url+'-x64-macosx.tar.gz',
                        'path': abspath('ncbi-blast-2.7.1+'+sep+'bin')},
              'IQTREE': {'url': iqtree_url+'-MacOSX.zip',
                         'path': abspath('iqtree-1.6.8-MacOSX'+sep+'bin')},
@@ -499,12 +500,22 @@ def deploy(software):
         if r.returncode == 0:
             run('brew install blast mafft brewsci/science/iqtree', shell=True)
         else:
-            tprint('Cannot install brew.')
+            tprint('Cannot find Homebrew.')
             download_software(url)
+            # after unzip, file lost executable flag on mac system
+            run('chmod +x {}'.format(join_path(urls[sys][software]['path'],
+                                               '*')), shell=True)
+            if software == 'MAFFT':
+                run('chmod +x {}'.format(join_path(urls[sys]['MAFFT']['path'],
+                                                   'mafftdir', 'bin', '*')),
+                    shell=True)
+                run('chmod +x {}'.format(join_path(urls[sys]['MAFFT']['path'],
+                                                   'mafftdir', 'libexec',
+                                                   '*')), shell=True)
     # windows can omit .bat, linux cannot
     if software == 'MAFFT' and sys != 'Windows':
-        rename(join_path(urls[sys]['mafft']['path'], 'mafft.bat'),
-               join_path(urls[sys]['mafft']['path'], 'mafft'))
+        rename(join_path(urls[sys]['MAFFT']['path'], 'mafft.bat'),
+               join_path(urls[sys]['MAFFT']['path'], 'mafft'))
     return abspath(urls[sys][software]['path'])
 
 
