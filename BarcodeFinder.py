@@ -546,7 +546,8 @@ def get_query_string(arg):
         condition.append('{}[filter]'.format(arg.organelle))
     if arg.refseq:
         condition.append('refseq[filter]')
-    if arg.min_len is not None and arg.max_len is not None:
+    if (len(condition) > 0) and (arg.min_len is not None and arg.max_len is
+                                 not None):
         condition.append('("{}"[SLEN] : "{}"[SLEN])'.format(
             arg.min_len, arg.max_len))
     if not condition:
