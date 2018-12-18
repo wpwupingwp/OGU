@@ -289,8 +289,8 @@ def parse_args():
     parsed = arg.parse_args()
     if parsed.refseq:
         # no length limit for refseq
-        parsed.min_len == None
-        parsed.max_len == None
+        parsed.min_len = None
+        parsed.max_len = None
     if not any([parsed.query, parsed.taxon, parsed.group, parsed.gene,
                 parsed.fasta, parsed.aln, parsed.gb, parsed.organelle]):
         arg.print_help()
