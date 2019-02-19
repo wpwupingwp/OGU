@@ -55,5 +55,6 @@
 55. score and sample number
 56. genaf for genome?
 57. trnK_matK?(get_spacer())
-58. do not check dependency if stop 1
-59. use set to speedup order_exceptions
+#58. do not check dependency if stop 1
+#59. use set to speedup order_exceptions
+60. figure axis

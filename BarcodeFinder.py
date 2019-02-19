@@ -1783,10 +1783,6 @@ def main():
     global log_handle
     log_handle = open(join_path(arg.out, 'Log.txt'), 'w', encoding='utf-8')
     tprint('Welcome to BarcodeFinder!')
-    original_path = check_tools()
-    if original_path is None:
-        tprint('Exit.')
-        return
     # collect and preprocess
     query = get_query_string(arg)
     if query is not None:
@@ -1803,6 +1799,10 @@ def main():
     if arg.fasta is not None:
         user_data = list(glob(arg.fasta))
         wrote_by_name.extend(user_data)
+    original_path = check_tools()
+    if original_path is None:
+        tprint('Cannot find and install depedent software. Exit.')
+        return
     if not any([wrote_by_gene, wrote_by_name, arg.aln]):
         tprint('Data is empty, please check your input!')
         environ['PATH'] = original_path
