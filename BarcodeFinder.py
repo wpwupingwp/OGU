@@ -457,31 +457,31 @@ def deploy(software):
            'official instruction to get a CLEAN system.'.format(software))
     sys = system()
     # url dict
-    blast_url = ('ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.7.1/'
-                 'ncbi-blast-2.7.1+')
-    iqtree_url = ('https://github.com/Cibiv/IQ-TREE/releases/download/v1.6.8/'
-                  'iqtree-1.6.8')
+    blast_url = ('ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.8.1/'
+                 'ncbi-blast-2.8.1+')
+    iqtree_url = ('https://github.com/Cibiv/IQ-TREE/releases/download/v1.6.9/'
+                  'iqtree-1.6.9')
     mafft_url = 'https://mafft.cbrc.jp/alignment/software/mafft'
     # windows blast path not sure
     urls = {'Linux':
             {'BLAST': {'url': blast_url+'-x64-linux.tar.gz',
-                       'path': abspath('ncbi-blast-2.7.1+'+sep+'bin')},
+                       'path': abspath('ncbi-blast-2.8.1+'+sep+'bin')},
              'IQTREE': {'url': iqtree_url+'-Linux.tar.gz',
-                        'path': abspath('iqtree-1.6.8-Linux'+sep+'bin')},
+                        'path': abspath('iqtree-1.6.9-Linux'+sep+'bin')},
              'MAFFT': {'url': mafft_url+'-7.407-linux.tgz',
                        'path': abspath('mafft-linux64')}},
             'Darwin':
             {'BLAST': {'url': blast_url+'-x64-macosx.tar.gz',
-                       'path': abspath('ncbi-blast-2.7.1+'+sep+'bin')},
+                       'path': abspath('ncbi-blast-2.8.1+'+sep+'bin')},
              'IQTREE': {'url': iqtree_url+'-MacOSX.zip',
-                        'path': abspath('iqtree-1.6.8-MacOSX'+sep+'bin')},
+                        'path': abspath('iqtree-1.6.9-MacOSX'+sep+'bin')},
              'MAFFT': {'url': mafft_url+'-7.407-mac.zip',
                        'path': abspath('mafft-mac')}},
             'Windows':
             {'BLAST': {'url': blast_url+'-win64.exe',
                        'path': abspath('.')},
              'IQTREE': {'url': iqtree_url+'-Windows.zip',
-                        'path': abspath('iqtree-1.6.8-Windows'+sep+'bin')},
+                        'path': abspath('iqtree-1.6.9-Windows'+sep+'bin')},
              'MAFFT': {'url': mafft_url+'-7.409-win64-signed.zip',
                        'path': abspath('mafft-win')}}}
     url = urls[sys][software]['url']
@@ -490,7 +490,7 @@ def deploy(software):
         if not download_software(url):
             return None
         if software == 'BLAST':
-            run('ncbi-blast-2.7.1+-win64.exe', shell=True)
+            run('ncbi-blast-2.8.1+-win64.exe', shell=True)
     elif sys == 'Linux':
         ok = False
         for pack_mgr in ('apt', 'dnf', 'yum', 'pkg'):
