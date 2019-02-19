@@ -41,6 +41,7 @@ rcParams['lines.linewidth'] = 1.5
 
 
 class PrimerWithInfo(SeqRecord):
+    # inherit from Bio.SeqRecord.SeqRecord
     def __init__(self, seq='', quality=None, start=0, coverage=0,
                  avg_bitscore=0, mid_loc=None, avg_mismatch=0, detail=0,
                  is_reverse_complement=False):
@@ -79,6 +80,7 @@ class PrimerWithInfo(SeqRecord):
             raise IndexError
 
     def is_good_primer(self):
+        # use re and primer3 to check weather it's good primer
         poly = re.compile(r'([ATCG])\1\1\1\1')
         tandem = re.compile(r'([ATCG]{2})\1\1\1\1')
         # ref1. http://www.premierbiosoft.com/tech_notes/PCR_Primer_Design.html
@@ -157,7 +159,7 @@ class Pair:
         self.score = 0.0
         self.get_score()
 
-    def __str__(self):
+    def __repr__(self):
         return (
             'Pair(score={:.2f}, product={:.0f}, start={}, end={}, left={}, '
             'right={}, observerd_resolution={:.2%}, coverage={:.2%},'
@@ -167,6 +169,8 @@ class Pair:
                 self.coverage, self.delta_tm, self.have_heterodimer))
 
     def get_score(self):
+        # calculate score of given primer pairs. Suggestion only
+        # use score to filter primer pairs
         self.score = (average(list(self.length.values())) * 0.5
                       + self.coverage * 200
                       + len(self.left) * 10
@@ -178,9 +182,8 @@ class Pair:
                       - self.right.avg_mismatch * 10)
 
     def add_info(self, alignment):
-        """
-        put slow steps here to save time
-        """
+        # put attributes that need heavy computation here for the final primer
+        # pairs in order to save CPU time
         if not self.right.is_reverse_complement:
             self.right = self.right.reverse_complement()
         # include end base, use alignment loc for slice
@@ -309,6 +312,9 @@ def parse_args():
 
 
 def tprint(string):
+    """
+    Formated print info.
+    """
     now = datetime.now()
     s = '{:0>2d}:{:0>2d}:{:>02d}   {}'.format(now.hour, now.minute, now.second,
                                               string)
@@ -318,6 +324,9 @@ def tprint(string):
 
 
 def average(x):
+    """
+    Safe average.
+    """
     if len(x) == 0:
         return 0
     else:
@@ -333,8 +342,8 @@ def safe(old):
 
 def clean_path(old, arg):
     """
-    Join path if the file is not under by-gene or by-uniq.
-    To make working folder clean.
+    Join path if the file is not under by-gene or by-uniq to make working
+    folder clean.
     """
     split = old.split(sep)
     if 'by-gene' not in split and 'by-name' not in split:
@@ -349,8 +358,8 @@ def calc_ambiguous_seq(func, seq, seq2=None):
     func to every sequence.
     Return average value. Return 0 if len(seq) > 60 (from primer3)
     """
-    # Seems primer3 only accept seqs shorter than 60 bp.
-    # Plus, too long seq will cost too much memory
+    # Seems primer3 only accept seqs shorter than 60 bp. Plus, too long seq
+    # will cost too much memory.
     len_limit = 60
 
     def _expand(seq):
@@ -442,7 +451,7 @@ def download_software(url):
 def deploy(software):
     """
     According to system, install software.
-    return False if failed
+    Return False if failed
     """
     tprint('Try to install {}. Please consider to install it following '
            'official instruction to get a CLEAN system.'.format(software))
@@ -520,6 +529,9 @@ def deploy(software):
 
 
 def get_query_string(arg):
+    """
+    Based on given options, generate query string from Genbank.
+    """
     condition = []
     if arg.group is not None:
         condition.append('{}[filter]'.format(arg.group))
@@ -557,6 +569,12 @@ def get_query_string(arg):
 
 
 def download(arg, query):
+    """
+    Download records from Genbank.
+    Because of connection to Genbank website is not stable (especially in
+    Asia), it will retry if failed. Ctrl+C to break.
+    """
+
     tprint('Query:\t{}.'.format(query))
     if arg.email is None:
         Entrez.email = 'guest@example.com'
@@ -611,9 +629,14 @@ def download(arg, query):
 
 
 def gene_rename(old_name):
-    """For chloroplast gene.
-    Input->str
-    Output->List[new_name:str, name_type:str]
+    """
+    Different name of same gene will cause data to be splited to numerous
+    files instead of one and some data may be dropped.
+    For chloroplast genes, the auther summarized various kinds of annotation
+    error of gene name or synonyms and try to use regular expression to fix
+    it.
+    Ideally, use BLAST to re-annotate sequence is the best way to find the
+    correct name. This function only offers a "hotfix".
     """
     lower = old_name.lower()
     # (trna|trn(?=[b-z]))
@@ -672,6 +695,11 @@ def gene_rename(old_name):
 
 
 def get_taxon(order_family, order_exceptions):
+    """
+    Get taxon info based on prefix.
+    Animal's order does not have uniform prefix. Have to use set to include
+    all order names.
+    """
     # order|family|organims(genus|species)
     order = ''
     family = ''
@@ -689,6 +717,7 @@ def write_seq(name, sequence_id, feature, whole_seq, path, arg):
     """
 
     def careful_extract(whole_seq):
+        # illegal annotation may cause extraction failed
         try:
             sequence = feature.extract(whole_seq)
         except ValueError:
@@ -783,6 +812,9 @@ def get_feature_name(feature, arg):
 
 
 def get_spacer(genes):
+    """
+    Given list of genes, extract spacers.
+    """
     spacers = []
     # sorted according to sequence starting postion
     genes.sort(key=lambda x: int(x[1].location.start))
@@ -960,7 +992,7 @@ def divide(gbfile, arg):
     Metopida, Hirudinida
     '''
     order_exceptions = order_exceptions.split(',')
-    order_exceptions = [i.strip() for i in order_exceptions]
+    order_exceptions = {i.strip() for i in order_exceptions}
     # divide gb
     for record in SeqIO.parse(gbfile, 'gb'):
         # only accept gene, product, and spacer in misc_features.note
@@ -1043,6 +1075,9 @@ def divide(gbfile, arg):
 
 
 def uniq(files, arg):
+    """
+    Remove redundant sequences of same species.
+    """
     uniq_files = []
     for fasta in files:
         info = defaultdict(lambda: list())
@@ -1083,6 +1118,9 @@ def uniq(files, arg):
 
 
 def align(files, arg):
+    """
+    Calls mafft to align sequences.
+    """
     result = []
     # get available CPU cores
     cores = max(1, cpu_count() - 1)
@@ -1155,7 +1193,7 @@ def count_base(alignment, rows, columns):
     """
     Given alignment numpy array, count cumulative frequency of base in each
     column (consider ambiguous base and "N", "-" and "?", otherwise omit).
-    Return List[List[float, float, float, float, float, float, float]] for
+    Return [[float, float, float, float, float, float, float]] for
     [A, T, C, G, N, GAP, OTHER].
     """
     frequency = []
@@ -1185,6 +1223,9 @@ def count_base(alignment, rows, columns):
 
 
 def get_quality(data, rows):
+    """
+    Calculate quality score.
+    """
     # use fastq-illumina format
     max_q = 62
     factor = max_q / rows
@@ -1258,11 +1299,8 @@ def get_resolution(alignment, start, end, fast=False):
 def generate_consensus(base_cumulative_frequency, coverage_percent,
                        rows, output):
     """
-    Given base count info, return List[index, base, quality]
-    and List[List[str, str, str, PrimerInfo]] for writing consensus.
-    return PrimerWithInfo
+    Given count info of bases, return consensus(PrimerWithInfo).
     """
-
     def get_ambiguous_dict():
         data = dict(zip(ambiguous_data.values(), ambiguous_data.keys()))
         # 2:{'AC': 'M',}
@@ -1275,7 +1313,7 @@ def generate_consensus(base_cumulative_frequency, coverage_percent,
     most = []
     coverage = rows * coverage_percent
 
-    limit = coverage / 4
+    limit = coverage / len('ATCG')
     for location, column in enumerate(base_cumulative_frequency):
         finish = False
         # "*" for others
@@ -1313,8 +1351,10 @@ def generate_consensus(base_cumulative_frequency, coverage_percent,
 
 
 def get_good_region(index, seq_count, arg):
-    # return loose region, final product may violate product length
-    # restriction
+    """
+    Return regions marked for finding primers. Because of alignment gap, PCR
+    product may smaller than given length limitation.
+    """
     n = arg.max_product - arg.min_product
     good_region = set()
     for i, j in zip(index, seq_count):
@@ -1327,7 +1367,7 @@ def get_good_region(index, seq_count, arg):
 
 def find_continuous(consensus, good_region, min_len):
     """
-    Given PrimerWithInfo, good_region: List[bool], min_len
+    Given PrimerWithInfo, good_region, min_len
     Return consensus with features.
     """
     skip = ('N', '-')
@@ -1344,7 +1384,7 @@ def find_continuous(consensus, good_region, min_len):
 def find_primer(consensus, min_len, max_len):
     """
     Find suitable primer in given consensus with features labeled as candidate
-    primer, return List[PrimerWithInfo], consensus
+    primer, return list of PrimerWithInfo, consensus.
     """
     primers = []
     # skip good_region
@@ -1368,10 +1408,11 @@ def find_primer(consensus, min_len, max_len):
 
 def count_and_draw(alignment, arg):
     """
-    Given alignment(numpy array), return unique sequence count List[float].
-    Calculate Shannon Index based on
+    Given alignment(numpy array), calculate Shannon Index based on
     www.itl.nist.gov/div898/software/dataplot/refman2/auxillar/shannon.htm
-    return List[float]
+    Return lists of observed resolution, shannon index, Pi, tree resolution,
+    average terminal branch length and index.
+    Draw sliding-window figure.
     All calculation excludes primer sequence.
     """
     output = join_path(arg.out, basename(arg.out_file).split('.')[0])
@@ -1444,6 +1485,9 @@ def count_and_draw(alignment, arg):
 
 
 def parse_blast_tab(filename):
+    """
+    Parse BLAST result (tab format).
+    """
     query = []
     with open(filename, 'r', encoding='utf-8') as raw:
         for line in raw:
@@ -1458,7 +1502,8 @@ def parse_blast_tab(filename):
 
 def validate(primer_candidate, db_file, n_seqs, arg):
     """
-    Do BLAST. Parse BLAST result. Return List[PrimerWithInfo]
+    Do BLAST. Parse BLAST result. Return list of PrimerWithInfo which passed
+    the validation.
     """
     query_file = arg.out_file + '.candidate.fasta'
     query_file_fastq = arg.out_file + '.candidate.fastq'
@@ -1537,6 +1582,10 @@ def validate(primer_candidate, db_file, n_seqs, arg):
 
 
 def pick_pair(primers, alignment, arg):
+    """
+    Pick primer pairs passed the validation and its product length fulfill the
+    requirement.
+    """
     pairs = []
     for n_left, left in enumerate(primers):
         # convert mid_loc to 5' location
@@ -1588,7 +1637,8 @@ def pick_pair(primers, alignment, arg):
 
 def analyze(fasta, arg):
     """
-    Automatic design primer for DNA barcode.
+    Primer design pipeline.
+    Return bool for success or not.
     """
     # read from fasta, generate new fasta for makeblastdb
     name, alignment, db_file = prepare(fasta, arg)
@@ -1705,6 +1755,9 @@ def analyze(fasta, arg):
 
 
 def analyze_wrapper(files, arg):
+    """
+    Wrapper for the primer design.
+    """
     result = []
     for aln in files:
         tprint('Analyze {}.'.format(aln))
