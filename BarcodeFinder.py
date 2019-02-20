@@ -1450,12 +1450,12 @@ def count_and_draw(alignment, arg):
     handle = open(output + '.variance.tsv', 'w', encoding='utf-8')
     # iqtree blmin is 1e-6
     fmt = '{},{:.2%},{:.6f},{:.6f},{:.6f},{:.6f},{:.6f}\n'
-    handle.write('Index,GapRatio,Resolution,TreeValue,AvgTerminalBranchLen,'
-                 'Entropy,Pi\n')
+    handle.write('Index,GapRatio,Resolution,Entropy,Pi,'
+                 'TreeValue,AvgTerminalBranchLen\n')
     for i in range(0, max_range, step):
         # exclude primer sequence
         values = get_resolution(alignment, i, i + max_plus, arg.fast)
-        handle.write(fmt.format(index, *values))
+        handle.write(fmt.format(i, *values))
         gap_ratio, resolution, entropy, pi, tree_value, avg_branch_len = values
         gap_ratio_list.append(gap_ratio)
         observed_res_list.append(resolution)
