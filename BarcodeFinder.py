@@ -240,11 +240,10 @@ def parse_args():
                      default='first',
                      help='method to remove redundant sequences')
     evaluate = arg.add_argument_group('Evaluate')
-    evaluate.add_argument('-f', dest='fast', action='store_true',
-                          default=False,
+    evaluate.add_argument('-fast', action='store_true', default=False,
                           help='faster evaluate variance by omit tree_value'
                           'and terminal branch length')
-    evaluate.add_argument('-s', dest='step', type=int, default=50,
+    evaluate.add_argument('-step', type=int, default=50,
                           help='step length for sliding-window scan')
     primer = arg.add_argument_group('Primer')
     primer.add_argument('-a', dest='ambiguous_base_n', type=int, default=4,
@@ -1449,9 +1448,6 @@ def count_and_draw(alignment, arg):
     handle.write('Index,GapRatio,Resolution,TreeValue,AvgTerminalBranchLen,'
                  'Entropy,Pi\n')
     for i in range(0, max_range, step):
-        # skip gap
-        # if consensus.sequence[i] in ('-', 'N'):
-        #     continue
         # exclude primer sequence
         values = get_resolution(alignment, i, i + max_plus, arg.fast)
         handle.write(fmt.format(*values))
@@ -1496,8 +1492,7 @@ def count_and_draw(alignment, arg):
     plt.close()
     # plt.show()
     handle.close()
-    return (gap_ratio_list, observed_res_list, entropy_list, pi_list,
-            tree_res_list, avg_branch_len_list, index)
+    return observed_res_list, index
 
 
 def parse_blast_tab(filename):
@@ -1692,16 +1687,17 @@ def analyze(fasta, arg):
         return False
     # count resolution
     tprint('Sliding window analyze.')
-    (seq_count, H, Pi, T, L, index) = count_and_draw(alignment, arg)
+    observed_res_list, index = count_and_draw(alignment, arg)
     # exit if resolution lower than given threshold.
-    if len(seq_count) == 0:
-        tprint('Problematic Input of {}!'.format(fasta))
+    if max(observed_res_list) < arg.resolution:
+        tprint('The resolution of {} is too low!'.format(fasta))
+        return False
     # stop if do not want to design primer
     if arg.stop == 2:
         return True
     # find ncandidate
     tprint('Start finding primers of {}.'.format(fasta))
-    good_region = get_good_region(index, seq_count, arg)
+    good_region = get_good_region(index, observed_res_list, arg)
     consensus = find_continuous(consensus, good_region, arg.min_primer)
     tprint('Filtering candidate primer pairs.')
     primer_candidate, consensus = find_primer(consensus, arg)
