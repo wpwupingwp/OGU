@@ -79,30 +79,6 @@ class PrimerWithInfo(SeqRecord):
         else:
             raise IndexError
 
-    def is_good_primer(self):
-        # use re and primer3 to check weather it's good primer
-        poly = re.compile(r'([ATCG])\1\1\1\1')
-        tandem = re.compile(r'([ATCG]{2})\1\1\1\1')
-        # ref1. http://www.premierbiosoft.com/tech_notes/PCR_Primer_Design.html
-        if re.search(poly, str(self.seq)) is not None:
-            self.detail = 'Poly(NNNNN) structure found'
-            return False
-        if re.search(tandem, str(self.seq)) is not None:
-            self.detail = 'Tandom(NN*5) exist'
-            return False
-        self.hairpin_tm = calc_ambiguous_seq(calcHairpinTm, self.seq)
-        self.homodimer_tm = calc_ambiguous_seq(calcHomodimerTm, self.seq)
-        self.tm = self.annotations['tm'] = calc_ambiguous_seq(calcTm, self.seq)
-        # primer3.calcHairpin or calcHomodimer usually return structure found
-        # with low Tm. Here we compare structure_tm with sequence tm
-        if self.hairpin_tm >= self.tm:
-            self.detail = 'Hairpin found'
-            return False
-        if self.homodimer_tm >= self.tm:
-            self.detail = 'Homodimer found'
-            return False
-        return True
-
     def reverse_complement(self):
         table = str.maketrans('ACGTMRWSYKVHDBXN', 'TGCAKYWSRMBDHVXN')
         new_seq = str.translate(self.sequence, table)[::-1]
@@ -1381,12 +1357,47 @@ def find_continuous(consensus, good_region, min_len):
     return consensus
 
 
-def find_primer(consensus, min_len, max_len):
+def find_primer(consensus, arg):
     """
     Find suitable primer in given consensus with features labeled as candidate
     primer, return list of PrimerWithInfo, consensus.
     """
+    # repeat no more than 5 times
+    poly = re.compile(r'([ATCG])\1\1\1\1')
+    tandem = re.compile(r'([ATCG]{2})\1\1\1\1')
+
+    def is_good_primer(primer):
+        # use re and primer3 to check weather it's good primer
+        # ref1. http://www.premierbiosoft.com/tech_notes/PCR_Primer_Design.html
+        ambiguous_base = len(primer)
+        for i in list('ATCG'):
+            ambiguous_base -= primer.seq.count(i)
+        if ambiguous_base > max_ambiguous:
+            return False
+        if re.search(poly, str(primer.seq)) is not None:
+            primer.detail = 'Poly(NNNNN) structure found'
+            return False
+        if re.search(tandem, str(primer.seq)) is not None:
+            primer.detail = 'Tandom(NN*5) exist'
+            return False
+        primer.hairpin_tm = calc_ambiguous_seq(calcHairpinTm, primer.seq)
+        primer.tm = primer.annotations['tm'] = calc_ambiguous_seq(calcTm,
+                                                                  primer.seq)
+        # primer3.calcHairpin or calcHomodimer usually return structure found
+        # with low Tm. Here we compare structure_tm with sequence tm
+        if primer.hairpin_tm >= primer.tm:
+            primer.detail = 'Hairpin found'
+            return False
+        primer.homodimer_tm = calc_ambiguous_seq(calcHomodimerTm, primer.seq)
+        if primer.homodimer_tm >= primer.tm:
+            primer.detail = 'Homodimer found'
+            return False
+        return True
+
     primers = []
+    min_len = arg.min_primer
+    max_len = arg.max_primer
+    max_ambiguous = arg.ambiguous_base_n
     # skip good_region
     continuous = consensus.features
     for feature in continuous:
@@ -1396,7 +1407,7 @@ def find_primer(consensus, min_len, max_len):
             for p_len in range(min_len, max_len + 1):
                 start = feature.location.start + begin
                 primer = consensus[start:start + p_len]
-                if primer.is_good_primer():
+                if is_good_primer(primer):
                     consensus.features.append(SeqFeature(
                         FeatureLocation(start, start + p_len),
                         type='primer', strand=1))
@@ -1689,8 +1700,7 @@ def analyze(fasta, arg):
     good_region = get_good_region(index, seq_count, arg)
     consensus = find_continuous(consensus, good_region, arg.min_primer)
     tprint('Filtering candidate primer pairs.')
-    primer_candidate, consensus = find_primer(consensus, arg.min_primer,
-                                              arg.max_primer)
+    primer_candidate, consensus = find_primer(consensus, arg)
     if len(primer_candidate) == 0:
         tprint('Cannot find primer candidates in {}. Try to loose'
                'options!'.format(fasta))
