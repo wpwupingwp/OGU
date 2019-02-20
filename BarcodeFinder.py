@@ -105,7 +105,8 @@ class Pair:
     # save memory
     __slots__ = ['left', 'right', 'delta_tm', 'coverage', 'start', 'end',
                  'resolution', 'tree_value', 'avg_terminal_len', 'entropy',
-                 'have_heterodimer', 'heterodimer_tm', 'pi', 'score', 'length']
+                 'have_heterodimer', 'heterodimer_tm', 'pi', 'score',
+                 'length', 'gap_ratio']
 
     def __init__(self, left, right, alignment):
         rows, columns = alignment.shape
@@ -132,8 +133,8 @@ class Pair:
         self.avg_terminal_len = 0.0
         self.entropy = 0.0
         self.pi = 0.0
-        self.score = 0.0
-        self.get_score()
+        self.gap_ratio = 0.0
+        self.score = self.get_score()
 
     def __repr__(self):
         return (
@@ -163,7 +164,7 @@ class Pair:
         if not self.right.is_reverse_complement:
             self.right = self.right.reverse_complement()
         # include end base, use alignment loc for slice
-        (self.resolution, self.entropy, self.pi,
+        (self.gap_ratio, self.resolution, self.entropy, self.pi,
          self.tree_value, self.avg_terminal_len) = get_resolution(
              alignment, self.left.start, self.right.end + 1)
         self.heterodimer_tm = calc_ambiguous_seq(calcHeterodimerTm,
@@ -1213,13 +1214,16 @@ def get_resolution(alignment, start, end, fast=False):
     """
     Given alignment (2d numpy array), location of fragment(start and end, int,
     start from zero, exclude end),
-    return resolution, entropy, Pi and tree value.
+    return gap ratio, resolution, entropy, Pi, tree value and average terminal
+    branch length.
     """
     subalign = alignment[:, start:end]
     rows, columns = subalign.shape
+    total = rows * columns
     # index error
     if columns == 0:
-        return 0, 0, 0, 0
+        return 0, 0, 0, 0, 0
+    gap_ratio = len(subalign[subalign == b'-']) / total
     item, count = np.unique(subalign, return_counts=True, axis=0)
     resolution = len(count) / rows
     tree_value = 0
@@ -1268,7 +1272,8 @@ def get_resolution(alignment, start, end, fast=False):
             avg_terminal_branch_len = sum_terminal_branch_len / len(terminals)
             tree_value = len(internals) / len(terminals)
             clean()
-    return resolution, entropy, pi, tree_value, avg_terminal_branch_len
+    return (gap_ratio, resolution, entropy, pi, tree_value,
+            avg_terminal_branch_len)
 
 
 def generate_consensus(base_cumulative_frequency, coverage_percent,
@@ -1664,8 +1669,8 @@ def analyze(fasta, arg):
     consensus = generate_consensus(base_cumulative_frequency, arg.coverage,
                                    rows, arg.out_file + '.consensus.fastq')
     tprint('Evaluate whole alignment.')
-    max_count, max_h, max_pi, max_t, max_l = get_resolution(alignment, 0,
-                                                            columns)
+    gap_ratio, max_count, max_h, max_pi, max_t, max_l = get_resolution(
+        alignment, 0, columns)
     tprint('Average terminal branch length {}.'.format(max_l))
     n_gap = sum([i[5] for i in base_cumulative_frequency])
     gap_ratio = n_gap / rows / columns
@@ -1720,7 +1725,7 @@ def analyze(fasta, arg):
         return True
     # output
     locus = basename(arg.out_file).split('.')[0]
-    csv_title = ('Locus,Score,Sequences,AvgProductLength,StdEV,'
+    csv_title = ('Locus,Score,Samples,AvgProductLength,StdEV,'
                  'MinProductLength,MaxProductLength,'
                  'Coverage,Resolution,TreeValue,AvgTerminalBranchLen,Entropy,'
                  'LeftSeq,LeftTm,LeftAvgBitscore,LeftAvgMismatch,'

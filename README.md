@@ -275,7 +275,7 @@ All results will be put in the output folder. If you didn't set output path by
 
     Its title:
     ```
-    Locus,Score,Sequences,AvgProductLength,StdEV,MinProductLength,MaxProductLength,Coverage,Resolution,TreeValue,AvgTerminalBranchLen,Entropy,LeftSeq,LeftTm,LeftAvgBitscore,LeftAvgMismatch,RightSeq,RightTm,RightAvgBitscore,RightAvgMismatch,DeltaTm,AlnStart,AlnEnd,AvgSeqStart,AvgSeqEnd
+    Locus,Score,Samples,AvgProductLength,StdEV,MinProductLength,MaxProductLength,Coverage,Resolution,TreeValue,AvgTerminalBranchLen,Entropy,LeftSeq,LeftTm,LeftAvgBitscore,LeftAvgMismatch,RightSeq,RightTm,RightAvgBitscore,RightAvgMismatch,DeltaTm,AlnStart,AlnEnd,AvgSeqStart,AvgSeqEnd
     ```
 
     * Locus
@@ -284,7 +284,7 @@ All results will be put in the output folder. If you didn't set output path by
     * Score
 
         The score of this primer pair. Usually the higher, the better.
-    * Sequences
+    * Samples
 
         How many sequences were used to find this primer pair.
 
