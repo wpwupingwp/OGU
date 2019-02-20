@@ -1421,7 +1421,7 @@ def count_and_draw(alignment, arg):
     max_product = arg.max_product
     step = arg.step
     # r_list, h_list, pi_list, t_list : count, normalized entropy, Pi and
-    #  tree value
+    # tree value
     r_list = []
     h_list = []
     pi_list = []
@@ -1452,6 +1452,8 @@ def count_and_draw(alignment, arg):
         basename(arg.out_file).split('.')[0], max_product, step))
     plt.xlabel('Base')
     ax1.yaxis.set_ticks(np.linspace(0, 1, num=11))
+    ax1.set_ylabel('Resolution & Shannon Equitability Index')
+    # different ytick
     ax2 = ax1.twinx()
     ax2.set_ylabel(r'$\pi$', rotation=-90, labelpad=20)
     # plt.xticks(np.linspace(0, max_range, 21))
@@ -1461,11 +1463,10 @@ def count_and_draw(alignment, arg):
                  label='Average Terminal Branch Length', alpha=0.8)
         ax2.set_ylabel(r'$\pi$ and Average Branch Length', rotation=-90,
                        labelpad=20)
-    ax1.set_ylabel('Resolution')
     ax1.plot(index, h_list, label='Shannon Equitability Index', alpha=0.8)
     ax1.plot(index, r_list, label='Observed Resolution', alpha=0.8)
     ax1.legend(loc='lower left')
-    ax2.plot(index, pi_list, 'k-', label=r'$\pi$', alpha=0.8)
+    ax2.plot(index, pi_list, 'k--', label=r'$\pi$', alpha=0.8)
     # _ = round(np.log10(max(Pi))) + 1
     # ax2.yaxis.set_ticks(np.linspace(0, 10**_, num=11))
     ax2.legend(loc='upper right')
@@ -1505,6 +1506,7 @@ def validate(primer_candidate, db_file, n_seqs, arg):
     Do BLAST. Parse BLAST result. Return list of PrimerWithInfo which passed
     the validation.
     """
+    EVALUE = 1e-2
     query_file = arg.out_file + '.candidate.fasta'
     query_file_fastq = arg.out_file + '.candidate.fastq'
     # SeqIO.write fasta file directly is prohibited. have to write fastq at
@@ -1527,7 +1529,7 @@ def validate(primer_candidate, db_file, n_seqs, arg):
                 query=query_file,
                 db=db_file,
                 task='blastn-short',
-                evalue=1e-2,
+                evalue=EVALUE,
                 max_hsps=1,
                 outfmt='"7 {}"'.format(fmt),
                 out=blast_result_file)
