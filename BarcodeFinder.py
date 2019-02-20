@@ -1222,7 +1222,7 @@ def get_resolution(alignment, start, end, fast=False):
     total = rows * columns
     # index error
     if columns == 0:
-        return 0, 0, 0, 0, 0
+        return 0, 0, 0, 0, 0, 0
     gap_ratio = len(subalign[subalign == b'-']) / total
     item, count = np.unique(subalign, return_counts=True, axis=0)
     resolution = len(count) / rows
@@ -1455,7 +1455,7 @@ def count_and_draw(alignment, arg):
     for i in range(0, max_range, step):
         # exclude primer sequence
         values = get_resolution(alignment, i, i + max_plus, arg.fast)
-        handle.write(fmt.format(*values))
+        handle.write(fmt.format(index, *values))
         gap_ratio, resolution, entropy, pi, tree_value, avg_branch_len = values
         gap_ratio_list.append(gap_ratio)
         observed_res_list.append(resolution)
@@ -1677,7 +1677,7 @@ def analyze(fasta, arg):
     summary = join_path(arg.out, 'Loci.csv')
     if not exists(summary):
         with open(summary, 'w', encoding='utf-8') as s:
-            s.write('Loci,Sequences,Length,GapRatio,ObservedResolution,'
+            s.write('Loci,Samples,Length,GapRatio,ObservedResolution,'
                     'TreeResolution,ShannonIndex,AvgTerminalBranchLen,Pi\n')
             s.write('{},{},{},{:.2%},{:.6f},{:.6f},{:.6f},{:.6f},{:.6f}'
                     '\n'.format(basename(fasta), rows, columns, gap_ratio,

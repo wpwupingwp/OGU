@@ -419,7 +419,7 @@ All results will be put in the output folder. If you didn't set output path by
     The summary of all loci/fragments which only contains the variance
     information of each fragment. The only new field, *GapRatio*, means the
     ratio of the gap ("-") in the alignment. Higher value means the sequences
-    may be too variaty that the alignment is not reliable.
+    may have too much insertion/deletion or the alignment is not reliable.
 * by_name
 
     The folder contains *"undivided"* sequences and intermediate results.
