@@ -148,15 +148,15 @@ class Pair:
     def get_score(self):
         # calculate score of given primer pairs. Suggestion only
         # use score to filter primer pairs
-        self.score = (average(list(self.length.values())) * 0.5
-                      + self.coverage * 200
-                      + len(self.left) * 10
-                      + len(self.right) * 10
-                      + self.resolution * 100
-                      + self.tree_value * 100 + self.entropy * 5
-                      - int(self.have_heterodimer) * 10
-                      - self.delta_tm * 5 - self.left.avg_mismatch * 10
-                      - self.right.avg_mismatch * 10)
+        return (average(list(self.length.values())) * 0.5
+                + self.coverage * 200
+                + len(self.left) * 10
+                + len(self.right) * 10
+                + self.resolution * 100
+                + self.tree_value * 100 + self.entropy * 5
+                - int(self.have_heterodimer) * 10
+                - self.delta_tm * 5 - self.left.avg_mismatch * 10
+                - self.right.avg_mismatch * 10)
 
     def add_info(self, alignment):
         # put attributes that need heavy computation here for the final primer
@@ -1473,6 +1473,10 @@ def count_and_draw(alignment, arg):
     plt.xlabel('Base')
     ax1.yaxis.set_ticks(np.linspace(0, 1, num=11))
     ax1.set_ylabel('Resolution & Shannon Equitability Index')
+    ax1.plot(index, entropy_list, label='Shannon Equitability Index',
+             alpha=0.8)
+    ax1.plot(index, observed_res_list, label='Observed Resolution', alpha=0.8)
+    ax1.plot(index, gap_ratio_list, label='Gap Ratio', alpha=0.8)
     # different ytick
     ax2 = ax1.twinx()
     ax2.set_ylabel(r'$\pi$', rotation=-90, labelpad=20)
@@ -1483,19 +1487,12 @@ def count_and_draw(alignment, arg):
                  label='Average Terminal Branch Length', alpha=0.8)
         ax2.set_ylabel(r'$\pi$ and Average Branch Length', rotation=-90,
                        labelpad=20)
-    ax1.plot(index, entropy_list, label='Shannon Equitability Index',
-             alpha=0.8)
-    ax1.plot(index, observed_res_list, label='Observed Resolution', alpha=0.8)
     ax1.legend(loc='lower left')
     ax2.plot(index, pi_list, 'k--', label=r'$\pi$', alpha=0.8)
-    # _ = round(np.log10(max(Pi))) + 1
-    # ax2.yaxis.set_ticks(np.linspace(0, 10**_, num=11))
     ax2.legend(loc='upper right')
-    # plt.yscale('log')
     plt.savefig(output + '.pdf')
     plt.savefig(output + '.png')
     plt.close()
-    # plt.show()
     handle.close()
     return observed_res_list, index
 
