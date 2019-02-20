@@ -1448,8 +1448,8 @@ def count_and_draw(alignment, arg):
     plt.style.use('seaborn-colorblind')
     # how to find optimized size?
     fig, ax1 = plt.subplots(figsize=(15 + len(index) // 5000, 10))
-    plt.title('Variance of {} (window={} bp, step={} bp)\n'.format(
-        basename(arg.out_file).split('.')[0], max_product, step))
+    plt.title('Variance of {} (sample={}, window={} bp, step={} bp)\n'.format(
+        rows, basename(arg.out_file).split('.')[0], max_product, step))
     plt.xlabel('Base')
     ax1.yaxis.set_ticks(np.linspace(0, 1, num=11))
     ax1.set_ylabel('Resolution & Shannon Equitability Index')
