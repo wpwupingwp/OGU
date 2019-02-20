@@ -712,7 +712,7 @@ All results will be put in the output folder. If you didn't set output path by
 
         Skip this step, all sequences will be kept.
 ## Evaluate
-* -f
+* -fast
 
     If set, BarcodeFinder will skip the calculation of "tree resolution" and
     "average terminal branch length" to reduce running time.
@@ -723,7 +723,7 @@ All results will be put in the output folder. If you didn't set output path by
     are too many, you can set this option to reduce time. The "tree
     resolution" and "average terminal branch length" will become 0 in the
     result file.
-* -s value
+* -step value
 
     The step length for sliding-window scan. The default *value* is 50. If
     the input data is too big, extreamly small *value* (such as 1 or 2) may
