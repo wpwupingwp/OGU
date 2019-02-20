@@ -61,4 +61,5 @@
 61. test install
 62. iqtree to IQ-TREE
 63. max_hsp, filter
-64. data missing at head/tail
+#64. data missing at head/tail
+65. blast score/penalty
