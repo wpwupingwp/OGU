@@ -69,6 +69,7 @@ class PrimerWithInfo(SeqRecord):
         self.update_id()
 
     def __getitem__(self, i):
+        # part of attribution do not change, others were reset
         if isinstance(i, int):
             i = slice(i, i + 1)
         if isinstance(i, slice):
@@ -181,6 +182,7 @@ class Pair:
 
 
 class BlastResult:
+    # slightly faster than namedtuple
     __slots = ('query_id', 'hit_id', 'query_seq', 'ident_num', 'mismatch_num',
                'bitscore_raw', 'query_start', 'query_end', 'hit_start',
                'hit_end')
@@ -194,6 +196,9 @@ class BlastResult:
 
 
 def parse_args():
+    """
+    Parse args and store some global/temporary values.
+    """
     arg = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description=main.__doc__)
@@ -336,7 +341,7 @@ def calc_ambiguous_seq(func, seq, seq2=None):
     """
     # Seems primer3 only accept seqs shorter than 60 bp. Plus, too long seq
     # will cost too much memory.
-    len_limit = 60
+    LEN_LIMIT = 60
 
     def _expand(seq):
         seq_list = []
@@ -349,13 +354,13 @@ def calc_ambiguous_seq(func, seq, seq2=None):
         seq_str = [''.join(i) for i in seq_product]
         return seq_str
 
-    if len(seq) > len_limit:
+    if len(seq) > LEN_LIMIT:
         return 0
     seq_str = _expand(seq)
     if seq2 is None:
         values = [func(i) for i in seq_str]
     else:
-        if len(seq2) > len_limit:
+        if len(seq2) > LEN_LIMIT:
             return 0
         seq_str2 = _expand(seq2)
         products = cartesian_product(seq_str, seq_str2)
@@ -611,8 +616,8 @@ def gene_rename(old_name):
     For chloroplast genes, the auther summarized various kinds of annotation
     error of gene name or synonyms and try to use regular expression to fix
     it.
-    Ideally, use BLAST to re-annotate sequence is the best way to find the
-    correct name. This function only offers a "hotfix".
+    Ideally, use BLAST to re-annotate sequence is the best(and slow) way to
+    find the correct name. This function only offers a "hotfix".
     """
     lower = old_name.lower()
     # (trna|trn(?=[b-z]))
@@ -736,7 +741,6 @@ def get_feature_name(feature, arg):
     """
     Get feature name and collect genes for extract spacer.
     Only handle gene, product, misc_feature, misc_RNA.
-    Return: [name, feature.type]
     """
     name = None
     misc_feature = None
@@ -774,14 +778,6 @@ def get_feature_name(feature, arg):
         # handle ITS
         if 'internal_transcribed_spacer' in name:
             name = 'ITS'
-        # name = name.replace('internal_transcribed_spacer', 'ITS')
-        # if 'ITS_1' in name:
-        #     if 'ITS_2' in name:
-        #         name = 'ITS'
-        #     else:
-        #         name = 'ITS_1'
-        # elif 'ITS_2' in name:
-        #     name = 'ITS_2'
     else:
         pass
     return name, feature.type
@@ -1104,6 +1100,7 @@ def align(files, arg):
         tprint('Aligning {}.'.format(fasta))
         out = clean_path(fasta, arg) + '.aln'
         with open(devnull, 'w', encoding='utf-8') as f:
+            # if computer is good enough, "--genafpair" is recommended
             _ = ('mafft --thread {} --reorder --quiet --adjustdirection '
                  '{} > {}'.format(cores, fasta, out))
             m = run(_, shell=True, stdout=f, stderr=f)
@@ -1121,6 +1118,7 @@ def prepare(aln_fasta, arg):
     """
     Given fasta format alignment filename, return a numpy array for sequence:
     Generate fasta file without gap for makeblastdb, return file name.
+    Faster and use smaller mem :)
     """
     data = []
     record = ['id', 'sequence']

@@ -63,3 +63,4 @@
 63. max_hsp, filter
 #64. data missing at head/tail
 65. blast score/penalty
+66. use requests instead of biopython to solve timeout
