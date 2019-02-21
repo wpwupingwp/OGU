@@ -1135,7 +1135,10 @@ def divide(gbfile, arg):
             for i in taxon_str:
                 if i.endswith('phyta'):
                     last_phyta = i
-            my_class = taxon_str[taxon_str.index(last_phyta) + 1]
+            try:
+                my_class = taxon_str[taxon_str.index(last_phyta) + 1]
+            except IndexError:
+                my_class = ''
         return (my_kingdom, my_phylum, my_class, my_order, my_family)
 
     # put raw fasta into root of output folder, so not to use clean_path
