@@ -1129,6 +1129,13 @@ def divide(gbfile, arg):
                 my_order = item
             elif item.endswith('aceae') or item.endswith('idae'):
                 my_family = item
+        # get fake class for plant
+        if my_phylum == 'Streptophyta' and my_class == '':
+            last_phyta = ''
+            for i in taxon_str:
+                if i.endswith('phyta'):
+                    last_phyta = i
+            my_class = taxon_str[taxon_str.index(last_phyta) + 1]
         return (my_kingdom, my_phylum, my_class, my_order, my_family)
 
     # put raw fasta into root of output folder, so not to use clean_path
