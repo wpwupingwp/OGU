@@ -476,7 +476,7 @@ def deploy(software):
                 ok = True
                 break
         if not ok:
-            tprint('Cannot install {} to system, try to'
+            tprint('Cannot install {} to system, try to '
                    'download.'.format(software))
             download_software(url)
     elif sys == 'Darwin':
@@ -1696,6 +1696,7 @@ def analyze(fasta, arg):
         return False
     # stop if do not want to design primer
     if arg.stop == 2:
+        tprint('Bye.')
         return True
     # find ncandidate
     tprint('Start finding primers of {}.'.format(fasta))
@@ -1813,13 +1814,8 @@ def main():
     if arg.fasta is not None:
         user_data = list(glob(arg.fasta))
         wrote_by_name.extend(user_data)
-    original_path = check_tools()
-    if original_path is None:
-        tprint('Cannot find and install depedent software. Exit.')
-        return
     if not any([wrote_by_gene, wrote_by_name, arg.aln]):
         tprint('Data is empty, please check your input!')
-        environ['PATH'] = original_path
         return
     if arg.uniq == 'no':
         tprint('Skip removing redundant sequences.')
@@ -1828,7 +1824,11 @@ def main():
     wrote_by_gene = uniq(wrote_by_gene, arg)
     wrote_by_name = uniq(wrote_by_name, arg)
     if arg.stop == 1:
-        environ['PATH'] = original_path
+        tprint('Bye.')
+        return
+    original_path = check_tools()
+    if original_path is None:
+        tprint('Cannot find and install depedent software. Exit.')
         return
     # evaluate
     tprint('Aligning sequences.')
