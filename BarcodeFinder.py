@@ -2095,9 +2095,7 @@ def main():
     log.info('Checking dependent software.')
     original_path = check_tools()
     if original_path is None:
-        log.critical('Cannot find and install depedent software.')
-        log.info('Quit.')
-        exit(-1)
+        quit('Cannot find and install depedent software.')
     if not any([wrote_by_gene, wrote_by_name, arg.aln]):
         log.critical('Data is empty, please check your input!')
         environ['PATH'] = original_path
