@@ -283,6 +283,10 @@ def parse_args():
     primer.add_argument('-tmax', dest='max_product', type=int, default=600,
                         help='maximum product length(include primer)')
     parsed = arg.parse_args()
+    if arg.group is not None:
+        log.warning('The "group[filter]" was reported to return abnormal'
+                    'records by Genbank. Please consider to use "-taxon" '
+                    'instead.')
     if parsed.fast:
         log.info('The "-fast" mode was opened. '
                  'Skip sliding-window scan with tree.')
@@ -359,12 +363,14 @@ def calc_ambiguous_seq(func, seq, seq2=None):
         return seq_str
 
     if len(seq) > LEN_LIMIT:
+        log.warning('Ambiguous sequences is too long. Skip')
         return 0
     seq_str = _expand(seq)
     if seq2 is None:
         values = [func(i) for i in seq_str]
     else:
         if len(seq2) > LEN_LIMIT:
+            log.warning('Ambiguous sequences is too long. Skip')
             return 0
         seq_str2 = _expand(seq2)
         products = cartesian_product(seq_str, seq_str2)
@@ -381,6 +387,7 @@ def check_tools():
     Return None if failed.
     """
     if exists('PATH.txt'):
+        log.info('Reading configuration of previous run from PATH.txt.')
         with open('PATH.txt', 'r', encoding='utf-8') as path_file:
             exists_path = path_file.read().strip()
             environ['PATH'] = pathsep.join([environ['PATH'], exists_path])
@@ -406,6 +413,8 @@ def check_tools():
     to_add = pathsep.join(installed)
     original = str(environ['PATH'])
     environ['PATH'] = pathsep.join([original, to_add])
+    log.info('Installation info of dependent software was written into '
+             'PATH.txt')
     with open('PATH.txt', 'w', encoding='utf-8') as path_out:
         path_out.write(to_add + '\n')
     f.close()
@@ -476,6 +485,8 @@ def deploy(software):
         if not download_software(url):
             return None
         if software == 'BLAST':
+            log.info('BLAST on Windows has to been installed manually.')
+            log.info('Please configure PATH variable correctly.')
             run('ncbi-blast-2.8.1+-win64.exe', shell=True)
     elif sys == 'Linux':
         ok = False
@@ -2039,6 +2050,7 @@ def main():
     if arg.fasta is not None:
         user_data = list(glob(arg.fasta))
         wrote_by_name.extend(user_data)
+    log.info('Checking dependent software.')
     original_path = check_tools()
     if original_path is None:
         log.critical('Cannot find and install depedent software.')
@@ -2082,7 +2094,7 @@ def main():
     with open(json_file, 'w', encoding='utf-8') as out:
         json.dump(vars(arg), out, indent=4, sort_keys=True)
     log.info('Options were dumped into {}.'.format(json_file))
-    # restore original PATH
+    log.info('Reset PATH to original value.')
     environ['PATH'] = original_path
     log.info('Bye.')
     return

@@ -555,7 +555,8 @@ All results will be put in the output folder. If you didn't set output path by
 
 * -group value
 
-    To restrict group of species, or the *kingdom*, the value could be
+    To restrict group of species to the *superkingdom* or *kingdom*, the value
+    could be
 
     * animals
     * plants
@@ -565,11 +566,13 @@ All results will be put in the output folder. If you didn't set output path by
     * archaea
     * viruses
 
-    Make sure do not have typo.
+    It is reported by anonymous user that "group" filter may return abnormal
+    records, for instance, return plants' records when the group is "animal"
+    and the "organelle" is "chloroplast". Besides, it may match a great amount
+    of records on Genbank. Hence we strongly recommend to use "-taxon"
+    instead.
 
-    If use this option, BarcodeFinder may possibly download a huge number of
-    records from Genbank. Please ensure you have stable and unexpensive
-    Internet connection. The default *value* is empty.
+    The default *value* is empty.
 
 * -min_len value
 
