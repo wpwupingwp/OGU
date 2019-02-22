@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import argparse
+import logging
 import json
 import re
 from collections import defaultdict
@@ -18,6 +19,7 @@ from subprocess import run
 from urllib.error import HTTPError
 from urllib.request import urlopen
 
+import coloredlogs
 import numpy as np
 from primer3 import calcTm, calcHairpinTm, calcHomodimerTm, calcHeterodimerTm
 from Bio import Entrez, Phylo, SeqIO
@@ -38,6 +40,17 @@ rcParams['axes.linewidth'] = 1.5
 rcParams['axes.titlesize'] = 25
 rcParams['font.size'] = 16
 rcParams['lines.linewidth'] = 1.5
+
+
+# define logger
+FMT = '%(asctime)s %(levelname)s %(message)s'
+DATEFMT = '%I:%M:%S'
+WELCOME = 'Welcome to BarcodeFinder!'
+# format vs fmt
+logging.basicConfig(level=logging.INFO, format=FMT, datefmt=DATEFMT)
+# colored console log
+coloredlogs.install(level=logging.INFO, fmt=FMT, datefmt=DATEFMT)
+log = logging.getLogger(__name__)
 
 
 class PrimerWithInfo(SeqRecord):
@@ -1972,16 +1985,26 @@ def analyze_wrapper(files, arg):
 
 
 def main():
-    # prepare
+    """
+    main function
+    """
+    log.info(WELCOME)
     arg = parse_args()
-    mkdir(arg.out)
+    try:
+        mkdir(arg.out)
+    except FileExistsError:
+        log.critical('Please use "-out" option to set a new output folder.')
+        raise
+    log_file = logging.FileHandler(join_path(arg.out, 'Log.txt'))
+    log.addHandler(log_file)
+    # make it same
+    log_file.emit(WELCOME)
+
+    # prepare
     wrote_by_gene = []
     wrote_by_name = []
     mkdir(arg.by_gene_folder)
     mkdir(arg.by_name_folder)
-    global log_handle
-    log_handle = open(join_path(arg.out, 'Log.txt'), 'w', encoding='utf-8')
-    tprint('Welcome to BarcodeFinder!')
     # collect and preprocess
     query = get_query_string(arg)
     if query is not None:
