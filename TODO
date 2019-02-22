@@ -65,4 +65,4 @@
 65. blast score/penalty
 66. use requests instead of biopython to solve timeout
 67. add note for fake class/kingdom
-68. rewrite uniq
+#68. rewrite uniq

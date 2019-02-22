@@ -1239,9 +1239,9 @@ def uniq(files, arg):
         keep = dict()
         count = 0
         for record in SeqIO.parse(fasta, 'fasta'):
-            # gene|order|family|genus|species|specimen
+            # gene|kingdom|phylum|class|order|family|genus|species|specimen
             if '|' in record.id:
-                name = ' '.join(record.id.split('|')[3:5])
+                name = ' '.join(record.id.split('|')[6:8])
             else:
                 name = record.id
             length = len(record)
