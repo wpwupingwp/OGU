@@ -283,17 +283,20 @@ def parse_args():
     primer.add_argument('-tmax', dest='max_product', type=int, default=600,
                         help='maximum product length(include primer)')
     parsed = arg.parse_args()
+    if parsed.fast:
+        log.info('The "-fast" mode was opened. '
+                 'Skip sliding-window scan with tree.')
     if arg.group is not None:
         log.warning('The "group[filter]" was reported to return abnormal'
                     'records by Genbank. Please consider to use "-taxon" '
                     'instead.')
-    if parsed.fast:
-        log.info('The "-fast" mode was opened. '
-                 'Skip sliding-window scan with tree.')
     if parsed.refseq:
         log.info('Reset sequence length limitation for RefSeq.')
         parsed.min_len = None
         parsed.max_len = None
+    if parsed.rename:
+        log.warning('BarcodeFinder will try to rename genes by regular'
+                    'expression.')
     if not any([parsed.query, parsed.taxon, parsed.group, parsed.gene,
                 parsed.fasta, parsed.aln, parsed.gb, parsed.organelle]):
         log.critical('Empty input! Please use "-h" options for help info.')
@@ -575,7 +578,7 @@ def download(arg, query):
     """
 
     TOO_MUCH = 50000
-    # 100 is enough ?
+    # 100 is enough?
     RETRY_MAX = 100
     log.info('Query:\t{}'.format(query))
     if arg.email is None:
@@ -593,14 +596,12 @@ def download(arg, query):
         log.info('Abort download.')
         return None
     elif count > TOO_MUCH:
-        log.warning('Got {} records. Please note that repeatedly sending huge '
-                    'queries may be blocked by NCBI.'.format(count))
+        log.warning('Got {} records. Please note that if you repeatedly '
+                    'sending huge queries you may be blocked by NCBI.'.format(
+                        count))
     else:
         log.info('Got {} records.'.format(count))
     log.info('Downloading... Ctrl+C to quit.')
-    json_file = join_path(arg.out, 'Query.json')
-    with open(json_file, 'w', encoding='utf-8') as _:
-        json.dump(query_handle, _, indent=4, sort_keys=True)
     name_words = []
     for i in (arg.group, arg.taxon, arg.organelle, arg.gene, arg.query):
         if i is not None:
@@ -643,6 +644,10 @@ def download(arg, query):
                 return None
         ret_start += ret_max
     log.info('Download finished.')
+    json_file = join_path(arg.out, 'Query.json')
+    with open(json_file, 'w', encoding='utf-8') as _:
+        json.dump(query_handle, _, indent=4, sort_keys=True)
+    log.info('The query info was dumped into {}'.format(json_file))
     return file_name
 
 
@@ -723,7 +728,7 @@ def write_seq(name, sequence_id, feature, whole_seq, path, arg):
             sequence = feature.extract(whole_seq)
         except ValueError:
             sequence = ''
-            tprint('Cannot extract sequence of {} from {}.'.format(
+            log.warning('Cannot extract sequence of {} from {}.'.format(
                 name, sequence_id))
         return sequence
 
@@ -1210,7 +1215,7 @@ def divide(gbfile, arg):
             if name is None:
                 continue
             if len(name) > arg.max_name_len:
-                log.warning('Too long name: {}.'.format(name))
+                log.warning('Too long name: {}. Truncated'.format(name))
                 name = name[:arg.max_name_len] + '...'
             # skip abnormal annotation
             if len(feature) > arg.max_seq_len:
@@ -1261,6 +1266,7 @@ def divide(gbfile, arg):
     # skip analyze of Unknown.fasta
     unknown = join_path(arg.by_name_folder, 'Unknown.fasta')
     if unknown in wrote_by_name:
+        log.info('Skip Unknown.fasta')
         wrote_by_name.remove(unknown)
     log.info('Divide finished.')
     return list(wrote_by_gene), list(wrote_by_name)
@@ -1751,9 +1757,9 @@ def validate(primer_candidate, db_file, n_seqs, arg):
         _ = run('makeblastdb -in {} -dbtype nucl'.format(db_file),
                 shell=True, stdout=f)
         if _.returncode != 0:
-            tprint('Failed to run makeblastdb!')
+            log.critical('Failed to run makeblastdb. Skip BLAST.')
             return []
-    # blast
+    # BLAST
     blast_result_file = 'blast.result.tsv'
     fmt = 'qseqid sseqid qseq nident mismatch score qstart qend sstart send'
     cmd = Blast(num_threads=max(1, cpu_count() - 1),
@@ -1766,6 +1772,8 @@ def validate(primer_candidate, db_file, n_seqs, arg):
                 out=blast_result_file)
     # hide output
     cmd()
+    log.info('BLAST finished.')
+    log.info('Parsing BLAST result.')
     blast_result = dict()
     # because SearchIO.parse is slow, use parse_blast_result()
     for query in parse_blast_tab(blast_result_file):
@@ -1811,6 +1819,7 @@ def validate(primer_candidate, db_file, n_seqs, arg):
     for i in glob(db_file + '*'):
         remove(i)
     remove(blast_result_file)
+    log.info('Parse finished.')
     return primer_verified
 
 
@@ -2042,6 +2051,8 @@ def main():
         if gbfile is not None:
             log.info('Divide data by annotation.')
             wrote_by_gene, wrote_by_name = divide(gbfile, arg)
+        else:
+            log.info('Query is empty.')
     if arg.gb is not None:
         for i in list(glob(arg.gb)):
             by_gene, by_name = divide(i, arg)
