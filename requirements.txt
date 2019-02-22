@@ -1,7 +1,8 @@
 biopython>=1.72
 certifi>=2018.11.29
+coloredlogs>=10.0
 matplotlib>=3.0.0
 numpy>=1.15.2
-primer3-py>=0.5.7
 pip>=18.0
+primer3-py>=0.5.7
 wheel>=0.32.3

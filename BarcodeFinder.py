@@ -5,7 +5,6 @@ import logging
 import json
 import re
 from collections import defaultdict
-from datetime import datetime
 from glob import glob
 from itertools import product as cartesian_product
 from os import (cpu_count, devnull, environ, mkdir, pathsep, remove, rename,

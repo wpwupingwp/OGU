@@ -5,13 +5,8 @@ import setuptools
 with open('README.rst', 'r') as _:
     long_description = _.read()
 
-requires = ['biopython>=1.72',
-            'certifi>=2018.11.29',
-            'matplotlib>=3.0.0',
-            'numpy>=1.15.2',
-            'pip>=18',
-            'primer3-py>=0.5.7',
-            'wheel>=0.32.3']
+with open('requirements.txt', 'r') as _:
+    requires = [i.strip() for i in _.readlines()]
 
 setuptools.setup(
     author='Ping Wu',
