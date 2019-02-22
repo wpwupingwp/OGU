@@ -43,7 +43,7 @@ rcParams['lines.linewidth'] = 1.5
 
 
 # define logger
-FMT = '%(asctime)s %(levelname)s %(message)s'
+FMT = '%(asctime)s %(levelname)-8s %(message)s'
 DATEFMT = '%I:%M:%S'
 TEMP_LOG = 'Temp.log'
 LOG_FMT = logging.Formatter(fmt=FMT, datefmt=DATEFMT)
