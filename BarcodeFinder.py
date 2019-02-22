@@ -2026,6 +2026,7 @@ def analyze_wrapper(files, arg):
         log.info('Analyze {}.'.format(aln))
         arg.out_file = splitext(clean_path(aln, arg))[0]
         result.append(analyze(aln, arg))
+        log.info('')
     # dirty work
     try:
         remove(arg.no_gap_file)
