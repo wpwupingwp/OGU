@@ -550,9 +550,10 @@ All results will be put in the output folder. If you didn't set output path by
     allowed. Make sure to use quotation mark. For instance, "atpB OR rbcL"
     (include quotation mark) means gene atpB or rbcL.
 
-    HOWEVER, the "-gene" options usually does not behave like what we thought.
-    If you query "rbcL[gene]" in Genbank, most of the time, NCBI still gives
-    you other gene's records.
+    HOWEVER, sometimes "-gene" options may bring in unwanted sequences. For
+    example, if you query "rbcL[gene]" in Genbank, spacers contain rbcL or
+    rbcL's upstream/downstream gene may be found, like "atpB_rbcL spacer",
+    atpB, etc.
 
 * -group value
 

@@ -69,6 +69,7 @@ class PrimerWithInfo(SeqRecord):
         self.update_id()
 
     def __getitem__(self, i):
+        # part of attribution do not change, others were reset
         if isinstance(i, int):
             i = slice(i, i + 1)
         if isinstance(i, slice):
@@ -181,6 +182,7 @@ class Pair:
 
 
 class BlastResult:
+    # slightly faster than namedtuple
     __slots = ('query_id', 'hit_id', 'query_seq', 'ident_num', 'mismatch_num',
                'bitscore_raw', 'query_start', 'query_end', 'hit_start',
                'hit_end')
@@ -194,6 +196,9 @@ class BlastResult:
 
 
 def parse_args():
+    """
+    Parse args and store some global/temporary values.
+    """
     arg = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description=main.__doc__)
@@ -336,7 +341,7 @@ def calc_ambiguous_seq(func, seq, seq2=None):
     """
     # Seems primer3 only accept seqs shorter than 60 bp. Plus, too long seq
     # will cost too much memory.
-    len_limit = 60
+    LEN_LIMIT = 60
 
     def _expand(seq):
         seq_list = []
@@ -349,13 +354,13 @@ def calc_ambiguous_seq(func, seq, seq2=None):
         seq_str = [''.join(i) for i in seq_product]
         return seq_str
 
-    if len(seq) > len_limit:
+    if len(seq) > LEN_LIMIT:
         return 0
     seq_str = _expand(seq)
     if seq2 is None:
         values = [func(i) for i in seq_str]
     else:
-        if len(seq2) > len_limit:
+        if len(seq2) > LEN_LIMIT:
             return 0
         seq_str2 = _expand(seq2)
         products = cartesian_product(seq_str, seq_str2)
@@ -611,8 +616,8 @@ def gene_rename(old_name):
     For chloroplast genes, the auther summarized various kinds of annotation
     error of gene name or synonyms and try to use regular expression to fix
     it.
-    Ideally, use BLAST to re-annotate sequence is the best way to find the
-    correct name. This function only offers a "hotfix".
+    Ideally, use BLAST to re-annotate sequence is the best(and slow) way to
+    find the correct name. This function only offers a "hotfix".
     """
     lower = old_name.lower()
     # (trna|trn(?=[b-z]))
@@ -670,23 +675,6 @@ def gene_rename(old_name):
     return new_name, gene_type
 
 
-def get_taxon(order_family, order_exceptions):
-    """
-    Get taxon info based on prefix.
-    Animal's order does not have uniform prefix. Have to use set to include
-    all order names.
-    """
-    # order|family|organims(genus|species)
-    order = ''
-    family = ''
-    for item in order_family:
-        if item.endswith('ales') or item in order_exceptions:
-            order = item
-        elif item.endswith('aceae') or item.endswith('idae'):
-            family = item
-    return order, family
-
-
 def write_seq(name, sequence_id, feature, whole_seq, path, arg):
     """
     Write fasta file.
@@ -736,7 +724,6 @@ def get_feature_name(feature, arg):
     """
     Get feature name and collect genes for extract spacer.
     Only handle gene, product, misc_feature, misc_RNA.
-    Return: [name, feature.type]
     """
     name = None
     misc_feature = None
@@ -774,14 +761,6 @@ def get_feature_name(feature, arg):
         # handle ITS
         if 'internal_transcribed_spacer' in name:
             name = 'ITS'
-        # name = name.replace('internal_transcribed_spacer', 'ITS')
-        # if 'ITS_1' in name:
-        #     if 'ITS_2' in name:
-        #         name = 'ITS'
-        #     else:
-        #         name = 'ITS_1'
-        # elif 'ITS_2' in name:
-        #     name = 'ITS_2'
     else:
         pass
     return name, feature.type
@@ -816,13 +795,169 @@ def divide(gbfile, arg):
     """
     Given genbank file, return divided fasta files.
     """
-    # put raw fasta into root of output folder, so not to use clean_path
-    raw_fasta = join_path(arg.out, splitext(basename(gbfile))[0] + '.fasta')
-    handle_raw = open(raw_fasta, 'w', encoding='utf-8')
-    wrote_by_gene = set()
-    wrote_by_name = set()
+    # From NCBI Taxonomy Database, 2019.2.21 update
+    # give all superkingdoms, kingdoms, phyla, classes because they do not
+    # have uniform prefix
+    superkingdoms = {'Bacteria', 'Archaea', 'Eukaryota', 'Viruses', 'Viroids'}
+    kingdoms = {'Fungi', 'Viridiplantae', 'Metazoa'}
+    phyla_str = '''
+    Bacteroidetes, Chlorobi, Cyanobacteria, Proteobacteria, Firmicutes,
+    Deinococcus-Thermus, Xanthophyceae, Bacillariophyta, Phaeophyceae,
+    Euglenida, Chlorophyta, Chytridiomycota, Ascomycota, Basidiomycota,
+    Eustigmatophyceae, Apicomplexa, Microsporidia, Porifera, Cnidaria,
+    Platyhelminthes, Nemertea, Nematoda, Annelida, Mollusca, Arthropoda,
+    Brachiopoda, Echinodermata, Chordata, Rotifera, Ctenophora, Bryozoa,
+    Rhombozoa, Hemichordata, Placozoa, Chaetognatha, Acanthocephala,
+    Onychophora, Crenarchaeota, Euryarchaeota, Haplosporidia, Fusobacteria,
+    Orthonectida, Nematomorpha, Gastrotricha, Priapulida, Streptophyta,
+    Nitrospirae, Tardigrada, Entoprocta, Kinorhyncha, Candidatus Korarchaeota,
+    Acidobacteria, Candidatus Marinimicrobia, Fibrobacteres, Gnathostomulida,
+    Candidatus Bipolaricaulota, Candidatus Omnitrophica, Caldiserica,
+    Candidatus Aminicenantes, Candidatus Atribacteria, Armatimonadetes,
+    Candidatus Microgenomates, Dictyoglomi, Cycliophora, Candidatus
+    Latescibacteria, Elusimicrobia, Verrucomicrobia, Bolidophyceae, Candidatus
+    Saccharibacteria, Kiritimatiellaeota, Gemmatimonadetes, Candidatus
+    Hydrogenedentes, Pinguiophyceae, Nanoarchaeota, Aquificae, Chloroflexi,
+    Thermotogae, Deferribacteres, Chrysiogenetes, Thermodesulfobacteria,
+    Actinobacteria, Planctomycetes, Spirochaetes, Chlamydiae, Candidatus
+    Parcubacteria, Lentisphaerae, Candidatus Poribacteria, Loricifera,
+    Candidatus Gracilibacteria, Picozoa, candidate division WWE3,
+    Blastocladiomycota, Candidatus Cloacimonetes, Synergistetes, Tenericutes,
+    Aurearenophyceae, candidate division NC10, Thaumarchaeota, Candidatus
+    Aenigmarchaeota, Candidatus Diapherotrites, Chromerida, Candidatus
+    Bathyarchaeota, Cryptomycota, Candidatus Calescamantes, Candidatus
+    Aerophobetes, candidate division JL-ETNP-Z39, Candidatus Hydrothermae,
+    Ignavibacteriae, candidate division WPS-1, candidate division WPS-2,
+    Nitrospinae, Xenacoelomorpha, candidate division Zixibacteria, Candidatus
+    Fervidibacteria, candidate division GAL15, Candidatus Geoarchaeota,
+    candidate phylum NAG2, Candidatus Parvarchaeota, Colponemidia, Candidatus
+    Berkelbacteria, candidate division CPR1, candidate division CPR2,
+    candidate division CPR3, Candidatus Peregrinibacteria, Candidatus
+    Lokiarchaeota, Candidatus Kapabacteria, candidate division WOR-3,
+    candidate division KD3-62, Candidatus Thorarchaeota, Candidatus
+    Fermentibacteria, Candidatus Rokubacteria, Candidatus Dadabacteria,
+    Candidatus Curtissbacteria, Candidatus Daviesbacteria, Candidatus
+    Levybacteria, Candidatus Gottesmanbacteria, Candidatus Shapirobacteria,
+    Candidatus Woesebacteria, Candidatus Roizmanbacteria, Candidatus
+    Pacebacteria, Candidatus Collierbacteria, Candidatus Beckwithbacteria,
+    Candidatus Campbellbacteria, Candidatus Falkowbacteria, Candidatus
+    Nomurabacteria, Candidatus Amesbacteria, Candidatus Magasanikbacteria,
+    Candidatus Uhrbacteria, Candidatus Yanofskybacteria, Candidatus
+    Kaiserbacteria, Candidatus Wolfebacteria, Candidatus Adlerbacteria,
+    Candidatus Moranbacteria, Candidatus Giovannonibacteria, Candidatus
+    Jorgensenbacteria, Candidatus Kuenenbacteria, Candidatus Azambacteria,
+    Candidatus Melainabacteria, Candidatus Woesearchaeota, Candidatus
+    Micrarchaeota, Candidatus Tectomicrobia, Candidatus Abawacabacteria,
+    Candidatus Coatesbacteria, Candidatus Delongbacteria, Candidatus
+    Doudnabacteria, Candidatus Edwardsbacteria, Candidatus Eisenbacteria,
+    Candidatus Firestonebacteria, Candidatus Fischerbacteria, Candidatus
+    Fraserbacteria, Candidatus Glassbacteria, Candidatus Handelsmanbacteria,
+    Candidatus Lindowbacteria, Candidatus Margulisbacteria, Candidatus
+    Raymondbacteria, Candidatus Riflebacteria, Candidatus Schekmanbacteria,
+    Candidatus Wallbacteria, Candidatus Blackburnbacteria, Candidatus
+    Woykebacteria, Candidatus Chisholmbacteria, Candidatus Andersenbacteria,
+    Candidatus Brennerbacteria, Candidatus Buchananbacteria, Candidatus
+    Colwellbacteria, Candidatus Harrisonbacteria, Candidatus Jacksonbacteria,
+    Candidatus Kerfeldbacteria, Candidatus Komeilibacteria, Candidatus
+    Liptonbacteria, Candidatus Lloydbacteria, Candidatus Nealsonbacteria,
+    Candidatus Niyogibacteria, Candidatus Portnoybacteria, Candidatus
+    Ryanbacteria, Candidatus Spechtbacteria, Candidatus Staskawiczbacteria,
+    Candidatus Sungbacteria, Candidatus Tagabacteria, Candidatus
+    Taylorbacteria, Candidatus Terrybacteria, Candidatus Veblenbacteria,
+    Candidatus Vogelbacteria, Candidatus Wildermuthbacteria, Candidatus
+    Yonathbacteria, Candidatus Zambryskibacteria, Candidatus Wirthbacteria,
+    Candidatus Desantisbacteria, Rhodothermaeota, Candidatus Kryptonia,
+    Mucoromycota, Zoopagomycota, Candidatus Verstraetearchaeota,
+    Calditrichaeota, Candidatus Odinarchaeota, Candidatus Heimdallarchaeota,
+    Balneolaeota, Candidatus Marsarchaeota, Candidatus Goldbacteria, candidate
+    division AD3, candidate division FCPU426, Candidatus Abyssubacteria,
+    Candidatus Aureabacteria, Abditibacteriota, Coprothermobacterota,
+    Olpidiomycota'''
+    phyla = {i.strip() for i in phyla_str.split(sep=',')}
+    classes_str = '''
+    Gammaproteobacteria, Actinobacteria, Bangiophyceae, Florideophyceae,
+    Chrysophyceae, Dinophyceae, Cryptophyta, Chlorophyceae, Bryopsida,
+    Cycadopsida, Gnetopsida, Liliopsida, Oomycetes, Saccharomycetes,
+    Ustilaginomycetes, Heterolobosea, Colpodea, Litostomatea, Prostomatea,
+    Nassophorea, Oligohymenophorea, Demospongiae, Hydrozoa, Anthozoa, Cubozoa,
+    Scyphozoa, Trematoda, Cestoda, Pilidiophora, Enopla, Polychaeta,
+    Gastropoda, Bivalvia, Cephalopoda, Polyplacophora, Branchiopoda,
+    Ostracoda, Malacostraca, Merostomata, Arachnida, Chilopoda, Diplopoda,
+    Asteroidea, Ophiuroidea, Echinoidea, Holothuroidea, Ascidiacea,
+    Chondrichthyes, Amphibia, Aves, Monogononta, Gymnolaemata, Enteropneusta,
+    Archiacanthocephala, Calcarea, Alphaproteobacteria, Betaproteobacteria,
+    Deltaproteobacteria, Epsilonproteobacteria, Ginkgoopsida, Diplura,
+    Protura, Collembola, Appendicularia, Thaliacea, Acoela, Mollicutes,
+    Chloroflexia, Scaphopoda, Ulvophyceae, Pterobranchia, Karyorelictea,
+    Spirotrichea, Coscinodiscophyceae, Bacillariophyceae, Fragilariophyceae,
+    Synurophyceae, Phylactolaemata, Crinoidea, Labyrinthulomycetes,
+    Pedinophyceae, Pelagophyceae, Phyllopharyngea, Monogenea,
+    Glaucocystophyceae, Raphidophyceae, Dictyochophyceae, Catenulida,
+    Mammalia, Clitellata, Eutardigrada, Hyphochytriomycetes, Gordioida,
+    Bdelloidea, Palaeacanthocephala, Eoacanthocephala, Insecta,
+    Nemertodermatida, Caudofoveata, Chrysomerophyceae, Pycnogonida,
+    Coniferopsida, Hexactinellida, Symphyla, Entorrhizomycetes, Pauropoda,
+    Acantharea, Polycystinea, Thermodesulfobacteria, Deferribacteres,
+    Hexanauplia, Cephalocarida, Trebouxiophyceae, Homoscleromorpha,
+    Phaeothamniophyceae, Remipedia, Acidimicrobiia, Rubrobacteria,
+    Coriobacteriia, Seisonidea, Heterotardigrada, Bacilli,
+    Mesostigmatophyceae, Stenolaemata, Andreaeopsida, Sphagnopsida,
+    Polytrichopsida, Takakiopsida, Andreaeobryopsida, Lingulata, Craniata,
+    Rhynchonellata, Flavobacteriia, Sphingobacteriia, Chrysiogenetes, Enoplea,
+    Chromadorea, Ichthyosporea, Zygnemophyceae, Chlorokybophyceae,
+    Klebsormidiophyceae, Spartobacteria, Tentaculata, Arthoniomycetes,
+    Dothideomycetes, Eurotiomycetes, Lecanoromycetes, Leotiomycetes,
+    Pezizomycetes, Sordariomycetes, Pneumocystidomycetes,
+    Schizosaccharomycetes, Taphrinomycetes, Neolectomycetes, Tremellomycetes,
+    Agaricomycetes, Placididea, Agaricostilbomycetes, Microbotryomycetes,
+    Pucciniomycetes, Turbellaria, Methanonatronarchaeia, Polyacanthocephala,
+    Thermoprotei, Methanobacteria, Methanococci, Halobacteria, Thermoplasmata,
+    Thermococci, Archaeoglobi, Methanopyri, Actinopteri, Marchantiopsida,
+    Jungermanniopsida, Clostridia, Aquificae, Thermotogae, Deinococci,
+    Laboulbeniomycetes, Orbiliomycetes, Thermomicrobia, Nectonematoida,
+    Chlorobia, Heterotrichea, Micrognathozoa, Bacteroidia, Dictyoglomia,
+    Fusobacteriia, Verrucomicrobiae, Planctomycetia, Spirochaetia, Nitrospira,
+    Chlamydiia, Fibrobacteria, Acidobacteriia, Glomeromycetes,
+    Gemmatimonadetes, Methanomicrobia, Solenogastres, Actinophryidae,
+    Polypodiopsida, Hypermastigia, Anaerolineae, Chitinivibrionia,
+    Dehalococcoidia, Coleochaetophyceae, Charophyceae, Gloeobacteria,
+    Lichinomycetes, Solibacteres, Katablepharidophyta, Monoplacophora,
+    Ktedonobacteria, Leiosporocerotopsida, Anthocerotopsida, Haplomitriopsida,
+    Oedipodiopsida, Tetraphidopsida, Opitutae, Aconoidasida, Wallemiomycetes,
+    Atractiellomycetes, Classiculomycetes, Cryptomycocolacomycetes,
+    Cystobasidiomycetes, Mixiomycetes, Stylonematophyceae, Candidatus
+    Marinamargulisbacteria, Endomicrobia, Chytridiomycetes,
+    Monoblepharidomycetes, Neocallimastigomycetes, Blastocladiomycetes,
+    Exobasidiomycetes, Dacrymycetes, Thermolithobacteria, Caldilineae,
+    Erysipelotrichia, Holophagae, Synchromophyceae, Zetaproteobacteria,
+    Mediophyceae, Elusimicrobia, Synergistia, Armophorea, Rhodellophyceae,
+    Geoglossomycetes, Phycisphaerae, Caldisericia, Cytophagia, Ignavibacteria,
+    Nitriliruptoria, Negativicutes, Compsopogonophyceae, Mamiellophyceae,
+    Armatimonadia, Nanohaloarchaea, Tritirachiomycetes, Archaeorhizomycetes,
+    Chthonomonadetes, Xylonomycetes, Nephroselmidophyceae, Plagiopylea,
+    Conoidasida, Nitrospinia, Coniocybomycetes, Oligosphaeria, Lentisphaeria,
+    Picomonadea, Cladistia, Ardenticatenia, Basidiobolomycetes,
+    Neozygitomycetes, Entomophthoromycetes, Sagittoidea, Thermoflexia,
+    Thermoleophilia, Aphelidea, Lycopodiopsida, Chlorodendrophyceae,
+    Moniliellomycetes, Malasseziomycetes, Oligoflexia, Blastocatellia,
+    Nitrososphaeria, Globothalamea, Fimbriimonadia, Limnochordia, Candidatus
+    Thalassoarchaea, Palaeonemertea, Geminibasidiomycetes, Tissierellia,
+    Hadesarchaea, Spiculogloeomycetes, Candidatus Peribacteria, Longimicrobia,
+    Acidithiobacillia, Acidobacteria subdivision 6, Candidatus
+    Lambdaproteobacteria, Candidatus Muproteobacteria, Balneolia,
+    Rhodothermia, Chitinophagia, Chitinispirillia, Candidatus Methanomethylia,
+    Nuda, Kiritimatiellae, Staurozoa, Saprospiria, Methylacidiphilae,
+    Calditrichae, Theionarchaea, Hydrogenophilalia, Udeonychophora,
+    Priapulimorpha, Abditibacteria, Coprothermobacteria, Candidatus
+    Fermentibacteria (class), Ichthyostraca, Palmophyllophyceae,
+    Physodermatomycetes, Olpidiomycetes, Collemopsidiomycetes, Candidatus
+    Sericytochromatia, Candidatus Riflemargulisbacteria, Endogonomycetes,
+    Mucoromycetes, Umbelopsidomycetes, Mortierellomycetes, Kickxellomycetes,
+    Dimargaritomycetes, Harpellomycetes, Asellariomycetes, Bartheletiomycetes,
+    Zoopagomycetes
+    '''
+    classes = {i.strip() for i in classes_str.split(',')}
     # order exceptions that not end with "ales"
-    # From NCBI Taxonomy Database, 2018.11.27 update
     order_exceptions = '''
     Labiatae, Gramineae, Kinetoplastida, Physariida, Haemosporida,
     Heterotrichida, Haptorida, Prorodontida, Haplosclerida, Actiniaria,
@@ -967,17 +1102,61 @@ def divide(gbfile, arg):
     Tetramerocerata, Rhaptothyreida, Sterrofustia, Aquavolonida, Micropygoida,
     Metopida, Hirudinida
     '''
-    order_exceptions = order_exceptions.split(',')
-    order_exceptions = {i.strip() for i in order_exceptions}
+    orders = {i.strip() for i in order_exceptions.split(',')}
+
+    def get_taxon(taxon_str):
+        """
+        Get taxon info based on suffix and list from NCBI taxonomy database.
+        """
+        # kingdom|phylum|class|order|family|organims(genus|species)
+        # add my_ prefix to avoid conflict of "class"
+        my_kingdom = ''
+        my_phylum = ''
+        my_class = ''
+        my_order = ''
+        my_family = ''
+        for item in taxon_str:
+            if item in superkingdoms:
+                my_kingdom = item
+            # mix superkingdom and kingdom to reduce name length
+            elif item in kingdoms:
+                my_kingdom = item
+            elif item in phyla:
+                my_phylum = item
+            elif item in classes:
+                my_class = item
+            if item.endswith('ales') or item in orders:
+                my_order = item
+            elif item.endswith('aceae') or item.endswith('idae'):
+                my_family = item
+        # get fake class for plant
+        if my_phylum == 'Streptophyta' and my_class == '':
+            last_phyta = ''
+            for i in taxon_str:
+                if i.endswith('phyta'):
+                    last_phyta = i
+            try:
+                my_class = taxon_str[taxon_str.index(last_phyta) + 1]
+            except IndexError:
+                my_class = ''
+        return (my_kingdom, my_phylum, my_class, my_order, my_family)
+
+    # put raw fasta into root of output folder, so not to use clean_path
+    raw_fasta = join_path(arg.out, splitext(basename(gbfile))[0] + '.fasta')
+    handle_raw = open(raw_fasta, 'w', encoding='utf-8')
+    wrote_by_gene = set()
+    wrote_by_name = set()
     # divide gb
     for record in SeqIO.parse(gbfile, 'gb'):
         # only accept gene, product, and spacer in misc_features.note
-        order_family = record.annotations['taxonomy']
-        order, family = get_taxon(order_family, order_exceptions)
+        taxon_str = record.annotations['taxonomy']
+        kingdom, phylum, class_, order, family = get_taxon(taxon_str)
         organism = record.annotations['organism'].replace(' ', '_')
         genus, *species = organism.split('_')
         # species name may contain other characters
-        taxon = '{}|{}|{}|{}'.format(order, family, genus, '_'.join(species))
+        taxon = '{}|{}|{}|{}|{}|{}|{}'.format(kingdom, phylum, class_, order,
+                                              family, genus,
+                                              '_'.join(species))
         accession = record.annotations['accessions'][0]
         try:
             specimen = record.features[0].qualifiers['specimen_voucher'
@@ -1104,6 +1283,7 @@ def align(files, arg):
         tprint('Aligning {}.'.format(fasta))
         out = clean_path(fasta, arg) + '.aln'
         with open(devnull, 'w', encoding='utf-8') as f:
+            # if computer is good enough, "--genafpair" is recommended
             _ = ('mafft --thread {} --reorder --quiet --adjustdirection '
                  '{} > {}'.format(cores, fasta, out))
             m = run(_, shell=True, stdout=f, stderr=f)
@@ -1121,6 +1301,7 @@ def prepare(aln_fasta, arg):
     """
     Given fasta format alignment filename, return a numpy array for sequence:
     Generate fasta file without gap for makeblastdb, return file name.
+    Faster and use smaller mem :)
     """
     data = []
     record = ['id', 'sequence']
