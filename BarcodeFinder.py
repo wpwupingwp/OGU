@@ -16,6 +16,7 @@ from platform import system
 from random import choice
 from shutil import unpack_archive, ReadError
 from subprocess import run
+from sys import exit
 from urllib.error import HTTPError
 from urllib.request import urlopen
 
@@ -30,7 +31,6 @@ from Bio.SeqFeature import SeqFeature, FeatureLocation
 from Bio.SeqRecord import SeqRecord
 from matplotlib import use as mpl_use
 if environ.get('DISPLAY', '') == '':
-    print('Cannot find DISPLAY. use Agg backend instead.')
     mpl_use('Agg')
 from matplotlib import pyplot as plt
 from matplotlib import rcParams
@@ -48,7 +48,6 @@ DATEFMT = '%I:%M:%S'
 WELCOME = 'Welcome to BarcodeFinder!'
 # format vs fmt
 logging.basicConfig(level=logging.INFO, format=FMT, datefmt=DATEFMT)
-# colored console log
 coloredlogs.install(level=logging.INFO, fmt=FMT, datefmt=DATEFMT)
 log = logging.getLogger(__name__)
 
@@ -91,7 +90,8 @@ class PrimerWithInfo(SeqRecord):
             answer.annotations = dict(self.annotations.items())
             return answer
         else:
-            raise IndexError
+            log.exception('Bad index.')
+            raise
 
     def reverse_complement(self):
         table = str.maketrans('ACGTMRWSYKVHDBXN', 'TGCAKYWSRMBDHVXN')
@@ -219,11 +219,10 @@ def parse_args():
     general.add_argument('-aln', help='aligned fasta files to analyze')
     general.add_argument('-fasta', help='unaligned fasta format data to add')
     general.add_argument('-gb', help='genbank files')
-    general.add_argument('-stop', type=int, choices=(1, 2, 3), default=3,
+    general.add_argument('-stop', type=int, choices=(1, 2),
                          help=('Stop after which step:'
                                '\t1. Download and pre-process;'
-                               '\t2. Analyze variance;'
-                               '\t3. Primer design.'))
+                               '\t2. Analyze variance;'))
     general.add_argument('-out', help='output directory')
     genbank = arg.add_argument_group('Genbank')
     genbank.add_argument('-email', help='email address for querying Genbank')
@@ -284,17 +283,21 @@ def parse_args():
     primer.add_argument('-tmax', dest='max_product', type=int, default=600,
                         help='maximum product length(include primer)')
     parsed = arg.parse_args()
+    if parsed.fast:
+        log.info('The "-fast" mode was opened. '
+                 'Skip sliding-window scan with tree.')
     if parsed.refseq:
-        # no length limit for refseq
+        log.info('Reset sequence length limitation for RefSeq.')
         parsed.min_len = None
         parsed.max_len = None
     if not any([parsed.query, parsed.taxon, parsed.group, parsed.gene,
                 parsed.fasta, parsed.aln, parsed.gb, parsed.organelle]):
-        arg.print_help()
-        raise ValueError('Empty input!')
+        log.critical('Empty input! Please use "-h" options for help info.')
+        return None
     if parsed.out is None:
-        raw_time = datetime.now().isoformat()
-        parsed.out = raw_time.replace(':', '-').split('.')[0]
+        log.warning('Output folder was not set.')
+        log.info('Use "Result" instead.')
+        parsed.out = 'Result'
     parsed.by_gene_folder = join_path(parsed.out, 'by-gene')
     parsed.by_name_folder = join_path(parsed.out, 'by-name')
     # temporary filename, omit one parameters in many functions
@@ -303,18 +306,6 @@ def parse_args():
     parsed.out_file = ''
     # load option.json may cause chaos, remove
     return parsed
-
-
-def tprint(string):
-    """
-    Formated print info.
-    """
-    now = datetime.now()
-    s = '{:0>2d}:{:0>2d}:{:>02d}   {}'.format(now.hour, now.minute, now.second,
-                                              string)
-    print(s, flush=True)
-    log_handle.write(s + '\n')
-    log_handle.flush()
 
 
 def average(x):
@@ -404,11 +395,11 @@ def check_tools():
         # mafft --help return 0 or 1 in different version, use --version
         # instead
         if check.returncode != 0:
-            tprint('Cannot find {}. Try to install.'.format(tools))
+            log.warning('Cannot find {}.'.format(tools))
             install_path = deploy(tools)
             if install_path is None:
-                tprint('Failed to install {}. Please try to manually install'
-                       'it (See README.md).'.format(tools))
+                log.error('Failed to install {}. Please try to manually '
+                          'install it (See README.md).'.format(tools))
                 return None
             installed.append(install_path)
     # do not edit original PATH
@@ -428,10 +419,10 @@ def download_software(url):
     """
     filename = url.split('/')[-1]
     try:
-        tprint('Downloading {}...'.format(filename))
+        log.info('Downloading {}...'.format(filename))
         down = urlopen(url)
     except HTTPError:
-        tprint('Cannot download {}.'.format(filename))
+        log.warn('Cannot download {}.'.format(filename))
         return False
     with open(filename, 'wb') as out:
         out.write(down.read())
@@ -447,8 +438,9 @@ def deploy(software):
     According to system, install software.
     Return False if failed
     """
-    tprint('Try to install {}. Please consider to install it following '
-           'official instruction to get a CLEAN system.'.format(software))
+    log.info('Try to install {}.'.format(software))
+    log.warning('Please consider to install it following official'
+                'instruction to get a CLEAN system.')
     sys = system()
     # url dict
     blast_url = ('ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.8.1/'
@@ -494,17 +486,19 @@ def deploy(software):
                 ok = True
                 break
         if not ok:
-            tprint('Cannot install {} to system, try to'
-                   'download.'.format(software))
-            download_software(url)
+            log.info('Cannot install {} with package manager. Try to'
+                     'download.'.format(software))
+            if not download_software(url):
+                return None
     elif sys == 'Darwin':
         with open(devnull, 'w', encoding='utf-8') as f:
             r = run('brew --help', shell=True, stdout=f, stderr=f)
         if r.returncode == 0:
             run('brew install blast mafft brewsci/science/iqtree', shell=True)
         else:
-            tprint('Cannot find Homebrew.')
-            download_software(url)
+            log.warning('Cannot find Homebrew.')
+            if not download_software(url):
+                return None
             # after unzip, file lost executable flag on mac system
             run('chmod +x {}'.format(join_path(urls[sys][software]['path'],
                                                '*')), shell=True)
@@ -569,22 +563,30 @@ def download(arg, query):
     Asia), it will retry if failed. Ctrl+C to break.
     """
 
-    tprint('Query:\t{}.'.format(query))
+    TOO_MUCH = 50000
+    # 100 is enough ?
+    RETRY_MAX = 100
+    log.info('Query:\t{}'.format(query))
     if arg.email is None:
         Entrez.email = 'guest@example.com'
-        tprint('You did not provide email address, use'
-               ' {} instead.'.format(Entrez.email))
+        log.warning('You did not provide email address for using Entrez, '
+                    'use {} instead.'.format(Entrez.email))
     else:
         Entrez.email = arg.email
     query_handle = Entrez.read(Entrez.esearch(db='nuccore', term=query,
                                               usehistory='y'))
     count = int(query_handle['Count'])
 
-    tprint('{} records found.'.format(count))
     if count == 0:
-        tprint('Download abort.')
+        log.warning('Got 0 record. Please check the query.')
+        log.info('Abort download.')
         return None
-    tprint('Downloading... Ctrl+C to quit.')
+    elif count > TOO_MUCH:
+        log.warning('Got {} records. Please note that repeatedly sending huge '
+                    'queries may be blocked by NCBI.'.format(count))
+    else:
+        log.info('Got {} records.'.format(count))
+    log.info('Downloading... Ctrl+C to quit.')
     json_file = join_path(arg.out, 'Query.json')
     with open(json_file, 'w', encoding='utf-8') as _:
         json.dump(query_handle, _, indent=4, sort_keys=True)
@@ -606,8 +608,9 @@ def download(arg, query):
         ret_max = 100
     else:
         ret_max = 10
+    retry = 0
     while ret_start < count:
-        tprint('{:d}--{:d}'.format(ret_start, ret_start + ret_max))
+        log.info('{:d}--{:d}'.format(ret_start, ret_start + ret_max))
         try:
             data = Entrez.efetch(db='nuccore',
                                  webenv=query_handle['WebEnv'],
@@ -619,10 +622,16 @@ def download(arg, query):
             output.write(data.read())
         # just retry if connection failed
         except IOError:
-            tprint('Retrying...')
-            continue
+            if retry <= RETRY_MAX:
+                log.warning('Failed on download. Retrying...')
+                retry += 1
+                continue
+            else:
+                log.critical('Too much failure ({} times).'.format(RETRY_MAX))
+                log.info('Abort download.')
+                return None
         ret_start += ret_max
-    tprint('Download finished.')
+    log.info('Download finished.')
     return file_name
 
 
@@ -1163,7 +1172,7 @@ def divide(gbfile, arg):
     handle_raw = open(raw_fasta, 'w', encoding='utf-8')
     wrote_by_gene = set()
     wrote_by_name = set()
-    # divide gb
+    log.info('Divide {}.'.format(gbfile))
     for record in SeqIO.parse(gbfile, 'gb'):
         # only accept gene, product, and spacer in misc_features.note
         taxon_str = record.annotations['taxonomy']
@@ -1190,12 +1199,12 @@ def divide(gbfile, arg):
             if name is None:
                 continue
             if len(name) > arg.max_name_len:
-                tprint('Too long name: {}.'.format(name))
+                log.warning('Too long name: {}.'.format(name))
                 name = name[:arg.max_name_len] + '...'
             # skip abnormal annotation
             if len(feature) > arg.max_seq_len:
-                tprint('Skip abnormal annotaion of {}(Accession {}).'.format(
-                    name, accession))
+                log.warning('Skip abnormal annotaion of {}'
+                            '(Accession {}).'.format(name, accession))
                 continue
             if feature_type == 'gene':
                 genes.append([name, feature])
@@ -1209,7 +1218,7 @@ def divide(gbfile, arg):
         spacers = get_spacer(genes)
         for spacer in spacers:
             if len(spacer) > arg.max_seq_len:
-                tprint('Spacer {} too long (Accession {}).'.format(
+                log.warning('Spacer {} too long (Accession {}).'.format(
                     spacer.id, accession))
                 continue
             sequence_id = '>' + '|'.join([spacer.id, taxon,
@@ -1242,7 +1251,7 @@ def divide(gbfile, arg):
     unknown = join_path(arg.by_name_folder, 'Unknown.fasta')
     if unknown in wrote_by_name:
         wrote_by_name.remove(unknown)
-    tprint('Divide done.')
+    log.info('Divide finished.')
     return list(wrote_by_gene), list(wrote_by_name)
 
 
@@ -1254,7 +1263,7 @@ def uniq(files, arg):
     for fasta in files:
         info = defaultdict(lambda: list())
         keep = dict()
-        count = 0
+        index = 0
         for record in SeqIO.parse(fasta, 'fasta'):
             # gene|kingdom|phylum|class|order|family|genus|species|specimen
             if '|' in record.id:
@@ -1264,8 +1273,8 @@ def uniq(files, arg):
             length = len(record)
             # skip empty file
             if length != 0:
-                info[name].append([count, length])
-            count += 1
+                info[name].append([index, length])
+            index += 1
         if arg.uniq == 'first':
             # keep only the first record
             keep = {info[i][0][0] for i in info}
@@ -1279,12 +1288,14 @@ def uniq(files, arg):
             keep = {info[i][0] for i in info}
         elif arg.uniq == 'no':
             # keep all
-            keep = {range(count + 1)}
+            keep = {range(index + 1)}
         new = clean_path(fasta, arg) + '.uniq'
         with open(new, 'w', encoding='utf-8') as out:
-            for index, record in enumerate(SeqIO.parse(fasta, 'fasta')):
-                if index in keep:
+            for idx, record in enumerate(SeqIO.parse(fasta, 'fasta')):
+                if idx in keep:
                     SeqIO.write(record, out, 'fasta')
+        log.info('{} of {} records were kept in {}'.format(len(keep), index,
+                                                           fasta))
         uniq_files.append(new)
     return uniq_files
 
@@ -1293,11 +1304,12 @@ def align(files, arg):
     """
     Calls mafft to align sequences.
     """
+    log.info('Align sequences.')
     result = []
     # get available CPU cores
     cores = max(1, cpu_count() - 1)
     for fasta in files:
-        tprint('Aligning {}.'.format(fasta))
+        log.info('Aligning {}.'.format(fasta))
         out = clean_path(fasta, arg) + '.aln'
         with open(devnull, 'w', encoding='utf-8') as f:
             # if computer is good enough, "--genafpair" is recommended
@@ -1307,8 +1319,8 @@ def align(files, arg):
         if m.returncode == 0:
             result.append(out)
         else:
-            tprint('Skip alignment of {}.'.format(fasta))
-    tprint('Alignment done.')
+            log.warning('Skip alignment of {}.'.format(fasta))
+    log.info('Alignment finished.')
     for i in glob('_order*'):
         remove(i)
     return result
@@ -1340,7 +1352,7 @@ def prepare(aln_fasta, arg):
     # check sequence length
     length_check = [len(i[1]) for i in data]
     if len(set(length_check)) != 1:
-        tprint('{} does not have uniform width!'.format(aln_fasta))
+        log.error('{} does not have uniform width!'.format(aln_fasta))
         return None, None, None
 
     # Convert List to numpy array.
@@ -1350,11 +1362,11 @@ def prepare(aln_fasta, arg):
     sequence = np.array([list(i[1]) for i in data], dtype=np.bytes_, order='F')
 
     if name is None:
-        tprint('Bad fasta file {}.'.format(aln_fasta))
+        log.error('Bad fasta file {}.'.format(aln_fasta))
         name = None
     # tree require more than 4 sequences
     if len(sequence) < 4:
-        tprint('Too few sequence in {} (less than 4)!'.format(aln_fasta))
+        log.error('Too few sequence in {} (less than 4)!'.format(aln_fasta))
         name = None
     interleaved = 'interleaved.fasta'
     # for clean
@@ -1457,8 +1469,7 @@ def get_resolution(alignment, start, end, fast=False):
                          stdout=f, stderr=f, shell=True)
         # just return 0 if there is error
         if iqtree.returncode != 0:
-            tprint('Too much gap in the region {}-{} bp.'.format(
-                start, end))
+            log.info('Too much gap in the region {}-{} bp.'.format(start, end))
             clean()
         else:
             tree = Phylo.read(aln_file + '.treefile', 'newick')
@@ -1732,7 +1743,6 @@ def validate(primer_candidate, db_file, n_seqs, arg):
             tprint('Failed to run makeblastdb!')
             return []
     # blast
-    tprint('Validate with BLAST.')
     blast_result_file = 'blast.result.tsv'
     fmt = 'qseqid sseqid qseq nident mismatch score qstart qend sstart send'
     cmd = Blast(num_threads=max(1, cpu_count() - 1),
@@ -1835,7 +1845,7 @@ def pick_pair(primers, alignment, arg):
             cluster.clear()
     cluster.sort(key=lambda x: x.score, reverse=True)
     less_pairs.extend(cluster[:arg.top_n])
-    tprint('{} pairs of redundant primers were removed.'.format(
+    log.info('{} pairs of redundant primers were removed.'.format(
         len(pairs) - len(less_pairs)))
     good_pairs = []
     for i in less_pairs:
@@ -1843,7 +1853,7 @@ def pick_pair(primers, alignment, arg):
         if i.resolution >= arg.resolution:
             good_pairs.append(i)
     good_pairs.sort(key=lambda x: x.score, reverse=True)
-    tprint('Successfully found validated primers.')
+    log.info('Successfully found validated primers.')
     return good_pairs[:arg.top_n]
 
 
@@ -1855,70 +1865,73 @@ def analyze(fasta, arg):
     # read from fasta, generate new fasta for makeblastdb
     name, alignment, db_file = prepare(fasta, arg)
     if name is None:
-        tprint('Invalid fasta file {}.'.format(fasta))
+        log.info('Invalid fasta file {}.'.format(fasta))
         return False
     rows, columns = alignment.shape
     # generate consensus
     base_cumulative_frequency = count_base(alignment, rows, columns)
-    tprint('Generate consensus.')
+    log.info('Generate consensus of {}.'.format(fasta))
     consensus = generate_consensus(base_cumulative_frequency, arg.coverage,
                                    rows, arg.out_file + '.consensus.fastq')
-    tprint('Evaluate whole alignment.')
-    gap_ratio, max_count, max_h, max_pi, max_t, max_l = get_resolution(
-        alignment, 0, columns)
-    tprint('Average terminal branch length {}.'.format(max_l))
-    n_gap = sum([i[5] for i in base_cumulative_frequency])
-    gap_ratio = n_gap / rows / columns
+    log.info('Evaluate whole alignment of {}.'.format(fasta))
+    # a_ : alignment
+    (a_gap_ratio, a_observed_res, a_entropy, a_pi, a_tree_res,
+     a_branch_len) = get_resolution(alignment, 0, columns)
+    log.info('Gap ratio: {}'.format(a_gap_ratio))
+    log.info('Observed resolution: {}'.format(a_observed_res))
+    log.info('Normalized Shannon Index: {}.'.format(a_entropy))
+    log.info('Pi: {}.'.format(a_pi))
+    log.info('Tree resolution: {}.'.format(a_tree_res))
+    log.info('Average terminal branch length: {}.'.format(a_branch_len))
     summary = join_path(arg.out, 'Loci.csv')
     if not exists(summary):
         with open(summary, 'w', encoding='utf-8') as s:
             s.write('Loci,Samples,Length,GapRatio,ObservedResolution,'
                     'TreeResolution,ShannonIndex,AvgTerminalBranchLen,Pi\n')
             s.write('{},{},{},{:.2%},{:.6f},{:.6f},{:.6f},{:.6f},{:.6f}'
-                    '\n'.format(basename(fasta), rows, columns, gap_ratio,
-                                max_count, max_t, max_h, max_l, max_pi))
+                    '\n'.format(basename(fasta), rows, columns, a_gap_ratio,
+                                a_observed_res, a_entropy, a_pi, a_tree_res,
+                                a_branch_len))
     else:
         with open(summary, 'a', encoding='utf-8') as s:
             s.write('{},{},{},{:.2%},{:.6f},{:.6f},{:.6f},{:.6f},{:.6f}'
-                    '\n'.format(basename(fasta), rows, columns, gap_ratio,
-                                max_count, max_t, max_h, max_l, max_pi))
-    if max_count < arg.resolution:
-        tprint('Too low resolution of {}!'.format(fasta))
-        return False
-    # count resolution
-    tprint('Sliding window analyze.')
-    observed_res_list, index = count_and_draw(alignment, arg)
+                    '\n'.format(basename(fasta), rows, columns, a_gap_ratio,
+                                a_observed_res, a_entropy, a_pi, a_tree_res,
+                                a_branch_len))
     # exit if resolution lower than given threshold.
-    if max(observed_res_list) < arg.resolution:
-        tprint('The resolution of {} is too low!'.format(fasta))
+    if a_observed_res < arg.resolution:
+        log.warning('Observed resolution is too low.')
         return False
+    log.info('Start the sliding-window scan.')
+    observed_res_list, index = count_and_draw(alignment, arg)
+    log.info('Evaluation finished.')
     # stop if do not want to design primer
     if arg.stop == 2:
         return True
-    # find ncandidate
-    tprint('Start finding primers of {}.'.format(fasta))
+    log.info('Start finding primers.')
+    log.info('Mark region for finding primer.')
     good_region = get_good_region(index, observed_res_list, arg)
+    log.info('Finding candidate primers.')
     consensus = find_continuous(consensus, good_region, arg.min_primer)
-    tprint('Filtering candidate primer pairs.')
     primer_candidate, consensus = find_primer(consensus, arg)
     if len(primer_candidate) == 0:
-        tprint('Cannot find primer candidates in {}. Try to loose'
-               'options!'.format(fasta))
+        log.warning('Cannot find primer candidates.'
+                    'Please consider to loose options.')
         return True
-    tprint('Found {} candidate primers.'.format(len(primer_candidate)))
-    # validate
+    log.info('Found {} candidate primers.'.format(len(primer_candidate)))
+    log.info('Validate with BLAST. May be slow.')
     primer_verified = validate(primer_candidate, db_file, rows, arg)
     if len(primer_verified) == 0:
-        tprint('Cannot find primers in {}. Try to loose options!'.format(
-            fasta))
+        log.warning('All candidates failed on validation. '
+                    'Please consider to loose options.')
         return True
-    # pick pair
+    log.info('Picking primer pairs.')
     pairs = pick_pair(primer_verified, alignment, arg)
     if len(pairs) == 0:
-        tprint('Cannot find primers in {}. Try to loose options!'.format(
-            fasta))
+        log.warning('Cannot find suitable primer pairs. '
+                    'Please consider to loose options.')
         return True
-    # output
+    log.info('Output the result.')
     locus = basename(arg.out_file).split('.')[0]
     csv_title = ('Locus,Score,Samples,AvgProductLength,StdEV,'
                  'MinProductLength,MaxProductLength,'
@@ -1962,7 +1975,7 @@ def analyze(fasta, arg):
     out1.close()
     out2.close()
     out3.close()
-    tprint('Primers info were written into {}.csv.'.format(arg.out_file))
+    log.info('Primers info were written into {}.csv.'.format(arg.out_file))
     return True
 
 
@@ -1970,9 +1983,10 @@ def analyze_wrapper(files, arg):
     """
     Wrapper for the primer design.
     """
+    log.info('Analyze alignments.')
     result = []
     for aln in files:
-        tprint('Analyze {}.'.format(aln))
+        log.info('Analyze {}.'.format(aln))
         arg.out_file = splitext(clean_path(aln, arg))[0]
         result.append(analyze(aln, arg))
     # dirty work
@@ -1981,6 +1995,7 @@ def analyze_wrapper(files, arg):
         remove(arg.db_file)
     except FileNotFoundError:
         pass
+    log.info('Analysis finished.')
     return any(result)
 
 
@@ -1990,6 +2005,9 @@ def main():
     """
     log.info(WELCOME)
     arg = parse_args()
+    if arg is None:
+        log.info('Quit.')
+        exit(-1)
     try:
         mkdir(arg.out)
     except FileExistsError:
@@ -2008,14 +2026,13 @@ def main():
     # collect and preprocess
     query = get_query_string(arg)
     if query is not None:
-        tprint('Download data from Genbank.')
+        log.info('Download data from Genbank.')
         gbfile = download(arg, query)
         if gbfile is not None:
-            tprint('Divide data by annotation.')
+            log.info('Divide data by annotation.')
             wrote_by_gene, wrote_by_name = divide(gbfile, arg)
     if arg.gb is not None:
         for i in list(glob(arg.gb)):
-            tprint('Divide {}.'.format(i))
             by_gene, by_name = divide(i, arg)
             wrote_by_gene.extend(by_gene)
             wrote_by_name.extend(by_name)
@@ -2024,23 +2041,25 @@ def main():
         wrote_by_name.extend(user_data)
     original_path = check_tools()
     if original_path is None:
-        tprint('Cannot find and install depedent software. Exit.')
-        return
+        log.critical('Cannot find and install depedent software.')
+        log.info('Quit.')
+        exit(-1)
     if not any([wrote_by_gene, wrote_by_name, arg.aln]):
-        tprint('Data is empty, please check your input!')
+        log.critical('Data is empty, please check your input!')
         environ['PATH'] = original_path
-        return
+        log.info('Quit.')
+        exit(-1)
     if arg.uniq == 'no':
-        tprint('Skip removing redundant sequences.')
+        log.info('Skip removing redundant sequences.')
     else:
-        tprint('Remove redundant sequences by "{}".'.format(arg.uniq))
+        log.info('Remove redundant sequences by "{}".'.format(arg.uniq))
     wrote_by_gene = uniq(wrote_by_gene, arg)
     wrote_by_name = uniq(wrote_by_name, arg)
     if arg.stop == 1:
         environ['PATH'] = original_path
+        log.info('Exit.')
         return
     # evaluate
-    tprint('Aligning sequences.')
     # only consider arg.no_divide and arg.fasta
     if arg.no_divide or arg.fasta:
         aligned = align(wrote_by_name, arg)
@@ -2051,17 +2070,21 @@ def main():
         user_aln = list(glob(arg.aln))
         aligned.extend(user_aln)
     result = analyze_wrapper(aligned, arg)
-    tprint('Finished. You can find output in {}.'.format(arg.out))
+    log.info('Finished. You can find output in {}.'.format(arg.out))
     if result:
-        tprint('Summary info were written into {} and {}.'.format(join_path(
+        log.info('Summary info were written into {} and {}.'.format(join_path(
             arg.out, 'Loci.csv'), join_path(arg.out, 'Primers.csv')))
+    else:
+        log.critical('None of input is valid.')
+        log.info('Quit.')
+        exit(-1)
     json_file = join_path(arg.out, 'Options.json')
     with open(json_file, 'w', encoding='utf-8') as out:
         json.dump(vars(arg), out, indent=4, sort_keys=True)
-    tprint('Options were dumped into {}.'.format(json_file))
-    log_handle.close()
+    log.info('Options were dumped into {}.'.format(json_file))
     # restore original PATH
     environ['PATH'] = original_path
+    log.info('Bye.')
     return
 
 

@@ -518,8 +518,6 @@ All results will be put in the output folder. If you didn't set output path by
         redundant, rename, expand).
     * 2
         Do step 1, and then analyze the variance. Do not design primers.
-    * 3
-        Do all things (which have no effect).
 
 * -out value
 
