@@ -1490,7 +1490,6 @@ def get_resolution(alignment, start, end, fast=False):
             remove(_)
     if not fast:
         if rows < 4:
-            log.warning('Less than 3 sequence in {}!'.format(aln_file))
             return (gap_ratio, resolution, entropy, pi, tree_value,
                     avg_terminal_branch_len)
         with open(aln_file, 'wb') as aln:
@@ -1677,6 +1676,8 @@ def count_and_draw(alignment, arg):
     min_primer = arg.min_primer
     max_product = arg.max_product
     step = arg.step
+    if rows < 4:
+        log.warning('Less than 3 sequence. Tree inference will be skipped.')
     # gap_list, r_list, h_list, pi_list, t_list : count, normalized entropy,
     # Pi and tree value
     gap_ratio_list = []
@@ -1915,10 +1916,10 @@ def analyze(fasta, arg):
      a_branch_len) = get_resolution(alignment, 0, columns)
     log.info('Gap ratio: {}'.format(a_gap_ratio))
     log.info('Observed resolution: {}'.format(a_observed_res))
-    log.info('Normalized Shannon Index: {}.'.format(a_entropy))
-    log.info('Pi: {}.'.format(a_pi))
-    log.info('Tree resolution: {}.'.format(a_tree_res))
-    log.info('Average terminal branch length: {}.'.format(a_branch_len))
+    log.info('Normalized Shannon Index: {}'.format(a_entropy))
+    log.info('Pi: {}'.format(a_pi))
+    log.info('Tree resolution: {}'.format(a_tree_res))
+    log.info('Average terminal branch length: {}'.format(a_branch_len))
     summary = join_path(arg.out, 'Loci.csv')
     if not exists(summary):
         with open(summary, 'w', encoding='utf-8') as s:
