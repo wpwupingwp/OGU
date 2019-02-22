@@ -566,7 +566,11 @@ def download(arg, query):
     query_handle = Entrez.read(Entrez.esearch(db='nuccore', term=query,
                                               usehistory='y'))
     count = int(query_handle['Count'])
+
     tprint('{} records found.'.format(count))
+    if count == 0:
+        tprint('Download abort.')
+        return None
     tprint('Downloading... Ctrl+C to quit.')
     json_file = join_path(arg.out, 'Query.json')
     with open(json_file, 'w', encoding='utf-8') as _:
@@ -1983,8 +1987,9 @@ def main():
     if query is not None:
         tprint('Download data from Genbank.')
         gbfile = download(arg, query)
-        tprint('Divide data by annotation.')
-        wrote_by_gene, wrote_by_name = divide(gbfile, arg)
+        if gbfile is not None:
+            tprint('Divide data by annotation.')
+            wrote_by_gene, wrote_by_name = divide(gbfile, arg)
     if arg.gb is not None:
         for i in list(glob(arg.gb)):
             tprint('Divide {}.'.format(i))
