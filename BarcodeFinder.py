@@ -45,11 +45,15 @@ rcParams['lines.linewidth'] = 1.5
 # define logger
 FMT = '%(asctime)s %(levelname)s %(message)s'
 DATEFMT = '%I:%M:%S'
-WELCOME = 'Welcome to BarcodeFinder!'
-# format vs fmt
-logging.basicConfig(level=logging.INFO, format=FMT, datefmt=DATEFMT)
-coloredlogs.install(level=logging.INFO, fmt=FMT, datefmt=DATEFMT)
+TEMP_LOG = 'Temp.log'
+LOG_FMT = logging.Formatter(fmt=FMT, datefmt=DATEFMT)
 log = logging.getLogger(__name__)
+coloredlogs.install(level=logging.INFO, fmt=FMT, datefmt=DATEFMT)
+# temporary filehandler before arg.out is set
+log_tmp = logging.FileHandler(TEMP_LOG, 'w')
+log_tmp.setLevel(logging.INFO)
+log_tmp.setFormatter(LOG_FMT)
+log.addHandler(log_tmp)
 
 
 class PrimerWithInfo(SeqRecord):
@@ -286,20 +290,19 @@ def parse_args():
     if parsed.fast:
         log.info('The "-fast" mode was opened. '
                  'Skip sliding-window scan with tree.')
-    if arg.group is not None:
-        log.warning('The "group[filter]" was reported to return abnormal'
+    if parsed.group is not None:
+        log.warning('The filters "group" was reported to return abnormal '
                     'records by Genbank. Please consider to use "-taxon" '
                     'instead.')
     if parsed.refseq:
-        log.info('Reset sequence length limitation for RefSeq.')
+        log.info('Reset the limitation of sequence length for RefSeq.')
         parsed.min_len = None
         parsed.max_len = None
     if parsed.rename:
-        log.warning('BarcodeFinder will try to rename genes by regular'
+        log.warning('BarcodeFinder will try to rename genes by regular '
                     'expression.')
     if not any([parsed.query, parsed.taxon, parsed.group, parsed.gene,
                 parsed.fasta, parsed.aln, parsed.gb, parsed.organelle]):
-        log.critical('Empty input! Please use "-h" options for help info.')
         return None
     if parsed.out is None:
         log.warning('Output folder was not set.')
@@ -416,10 +419,13 @@ def check_tools():
     to_add = pathsep.join(installed)
     original = str(environ['PATH'])
     environ['PATH'] = pathsep.join([original, to_add])
-    log.info('Installation info of dependent software was written into '
-             'PATH.txt')
-    with open('PATH.txt', 'w', encoding='utf-8') as path_out:
-        path_out.write(to_add + '\n')
+    if len(installed) != 0:
+        log.info('Installation info of dependent software was written into '
+                 'PATH.txt')
+        with open('PATH.txt', 'w', encoding='utf-8') as path_out:
+            path_out.write(to_add + '\n')
+    else:
+        log.info('All dependent software found.')
     f.close()
     return original
 
@@ -451,7 +457,7 @@ def deploy(software):
     Return False if failed
     """
     log.info('Try to install {}.'.format(software))
-    log.warning('Please consider to install it following official'
+    log.warning('Please consider to install it following official '
                 'instruction to get a CLEAN system.')
     sys = system()
     # url dict
@@ -500,7 +506,7 @@ def deploy(software):
                 ok = True
                 break
         if not ok:
-            log.info('Cannot install {} with package manager. Try to'
+            log.info('Cannot install {} with package manager. Try to '
                      'download.'.format(software))
             if not download_software(url):
                 return None
@@ -1215,7 +1221,7 @@ def divide(gbfile, arg):
             if name is None:
                 continue
             if len(name) > arg.max_name_len:
-                log.warning('Too long name: {}. Truncated'.format(name))
+                log.warning('Too long name: {}. Truncated.'.format(name))
                 name = name[:arg.max_name_len] + '...'
             # skip abnormal annotation
             if len(feature) > arg.max_seq_len:
@@ -1336,10 +1342,13 @@ def align(files, arg):
         if m.returncode == 0:
             result.append(out)
         else:
-            log.warning('Skip alignment of {}.'.format(fasta))
+            # ignore empty result
+            pass
     log.info('Alignment finished.')
     for i in glob('_order*'):
         remove(i)
+    log.info('{} of {} files were successfully aligned.'.format(len(result),
+                                                                len(files)))
     return result
 
 
@@ -1935,7 +1944,7 @@ def analyze(fasta, arg):
     consensus = find_continuous(consensus, good_region, arg.min_primer)
     primer_candidate, consensus = find_primer(consensus, arg)
     if len(primer_candidate) == 0:
-        log.warning('Cannot find primer candidates.'
+        log.warning('Cannot find primer candidates. '
                     'Please consider to loose options.')
         return True
     log.info('Found {} candidate primers.'.format(len(primer_candidate)))
@@ -2019,24 +2028,38 @@ def analyze_wrapper(files, arg):
     return any(result)
 
 
+def quit(msg):
+    """
+    Quit for critical situation.
+    """
+    log.critical(msg)
+    log.info('Quit.')
+    exit(-1)
+
+
 def main():
     """
     main function
     """
-    log.info(WELCOME)
+    log.info('Welcome to BarcodeFinder!')
     arg = parse_args()
     if arg is None:
-        log.info('Quit.')
-        exit(-1)
+        quit('Empty input! Please use "-h" options for help info.')
     try:
         mkdir(arg.out)
     except FileExistsError:
-        log.critical('Please use "-out" option to set a new output folder.')
-        raise
-    log_file = logging.FileHandler(join_path(arg.out, 'Log.txt'))
-    log.addHandler(log_file)
-    # make it same
-    log_file.emit(WELCOME)
+        quit('Output folder "{}" is existed. Please use "-out" option to set '
+             'a new output folder.'.format(arg.out))
+    # move log to new log file
+    log_tmp.close()
+    log_file = join_path(arg.out, 'Log.txt')
+    with open(TEMP_LOG, 'r') as a, open(log_file, 'w') as b:
+        b.write(a.read())
+    remove(TEMP_LOG)
+    log_file_handler = logging.FileHandler(log_file)
+    log_file_handler.setLevel(logging.INFO)
+    log_file_handler.setFormatter(LOG_FMT)
+    log.addHandler(log_file_handler)
 
     # prepare
     wrote_by_gene = []
@@ -2092,6 +2115,10 @@ def main():
     if arg.aln is not None:
         user_aln = list(glob(arg.aln))
         aligned.extend(user_aln)
+    if len(aligned) == 0:
+        log.critical('Cannot find valid alignment.')
+        log.info('Quit')
+        exit(-1)
     result = analyze_wrapper(aligned, arg)
     log.info('Finished. You can find output in {}.'.format(arg.out))
     if result:
