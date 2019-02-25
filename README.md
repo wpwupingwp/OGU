@@ -65,10 +65,11 @@ primers. It does three things as listed below.
 ## Software
 * Python3 (3.5 or above)
 * BLAST+
-* IQTREE
+* IQ-TREE
 * MAFFT
 ## Python module
 * Biopython
+* coloredlogs
 * matplotlib
 * numpy
 * primer3-py

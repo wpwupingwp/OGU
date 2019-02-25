@@ -54,6 +54,7 @@ primers. It does three things as listed below.
 * MAFFT
 
 - Biopython
+- coloredlogs
 - matplotlib
 - numpy
 - primer3-py

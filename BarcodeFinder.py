@@ -28,6 +28,7 @@ from Bio.Data.IUPACData import ambiguous_dna_values as ambiguous_data
 from Bio.Seq import Seq
 from Bio.SeqFeature import SeqFeature, FeatureLocation
 from Bio.SeqRecord import SeqRecord
+
 from matplotlib import use as mpl_use
 if environ.get('DISPLAY', '') == '':
     mpl_use('Agg')
@@ -2092,13 +2093,8 @@ def main():
     if arg.fasta is not None:
         user_data = list(glob(arg.fasta))
         wrote_by_name.extend(user_data)
-    log.info('Checking dependent software.')
-    original_path = check_tools()
-    if original_path is None:
-        quit('Cannot find and install depedent software.')
     if not any([wrote_by_gene, wrote_by_name, arg.aln]):
         log.critical('Data is empty, please check your input!')
-        environ['PATH'] = original_path
         log.info('Quit.')
         exit(-1)
     if arg.uniq == 'no':
@@ -2108,9 +2104,13 @@ def main():
     wrote_by_gene = uniq(wrote_by_gene, arg)
     wrote_by_name = uniq(wrote_by_name, arg)
     if arg.stop == 1:
-        environ['PATH'] = original_path
         log.info('Exit.')
         return
+    # check dependent
+    log.info('Checking dependent software.')
+    original_path = check_tools()
+    if original_path is None:
+        quit('Cannot find and install depedent software.')
     # evaluate
     # only consider arg.no_divide and arg.fasta
     if arg.no_divide or arg.fasta:
