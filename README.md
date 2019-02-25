@@ -616,9 +616,13 @@ All results will be put in the output folder. If you didn't set output path by
     The query string user provied. It behaves same with the query you typed in
     the Search Box in NCBI Genbank's webpage.
 
-    Make sure to follow NCBI's grammer of query. Please do not forget
-    quotation mark if it has more than one word. The default *string* is
-    empty.
+    Make sure to follow NCBI's grammer of query. It can contains several
+    words. Remember to add quotation mark if an item have more than one words,
+    for instance, *"Homo sapiens"[organism].
+
+    Do not add quotation mark at the beginning and end of the query string.
+    For instance, *"cbs[gene] AND "Homo sapiens"[organism]" may return empty
+    result.
 
 * -refseq
 

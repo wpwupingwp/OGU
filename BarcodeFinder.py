@@ -246,7 +246,7 @@ def parse_args():
                          help='organelle type')
     genbank.add_argument('-refseq', action='store_true',
                          help='Only search in RefSeq database')
-    genbank.add_argument('-query', help='query text')
+    genbank.add_argument('-query', nargs='*', help='query text')
     genbank.add_argument('-taxon', help='Taxonomy name')
     pre = arg.add_argument_group('Preprocess')
     pre.add_argument('-expand', type=int, default=200,
@@ -294,6 +294,9 @@ def parse_args():
         log.warning('The filters "group" was reported to return abnormal '
                     'records by Genbank. Please consider to use "-taxon" '
                     'instead.')
+    # join nargs
+    if parsed.query is not None:
+        parsed.query = ' '.join(parsed.query)
     if parsed.refseq:
         log.info('Reset the limitation of sequence length for RefSeq.')
         parsed.min_len = None
@@ -544,10 +547,7 @@ def get_query_string(arg):
     if arg.group is not None:
         condition.append('{}[filter]'.format(arg.group))
     if arg.query is not None:
-        if ' ' in arg.query:
-            condition.append('"{}"'.format(arg.query))
-        else:
-            condition.append('{}'.format(arg.query))
+        condition.append(arg.query)
     if arg.gene is not None:
         if ' ' in arg.gene:
             condition.append('"{}"[gene]'.format(arg.gene))
