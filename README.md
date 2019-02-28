@@ -24,35 +24,36 @@ primers. It does three things as listed below.
 * Collect data
 
     It can automatically retrieve data from NCBI Genbank with restrictions
-    that user provided, such as gene name, taxonomy, sequence name and
-    organelle. Also, it can integrate user provided sequences or alignments.
+    user provided, such as gene name, taxonomy, sequence name and organelle.
+    Also, it can integrate sequences or alignments that user provided.
 * Preprocess data
 
     Barcodefinder utilizes annotation information in data to divide sequence
     into fragments (gene, spacer, misc_feature), because data collected from
     Genbank may not be "uniform". For instance, you can find one gene's
     upstream and downstream sequences in one record but only gene sequence in
-    another record. The situation becomes worse for intergenic spacers, that
-    various annotation style may cause endless trouble in following analysis.
+    another record. The situation becomes worse for intergenic spacers because
+    of various annotation style that may cause trouble in following
+    analysis.
 
     Given that one gene or spacer for each species may be sequenced several
     times, by default, BarcodeFinder removes redundant sequences to left only
     one record for each species. This behavior can be changed as you wish.
-    Then, _mafft_ was called for alignment. Each sequence's direction were
+    Then, _MAFFT_ was called for alignment. Each sequence's direction were
     adjusted and all sequences were reordered.
 * Analyze
 
     Firstly, BarcodeFinder evaluate variance of each alignment by calculating
     Pi, Shannon Index, observed resolution, tree resolution and average
     terminal branch length, etc. If the result is lower than given threshold,
-    i.e., it does not have efficient resolution, this alignment were skipped.
+    i.e., it does not have efficient resolution, this alignment will be skipped.
 
     Next, a sliding-window scan will be performed for those alignments passed
     the test. The high-variance region (variance "hotspot") were picked and
     its upstream/downstream region were used to find primer.
 
     Consensus sequence of those conserved region for finding primers were
-    generated and with the help of primer3, candidate primers were selected.
+    generated and with the help of _primer3_, candidate primers were selected.
     After BLAST validation, suitable primers were combined to form several
     primer pairs. According to the limit of PCR product's length, only pairs
     with wanted length were left. Note that gaps were removed to calculated
@@ -62,6 +63,10 @@ primers. It does three things as listed below.
     Finally, primer pairs were reordered by score to make it easy for user to
     find "best" primer pairs they want.
 # Prerequisite
+## Hardware
+BarcodeFinder requires few computational resources. A normal PC/laptop is
+enough. For huge analysis that covers large taxonomic group, better computer
+may save time.
 ## Software
 * Python3 (3.5 or above)
 * BLAST+
@@ -123,7 +128,7 @@ install it:
 ```
 /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 ```
-If you find any error occured, install Xcode in App Store then retry.
+If you find any error occured, install Xcode in App Store and retry.
 
 Then:
 ```
@@ -149,7 +154,7 @@ instructions:
 
         Choose "All-in-one version", download and unzip. Then follow the step
         in BLAST+ installation manual to set _PATH_.
-3. IQTREE
+3. IQ-TREE
 
     * [Download](http://www.iqtree.org/#download)
 
@@ -165,12 +170,12 @@ python -m BarcodeFinder [input] -[options] -out [out_folder]
 python3 -m BarcodeFinder [input] -[options] -out [out_folder]
 ```
 ## Quick examples
-1. Download all _rbcL_ sequences of plants and do pre-process:
+1. Download all _rbcL_ sequences of plants(viridiplantae) and do pre-process:
 ```
 # Windows
-python -m BarcodeFinder -query rbcL -group plants -stop 1 -out rbcL
+python -m BarcodeFinder -gene rbcL -taxon Viridiplantae -stop 1 -out rbcL_all_plant
 # Linux and macOS
-python3 -m BarcodeFinder -query rbcL -group plants -stop 1 -out rbcL
+python3 -m BarcodeFinder -gene rbcL -taxon Viridiplantae -stop 1 -out rbcL_all_plant
 ```
 2. Download all ITS sequences of _Rosa_ and do pre-process:
 ```

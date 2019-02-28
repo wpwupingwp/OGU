@@ -241,8 +241,9 @@ def parse_args():
                          help='maximum length')
     genbank.add_argument('-molecular', choices=('DNA', 'RNA'),
                          help='molecular type')
-    genbank.add_argument('-organelle',
-                         choices=('mitochondrion', 'plastid', 'chloroplast'),
+    genbank.add_argument('-og', dest='organelle',
+                         choices=('mt', 'mitochondrion', 'cp',
+                                  'chloroplast''pl', 'plastid'),
                          help='organelle type')
     genbank.add_argument('-refseq', action='store_true',
                          help='Only search in RefSeq database')
@@ -544,6 +545,7 @@ def get_query_string(arg):
     Based on given options, generate query string from Genbank.
     """
     condition = []
+    og_dict = {'mt': 'mitochondrion', 'pl': 'plastid', 'cp': 'chloroplast'}
     if arg.group is not None:
         condition.append('{}[filter]'.format(arg.group))
     if arg.query is not None:
@@ -563,7 +565,10 @@ def get_query_string(arg):
         else:
             condition.append('{}[ORGANISM]'.format(arg.taxon))
     if arg.organelle is not None:
-        condition.append('{}[filter]'.format(arg.organelle))
+        if arg.organelle in og_dict:
+            condition.append('{}[filter]'.format(og_dict[arg.organelle]))
+        else:
+            condition.append('{}[filter]'.format(arg.organelle))
     if arg.refseq:
         condition.append('refseq[filter]')
     if (len(condition) > 0) and (arg.min_len is not None and arg.max_len is
