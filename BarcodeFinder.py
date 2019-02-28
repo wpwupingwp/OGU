@@ -1309,9 +1309,6 @@ def uniq(files, arg):
             for i in info:
                 info[i] = choice(info[i])
             keep = {info[i][0] for i in info}
-        elif arg.uniq == 'no':
-            # keep all
-            keep = {range(index + 1)}
         new = clean_path(fasta, arg) + '.uniq'
         with open(new, 'w', encoding='utf-8') as out:
             for idx, record in enumerate(SeqIO.parse(fasta, 'fasta')):
@@ -2061,6 +2058,7 @@ def main():
              'a new output folder.'.format(arg.out))
     # move log to new log file
     log_tmp.close()
+    log.removeHandler(log_tmp)
     log_file = join_path(arg.out, 'Log.txt')
     with open(TEMP_LOG, 'r') as a, open(log_file, 'w') as b:
         b.write(a.read())
@@ -2101,8 +2099,8 @@ def main():
         log.info('Skip removing redundant sequences.')
     else:
         log.info('Remove redundant sequences by "{}".'.format(arg.uniq))
-    wrote_by_gene = uniq(wrote_by_gene, arg)
-    wrote_by_name = uniq(wrote_by_name, arg)
+        wrote_by_gene = uniq(wrote_by_gene, arg)
+        wrote_by_name = uniq(wrote_by_name, arg)
     if arg.stop == 1:
         log.info('Exit.')
         return
