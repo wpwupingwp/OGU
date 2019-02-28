@@ -1387,11 +1387,10 @@ def prepare(aln_fasta, arg):
     if name is None:
         log.error('Bad fasta file {}.'.format(aln_fasta))
         name = None
-    interleaved = 'interleaved.fasta'
-    # for clean
     # try to avoid makeblastdb error
-    SeqIO.convert(arg.no_gap_file, 'fasta', interleaved, 'fasta')
-    return name, sequence, interleaved
+    SeqIO.convert(arg.no_gap_file, 'fasta', arg.db_file, 'fasta')
+    remove(arg.no_gap_file)
+    return name, sequence, arg.db_file
 
 
 def count_base(alignment, rows, columns):
@@ -2024,12 +2023,6 @@ def analyze_wrapper(files, arg):
         arg.out_file = splitext(clean_path(aln, arg))[0]
         result.append(analyze(aln, arg))
         log.info('')
-    # dirty work
-    try:
-        remove(arg.no_gap_file)
-        remove(arg.db_file)
-    except FileNotFoundError:
-        pass
     log.info('Analysis finished.')
     return any(result)
 
@@ -2138,6 +2131,12 @@ def main():
     log.info('Options were dumped into {}.'.format(json_file))
     log.info('Reset PATH to original value.')
     environ['PATH'] = original_path
+    log.info('Make sure temporary files were cleaned.')
+    try:
+        remove(arg.no_gap_file)
+        remove(arg.db_file)
+    except FileNotFoundError:
+        pass
     log.info('Bye.')
     return
 
