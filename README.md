@@ -170,28 +170,30 @@ python -m BarcodeFinder [input] -[options] -out [out_folder]
 python3 -m BarcodeFinder [input] -[options] -out [out_folder]
 ```
 ## Quick examples
-1. Download all _rbcL_ sequences of plants(viridiplantae) and do pre-process:
+1. Download all _rbcL_ sequences of plants(viridiplantae) and do pre-process.
+   Do not expand sequence to is upstream/downstream:
 ```
 # Windows
-python -m BarcodeFinder -gene rbcL -taxon Viridiplantae -stop 1 -out rbcL_all_plant
+python -m BarcodeFinder -gene rbcL -taxon Viridiplantae -stop 1 -out rbcL_all_plant -expand 0
 # Linux and macOS
-python3 -m BarcodeFinder -gene rbcL -taxon Viridiplantae -stop 1 -out rbcL_all_plant
+python3 -m BarcodeFinder -gene rbcL -taxon Viridiplantae -stop 1 -out rbcL_all_plant -expand 0
 ```
-2. Download all ITS sequences of _Rosa_ and do pre-process:
+2. Download all ITS sequences of _Rosa_. Do pre-process and keep redundant
+   sequences:
 ```
 # Windows
-python -m BarcodeFinder -query "internal transcribed spacer" -taxon Rosa -stop 1 -out Rosa_its
+python -m BarcodeFinder -query internal transcribed spacer -taxon Rosa -stop 1 -out Rosa_its -uniq no
 # Linux and macOS
-python3 -m BarcodeFinder -query "internal transcribed spacer" -taxon Rosa -stop 1 -out Rosa_its
+python3 -m BarcodeFinder -query internal transcribed spacer -taxon Rosa -stop 1 -out Rosa_its -uniq no
 ```
-3. Download all Rosaceae chloroplast genome sequences in RefSeq database, plus
-   your own data.  Then do pre-process and evaluation of variance (do not
-   design primers):
+3. Download all Poaceae chloroplast genome sequences in RefSeq database, plus
+   your own data. Then do pre-process and evaluation of variance (skip primer
+   design):
 ```
 # Windows
-python -m BarcodeFinder -organelle chloroplast -refseq -taxon Rosaceae -out Poaceae_cpg -fasta my_data.fasta -stop 2
+python -m BarcodeFinder -og cp -refseq -taxon Poaceae -out Poaceae_cpg -fasta my_data.fasta -stop 2
 # Linux and macOS
-python3 -m BarcodeFinder -organelle chloroplast -refseq -taxon Rosaceae -out Poaceae_cpg -fasta my_data.fasta stop 2
+python3 -m BarcodeFinder -og cp -refseq -taxon Poaceae -out Poaceae_cpg -fasta my_data.fasta stop 2
 ```
 4. Download sequences of _Zea mays_, set length between 100 bp and 3000 bp,
    plus your aligned data, then do full analysis:
@@ -205,9 +207,9 @@ python3 -m BarcodeFinder -taxon "Zea mays" -min_len 100 -max_len 3000 -out Zea_m
    keep the longest sequence for each species and do full analysis:
 ```
 # Windows
-python -m BarcodeFinder -taxon Oryza -organelle chloroplast -min_len 50000 -max_len 500000 -uniq longest -out Oryza_cp
+python -m BarcodeFinder -taxon Oryza -og cp -min_len 50000 -max_len 500000 -uniq longest -out Oryza_cp
 # Linux and macOS
-python3 -m BarcodeFinder -taxon Oryza -organelle chloroplast -min_len 50000 -max_len 500000 -uniq longest -out Oryza_cp
+python3 -m BarcodeFinder -taxon Oryza -og cp -min_len 50000 -max_len 500000 -uniq longest -out Oryza_cp
 ```
 ## Input
 BarcodeFinder accepts:
@@ -224,24 +226,49 @@ folder.
 ## Sequence ID
 BarcodeFinder use uniform sequence ID in all fasta files it generated.
 ```
-SeqName|Order|Family|Genus|Species|Accession|SpecimenID
+SeqName|Kingdom|Phylum|Class|Order|Family|Genus|Species|Accession|SpecimenID
 # example
 rbcL|Poales|Poaceae|Oryza|longistaminata|MF998442|TAN:GB60B-2014
 ```
-The order of the seven fields is fixed. Each field was seperated by the
+The order of the fields is fixed. Each field was seperated by the
 vertical bar ("|"). The space character (" ") was disallowed and it was
-replaced by underscore ("\_").  Because of technical issue, the order rank may
-be empty for animals.
+replaced by underscore ("\_"). Because of data missing, some fields may be
+empty. 
 * SeqName
 
-    It means the name of sequences. Usually it its the gene name. For spacer,
+    It means the name of sequences. Usually it is the gene name. For spacer,
     it is "geneA_geneB" that use underscore ("\_") to connect two gene's name.
-
-    Note that the original gene name in genbank file were renamed to try to
-    fix part of annotation error.
 
     If a valid sequence name could not be found in annotation of genbank file,
     BarcodeFinder will use "Unknown" instead.
+
+    For chloroplast genes, if "-rename" option was set, the program will try to
+    use regular expression to fix potential error of gene name.
+* Kingdom
+
+    The kingdom (_Fungi, Viridiplantae, Metazoa_) of species. For convenience,
+    superkingdom (_Bacteria, Archaea, Eukaryota, Viruses, Viroids_) may be used
+    if the kingdom info of sequence is missing.
+* Phylum
+
+    The phylum of the species.
+* Class
+    
+    The class of the species.
+    
+    Because some species' class is emtpy (for
+    instance, basal angiosperm), for plants, BarcodeFinder will guess the
+    class of the species.
+
+    Given taxonomy informatics in genbank file:
+    ```
+    Eukaryota; Viridiplantae; Streptophyta; Embryophyta; Tracheophyta;
+            Spermatophyta; Magnoliophyta; basal Magnoliophyta; Amborellales;
+            Amborellaceae; Amborella.
+    ```
+    BarcodeFinder will use "basal Magnoliophyta" as its class because it's
+    located before its order ("Amborellales").
+
 * Order
 
     The order name of the species.
@@ -258,15 +285,14 @@ be empty for animals.
     scientific name of the species. It may contains subspecies name.
 * Accession
 
-    The Genbank Accession number of the sequence. Do not contain version
-    number.
+    The Genbank Accession number of the sequence. It does not contain version
+    number of the record.
 * SpecimenID
 
-    The ID of specimen of the sequence. May be empty.
+    The ID of specimen of the sequence. Usually it is empty.
 ## Output
 All results will be put in the output folder. If you didn't set output path by
-"-out", BarcodeFinder will create a folder named by current time, for example,
-"2018-11-19T16-41-59.330217".
+"-out", BarcodeFinder will create a folder "Result".
 * _a_.gb
 
     The raw genbank file. The _a_ comes from the keyword of query.
@@ -289,15 +315,14 @@ All results will be put in the output folder. If you didn't set output path by
         The name of locus/fragment.
     * Score
 
-        The score of this primer pair. Usually the higher, the better.
+        The score of this pair of primer. Usually the higher, the better.
     * Samples
 
-        How many sequences were used to find this primer pair.
+        How many sequences were used to find this pair of primer.
 
     * AvgProductLength
 
         The average length of amplified DNA fragment by this pair of primer.
-        Integer.
     * StdEV
 
         The standard deviation of the AvgProductLength. Higher number means
@@ -309,11 +334,10 @@ All results will be put in the output folder. If you didn't set output path by
     * MaxProductLength
 
         The maximum length of amplified fragment. Note that all these four
-        fields were calculated by given sequences that may not cover
-        exception.
+        fields were calculated by given sequences.
     * Coverage
 
-        The coverage of this primer pair for sequences it used. Calculated by
+        The coverage of this pair of primer on sequences it used. Calculated by
         BLAST result. High coverage means it is much more "universal".
     * Resolution
 
@@ -321,19 +345,18 @@ All results will be put in the output folder. If you didn't set output path by
 
         The *observed resolution* of the sub-alignment sliced by the primer
         pair, which is equal to number of uniq sequences divided by number of
-        total sequences. The value is
-        between 0 and 1.
+        total sequences. The value is between 0 and 1.
     * TreeValue
 
         <img src="https://latex.codecogs.com/svg.latex?\dpi{300}&space;R_{T}=\frac{n_{internal}}{n_{terminal}}" title="R_{T}=\frac{n_{internal}}{n_{terminal}}" />
 
         The *tree resolution* of the sub-alignment, which is equal to number
-        of internal nodes of phylogenetic tree construted from the alignment
+        of internal nodes of phylogenetic tree (construted from the alignment)
         divided by number of terminal nodes. The value is between 0 and 1.
 
     * AvgTerminalBranchLen
 
-        The average of sum of terminal branch's length.
+        The average of terminal branch's length.
     * Entropy
 
         <img src="https://latex.codecogs.com/svg.latex?\dpi{300}&space;E_{H}&space;=&space;\frac{-&space;\sum_{i=1}^{k}{p_{i}&space;\log(p_{i})}}{\log(k)}" title="E_{H} = \frac{- \sum_{i=1}^{k}{p_{i} \log(p_{i})}}{\log(k)}" />
@@ -371,7 +394,7 @@ All results will be put in the output folder. If you didn't set output path by
     * DeltaTm
 
         The difference of melting temperature of forward and reverse primer.
-        High DeltaTm may result in failure of PCR amplified.
+        High DeltaTm may result in failure in PCR.
     * AlnStart
 
         The location of beginning of forward primer (5', leftmost of primer
@@ -454,8 +477,9 @@ All results will be put in the output folder. If you didn't set output path by
     sequence for analysis. Note that it DOES NOT skip the first step of the
     dividing.
 
-    These two folders usually can be ignored. However, sometimes, user may
-    utilize one of these intermediate result:
+    These two folders usually can be ignored. However, user may
+    utilize one of these intermediate result (especially for those who only
+    use BarcodeFinder to collect data from Genbank):
     * _b_.fasta
         The raw fasta file directly converted from genbank file which only
         contains sequences of one locus/fragment.
@@ -467,7 +491,7 @@ All results will be put in the output folder. If you didn't set output path by
         their filename.
     * _b_.uniq
 
-        Redundant sequences were removed.
+        Non-redundant sequences.
     * _b_.uniq.aln
 
         The alignment of the fasta file.
@@ -481,8 +505,8 @@ All results will be put in the output folder. If you didn't set output path by
         base's proportion in the column of the alignment.
     * _b_.uniq.consensus.fastq
 
-        The fastq format of the consensus sequence of the alignment.  Note
-        that it contains aligment gap ("-").  Although this may be the most
+        The fastq format of the consensus sequence of the alignment. Note
+        that it contains aligment gap ("-"). Although this may be the most
         useful file in the folder, it is NOT RECOMMENDED to directly use it as
         the consensus sequence of the alignment because the
         consensus-genrating algorithm were optimized for primer design that it
@@ -507,7 +531,7 @@ All results will be put in the output folder. If you didn't set output path by
 * -fasta filename
 
     User provided unaligned fasta files. Also support "\*" and "?". If you
-    want to use "-uniq" function, please rename your sequences.  See the
+    want to use "-uniq" function, please rename your sequences. See the
     format of sequence ID above.
 
 * -gb filename
@@ -517,7 +541,7 @@ All results will be put in the output folder. If you didn't set output path by
 * -stop value
 
     To break the running of BarcodeFinder in the specific step. BarcodeFinder
-    provided all-in-one solution to find novel DNA barcode.  However, some
+    provided all-in-one solution to find novel DNA barcode. However, some
     user may only want to use one module. The *value* could be
     * 1
         Only collect data and do preprocess (download, divide, remove
@@ -529,13 +553,13 @@ All results will be put in the output folder. If you didn't set output path by
 
     The output folder's name. All results will be put in the output folder. If
     you didn't set output path by "-out", BarcodeFinder will create a folder
-    named by current time, for example, "2018-11-19T16-41-59.330217".
+    named "Result".
 
     BarcodeFinder does not overwrite existing folder with same name.
 
     It is HIGHLY RECOMMENDED to use only letter, number and underscore ("_")
     in the folder name to avoid mysterious error caused by other Unicode
-    characters. :)
+    characters.
 
 ## Genbank
 * -email address
@@ -550,11 +574,13 @@ All results will be put in the output folder. If you didn't set output path by
 
 * -gene name
 
-    The gene's name user wants to query in Genbank. The "OR" and "AND" were
-    allowed. Make sure to use quotation mark. For instance, "atpB OR rbcL"
-    (include quotation mark) means gene atpB or rbcL.
+    The gene's name user wants to query in Genbank. If you want to use logical
+    expression like "OR", "AND", "NOT", please use "-query" instead.
+    If there is space in gene's name, make sure to use quotation mark.
 
-    HOWEVER, sometimes "-gene" options may bring in unwanted sequences. For
+    Note that, "ITS" is not a gene name, it is "internal transcribed spacer".
+
+    Sometimes "-gene" options may bring in unwanted sequences. For
     example, if you query "rbcL[gene]" in Genbank, spacers contain rbcL or
     rbcL's upstream/downstream gene may be found, like "atpB_rbcL spacer",
     atpB, etc.
@@ -572,8 +598,8 @@ All results will be put in the output folder. If you didn't set output path by
     * archaea
     * viruses
 
-    It is reported by anonymous user that "group" filter may return abnormal
-    records, for instance, return plants' records when the group is "animal"
+    It is reported that "group" filter may return abnormal records, for
+    instance, return plants' records when the group is "animal"
     and the "organelle" is "chloroplast". Besides, it may match a great amount
     of records on Genbank. Hence we strongly recommend to use "-taxon"
     instead.
@@ -582,26 +608,28 @@ All results will be put in the output folder. If you didn't set output path by
 
 * -min_len value
 
-    The minium length of the records downloaded from Genbank.  The default
+    The minium length of the records downloaded from Genbank. The default
     *value* is 100 (bp). The *number* must be integer.
 
 * -max_len value
 
-    The maximum length of the records downloaded from Genbank.  The default
+    The maximum length of the records downloaded from Genbank. The default
     *value* is 10000 (bp). The *number* must be integer.
 
 * -molecular type
 
     The molecular type, could be DNA or RNA. The default *type* is empty.
 
-* -organelle type
+* -og type (or -organelle type)
 
-    Add "organelle[filter]" in query that sequence was limited on given
-    organelle type. The *type* could be
+    Add "organelle[filter]" in query to limit results on given organelle type
+    only.
 
-    * mitochondrion
-    * plastid
-    * chloroplast
+    The *type* could be
+
+    * mitochondrion, or mt
+    * plastid, or pl
+    * chloroplast, or cp
 
     Usually users only want organelle genome instead of fragment. One solution
     is to set "-min_len" and "-max_len" to use length filter to get genomes.
@@ -610,9 +638,9 @@ All results will be put in the output folder. If you didn't set output path by
     For instance,
     ```
     # all chloroplast sequences of Poaceae (not only in RefSeq)
-    -taxon Poaceae -organelle chloroplast -min_len 50000 -max_len 300000
+    -taxon Poaceae -og chloroplast -min_len 50000 -max_len 300000
     # all chloroplast sequences of Poaceae (only in RefSeq)
-    -taxon Poaceae -organelle chloroplast -refseq
+    -taxon Poaceae -og chloroplast -refseq
     ```
 
     Make sure do not have typo.
@@ -643,14 +671,13 @@ All results will be put in the output folder. If you didn't set output path by
     -query refseq[filter] -taxon Poaceae -min_len 1000 -max_len 10000
     ```
 
-    Usually, this option will be combined with "-organelle" to get high
-    quality organelle genomes.
+    Usually, this option will be combined with "-og" to get organelle genomes.
 
     Note that this option is boolen type. It DOES NOT followed with a *value*.
 * -taxon taxonomy
 
     The taxonomy name. It could be any taxonomy rank. From kingdom (same with
-    "-group") to species or subspecies, as long as you input correct name
+    "-group") to species, as long as you input correct name
     (scientific name of species or taxonomic group, latin, NOT ENGLISH), it
     will restriced query to your target taxonomy unit. Make sure to use
     quotation mark if *taxonomy* has more than one word.
@@ -664,7 +691,7 @@ All results will be put in the output folder. If you didn't set output path by
     skip.
 * -max_name_len value
 
-    The maximum length of feature name. Some annotation's feature name  in
+    The maximum length of feature name. Some annotation's feature name in
     genbank file is too long and usually they are not target sequence user
     wanted. By setting this option, Barcodefinder will truncate annotation's
     feature name if too long. By default the *value* is 50.
@@ -673,7 +700,7 @@ All results will be put in the output folder. If you didn't set output path by
     The maximum length of sequence of one annotation. Some annotation's
     sequence is too long (for instance, one gene have two exons and its intron
     is longer than 10 Kb), This option will skip those long sequences. By
-    default the *value* is 20000 (20 KB).
+    default the *value* is 20000 (bp).
 
     Note that this option is different with "-max_len". This option limits the
     length of one annotation's sequence. The "-max_len" limits the whole
@@ -697,7 +724,7 @@ All results will be put in the output folder. If you didn't set output path by
     format. So it can merge same sequences to one file which are same locus
     but have variant name.
 
-    If you use Windows, please use this option to avoid confliction of
+    If you use Windows, consider to use this option to avoid confliction of
     filename.
 
     It is also a boolen type. The default is not to rename.
@@ -739,8 +766,7 @@ All results will be put in the output folder. If you didn't set output path by
 
     The step length for sliding-window scan. The default *value* is 50. If
     the input data is too big, extreamly small *value* (such as 1 or 2) may
-    cause too much time, especially when the "-f" option were not used at the
-    same time.
+    cause too much time, especially when the "-fast" option were not used.
 ## Primer Design
 * -a value
 
@@ -787,7 +813,7 @@ All results will be put in the output folder. If you didn't set output path by
         resolution* may not satisfy the requirement, either.
 
     By set it to 0, BarcodeFinder can skip this step of filteration.
-    Meanwhile, the running time may be high.
+    Meanwhile, the running may be extremly slow.
 * -t value
 
     Only keep *value* pairs of primers for each high varient region. The
@@ -822,11 +848,11 @@ the task in *minutes*. For large taxon (such as Asteraceae family or the whole
 plants kingdom) and multiple fragments (such as chloroplast genomes) the time
 may be one hour or more -- in a PC/laptop.
 
-BarcodeFinder requires few memory (usually less than 1GB, for large taxon
+BarcodeFinder requires few memory (usually less than 0.5 GB, for large taxon
 BLAST may require more) and CPU (one core is enough). It can run in normal PC
 very well. Multiple CPU cores may be helpful for the alignment and tree
 construction steps.
 
-For Windows user, it's said that MAFFT [may be very slow due to anti-virus
+For Windows user, it's reported that MAFFT [may be very slow due to anti-virus
 software](https://mafft.cbrc.jp/alignment/software/windows_without_cygwin.html).
 Please consider to follow [this instruction] (https://mafft.cbrc.jp/alignment/software/ubuntu_on_windows.html) to install Ubuntu on Windows and get better experiment.

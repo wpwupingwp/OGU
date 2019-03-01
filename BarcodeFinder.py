@@ -241,7 +241,7 @@ def parse_args():
                          help='maximum length')
     genbank.add_argument('-molecular', choices=('DNA', 'RNA'),
                          help='molecular type')
-    genbank.add_argument('-og', dest='organelle',
+    genbank.add_argument('-og', '-organelle', dest='organelle',
                          choices=('mt', 'mitochondrion', 'cp',
                                   'chloroplast''pl', 'plastid'),
                          help='organelle type')
