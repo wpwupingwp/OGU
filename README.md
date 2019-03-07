@@ -1,5 +1,6 @@
 # Table of Contents
    * [Introduction](#introduction)
+   * [Background](#background)
    * [Prerequisite](#prerequisite)
       * [Software](#software)
       * [Python module](#python-module)
@@ -18,6 +19,35 @@
       * [Evaluate](#evaluate)
       * [Primer Design](#primer-design)
    * [Performance](#performance)
+# Background
+DNA barcoding is a molecular phylogenetic method that uses a standard DNA
+sequence to identify species. By comparing sequences of specific region to
+exist reference database, samples could be identified to species, genus,
+family or higher taxonomy rank.
+Comparing to mophological identification, DNA barcoding has these advantages:
+
+* DNA sequences could offer much more characters for identification
+* requires few amount of sample (mg level)
+* samples could be any form as long as it has DNA
+* could identify mixed samples
+
+However, it also has limitation:
+
+* require high-quality reference database
+* exist DNA barcodes show poor performance in species level
+* different DNA barcodes may conflict with each other in specific taxonomic
+  group
+
+To date, DNA barcoding has been widely used in:
+
+* identify species, for research, food safety, custom inspection,
+  criminal detection, forensic, quality control of medicine, etc
+* identify mixed sample (soil, water, air, intestinal contents, etc), for
+  research, environmental survey, medical analysis, etc
+* species classfication, for classfying unsolved relationship of species,
+  delimiting cryptic species, validate mophological identification
+* species description, as supplementary information for specimen voucher
+
 # Introduction
 BarcodeFinder could automatically discover novel DNA barcodes with universal
 primers. It does three things as listed below.
