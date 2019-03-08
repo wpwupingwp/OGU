@@ -1,6 +1,8 @@
 # Table of Contents
-   * [Introduction](#introduction)
    * [Background](#background)
+   * [Introduction](#introduction)
+    * [Function](#function)
+    * [Application] (#application)
    * [Prerequisite](#prerequisite)
       * [Software](#software)
       * [Python module](#python-module)
@@ -15,7 +17,7 @@
       * [Help](#help)
       * [General](#general)
       * [Genbank](#genbank)
-      * [Preprocess](#preprocess)
+      * [Pre-process](#preprocess)
       * [Evaluate](#evaluate)
       * [Primer Design](#primer-design)
    * [Performance](#performance)
@@ -24,7 +26,7 @@ DNA barcoding is a molecular phylogenetic method that uses a standard DNA
 sequence to identify species. By comparing sequences of specific region to
 exist reference database, samples could be identified to species, genus,
 family or higher taxonomy rank.
-Comparing to mophological identification, DNA barcoding has these advantages:
+Comparing to morphological identification, DNA barcoding has these advantages:
 
 * DNA sequences could offer much more characters for identification
 * requires few amount of sample (mg level)
@@ -44,11 +46,12 @@ To date, DNA barcoding has been widely used in:
   criminal detection, forensic, quality control of medicine, etc
 * identify mixed sample (soil, water, air, intestinal contents, etc), for
   research, environmental survey, medical analysis, etc
-* species classfication, for classfying unsolved relationship of species,
-  delimiting cryptic species, validate mophological identification
+* species classification, for classifying unsolved relationship of species,
+  delimiting cryptic species, validate morphological identification
 * species description, as supplementary information for specimen voucher
 
 # Introduction
+## Function
 BarcodeFinder could automatically discover novel DNA barcodes with universal
 primers. It does three things as listed below.
 * Collect data
@@ -56,7 +59,7 @@ primers. It does three things as listed below.
     It can automatically retrieve data from NCBI Genbank with restrictions
     user provided, such as gene name, taxonomy, sequence name and organelle.
     Also, it can integrate sequences or alignments that user provided.
-* Preprocess data
+* Pre-process data
 
     Barcodefinder utilizes annotation information in data to divide sequence
     into fragments (gene, spacer, misc_feature), because data collected from
@@ -92,6 +95,23 @@ primers. It does three things as listed below.
 
     Finally, primer pairs were reordered by score to make it easy for user to
     find "best" primer pairs they want.
+## Application
+BarcodeFinder could be used to:
+* Collect data from Genbank. Full-support of Genbank's query syntax and
+  optimization of download process make it easy for usage.
+* Convert gb file to fasta. The software make good use of annotation in gb
+  file to generate well-organized fasta files. Particularly, the extraction of
+  complete taxonomy ranks made it super useful for phylogenetic researchers.
+* Clean data. Various strategies were offered to remove redundant sequences.
+  Several filters were also provided to pick out abnormal sequences.
+* Evaluate sequence polymorphism. Supports kinds of methods to calculate
+  variance of whole alignment and to mark high-variance region. Compatible
+  with ambiguous base and gap. Utilizes phylogenetic method to provide robust
+  result.
+* Design universal primer. Abundant options, smart algorithm and strict
+  validation result in reliable primers.
+* Discover novel DNA barcode for specific taxa. Automatic and high-efficient
+  process could significantly reduce researchers work to find new barcodes.
 # Prerequisite
 ## Hardware
 BarcodeFinder requires few computational resources. A normal PC/laptop is
@@ -158,7 +178,7 @@ install it:
 ```
 /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 ```
-If you find any error occured, install Xcode in App Store and retry.
+If you find any error occurred, install Xcode in App Store and retry.
 
 Then:
 ```
@@ -260,7 +280,7 @@ SeqName|Kingdom|Phylum|Class|Order|Family|Genus|Species|Accession|SpecimenID
 # example
 rbcL|Poales|Poaceae|Oryza|longistaminata|MF998442|TAN:GB60B-2014
 ```
-The order of the fields is fixed. Each field was seperated by the
+The order of the fields is fixed. Each field was separated by the
 vertical bar ("|"). The space character (" ") was disallowed and it was
 replaced by underscore ("\_"). Because of data missing, some fields may be
 empty. 
@@ -712,7 +732,7 @@ All results will be put in the output folder. If you didn't set output path by
     will restriced query to your target taxonomy unit. Make sure to use
     quotation mark if *taxonomy* has more than one word.
 
-## Preprocess
+## Pre-process
 * -expand value
 
     The expand length of upstream/downstream. The default *value* is 200 (bp).
