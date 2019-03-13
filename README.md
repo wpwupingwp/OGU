@@ -1,8 +1,8 @@
 # Table of Contents
    * [Background](#background)
    * [Introduction](#introduction)
-    * [Function](#function)
-    * [Application] (#application)
+      * [Function](#function)
+      * [Application](#application)
    * [Prerequisite](#prerequisite)
       * [Software](#software)
       * [Python module](#python-module)
