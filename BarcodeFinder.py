@@ -15,7 +15,6 @@ from platform import system
 from random import choice
 from shutil import unpack_archive, ReadError
 from subprocess import run
-from sys import exit
 from urllib.error import HTTPError
 from urllib.request import urlopen
 
@@ -1713,7 +1712,7 @@ def count_and_draw(alignment, arg):
     # how to find optimized size?
     fig, ax1 = plt.subplots(figsize=(15 + len(index) // 5000, 10))
     plt.title('Variance of {} (sample={}, window={} bp, step={} bp)\n'.format(
-        rows, basename(arg.out_file).split('.')[0], max_product, step))
+        basename(arg.out_file).split('.')[0], rows, max_product, step))
     plt.xlabel('Base')
     ax1.yaxis.set_ticks(np.linspace(0, 1, num=11))
     ax1.set_ylabel('Resolution & Shannon Equitability Index')
@@ -2038,7 +2037,7 @@ def quit(msg):
     """
     log.critical(msg)
     log.info('Quit.')
-    exit(-1)
+    raise SystemExit(-1)
 
 
 def main():
@@ -2092,7 +2091,7 @@ def main():
     if not any([wrote_by_gene, wrote_by_name, arg.aln]):
         log.critical('Data is empty, please check your input!')
         log.info('Quit.')
-        exit(-1)
+        raise SystemExit(-1)
     if arg.uniq == 'no':
         log.info('Skip removing redundant sequences.')
     else:
@@ -2120,7 +2119,7 @@ def main():
     if len(aligned) == 0:
         log.critical('Cannot find valid alignment.')
         log.info('Quit')
-        exit(-1)
+        raise SystemExit(-1)
     result = analyze_wrapper(aligned, arg)
     log.info('Finished. You can find output in {}.'.format(arg.out))
     if result:
@@ -2129,7 +2128,7 @@ def main():
     else:
         log.critical('None of input is valid.')
         log.info('Quit.')
-        exit(-1)
+        raise SystemExit(-1)
     json_file = join_path(arg.out, 'Options.json')
     with open(json_file, 'w', encoding='utf-8') as out:
         json.dump(vars(arg), out, indent=4, sort_keys=True)
