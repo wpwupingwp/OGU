@@ -1451,6 +1451,7 @@ def get_resolution(alignment, start, end, fast=False):
     """
     subalign = alignment[:, start:end]
     rows, columns = subalign.shape
+    max_h = np.log2(rows)
     total = rows * columns
     gap_ratio = 0
     resolution = 0
@@ -1465,15 +1466,13 @@ def get_resolution(alignment, start, end, fast=False):
     gap_ratio = len(subalign[subalign == b'-']) / total
     item, count = np.unique(subalign, return_counts=True, axis=0)
     resolution = len(count) / rows
-    tree_value = 0
-    avg_terminal_branch_len = 0
-    # entropy
+    # normalized entropy
     entropy = 0
     for j in count:
         p_j = j / rows
         log2_p_j = np.log2(p_j)
         entropy += log2_p_j * p_j
-    entropy *= -1
+    entropy = -1 * entropy / max_h
     # Nucleotide diversity (pi)
     m = columns
     n = rows
@@ -1686,7 +1685,6 @@ def count_and_draw(alignment, arg):
     pi_list = []
     observed_res_list = []
     tree_res_list = []
-    max_h = np.log2(rows)
     index = []
     max_plus = max_product - min_primer * 2
     max_range = columns - max_product
@@ -1927,14 +1925,14 @@ def analyze(fasta, arg):
                     'TreeResolution,ShannonIndex,AvgTerminalBranchLen,Pi\n')
             s.write('{},{},{},{:.2%},{:.6f},{:.6f},{:.6f},{:.6f},{:.6f}'
                     '\n'.format(basename(fasta), rows, columns, a_gap_ratio,
-                                a_observed_res, a_entropy, a_pi, a_tree_res,
-                                a_branch_len))
+                                a_observed_res, a_tree_res, a_entropy,
+                                a_branch_len, a_pi))
     else:
         with open(summary, 'a', encoding='utf-8') as s:
             s.write('{},{},{},{:.2%},{:.6f},{:.6f},{:.6f},{:.6f},{:.6f}'
                     '\n'.format(basename(fasta), rows, columns, a_gap_ratio,
-                                a_observed_res, a_entropy, a_pi, a_tree_res,
-                                a_branch_len))
+                                a_observed_res, a_tree_res, a_entropy,
+                                a_branch_len, a_pi))
     # exit if resolution lower than given threshold.
     if a_observed_res < arg.resolution:
         log.warning('Observed resolution is too low.')
