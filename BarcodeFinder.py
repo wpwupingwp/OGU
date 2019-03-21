@@ -1700,7 +1700,7 @@ def count_and_draw(alignment, arg):
         gap_ratio, resolution, entropy, pi, tree_value, avg_branch_len = values
         gap_ratio_list.append(gap_ratio)
         observed_res_list.append(resolution)
-        entropy_list.append(entropy / max_h)
+        entropy_list.append(entropy)
         pi_list.append(pi)
         tree_res_list.append(tree_value)
         avg_branch_len_list.append(avg_branch_len)
