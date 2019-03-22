@@ -778,44 +778,52 @@ def get_feature_name(feature, arg):
     Only handle gene, product, misc_feature, misc_RNA.
     """
     name = None
-    misc_feature = None
     if feature.type == 'gene':
         if 'gene' in feature.qualifiers:
-            gene = feature.qualifiers['gene'][0].replace(' ', '_')
+            name = feature.qualifiers['gene'][0]
             if arg.rename:
-                gene = gene_rename(gene)[0]
-            name = safe(gene)
+                name = gene_rename(name)[0]
         elif 'product' in feature.qualifiers:
-            product = feature.qualifiers['product'][0].replace(
-                ' ', '_')
-            name = safe(product)
+            name = feature.qualifiers['product'][0]
+        elif 'locus_tag' in feature.qualifiers:
+            name = feature.qualifiers['locus_tag'][0]
+        else:
+            log.warning('Cannot recognize annotation:\n{}'.format(feature))
     elif feature.type == 'misc_feature':
         if 'product' in feature.qualifiers:
-            misc_feature = feature.qualifiers['product'][0].replace(
-                ' ', '_')
+            name = feature.qualifiers['product'][0]
         elif 'note' in feature.qualifiers:
-            misc_feature = feature.qualifiers['note'][0].replace(
-                ' ', '_')
-        if (misc_feature is not None) and ('intergenic_spacer' in misc_feature
-                                           or 'IGS' in misc_feature):
-            # 'IGS' in misc_feature) and len(misc_feature) < 100):
-            name = safe(misc_feature)
-            name = name.replace('intergenic_spacer_region',
-                                'IGS')
+            name = feature.qualifiers['note'][0]
+        else:
+            log.warning('Cannot recognize annotation:\n{}'.format(feature))
+        if (name is not None) and ('intergenic_spacer' in name or 'IGS' in
+                                   name):
+            # 'IGS' in name) and len(name) < 100):
+            name = name.replace('intergenic_spacer_region', 'IGS')
     elif feature.type == 'misc_RNA':
         if 'product' in feature.qualifiers:
-            misc_feature = feature.qualifiers['product'][0].replace(
-                ' ', '_')
+            name = feature.qualifiers['product'][0]
         elif 'note' in feature.qualifiers:
-            misc_feature = feature.qualifiers['note'][0].replace(
-                ' ', '_')
-        name = safe(misc_feature)
+            name = feature.qualifiers['note'][0]
+        else:
+            log.warning('Cannot recognize annotation:\n{}'.format(feature))
         # handle ITS
         if 'internal_transcribed_spacer' in name:
             name = 'ITS'
+    elif feature.type == 'rRNA':
+        if 'product' in feature.qualifiers:
+            name = feature.qualifiers['product'][0]
+        elif 'note' in feature.qualifiers:
+            name = feature.qualifiers['note'][0]
+        else:
+            log.warning('Cannot recognize annotation:\n{}'.format(feature))
     else:
         pass
-    return name, feature.type
+    if name is not None:
+        safe_name = safe(name)
+    else:
+        safe_name = None
+    return safe_name, feature.type
 
 
 def get_spacer(genes):
@@ -1220,6 +1228,8 @@ def divide(gbfile, arg):
         genes = []
 
         for feature in record.features:
+            if feature.type == 'source':
+                continue
             name, feature_type = get_feature_name(feature, arg)
             # skip unsupport feature
             if name is None:
