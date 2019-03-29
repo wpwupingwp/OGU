@@ -242,7 +242,7 @@ def parse_args():
                          help='molecular type')
     genbank.add_argument('-og', '-organelle', dest='organelle',
                          choices=('mt', 'mitochondrion', 'cp',
-                                  'chloroplast''pl', 'plastid'),
+                                  'chloroplast', 'pl', 'plastid'),
                          help='organelle type')
     genbank.add_argument('-refseq', action='store_true',
                          help='Only search in RefSeq database')
