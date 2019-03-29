@@ -661,6 +661,49 @@ def download(arg, query):
     return file_name
 
 
+def check_gb(gbfile):
+    """
+    Records in Genbank may be problematic. Check it before parse and remove
+    abnormal records.
+    """
+    log.info('Check Genbank file to remove abnormal records.')
+    tmp_gb = 'tmp.gb'
+    old_gb = open(gbfile, 'r')
+    new_gb_file = gbfile + '.clean'
+    new_gb = open(new_gb_file, 'w')
+
+    def parse_gb(handle):
+        record = []
+        for line in handle:
+            record.append(line)
+            if line.startswith('//'):
+                yield record
+                record = []
+            else:
+                pass
+
+    wrong = 0
+    for record in parse_gb(old_gb):
+        with open(tmp_gb, 'w') as t:
+            for _ in record:
+                t.write(_)
+        try:
+            gb_record = SeqIO.read(tmp_gb, 'gb')
+            SeqIO.write(gb_record, new_gb, 'gb')
+        except ValueError as e:
+            log.critical('Found problematic record {}: {}'.format(
+                record[0][:25], e.args[0]))
+            wrong += 1
+    new_gb.close()
+    remove(tmp_gb)
+    if wrong != 0:
+        log.info('Remove {} abnormal records.'.format(wrong))
+        return new_gb_file
+    else:
+        remove(new_gb_file)
+        return gbfile
+
+
 def gene_rename(old_name):
     """
     Different name of same gene will cause data to be splited to numerous
@@ -808,7 +851,7 @@ def get_feature_name(feature, arg):
         else:
             log.warning('Cannot recognize annotation:\n{}'.format(feature))
         # handle ITS
-        if 'internal_transcribed_spacer' in name:
+        if (name is not None) and 'internal_transcribed_spacer' in name:
             name = 'ITS'
     elif feature.type == 'rRNA':
         if 'product' in feature.qualifiers:
@@ -858,6 +901,7 @@ def divide(gbfile, arg):
     # From NCBI Taxonomy Database, 2019.2.21 update
     # give all superkingdoms, kingdoms, phyla, classes because they do not
     # have uniform prefix
+    log.info('Divide {} by annotation.'.format(gbfile))
     superkingdoms = {'Bacteria', 'Archaea', 'Eukaryota', 'Viruses', 'Viroids'}
     kingdoms = {'Fungi', 'Viridiplantae', 'Metazoa'}
     phyla_str = '''
@@ -1207,6 +1251,7 @@ def divide(gbfile, arg):
     wrote_by_gene = set()
     wrote_by_name = set()
     log.info('Divide {}.'.format(gbfile))
+    sequence_id = 0
     for record in SeqIO.parse(gbfile, 'gb'):
         # only accept gene, product, and spacer in misc_features.note
         taxon_str = record.annotations['taxonomy']
@@ -1214,13 +1259,13 @@ def divide(gbfile, arg):
         organism = record.annotations['organism'].replace(' ', '_')
         genus, *species = organism.split('_')
         # species name may contain other characters
-        taxon = '{}|{}|{}|{}|{}|{}|{}'.format(kingdom, phylum, class_, order,
-                                              family, genus,
+        taxon = '{}|{}|{}|{}|{}|{}|{}'.format(kingdom, phylum, class_,
+                                              order, family, genus,
                                               '_'.join(species))
-        accession = record.annotations['accessions'][0]
+        sequence_id = accession = record.annotations['accessions'][0]
         try:
-            specimen = record.features[0].qualifiers['specimen_voucher'
-                                                     ][0].replace(' ', '_')
+            specimen = record.features[0].qualifiers[
+                'specimen_voucher'][0].replace(' ', '_')
         except (IndexError, KeyError):
             specimen = ''
         whole_seq = record.seq
@@ -1245,7 +1290,8 @@ def divide(gbfile, arg):
             if feature_type == 'gene':
                 genes.append([name, feature])
             feature_name.append(name)
-            sequence_id = '>' + '|'.join([name, taxon, accession, specimen])
+            sequence_id = '>' + '|'.join([name, taxon, accession,
+                                          specimen])
             wrote = write_seq(name, sequence_id, feature, whole_seq,
                               arg.by_gene_folder, arg)
             wrote_by_gene.add(wrote)
@@ -2084,12 +2130,13 @@ def main():
         log.info('Download data from Genbank.')
         gbfile = download(arg, query)
         if gbfile is not None:
-            log.info('Divide data by annotation.')
+            gbfile = check_gb(gbfile)
             wrote_by_gene, wrote_by_name = divide(gbfile, arg)
         else:
-            log.info('Query is empty.')
+            log.critical('Query is empty.')
     if arg.gb is not None:
         for i in list(glob(arg.gb)):
+            i = check_gb(i)
             by_gene, by_name = divide(i, arg)
             wrote_by_gene.extend(by_gene)
             wrote_by_name.extend(by_name)
