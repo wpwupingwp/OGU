@@ -2200,6 +2200,6 @@ def main():
     return
 
 
-__version__ = '0.9.33'
+__version__ = '0.9.34'
 if __name__ == '__main__':
     main()
