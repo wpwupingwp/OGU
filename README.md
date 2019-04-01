@@ -356,11 +356,6 @@ output path via "-out", BarcodeFinder will create a folder labelled "Result".
 * _a_.gb
 
     The raw Genbank file. The _a_ comes from the query's keyword.
-* _a_.gb.clean
-
-    The cleaned Genbank file. Abnormal Genbank records that lacks necessary
-    information will break the process of parsing file. BarcodeFinder can
-    remove those records and left "cleaned" Genbank files. 
 * _a_.fasta
 
     The converted fasta file of the ".gb" file.
