@@ -316,7 +316,6 @@ def parse_args():
     parsed.by_name_folder = join_path(parsed.out, 'by-name')
     # temporary filename, omit one parameters in many functions
     parsed.db_file = join_path(parsed.out, 'interleaved.fasta')
-    parsed.no_gap_file = join_path(parsed.out, 'no_gap.fasta')
     parsed.out_file = ''
     # load option.json may cause chaos, remove
     return parsed
@@ -1413,8 +1412,8 @@ def prepare(aln_fasta, arg):
     """
     data = []
     record = ['id', 'sequence']
-    with open(aln_fasta, 'r', encoding='utf-8') as raw, open(
-            arg.no_gap_file, 'w', encoding='utf-8') as no_gap:
+    no_gap = StringIO()
+    with open(aln_fasta, 'r', encoding='utf-8') as raw:
         for line in raw:
             no_gap.write(line.replace('-', ''))
             if line.startswith('>'):
@@ -1444,8 +1443,9 @@ def prepare(aln_fasta, arg):
         log.error('Bad fasta file {}.'.format(aln_fasta))
         name = None
     # try to avoid makeblastdb error
-    SeqIO.convert(arg.no_gap_file, 'fasta', arg.db_file, 'fasta')
-    remove(arg.no_gap_file)
+    no_gap.seek(0)
+    SeqIO.convert(no_gap, 'fasta', arg.db_file, 'fasta')
+    no_gap.close()
     return name, sequence, arg.db_file
 
 
@@ -2186,7 +2186,6 @@ def main():
     environ['PATH'] = original_path
     log.info('Make sure temporary files were cleaned.')
     try:
-        remove(arg.no_gap_file)
         remove(arg.db_file)
     except FileNotFoundError:
         pass
