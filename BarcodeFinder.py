@@ -7,6 +7,7 @@ import re
 from collections import defaultdict
 from glob import glob
 from itertools import product as cartesian_product
+from io import StringIO
 from os import (cpu_count, devnull, environ, mkdir, pathsep, remove, rename,
                 sep)
 from os.path import abspath, basename, exists, splitext
@@ -667,7 +668,6 @@ def check_gb(gbfile):
     abnormal records.
     """
     log.info('Check Genbank file to remove abnormal records.')
-    tmp_gb = 'tmp.gb'
     old_gb = open(gbfile, 'r')
     new_gb_file = gbfile + '.clean'
     new_gb = open(new_gb_file, 'w')
@@ -684,9 +684,9 @@ def check_gb(gbfile):
 
     wrong = 0
     for record in parse_gb(old_gb):
-        with open(tmp_gb, 'w') as t:
-            for _ in record:
-                t.write(_)
+        tmp_gb = StringIO()
+        tmp_gb.write(''.join(record))
+        tmp_gb.seek(0)
         try:
             gb_record = SeqIO.read(tmp_gb, 'gb')
             SeqIO.write(gb_record, new_gb, 'gb')
@@ -695,7 +695,7 @@ def check_gb(gbfile):
                 record[0][:25], e.args[0]))
             wrong += 1
     new_gb.close()
-    remove(tmp_gb)
+    tmp_gb.close()
     if wrong != 0:
         log.info('Remove {} abnormal records.'.format(wrong))
         return new_gb_file
