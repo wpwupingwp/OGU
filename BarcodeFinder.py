@@ -2094,7 +2094,7 @@ def main():
     """
     main function
     """
-    log.info('Welcome to BarcodeFinder!')
+    log.info('Welcome to BarcodeFinder v{}.'.format(__version__))
     arg = parse_args()
     if arg is None:
         quit('Empty input! Please use "-h" options for help info.')
@@ -2193,5 +2193,6 @@ def main():
     return
 
 
+__version__ = '0.9.33'
 if __name__ == '__main__':
     main()
