@@ -744,6 +744,12 @@ output path via "-out", BarcodeFinder will create a folder labelled "Result".
     genomes.
 
     Note that this option is of Boolean type. It IS NOT followed with a *value*.
+
+* -seq_n value
+
+    Download part of records. The *value* should be integer.
+
+    The defaule *value* is None, i.e., download all records.
 * -taxon taxonomy
 
     The taxonomy name. It could be any taxonomic rank from kingdom (same as

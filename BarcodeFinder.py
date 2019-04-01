@@ -245,9 +245,11 @@ def parse_args():
                          choices=('mt', 'mitochondrion', 'cp',
                                   'chloroplast', 'pl', 'plastid'),
                          help='organelle type')
+    genbank.add_argument('-query', nargs='*', help='query text')
     genbank.add_argument('-refseq', action='store_true',
                          help='Only search in RefSeq database')
-    genbank.add_argument('-query', nargs='*', help='query text')
+    genbank.add_argument('-seq_n', default=None, type=int,
+                         help='maximum number of records to download')
     genbank.add_argument('-taxon', help='Taxonomy name')
     pre = arg.add_argument_group('Preprocess')
     pre.add_argument('-expand', type=int, default=200,
@@ -611,6 +613,11 @@ def download(arg, query):
                         count))
     else:
         log.info('Got {} records.'.format(count))
+    if arg.seq_n is not None:
+        if count > arg.seq_n:
+            count = arg.seq_n
+            log.info('Download {} records becase of "-seq_n".'.format(
+                arg.seq_n))
     log.info('Downloading... Ctrl+C to quit.')
     name_words = []
     for i in (arg.group, arg.taxon, arg.organelle, arg.gene, arg.query):
