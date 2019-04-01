@@ -662,15 +662,12 @@ def download(arg, query):
     return file_name
 
 
-def check_gb(gbfile):
+def clean_gb(gbfile):
     """
-    Records in Genbank may be problematic. Check it before parse and remove
+    Records in Genbank may be problematic. Check it before parse and skip
     abnormal records.
     """
     log.info('Check Genbank file to remove abnormal records.')
-    old_gb = open(gbfile, 'r')
-    new_gb_file = gbfile + '.clean'
-    new_gb = open(new_gb_file, 'w')
 
     def parse_gb(handle):
         record = []
@@ -683,25 +680,24 @@ def check_gb(gbfile):
                 pass
 
     wrong = 0
+    old_gb = open(gbfile, 'r')
     for record in parse_gb(old_gb):
+        # StringIO is faster than write tmp file to disk and read
         tmp_gb = StringIO()
-        tmp_gb.write(''.join(record))
+        for _ in record:
+            tmp_gb.write(_)
         tmp_gb.seek(0)
         try:
             gb_record = SeqIO.read(tmp_gb, 'gb')
-            SeqIO.write(gb_record, new_gb, 'gb')
+            yield gb_record
         except ValueError as e:
             log.critical('Found problematic record {}: {}'.format(
                 record[0][:25], e.args[0]))
             wrong += 1
-    new_gb.close()
     tmp_gb.close()
+    old_gb.close()
     if wrong != 0:
         log.info('Remove {} abnormal records.'.format(wrong))
-        return new_gb_file
-    else:
-        remove(new_gb_file)
-        return gbfile
 
 
 def gene_rename(old_name):
@@ -1252,7 +1248,7 @@ def divide(gbfile, arg):
     wrote_by_name = set()
     log.info('Divide {}.'.format(gbfile))
     sequence_id = 0
-    for record in SeqIO.parse(gbfile, 'gb'):
+    for record in clean_gb(gbfile):
         # only accept gene, product, and spacer in misc_features.note
         taxon_str = record.annotations['taxonomy']
         kingdom, phylum, class_, order, family = get_taxon(taxon_str)
@@ -2130,13 +2126,11 @@ def main():
         log.info('Download data from Genbank.')
         gbfile = download(arg, query)
         if gbfile is not None:
-            gbfile = check_gb(gbfile)
             wrote_by_gene, wrote_by_name = divide(gbfile, arg)
         else:
             log.critical('Query is empty.')
     if arg.gb is not None:
         for i in list(glob(arg.gb)):
-            i = check_gb(i)
             by_gene, by_name = divide(i, arg)
             wrote_by_gene.extend(by_gene)
             wrote_by_name.extend(by_name)
