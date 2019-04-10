@@ -230,6 +230,7 @@ def parse_args():
     general.add_argument('-out', help='output directory')
     genbank = arg.add_argument_group('Genbank')
     genbank.add_argument('-email', help='email address for querying Genbank')
+    genbank.add_argument('-exclude', help='exclude option')
     genbank.add_argument('-gene', type=str, help='gene name')
     genbank.add_argument('-group',
                          choices=('animals', 'plants', 'fungi', 'protists',
@@ -561,10 +562,7 @@ def get_query_string(arg):
              'RNA': 'biomol_mrna[PROP]'}
         condition.append(d[arg.molecular])
     if arg.taxon is not None:
-        if ' ' in arg.taxon:
-            condition.append('"{}"[ORGANISM]'.format(arg.taxon))
-        else:
-            condition.append('{}[ORGANISM]'.format(arg.taxon))
+        condition.append('{}[ORGANISM]'.format(arg.taxon))
     if arg.organelle is not None:
         if arg.organelle in og_dict:
             condition.append('{}[filter]'.format(og_dict[arg.organelle]))
@@ -576,10 +574,14 @@ def get_query_string(arg):
                                  not None):
         condition.append('("{}"[SLEN] : "{}"[SLEN])'.format(
             arg.min_len, arg.max_len))
+    if arg.exclude is not None:
+        condition.append('NOT ({})'.format(arg.exclude))
     if not condition:
         return None
     else:
-        return ' AND '.join(condition)
+        string = ' AND '.join(condition)
+        string = string.replace('AND NOT', 'NOT')
+        return string
 
 
 def download(arg, query):
@@ -2200,6 +2202,6 @@ def main():
     return
 
 
-__version__ = '0.9.34'
+__version__ = '0.9.35'
 if __name__ == '__main__':
     main()

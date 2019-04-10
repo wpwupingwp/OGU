@@ -640,6 +640,21 @@ output path via "-out", BarcodeFinder will create a folder labelled "Result".
     _However, for the convenience of the user, BarcodeFinder will use
     "guest@example.com" if the user does not provide an email address._
 
+* -exclude option
+
+    Use this option to use negative option. For instance, "-exclude Zea
+    [organism]" (do not include quotation marks) will add " NOT
+    (Zea[organism])" to the query.
+
+    This option can be useful for exclude specific taxon.
+    ```
+    -taxon Zea -exclude "Zea mays"[organism]
+    ```
+    This will query all records in genus *Zea* while records of *Zea mays*
+    will be exclude.
+
+    For much more complex exclude options, please consider to use "Advance
+    search" in Genbank website.
 * -gene name
 
     The gene's name which the user wants to query in Genbank. If the user
