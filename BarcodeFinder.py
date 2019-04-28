@@ -1266,7 +1266,10 @@ def divide(gbfile, arg):
         taxon = '{}|{}|{}|{}|{}|{}|{}'.format(kingdom, phylum, class_,
                                               order, family, genus,
                                               '_'.join(species))
-        sequence_id = accession = record.annotations['accessions'][0]
+        try:
+            sequence_id = accession = record.annotations['accessions'][0]
+        except KeyError:
+            sequence_id = accession = ''
         try:
             specimen = record.features[0].qualifiers[
                 'specimen_voucher'][0].replace(' ', '_')
