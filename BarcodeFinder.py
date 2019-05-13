@@ -211,6 +211,13 @@ class BlastResult:
          self.query_start, self.query_end, self.hit_start,
          self.hit_end) = [int(i) for i in record[3:]]
 
+    def __repr__(self):
+        fmt = ('query_id: {}\thit_id: {}\tbitscore_raw: {}\tquery_start:{}\t'
+               'query_end: {}\thit_start: {}\thit_end: {}')
+        return fmt.format(self.query_id, self.hit_id, self.bitscore_raw,
+                          self.query_start, self.query_end, self.hit_start,
+                          self.hit_end)
+
 
 def parse_args():
     """
