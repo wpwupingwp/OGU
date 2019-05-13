@@ -554,7 +554,6 @@ def get_query_string(arg):
     Based on given options, generate query string from Genbank.
     """
     condition = []
-    og_dict = {'mt': 'mitochondrion', 'pl': 'plastid', 'cp': 'chloroplast'}
     if arg.group is not None:
         condition.append('{}[filter]'.format(arg.group))
     if arg.query is not None:
@@ -571,10 +570,10 @@ def get_query_string(arg):
     if arg.taxon is not None:
         condition.append('{}[ORGANISM]'.format(arg.taxon))
     if arg.organelle is not None:
-        if arg.organelle in og_dict:
-            condition.append('{}[filter]'.format(og_dict[arg.organelle]))
+        if arg.organelle in ('mt', 'mitochondrion'):
+            condition.append('{mitochondrion}[filter]')
         else:
-            condition.append('{}[filter]'.format(arg.organelle))
+            condition.append('(plastid[filter] OR chloroplast[filter])')
     if arg.refseq:
         condition.append('refseq[filter]')
     if (len(condition) > 0) and (arg.min_len is not None and arg.max_len is
