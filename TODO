@@ -58,8 +58,8 @@
 #58. do not check dependency if stop 1
 #59. use set to speedup order_exceptions
 #60. figure axis
-61. test install
-62. iqtree to IQ-TREE
+# 61. test install
+# 62. iqtree to IQ-TREE
 63. max_hsp, filter
 #64. data missing at head/tail
 65. blast score/penalty
@@ -68,4 +68,4 @@
 #68. rewrite uniq
 69. fix no_divide
 70. NC_ repeat with other accession
-71. plastid or chloroplast
+# 71. plastid or chloroplast
