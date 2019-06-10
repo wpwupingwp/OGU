@@ -2213,6 +2213,6 @@ def main():
     return
 
 
-__version__ = '0.9.35'
+__version__ = '0.9.37'
 if __name__ == '__main__':
     main()
