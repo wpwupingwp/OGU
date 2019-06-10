@@ -648,6 +648,8 @@ def download(arg, query):
     retry = 0
     while ret_start < count:
         log.info('{:d}--{:d}'.format(ret_start, ret_start + ret_max))
+        # Entrez accept at most 3 times per second
+        # However, due to slow network, it's fine :)
         try:
             data = Entrez.efetch(db='nuccore',
                                  webenv=query_handle['WebEnv'],
