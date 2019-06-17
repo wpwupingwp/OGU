@@ -1996,12 +1996,12 @@ def analyze(fasta, arg):
     # a_ : alignment
     (a_gap_ratio, a_observed_res, a_entropy, a_pi, a_tree_res,
      a_branch_len) = get_resolution(alignment, 0, columns)
-    log.info('Gap ratio: {}'.format(a_gap_ratio))
-    log.info('Observed resolution: {}'.format(a_observed_res))
-    log.info('Normalized Shannon Index: {}'.format(a_entropy))
-    log.info('Pi: {}'.format(a_pi))
-    log.info('Tree resolution: {}'.format(a_tree_res))
-    log.info('Average terminal branch length: {}'.format(a_branch_len))
+    log.info('\tGap ratio:\t{}'.format(a_gap_ratio))
+    log.info('\tObserved resolution:\t{}'.format(a_observed_res))
+    log.info('\tNormalized Shannon Index:\t{}'.format(a_entropy))
+    log.info('\tPi:\t{}'.format(a_pi))
+    log.info('\tTree resolution:\t{}'.format(a_tree_res))
+    log.info('\tAverage terminal branch length:\t{}'.format(a_branch_len))
     summary = join_path(arg.out, 'Loci.csv')
     if not exists(summary):
         with open(summary, 'w', encoding='utf-8') as s:
