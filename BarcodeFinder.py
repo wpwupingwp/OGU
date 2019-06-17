@@ -1278,11 +1278,18 @@ def divide(gbfile, arg):
             sequence_id = accession = record.annotations['accessions'][0]
         except KeyError:
             sequence_id = accession = ''
-        try:
+        specimen = ''
+        isolate = ''
+        if 'specimen_voucher' in record.features[0].qualifiers:
             specimen = record.features[0].qualifiers[
                 'specimen_voucher'][0].replace(' ', '_')
-        except (IndexError, KeyError):
-            specimen = ''
+        if 'isolate' in record.features[0].qualifiers:
+            isolate = record.features[0].qualifiers[
+                'isolate'][0].replace(' ', '_')
+        # do not change id format, use one field
+        # usually the record only has one of them
+        specimen = '_'.join([specimen, isolate]).rstrip('_')
+        # except (IndexError, KeyError):
         whole_seq = record.seq
         feature_name = []
         genes = []
