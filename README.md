@@ -230,12 +230,11 @@ python3 -m BarcodeFinder [input] -[options] -out [out_folder]
 ```
 ## Quick examples
 1. Download all _rbcL_ sequences of plants(viridiplantae) and do pre-process.
-   Do not expand sequence to its upstream/downstream:
 ```
 # Windows
-python -m BarcodeFinder -gene rbcL -taxon Viridiplantae -stop 1 -out rbcL_all_plant -expand 0
+python -m BarcodeFinder -gene rbcL -taxon Viridiplantae -stop 1 -out rbcL_all_plant
 # Linux and macOS
-python3 -m BarcodeFinder -gene rbcL -taxon Viridiplantae -stop 1 -out rbcL_all_plant -expand 0
+python3 -m BarcodeFinder -gene rbcL -taxon Viridiplantae -stop 1 -out rbcL_all_plant
 ```
 2. Download all ITS sequences of _Rosa_. Do pre-process and keep redundant
    sequences:
@@ -776,10 +775,16 @@ output path via "-out", BarcodeFinder will create a folder labelled "Result".
 ## Pre-process
 * -expand value
 
-    The expand length for going upstream/downstream. The default *value* is
-    200 (bp). If set, BarcodeFinder will expand the sequence to its
-    upstream/downstream after the dividing step to find primer candidates. Set
-    the *number* to 0 to skip.
+    The expand length for going upstream/downstream. If set, BarcodeFinder
+    will expand the sequence to its upstream/downstream after the dividing
+    step to find primer candidates. Set the *number* to 0 to skip.
+
+    The default value is 0 if users set "-stop" to 1 or 2, i.e., users do not
+    want to run the primer-design process.
+
+    If users run the whole process but forget to set "-expand", BarcodeFinder
+    will automatically set "-expand" to 200. However, users can force the
+    program to not to expand the sequence by setting it to 0.
 * -max_name_len value
 
     The maximum length of a feature name. Some annotation's feature name in

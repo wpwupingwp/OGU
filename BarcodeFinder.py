@@ -260,7 +260,7 @@ def parse_args():
                          help='maximum number of records to download')
     genbank.add_argument('-taxon', help='Taxonomy name')
     pre = arg.add_argument_group('Preprocess')
-    pre.add_argument('-expand', type=int, default=200,
+    pre.add_argument('-expand', type=int,
                      help='expand length of upstream/downstream')
     pre.add_argument('-max_name_len', default=50,
                      help='maximum length of feature name')
@@ -298,6 +298,11 @@ def parse_args():
     primer.add_argument('-tmax', dest='max_product', type=int, default=600,
                         help='maximum product length(include primer)')
     parsed = arg.parse_args()
+    if parsed.stop is None and parsed.expand is None:
+        # expand 200 for primer design
+        parsed.expand = 200
+        log.warning('In order to design primers, set "--expand" to '
+                    '{}.'.format(parsed.expand))
     if parsed.fast:
         log.info('The "-fast" mode was opened. '
                  'Skip sliding-window scan with tree.')
@@ -802,7 +807,7 @@ def write_seq(name, sequence_id, feature, whole_seq, path, arg):
     with open(filename, 'a', encoding='utf-8') as handle:
         handle.write(sequence_id + '\n')
         handle.write(str(sequence) + '\n')
-    if arg.expand != 0:
+    if arg.expand != 0 or arg.expand is not None:
         if feature.location_operator == 'join':
             loc = feature.location.parts
             # ensure increasing order
