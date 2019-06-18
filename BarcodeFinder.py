@@ -303,6 +303,8 @@ def parse_args():
         parsed.expand = 200
         log.warning('In order to design primers, set "--expand" to '
                     '{}.'.format(parsed.expand))
+    elif parsed.stop is not None and parsed.expand is None:
+        parsed.expand = 0
     if parsed.fast:
         log.info('The "-fast" mode was opened. '
                  'Skip sliding-window scan with tree.')
@@ -807,7 +809,7 @@ def write_seq(name, sequence_id, feature, whole_seq, path, arg):
     with open(filename, 'a', encoding='utf-8') as handle:
         handle.write(sequence_id + '\n')
         handle.write(str(sequence) + '\n')
-    if arg.expand != 0 or arg.expand is not None:
+    if arg.expand != 0:
         if feature.location_operator == 'join':
             loc = feature.location.parts
             # ensure increasing order
