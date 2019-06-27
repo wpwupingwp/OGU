@@ -1,19 +1,19 @@
 #1. integrate gb2fasta
 #2. integrate batch_query
-# 3. integrate uniq
+#3. integrate uniq
 #4. integrate remove-long
 #5. use Shannon Index
-# 6. pick primer pair
-# 7. too few primer found!!!!!!!!!!!!!
-# 8. some primers do not have info (test2,156989)
+#6. pick primer pair
+#7. too few primer found!!!!!!!!!!!!!
+#8. some primers do not have info (test2,156989)
 #9. 30min for a cp genome, too slow
 #10. try to replace Bio.SearchIO (10 second+, 50% of runtime)
 #11. +1 or not
-# 12. use tree_value or not, mafft seems give 1.0 always
+#12. use tree_value or not, mafft seems give 1.0 always
 #13. too slow for chloroplast genome, 10 samples, 6 hours
 #14. difflib
-# 15. log
-# 16. give fragment name by gb file
+#15. log
+#16. give fragment name by gb file
 #17. use time.test2 to profile
 #18. too much primer candidate
 #19. update_id for Pair
@@ -23,13 +23,13 @@
 23. GC content
 24. delta G
 #25. integrate mafft
-# 26. matK.aln use 89 seconds, need profiling (now 7s)
-# 27. clean output file
-# 28. print hint
-# 29. reorder functions
-# 30. package
-# 31. update to pip
-# 32. requirement
+#26. matK.aln use 89 seconds, need profiling (now 7s)
+#27. clean output file
+#28. print hint
+#29. reorder functions
+#30. package
+#31. update to pip
+#32. requirement
 #33. readme
 #34. figure title as gene name
 #35. rps12
@@ -38,7 +38,7 @@
 #38. use namedtuple
 39. BiopythonParserWarning: Expected sequence length 491, found 1083 (U58558.1).
 #40. add animal order
-# 41. use avg to calc tm
+#41. use avg to calc tm
 #42. stop 1 for divide, 2 for analyze, 3 for primer design
 #43. TypeError: unique() got an unexpected keyword argument 'axis'
 #44. time usage, memory usage
@@ -52,14 +52,14 @@
 #52. check memory usage of pick_pair
 #53. no_gap.fasta should not be put on current workdir
 #54. Pair's init seems slow
-55. score # and sample number
+55. score #and sample number
 56. genaf for genome?
 57. trnK_matK?(get_spacer())
 #58. do not check dependency if stop 1
 #59. use set to speedup order_exceptions
 #60. figure axis
-# 61. test install
-# 62. iqtree to IQ-TREE
+#61. test install
+#62. iqtree to IQ-TREE
 63. max_hsp, filter
 #64. data missing at head/tail
 65. blast score/penalty
@@ -68,7 +68,7 @@
 #68. rewrite uniq
 69. fix no_divide
 70. NC_ repeat with other accession
-# 71. plastid or chloroplast
+#71. plastid or chloroplast
 #72. expand 0 if stop 1
 73. intron
 74. gene CDS tRNA rRNA spacer

@@ -4,5 +4,5 @@ coloredlogs>=10.0
 matplotlib>=3.0.0
 numpy>=1.15.2
 pip>=18.0
-primer3-py>=0.5.7
+primer3-py==0.5.7
 wheel>=0.32.3
