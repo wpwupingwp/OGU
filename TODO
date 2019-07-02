@@ -76,3 +76,5 @@
 76. No. of gene
 #77. isotype or specimen
 78. strand
+#79. consider to use primer3 rather than primer3-py
+80. A_B or B_A
