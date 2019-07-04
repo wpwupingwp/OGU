@@ -904,9 +904,9 @@ def get_spacer(genes):
         c_name, current = genes[i+1]
         invert_repeat = False
         repeat = False
+        name = '_'.join([b_name, c_name])
         # 1. A.start--A.end--B.start--B.end
         if before.location.end <= current.location.start:
-            name = '_'.join([b_name, c_name])
             # check invert repeat
             invert_name = '_'.join([c_name, b_name])
             if invert_name in names:
@@ -942,7 +942,7 @@ def get_spacer(genes):
                             'invert_repeat': str(invert_repeat)})
             spacer_down = SeqFeature(
                 type='mosaic_spacer',
-                id=name,
+                id='_'.join([c_name, b_name]),
                 location=FeatureLocation(current.location.end+1,
                                          before.location.end-1),
                 qualifiers={'upstream': b_name,
