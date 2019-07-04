@@ -904,7 +904,6 @@ def get_spacer(genes):
         c_name, current = genes[i+1]
         invert_repeat = False
         repeat = False
-        mosaic = False
         # 1. A.start--A.end--B.start--B.end
         if before.location.end <= current.location.start:
             name = '_'.join([b_name, c_name])
@@ -918,13 +917,13 @@ def get_spacer(genes):
                 names.add(name)
             spacer = SeqFeature(
                 type='spacer',
+                id=name,
                 location=FeatureLocation(before.location.end+1,
                                          current.location.start-1),
                 qualifiers={'upstream': b_name,
                             'downstream': c_name,
                             'repeat': str(repeat),
-                            'invert_repeat': str(invert_repeat),
-                            'mosaic': str(mosaic)})
+                            'invert_repeat': str(invert_repeat)})
             spacers.append(spacer)
         # 2. A.start--B.start--A.end--B.end
         elif before.location.end <= current.location.end:
@@ -932,25 +931,24 @@ def get_spacer(genes):
             pass
         # 3. A.start--B.start--B.end--A.end
         else:
-            mosaic = True
             spacer_up = SeqFeature(
-                type='spacer',
+                type='mosaic_spacer',
+                id=name,
                 location=FeatureLocation(before.location.start+1,
                                          current.location.start-1),
                 qualifiers={'upstream': b_name,
                             'downstream': c_name,
                             'repeat': str(repeat),
-                            'invert_repeat': str(invert_repeat),
-                            'mosaic': str(mosaic)})
+                            'invert_repeat': str(invert_repeat)})
             spacer_down = SeqFeature(
-                type='spacer',
+                type='mosaic_spacer',
+                id=name,
                 location=FeatureLocation(current.location.end+1,
                                          before.location.end-1),
                 qualifiers={'upstream': b_name,
                             'downstream': c_name,
                             'repeat': str(repeat),
-                            'invert_repeat': str(invert_repeat),
-                            'mosaic': str(mosaic)})
+                            'invert_repeat': str(invert_repeat)})
             spacers.extend([spacer_up, spacer_down])
         if len(spacer) == 0:
             continue
@@ -1374,7 +1372,7 @@ def divide(gbfile, arg):
         spacers = get_spacer(genes)
         for spacer in spacers:
             if len(spacer) > arg.max_seq_len:
-                log.warning('Spacer {} too long (Accession {}).'.format(
+                log.warning('Spacer {} too long (Accession {}). Skip.'.format(
                     spacer.id, accession))
                 continue
             sequence_id = '>' + '|'.join([spacer.id, taxon,
