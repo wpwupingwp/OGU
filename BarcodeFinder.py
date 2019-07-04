@@ -950,9 +950,7 @@ def get_spacer(genes):
                             'repeat': str(repeat),
                             'invert_repeat': str(invert_repeat)})
             spacers.extend([spacer_up, spacer_down])
-        if len(spacer) == 0:
-            continue
-    spacers = [i for i in spacer if len(i) != 0]
+    spacers = [i for i in spacers if len(i) != 0]
     return spacers
 
 
