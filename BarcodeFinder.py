@@ -891,25 +891,70 @@ def get_feature_name(feature, arg):
 def get_spacer(genes):
     """
     Given list of genes, extract spacers.
+    genes: [name, feature]
     """
-    spacers = []
+    if len(genes) <= 1:
+        return []
+    spacers = list()
+    names = set()
     # sorted according to sequence starting postion
     genes.sort(key=lambda x: int(x[1].location.start))
-    for n, present in enumerate(genes[1:], 1):
-        before = genes[n - 1]
-        # use sort to handle complex location relationship of two fragments
-        location = [before[1].location.start, before[1].location.end,
-                    present[1].location.start, present[1].location.end]
-        location.sort(key=lambda x: int(x))
-        start, end = location[1:3]
-        if before[1].location.strand == present[1].location.strand == -1:
-            strand = -1
+    for i in range(len(genes)-1):
+        b_name, before = genes[i]
+        c_name, current = genes[i+1]
+        invert_repeat = False
+        repeat = False
+        mosaic = False
+        # 1. A.start--A.end--B.start--B.end
+        if before.location.end <= current.location.start:
+            name = '_'.join([b_name, c_name])
+            # check invert repeat
+            invert_name = '_'.join([c_name, b_name])
+            if invert_name in names:
+                invert_repeat = True
+            elif name in names:
+                repeat = True
+            else:
+                names.add(name)
+            spacer = SeqFeature(
+                type='spacer',
+                location=FeatureLocation(before.location.end+1,
+                                         current.location.start-1),
+                qualifiers={'upstream': b_name,
+                            'downstream': c_name,
+                            'repeat': str(repeat),
+                            'invert_repeat': str(invert_repeat),
+                            'mosaic': str(mosaic)})
+            spacers.append(spacer)
+        # 2. A.start--B.start--A.end--B.end
+        elif before.location.end <= current.location.end:
+            # overlap, no spacer
+            pass
+        # 3. A.start--B.start--B.end--A.end
         else:
-            strand = 1
-        name = '_'.join([before[0], present[0]])
-        spacer = SeqFeature(FeatureLocation(start, end), id=name,
-                            type='spacer', strand=strand)
-        spacers.append(spacer)
+            mosaic = True
+            spacer_up = SeqFeature(
+                type='spacer',
+                location=FeatureLocation(before.location.start+1,
+                                         current.location.start-1),
+                qualifiers={'upstream': b_name,
+                            'downstream': c_name,
+                            'repeat': str(repeat),
+                            'invert_repeat': str(invert_repeat),
+                            'mosaic': str(mosaic)})
+            spacer_down = SeqFeature(
+                type='spacer',
+                location=FeatureLocation(current.location.end+1,
+                                         before.location.end-1),
+                qualifiers={'upstream': b_name,
+                            'downstream': c_name,
+                            'repeat': str(repeat),
+                            'invert_repeat': str(invert_repeat),
+                            'mosaic': str(mosaic)})
+            spacers.extend([spacer_up, spacer_down])
+        if len(spacer) == 0:
+            continue
+    spacers = [i for i in spacer if len(i) != 0]
     return spacers
 
 
