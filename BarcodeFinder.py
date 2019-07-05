@@ -811,7 +811,7 @@ def write_seq(name, sequence_id, feature, whole_seq, path, arg):
         return sequence
 
     filename = join_path(path, name + '.fasta')
-    sequence = careful_extract(whole_seq)
+    sequence = careful_extract(feature, whole_seq)
     with open(filename, 'a', encoding='utf-8') as handle:
         handle.write(sequence_id + '\n')
         handle.write(str(sequence) + '\n')
@@ -1371,13 +1371,19 @@ def divide(gbfile, arg):
             wrote = write_seq(name, sequence_id, feature, whole_seq,
                               arg.by_gene_folder, arg)
             wrote_by_gene.add(wrote)
-
         # extract spacer
         spacers = get_spacer(genes)
+        # write spacer annotations
+        if not arg.allow_mosaic_spacer:
+            spacers = [i for i in spacers if i.type != 'mosaic_spacer']
+        record.features.extend(spacers)
+        gb_plus = gbfile + '.plus'
+        SeqIO.write(record, gb_plus, 'gb')
         if not arg.allow_repeat_spacer:
             log.warning('Skip repeat or invert-repeat spacers.')
             spacers = [i for i in spacers if i.qualifiers['repeat'] == 'False'
                        and i.qualifiers['invert_repeat'] == 'False']
+        # write seq
         for spacer in spacers:
             if len(spacer) > arg.max_seq_len:
                 log.warning('Spacer {} too long (Accession {}). Skip.'.format(
@@ -1408,12 +1414,6 @@ def divide(gbfile, arg):
             wrote_by_name.add(filename)
         # write raw fasta
         SeqIO.write(record, handle_raw, 'fasta')
-        # write spacer annotations
-        if not arg.allow_mosaic_spacer:
-            spacers = [i for i in spacers if i.type != 'mosaic_spacer']
-        record.features.extend(spacers)
-        gb_plus = gbfile + '.plus'
-        SeqIO.write(record, gb_plus, 'gb')
 
     # skip analyze of Unknown.fasta
     unknown = join_path(arg.by_name_folder, 'Unknown.fasta')
