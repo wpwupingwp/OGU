@@ -1377,8 +1377,8 @@ def divide(gbfile, arg):
         if not arg.allow_mosaic_spacer:
             spacers = [i for i in spacers if i.type != 'mosaic_spacer']
         record.features.extend(spacers)
-        gb_plus = gbfile + '.plus'
-        SeqIO.write(record, gb_plus, 'gb')
+        with open(gbfile+'.plus', 'a') as gb_plus:
+            SeqIO.write(record, gb_plus, 'gb')
         if not arg.allow_repeat_spacer:
             log.warning('Skip repeat or invert-repeat spacers.')
             spacers = [i for i in spacers if i.qualifiers['repeat'] == 'False'
