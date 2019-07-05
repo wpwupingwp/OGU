@@ -920,8 +920,8 @@ def get_spacer(genes):
             spacer = SeqFeature(
                 type='spacer',
                 id=name,
-                location=FeatureLocation(before.location.end+1,
-                                         current.location.start-1),
+                location=FeatureLocation(before.location.end,
+                                         current.location.start),
                 qualifiers={'upstream': b_name,
                             'downstream': c_name,
                             'repeat': str(repeat),
@@ -936,8 +936,8 @@ def get_spacer(genes):
             spacer_up = SeqFeature(
                 type='mosaic_spacer',
                 id=name,
-                location=FeatureLocation(before.location.start+1,
-                                         current.location.start-1),
+                location=FeatureLocation(before.location.start,
+                                         current.location.start),
                 qualifiers={'upstream': b_name,
                             'downstream': c_name,
                             'repeat': str(repeat),
@@ -945,8 +945,8 @@ def get_spacer(genes):
             spacer_down = SeqFeature(
                 type='mosaic_spacer',
                 id='_'.join([c_name, b_name]),
-                location=FeatureLocation(current.location.end+1,
-                                         before.location.end-1),
+                location=FeatureLocation(current.location.end,
+                                         before.location.end),
                 qualifiers={'upstream': b_name,
                             'downstream': c_name,
                             'repeat': str(repeat),
@@ -1404,7 +1404,7 @@ def divide(gbfile, arg):
         if arg.mosaic_spacer:
             record.features.extend(spacers)
         else:
-            real_spacer = [i for i in spacers if not i.qualifiers['mosaic']]
+            real_spacer = [i for i in spacers if i.type != 'mosaic_spacer']
             record.features.extend(real_spacer)
         gb_plus = gbfile + '.plus'
         SeqIO.write(record, gb_plus, 'gb')
