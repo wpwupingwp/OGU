@@ -800,7 +800,7 @@ def write_seq(name, sequence_id, feature, whole_seq, path, arg):
     Write fasta file.
     """
 
-    def careful_extract(whole_seq):
+    def careful_extract(feature, whole_seq):
         # illegal annotation may cause extraction failed
         try:
             sequence = feature.extract(whole_seq)
@@ -831,7 +831,7 @@ def write_seq(name, sequence_id, feature, whole_seq, path, arg):
                                 loc[-1].strand)])
             feature.location = new_loc
         feature.type = 'expand'
-        sequence = careful_extract(whole_seq)
+        sequence = careful_extract(feature, whole_seq)
         filename2 = join_path(path, '{}.expand'.format(name))
         with open(filename2, 'a', encoding='utf-8') as handle:
             handle.write(sequence_id + '\n')
