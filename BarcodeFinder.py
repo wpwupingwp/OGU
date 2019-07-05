@@ -249,6 +249,8 @@ def parse_args():
                          help='maximum length')
     genbank.add_argument('-molecular', choices=('DNA', 'RNA'),
                          help='molecular type')
+    genbank.add_argument('-mosaic_spacer', action='store_true',
+                         help='allow mosaic spacer')
     genbank.add_argument('-og', '-organelle', dest='organelle',
                          choices=('mt', 'mitochondrion', 'cp',
                                   'chloroplast', 'pl', 'plastid'),
@@ -1398,6 +1400,14 @@ def divide(gbfile, arg):
             wrote_by_name.add(filename)
         # write raw fasta
         SeqIO.write(record, handle_raw, 'fasta')
+        # write spacer annotations
+        if arg.mosaic_spacer:
+            record.features.extend(spacers)
+        else:
+            real_spacer = [i for i in spacers if not i.qualifiers['mosaic']]
+            record.features.extend(real_spacer)
+        gb_plus = gbfile + '.plus'
+        SeqIO.write(record, gb_plus, 'gb')
 
     # skip analyze of Unknown.fasta
     unknown = join_path(arg.by_name_folder, 'Unknown.fasta')
