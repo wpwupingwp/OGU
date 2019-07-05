@@ -654,8 +654,10 @@ def download(arg, query):
         ret_max = 1000
     elif count >= 100:
         ret_max = 100
-    else:
+    elif count >= 10:
         ret_max = 10
+    else:
+        ret_max = 1
     retry = 0
     while ret_start < count:
         log.info('{:d}--{:d}'.format(ret_start, ret_start + ret_max))
