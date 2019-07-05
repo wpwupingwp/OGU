@@ -249,8 +249,10 @@ def parse_args():
                          help='maximum length')
     genbank.add_argument('-molecular', choices=('DNA', 'RNA'),
                          help='molecular type')
-    genbank.add_argument('-mosaic_spacer', action='store_true',
+    genbank.add_argument('-allow_mosaic_spacer', action='store_true',
                          help='allow mosaic spacer')
+    genbank.add_argument('-allow_repeat_spacer', action='store_true',
+                         help='allow repeat spacer, especially in IR region')
     genbank.add_argument('-og', '-organelle', dest='organelle',
                          choices=('mt', 'mitochondrion', 'cp',
                                   'chloroplast', 'pl', 'plastid'),
@@ -1370,6 +1372,10 @@ def divide(gbfile, arg):
 
         # extract spacer
         spacers = get_spacer(genes)
+        if not arg.allow_repeat_spacer:
+            log.warning('Skip repeat or invert-repeat spacers.')
+            spacers = [i for i in spacers if i.qualifiers['repeat'] == 'False'
+                       and i.qualifiers['invert_repeat'] == 'False']
         for spacer in spacers:
             if len(spacer) > arg.max_seq_len:
                 log.warning('Spacer {} too long (Accession {}). Skip.'.format(
@@ -1401,11 +1407,9 @@ def divide(gbfile, arg):
         # write raw fasta
         SeqIO.write(record, handle_raw, 'fasta')
         # write spacer annotations
-        if arg.mosaic_spacer:
-            record.features.extend(spacers)
-        else:
-            real_spacer = [i for i in spacers if i.type != 'mosaic_spacer']
-            record.features.extend(real_spacer)
+        if not arg.allow_mosaic_spacer:
+            spacers = [i for i in spacers if i.type != 'mosaic_spacer']
+        record.features.extend(spacers)
         gb_plus = gbfile + '.plus'
         SeqIO.write(record, gb_plus, 'gb')
 
