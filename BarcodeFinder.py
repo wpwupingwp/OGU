@@ -635,7 +635,7 @@ def download(arg, query):
     if arg.seq_n is not None:
         if count > arg.seq_n:
             count = arg.seq_n
-            log.info('Download {} records becase of "-seq_n".'.format(
+            log.info('Download {} records because of "-seq_n".'.format(
                 arg.seq_n))
     log.info('Downloading... Ctrl+C to quit.')
     name_words = []
