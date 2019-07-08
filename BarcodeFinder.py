@@ -797,49 +797,65 @@ def gene_rename(old_name):
     return new_name, gene_type
 
 
-def write_seq(name, sequence_id, feature, whole_seq, path, arg):
+def write_seq(record, seq_info, whole_seq, arg):
     """
     Write fasta file.
+    record: [name, feature]
+    seq_info: (taxon, accession, specimen)
+    ID format: >name|taxon|accession|specimen
+    Return: {filename}
     """
 
-    def careful_extract(feature, whole_seq):
+    def careful_extract(name, feature, whole_seq):
         # illegal annotation may cause extraction failed
+
         try:
             sequence = feature.extract(whole_seq)
         except ValueError:
             sequence = ''
             log.warning('Cannot extract sequence of {} from {}.'.format(
-                name, sequence_id))
+                name, seq_info[1]))
         return sequence
 
-    filename = join_path(path, name + '.fasta')
-    sequence = careful_extract(feature, whole_seq)
-    with open(filename, 'a', encoding='utf-8') as handle:
-        handle.write(sequence_id + '\n')
-        handle.write(str(sequence) + '\n')
-    if arg.expand != 0:
-        if feature.location_operator == 'join':
-            loc = feature.location.parts
-            # ensure increasing order
-            # parts do not have sort method
-            loc.sort(key=lambda x: x.start)
-            new_loc = sum([
-                # avoid IndexError
-                FeatureLocation(max(0, loc[0].start - arg.expand),
-                                loc[0].end, loc[0].strand),
-                *loc[1:-1],
-                FeatureLocation(loc[-1].start,
-                                min(len(whole_seq), loc[-1].end+arg.expand),
-                                loc[-1].strand)])
-            feature.location = new_loc
-        feature.type = 'expand'
-        sequence = careful_extract(feature, whole_seq)
-        filename2 = join_path(path, '{}.expand'.format(name))
-        with open(filename2, 'a', encoding='utf-8') as handle:
+    path = arg.by_gene_folder
+    seq_len = len(whole_seq)
+    filenames = set()
+    for i in record:
+        name, feature = i
+        # skip abnormal annotation
+        if len(feature) > arg.max_seq_len:
+            log.warning('Annotaion of {} (Accession {}) '
+                        'is too long. Skip.'.format(name, seq_info[1]))
+        sequence_id = '>' + '|'.join([name, *seq_info])
+        filename = join_path(path, name + '.fasta')
+        sequence = careful_extract(name, feature, whole_seq)
+        with open(filename, 'a', encoding='utf-8') as handle:
             handle.write(sequence_id + '\n')
             handle.write(str(sequence) + '\n')
-        return filename2
-    return filename
+        filenames.add(filename)
+        if arg.expand != 0:
+            if feature.location_operator == 'join':
+                loc = feature.location.parts
+                # ensure increasing order
+                # parts do not have sort method
+                loc.sort(key=lambda x: x.start)
+                new_loc = sum([
+                    # avoid IndexError
+                    FeatureLocation(max(0, loc[0].start-arg.expand),
+                                    loc[0].end, loc[0].strand),
+                    *loc[1:-1],
+                    FeatureLocation(loc[-1].start,
+                                    min(seq_len, loc[-1].end+arg.expand),
+                                    loc[-1].strand)])
+                feature.location = new_loc
+            feature.type = 'expand'
+            sequence = careful_extract(feature, whole_seq)
+            filename2 = join_path(path, '{}.expand'.format(name))
+            with open(filename2, 'a', encoding='utf-8') as handle:
+                handle.write(sequence_id + '\n')
+                handle.write(str(sequence) + '\n')
+            filenames.add(filename2)
+    return filenames
 
 
 def get_feature_name(feature, arg):
@@ -1319,7 +1335,7 @@ def divide(gbfile, arg):
     wrote_by_gene = set()
     wrote_by_name = set()
     log.info('Divide {}.'.format(gbfile))
-    sequence_id = 0
+    accession = ''
     for record in clean_gb(gbfile):
         # only accept gene, product, and spacer in misc_features.note
         taxon_str = record.annotations['taxonomy']
@@ -1331,9 +1347,9 @@ def divide(gbfile, arg):
                                               order, family, genus,
                                               '_'.join(species))
         try:
-            sequence_id = accession = record.annotations['accessions'][0]
+            accession = record.annotations['accessions'][0]
         except KeyError:
-            sequence_id = accession = ''
+            accession = ''
         specimen = ''
         isolate = ''
         if 'specimen_voucher' in record.features[0].qualifiers:
@@ -1346,10 +1362,11 @@ def divide(gbfile, arg):
         # usually the record only has one of them
         specimen = '_'.join([specimen, isolate]).rstrip('_')
         # except (IndexError, KeyError):
+        seq_info = (taxon, accession, specimen)
         whole_seq = record.seq
         feature_name = []
         genes = []
-
+        # get genes
         for feature in record.features:
             if feature.type == 'source':
                 continue
@@ -1360,19 +1377,13 @@ def divide(gbfile, arg):
             if len(name) > arg.max_name_len:
                 log.warning('Too long name: {}. Truncated.'.format(name))
                 name = name[:arg.max_name_len] + '...'
-            # skip abnormal annotation
-            if len(feature) > arg.max_seq_len:
-                log.warning('Skip abnormal annotaion of {}'
-                            '(Accession {}).'.format(name, accession))
                 continue
             if feature_type == 'gene':
                 genes.append([name, feature])
             feature_name.append(name)
-            sequence_id = '>' + '|'.join([name, taxon, accession,
-                                          specimen])
-            wrote = write_seq(name, sequence_id, feature, whole_seq,
-                              arg.by_gene_folder, arg)
-            wrote_by_gene.add(wrote)
+        # write genes
+        wrote = write_seq(genes, seq_info, whole_seq, arg)
+        wrote_by_gene.update(wrote)
         # extract spacer
         spacers = get_spacer(genes)
         # write spacer annotations
@@ -1386,16 +1397,9 @@ def divide(gbfile, arg):
             spacers = [i for i in spacers if i.qualifiers[
                 'invert_repeat'] == 'False']
         # write seq
-        for spacer in spacers:
-            if len(spacer) > arg.max_seq_len:
-                log.warning('Spacer {} too long (Accession {}). Skip.'.format(
-                    spacer.id, accession))
-                continue
-            sequence_id = '>' + '|'.join([spacer.id, taxon,
-                                          accession, specimen])
-            wrote = write_seq(spacer.id, sequence_id, spacer, whole_seq,
-                              arg.by_gene_folder, arg)
-            wrote_by_gene.add(wrote)
+        spacers_to_write = [[i.id, i] for i in spacers]
+        wrote = write_seq(spacers_to_write, seq_info, whole_seq, arg)
+        wrote_by_gene.update(wrote)
         # write to group_by name, i.e., one gb record one fasta
         if 'ITS' in feature_name:
             name_str = 'ITS'
