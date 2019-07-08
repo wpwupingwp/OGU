@@ -251,8 +251,10 @@ def parse_args():
                          help='molecular type')
     genbank.add_argument('-allow_mosaic_spacer', action='store_true',
                          help='allow mosaic spacer')
-    genbank.add_argument('-allow_repeat_spacer', action='store_true',
-                         help='allow repeat spacer, especially in IR region')
+    genbank.add_argument('-allow_repeat', action='store_true',
+                         help='allow repeat genes or spacer')
+    genbank.add_argument('-allow_invert_repeat', action='store_true',
+                         help='allow invert-repeat spacers')
     genbank.add_argument('-og', '-organelle', dest='organelle',
                          choices=('mt', 'mitochondrion', 'cp',
                                   'chloroplast', 'pl', 'plastid'),
@@ -1379,10 +1381,10 @@ def divide(gbfile, arg):
         record.features.extend(spacers)
         with open(gbfile+'.plus', 'a') as gb_plus:
             SeqIO.write(record, gb_plus, 'gb')
-        if not arg.allow_repeat_spacer:
-            log.warning('Skip repeat or invert-repeat spacers.')
-            spacers = [i for i in spacers if i.qualifiers['repeat'] == 'False'
-                       and i.qualifiers['invert_repeat'] == 'False']
+        if not arg.allow_invert_repeat:
+            log.warning('Skip invert-repeat spacers.')
+            spacers = [i for i in spacers if i.qualifiers[
+                'invert_repeat'] == 'False']
         # write seq
         for spacer in spacers:
             if len(spacer) > arg.max_seq_len:

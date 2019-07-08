@@ -77,7 +77,8 @@
 #77. isotype or specimen
 78. strand
 #79. consider to use primer3 rather than primer3-py
-80. A_B or B_A
+#80. A_B or B_A
 81. use pathlib
-82. readme for gb.plus, spacer options
+#82. readme for gb.plus, spacer options
 83. expand create new feature instead of change old
+#84. repeat option apply on gene

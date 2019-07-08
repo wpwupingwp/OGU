@@ -355,6 +355,9 @@ output path via "-out", BarcodeFinder will create a folder labelled "Result".
 * _a_.gb
 
     The raw Genbank file. The _a_ comes from the query's keyword.
+* _a_.gb.plus
+
+    The raw Genbank file plus extended annotations for spacers and introns.
 * _a_.fasta
 
     The converted fasta file of the ".gb" file.
@@ -629,6 +632,30 @@ output path via "-out", BarcodeFinder will create a folder labelled "Result".
     Unicode characters.
 
 ## Genbank
+* -allow_mosaic_spacer
+    
+    If one gene is nested with another gene, normally they do not have spacers.
+
+    However, some users want the fragments between two gene's beginnings and
+    ends. This option is for this specific purpose. For normal usage, *do not
+    recommend*.
+* -allow_repeat
+
+    If genes repeated in downstream, this option will allow the repeat region
+    to be extracted, otherwise any repeated region will be omitted.
+    
+    The default value is False.
+* -allow_invert_repeat
+
+    If two genes invert-repeated in downstream, this option will allow the
+    spacer of them to be extracted, otherwise the spacer will be omitted.
+
+    For instance, geneA-geneB located in one invert-repeat region (IR) of
+    chloroplast genome. In another IR region, there are geneB-geneA. This
+    option will extract sequences of two different direction as two unique
+    spacers.
+    
+    The default value is False.
 * -email address
 
     BarcodeFinder uses Biopython to handle the communication between the user
@@ -945,8 +972,8 @@ output path via "-out", BarcodeFinder will create a folder labelled "Result".
 For a taxon that is not very large and includes few fragments, BarcodeFinder
 can finish the task in *minutes*. For a large taxon (such as the Asteraceae
 family or the whole class of the Poales) and multiple fragments (such as the
-chloroplast genomes), the time to completion may be one hour or more on a PC
-or laptop.
+chloroplast genomes), the time to complete may be one hour or more on a PC or
+laptop.
 
 BarcodeFinder requires less memory (usually less than 0.5 GB, although, for a
 large taxon BLAST may require more) and few CPUs (one core is enough). It can
