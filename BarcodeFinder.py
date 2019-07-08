@@ -339,7 +339,7 @@ def parse_args():
         return None
     if parsed.out is None:
         log.warning('Output folder was not set.')
-        log.info('Use "Result" instead.')
+        log.info('\tUse "Result" instead.')
         parsed.out = 'Result'
     parsed.by_gene_folder = join_path(parsed.out, 'by-gene')
     parsed.by_name_folder = join_path(parsed.out, 'by-name')
@@ -619,11 +619,12 @@ def download(arg, query):
     TOO_MUCH = 50000
     # 100 is enough?
     RETRY_MAX = 100
-    log.info('Query:\t{}'.format(query))
+    log.info('\tQuery string:')
+    log.info('\t{}'.format(query))
     if arg.email is None:
         Entrez.email = 'guest@example.com'
-        log.warning('You did not provide email address for using Entrez, '
-                    'use {} instead.'.format(Entrez.email))
+        log.info('\tEmail address for using Entrez missing, '
+                 'use {} instead.'.format(Entrez.email))
     else:
         Entrez.email = arg.email
     query_handle = Entrez.read(Entrez.esearch(db='nuccore', term=query,
@@ -639,13 +640,14 @@ def download(arg, query):
                     'sending huge queries you may be blocked by NCBI.'.format(
                         count))
     else:
-        log.info('Got {} records.'.format(count))
+        log.info('\tGot {} records.'.format(count))
     if arg.seq_n is not None:
         if count > arg.seq_n:
             count = arg.seq_n
-            log.info('Download {} records because of "-seq_n".'.format(
+            log.info('\tDownload {} records because of "-seq_n".'.format(
                 arg.seq_n))
-    log.info('Downloading... Ctrl+C to quit.')
+    log.info('\tDownloading...')
+    log.warning('\tMay be slow if connection is bad. Ctrl+C to quit.')
     name_words = []
     for i in (arg.group, arg.taxon, arg.organelle, arg.gene, arg.query):
         if i is not None:
@@ -668,7 +670,7 @@ def download(arg, query):
         ret_max = 1
     retry = 0
     while ret_start < count:
-        log.info('{:d}--{:d}'.format(ret_start, ret_start + ret_max))
+        log.info('\t{:d}--{:d}'.format(ret_start, ret_start + ret_max))
         # Entrez accept at most 3 times per second
         # However, due to slow network, it's fine :)
         try:
@@ -704,7 +706,7 @@ def clean_gb(gbfile):
     Records in Genbank may be problematic. Check it before parse and skip
     abnormal records.
     """
-    log.info('Check Genbank file to remove abnormal records.')
+    log.info('\tCheck Genbank file to remove abnormal records.')
 
     def parse_gb(handle):
         record = []
@@ -728,13 +730,13 @@ def clean_gb(gbfile):
             gb_record = SeqIO.read(tmp_gb, 'gb')
             yield gb_record
         except ValueError as e:
-            log.critical('Found problematic record {}: {}'.format(
+            log.critical('\tFound problematic record {}: {}'.format(
                 record[0][:25], e.args[0]))
             wrong += 1
     tmp_gb.close()
     old_gb.close()
     if wrong != 0:
-        log.info('Remove {} abnormal records.'.format(wrong))
+        log.info('\tRemove {} abnormal records.'.format(wrong))
 
 
 def gene_rename(old_name):
@@ -1353,7 +1355,6 @@ def divide(gbfile, arg):
     handle_raw = open(raw_fasta, 'w', encoding='utf-8')
     wrote_by_gene = set()
     wrote_by_name = set()
-    log.info('Divide {}.'.format(gbfile))
     accession = ''
     for record in clean_gb(gbfile):
         # only accept gene, product, and spacer in misc_features.note
@@ -1489,8 +1490,6 @@ def uniq(files, arg):
                 if idx in keep:
                     SeqIO.write(record, out, 'fasta')
         uniq_files.append(new)
-    log.info('In summary, {} of {} records were kept in {} files'.format(
-        kept, total, len(files)))
     return uniq_files
 
 
@@ -2303,7 +2302,7 @@ def main():
     log.info('Options were dumped into {}.'.format(json_file))
     log.info('Reset PATH to original value.')
     environ['PATH'] = original_path
-    log.info('Make sure temporary files were cleaned.')
+    log.info('Clean temporary files.')
     try:
         remove(arg.db_file)
     except FileNotFoundError:
