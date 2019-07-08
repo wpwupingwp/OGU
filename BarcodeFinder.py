@@ -826,6 +826,7 @@ def write_seq(record, seq_info, whole_seq, arg):
     path = arg.by_gene_folder
     seq_len = len(whole_seq)
     filenames = set()
+    expand_files = set()
     record_uniq = []
     if not arg.allow_repeat:
         names = set()
@@ -870,7 +871,9 @@ def write_seq(record, seq_info, whole_seq, arg):
             with open(filename2, 'a', encoding='utf-8') as handle:
                 handle.write(sequence_id + '\n')
                 handle.write(str(sequence) + '\n')
-            filenames.add(filename2)
+            expand_files.add(filename2)
+    if arg.expand != 0:
+        return expand_files
     return filenames
 
 
