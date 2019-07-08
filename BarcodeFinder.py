@@ -327,7 +327,7 @@ def parse_args():
     # join nargs
     if parsed.query is not None:
         parsed.query = ' '.join(parsed.query)
-    if parsed.refseq:
+    if parsed.refseq and parsed.gene is None:
         log.info('Reset the limitation of sequence length for RefSeq.')
         parsed.min_len = None
         parsed.max_len = None
@@ -865,7 +865,7 @@ def write_seq(record, seq_info, whole_seq, arg):
                                     loc[-1].strand)])
                 feature.location = new_loc
             feature.type = 'expand'
-            sequence = careful_extract(feature, whole_seq)
+            sequence = careful_extract(name, feature, whole_seq)
             filename2 = join_path(path, '{}.expand'.format(name))
             with open(filename2, 'a', encoding='utf-8') as handle:
                 handle.write(sequence_id + '\n')

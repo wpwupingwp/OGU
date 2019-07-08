@@ -54,7 +54,7 @@
 #54. Pair's init seems slow
 55. score #and sample number
 56. genaf for genome?
-57. trnK_matK?(get_spacer())
+#57. trnK_matK?(get_spacer())
 #58. do not check dependency if stop 1
 #59. use set to speedup order_exceptions
 #60. figure axis
@@ -82,4 +82,4 @@
 #82. readme for gb.plus, spacer options
 83. expand create new feature instead of change old
 #84. repeat option apply on gene
-85. repeat rrna
+#85. repeat rrna
