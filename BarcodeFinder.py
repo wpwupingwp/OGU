@@ -304,6 +304,12 @@ def parse_args():
     primer.add_argument('-tmax', dest='max_product', type=int, default=600,
                         help='maximum product length(include primer)')
     parsed = arg.parse_args()
+    if parsed.allow_repeat:
+        log.warning("Repeat genes or spacers will be kept as user's wish.")
+    if parsed.allow_invert_repeat:
+        log.warning("Invert-repeat spacers will be kept.")
+    if parsed.allow_mosaic_spacer:
+        log.warning('The "spacers" of overlapped genes will be kept.')
     if parsed.stop is None and parsed.expand is None:
         # expand 200 for primer design
         parsed.expand = 200
@@ -822,14 +828,12 @@ def write_seq(record, seq_info, whole_seq, arg):
     filenames = set()
     record_uniq = []
     if not arg.allow_repeat:
-        log.info('Remove repeat annotations.')
         names = set()
         for i in record:
             if i[0] not in names:
                 record_uniq.append(i)
                 names.add(i[0])
     else:
-        log.warning("Keep repeat annotations as user's wish.")
         record_uniq = record
 
     for i in record_uniq:
@@ -1405,7 +1409,6 @@ def divide(gbfile, arg):
         with open(gbfile+'.plus', 'a') as gb_plus:
             SeqIO.write(record, gb_plus, 'gb')
         if not arg.allow_invert_repeat:
-            log.warning('Skip invert-repeat spacers.')
             spacers = [i for i in spacers if i.qualifiers[
                 'invert_repeat'] == 'False']
         # write seq
@@ -1447,12 +1450,15 @@ def uniq(files, arg):
     Remove redundant sequences of same species.
     """
     uniq_files = []
+    total = 0
+    kept = 0
     for fasta in files:
         info = defaultdict(lambda: list())
         keep = dict()
         index = 0
         for record in SeqIO.parse(fasta, 'fasta'):
             # gene|kingdom|phylum|class|order|family|genus|species|specimen
+            total += 1
             if '|' in record.id:
                 name = ' '.join(record.id.split('|')[6:8])
             else:
@@ -1473,14 +1479,15 @@ def uniq(files, arg):
             for i in info:
                 info[i] = choice(info[i])
             keep = {info[i][0] for i in info}
+        kept += len(keep)
         new = clean_path(fasta, arg) + '.uniq'
         with open(new, 'w', encoding='utf-8') as out:
             for idx, record in enumerate(SeqIO.parse(fasta, 'fasta')):
                 if idx in keep:
                     SeqIO.write(record, out, 'fasta')
-        log.info('{} of {} records were kept in {}'.format(len(keep), index,
-                                                           fasta))
         uniq_files.append(new)
+    log.info('In summary, {} of {} records were kept in {} files'.format(
+        kept, total, len(files)))
     return uniq_files
 
 
