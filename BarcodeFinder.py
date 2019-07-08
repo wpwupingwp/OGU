@@ -820,7 +820,19 @@ def write_seq(record, seq_info, whole_seq, arg):
     path = arg.by_gene_folder
     seq_len = len(whole_seq)
     filenames = set()
-    for i in record:
+    record_uniq = []
+    if not arg.allow_repeat:
+        log.info('Remove repeat annotations.')
+        names = set()
+        for i in record:
+            if i[0] not in names:
+                record_uniq.append(i)
+                names.add(i[0])
+    else:
+        log.warning("Keep repeat annotations as user's wish.")
+        record_uniq = record
+
+    for i in record_uniq:
         name, feature = i
         # skip abnormal annotation
         if len(feature) > arg.max_seq_len:
