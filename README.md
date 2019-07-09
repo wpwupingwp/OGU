@@ -285,9 +285,9 @@ in the folder.
 ## Sequence ID
 BarcodeFinder uses a uniform sequence ID for all fasta files that it generates.
 ```
-SeqName|Kingdom|Phylum|Class|Order|Family|Genus|Species|Accession|SpecimenID
+SeqName|Kingdom|Phylum|Class|Order|Family|Genus|Species|Accession|SpecimenID|Type
 # example
-rbcL|Poales|Poaceae|Oryza|longistaminata|MF998442|TAN:GB60B-2014
+rbcL|Poales|Poaceae|Oryza|longistaminata|MF998442|TAN:GB60B-2014|
 ```
 The order of the fields is fixed. The fields are separated by vertical bars
 ("|"). The space character (" ") was disallowed and was replaced by an
@@ -349,6 +349,9 @@ underscore ("\_"). Due to missing data, some fields may be empty.
 * SpecimenID
 
     The ID of the specimen of the sequence. Usually this value is empty.
+* Type
+
+    The type of the sequence. Could be "gene", "spacer", "intron" or else.
 ## Output
 All results will be put in the output folder. If the user does not set the
 output path via "-out", BarcodeFinder will create a folder labelled "Result".

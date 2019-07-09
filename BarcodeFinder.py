@@ -810,7 +810,7 @@ def write_seq(record, seq_info, whole_seq, arg):
     Write fasta files to "by-gene" folder only.
     record: [name, feature]
     seq_info: (taxon, accession, specimen)
-    ID format: >name|taxon|accession|specimen
+    ID format: >name|taxon|accession|specimen|type
     Return: {filename}
     """
 
@@ -845,7 +845,7 @@ def write_seq(record, seq_info, whole_seq, arg):
         if len(feature) > arg.max_seq_len:
             log.warning('Annotaion of {} (Accession {}) '
                         'is too long. Skip.'.format(name, seq_info[1]))
-        sequence_id = '>' + '|'.join([name, *seq_info])
+        sequence_id = '>' + '|'.join([name, *seq_info, feature.type])
         filename = join_path(path, name + '.fasta')
         sequence = careful_extract(name, feature, whole_seq)
         with open(filename, 'a', encoding='utf-8') as handle:
@@ -1508,7 +1508,7 @@ def uniq(files, arg):
         keep = dict()
         index = 0
         for record in SeqIO.parse(fasta, 'fasta'):
-            # gene|kingdom|phylum|class|order|family|genus|species|specimen
+            # gene|kingdom|phylum|class|order|family|genus|species|specimen|type
             total += 1
             if '|' in record.id:
                 name = ' '.join(record.id.split('|')[6:8])
