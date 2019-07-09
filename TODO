@@ -70,7 +70,7 @@
 70. NC_ repeat with other accession
 #71. plastid or chloroplast
 #72. expand 0 if stop 1
-73. intron
+#73. intron
 74. gene CDS tRNA rRNA spacer
 75. upstream/downstream gene
 76. No. of gene
@@ -84,3 +84,4 @@
 #84. repeat option apply on gene
 #85. repeat rrna
 86. indent for log
+87. intron for trna and rrna that missed in gene

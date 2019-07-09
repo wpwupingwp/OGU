@@ -949,11 +949,12 @@ def get_spacer(genes):
         c_name, current = genes[i+1]
         invert_repeat = False
         repeat = False
-        name = '_'.join([b_name, c_name])
+        # gene name may contain "_", use "-" instead
+        name = '-'.join([b_name, c_name])
         # 1. A.start--A.end--B.start--B.end
         if before.location.end <= current.location.start:
             # check invert repeat
-            invert_name = '_'.join([c_name, b_name])
+            invert_name = '-'.join([c_name, b_name])
             if invert_name in names:
                 invert_repeat = True
             elif name in names:
@@ -987,7 +988,7 @@ def get_spacer(genes):
                             'invert_repeat': str(invert_repeat)})
             spacer_down = SeqFeature(
                 type='mosaic_spacer',
-                id='_'.join([c_name, b_name]),
+                id='-'.join([c_name, b_name]),
                 location=FeatureLocation(current.location.end,
                                          before.location.end),
                 qualifiers={'upstream': b_name,
@@ -1006,7 +1007,7 @@ def get_intron(genes):
     Return:
         intron(list): [name, feature]
     """
-    genes_with_intron = [i for i in genes if i.location_operator == 'join']
+    genes_with_intron = [i for i in genes if i[1].location_operator == 'join']
     # exons = []
     introns = []
     for gene_name, feature in genes_with_intron:
@@ -1031,7 +1032,7 @@ def get_intron(genes):
                 n_intron = n_part - i
             intron = SeqFeature(
                 type='intron',
-                id='.'.join([gene_name, n_intron]),
+                id='{}.{}'.format(gene_name, n_intron),
                 location=FeatureLocation(before.end,
                                          current.start,
                                          before.strand),
