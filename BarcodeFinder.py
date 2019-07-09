@@ -807,7 +807,7 @@ def gene_rename(old_name):
 
 def write_seq(record, seq_info, whole_seq, arg):
     """
-    Write fasta file.
+    Write fasta files to "by-gene" folder only.
     record: [name, feature]
     seq_info: (taxon, accession, specimen)
     ID format: >name|taxon|accession|specimen
@@ -997,6 +997,48 @@ def get_spacer(genes):
             spacers.extend([spacer_up, spacer_down])
     spacers = [i for i in spacers if len(i) != 0]
     return spacers
+
+
+def get_intron(genes):
+    """
+    Given list of genes, extract introns.
+    genes: [name, feature]
+    Return:
+        intron(list): [name, feature]
+    """
+    genes_with_intron = [i for i in genes if i.location_operator == 'join']
+    # exons = []
+    introns = []
+    for gene_name, feature in genes_with_intron:
+        # for n, part in enumerate(feature.location.parts):
+        #     exon = SeqFeature(
+        #     type='exon',
+        #     id='-'.join([gene_name, n+1]),
+        #     location=part,
+        #     qualifiers={'gene': gene_name,
+        #                 'count': n+1})
+        # exons.append(exon)
+        n_part = len(feature.location.parts)
+        strand = feature.location.strand
+        for i in range(n_part-1):
+            before = feature.location.parts[i]
+            current = feature.location.parts[i+1]
+            # complement strand use reversed index
+            # n_intron start with 1 instead of 0
+            if strand != -1:
+                n_intron = i + 1
+            else:
+                n_intron = n_part - i
+            intron = SeqFeature(
+                type='intron',
+                id='.'.join([gene_name, n_intron]),
+                location=FeatureLocation(before.end,
+                                         current.start,
+                                         before.strand),
+                qualifiers={'gene': gene_name,
+                            'count': n_intron})
+            introns.append(intron)
+    return introns
 
 
 def divide(gbfile, arg):
@@ -1410,6 +1452,9 @@ def divide(gbfile, arg):
         if not arg.allow_mosaic_spacer:
             spacers = [i for i in spacers if i.type != 'mosaic_spacer']
         record.features.extend(spacers)
+        # extract intron
+        introns = get_intron(genes)
+        record.features.extend(introns)
         with open(gbfile+'.plus', 'a') as gb_plus:
             SeqIO.write(record, gb_plus, 'gb')
         if not arg.allow_invert_repeat:
@@ -1417,8 +1462,10 @@ def divide(gbfile, arg):
                 'invert_repeat'] == 'False']
         # write seq
         spacers_to_write = [[i.id, i] for i in spacers]
+        introns_to_write = [(i.id, i) for i in introns]
         wrote = write_seq(spacers_to_write, seq_info, whole_seq, arg)
         wrote_by_gene.update(wrote)
+        _ = write_seq(introns_to_write, seq_info, whole_seq, arg)
         # write to group_by name, i.e., one gb record one fasta
         if 'ITS' in feature_name:
             name_str = 'ITS'
