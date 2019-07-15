@@ -1018,7 +1018,7 @@ def get_intron(genes):
             if strand != -1:
                 n_intron = i + 1
             else:
-                n_intron = n_part - i
+                n_intron = n_part - i - 1
             intron = SeqFeature(
                 type='intron',
                 id='{}.{}'.format(gene_name, n_intron),
@@ -2366,6 +2366,6 @@ def main():
     return
 
 
-__version__ = '0.9.39'
+__version__ = '0.9.40'
 if __name__ == '__main__':
     main()
