@@ -749,6 +749,8 @@ def gene_rename(old_name):
     Ideally, use BLAST to re-annotate sequence is the best(and slow) way to
     find the correct name. This function only offers a "hotfix".
     """
+    if old_name is None:
+        return None, None
     lower = old_name.lower()
     # (trna|trn(?=[b-z]))
     s = re.compile(r'(\d+\.?\d?)(s|rrn|rdna)')
@@ -884,53 +886,37 @@ def get_feature_name(feature, arg):
     Get feature name and collect genes for extract spacer.
     Only handle gene, product, misc_feature, misc_RNA.
     """
-    name = None
-    if feature.type == 'gene':
+    def extract_name(feature):
         if 'gene' in feature.qualifiers:
             name = feature.qualifiers['gene'][0]
-            if arg.rename:
-                name = gene_rename(name)[0]
         elif 'product' in feature.qualifiers:
             name = feature.qualifiers['product'][0]
         elif 'locus_tag' in feature.qualifiers:
             name = feature.qualifiers['locus_tag'][0]
         else:
             log.warning('Cannot recognize annotation:\n{}'.format(feature))
-    elif feature.type == 'misc_feature':
-        if 'product' in feature.qualifiers:
-            name = feature.qualifiers['product'][0]
-        elif 'note' in feature.qualifiers:
-            name = feature.qualifiers['note'][0]
-        else:
-            log.warning('Cannot recognize annotation:\n{}'.format(feature))
+        return name
+
+    name = None
+    accept_type = {'gene', 'CDS', 'tRNA', 'rRNA', 'misc_feature', 'misc_RNA'}
+    if feature.type in accept_type:
+        name = extract_name(feature)
+    else:
+        log.warning('Unsupport annotation type {}'.format(feature.type))
+    if feature.type == 'misc_feature':
         if (name is not None) and ('intergenic_spacer' in name or 'IGS' in
                                    name):
             # 'IGS' in name) and len(name) < 100):
             name = name.replace('intergenic_spacer_region', 'IGS')
-    elif feature.type == 'misc_RNA':
-        if 'product' in feature.qualifiers:
-            name = feature.qualifiers['product'][0]
-        elif 'note' in feature.qualifiers:
-            name = feature.qualifiers['note'][0]
-        else:
-            log.warning('Cannot recognize annotation:\n{}'.format(feature))
+    if feature.type == 'misc_RNA':
         # handle ITS
         if (name is not None) and 'internal_transcribed_spacer' in name:
             name = 'ITS'
-    elif feature.type == 'rRNA':
-        if 'product' in feature.qualifiers:
-            name = feature.qualifiers['product'][0]
-        elif 'note' in feature.qualifiers:
-            name = feature.qualifiers['note'][0]
-        else:
-            log.warning('Cannot recognize annotation:\n{}'.format(feature))
-    else:
-        pass
     if name is not None:
-        safe_name = safe(name)
-    else:
-        safe_name = None
-    return safe_name, feature.type
+        name = safe(name)
+    if arg.rename:
+        name = gene_rename(name)[0]
+    return name, feature.type
 
 
 def get_spacer(genes):
@@ -1429,6 +1415,9 @@ def divide(gbfile, arg):
         whole_seq = record.seq
         feature_name = []
         genes = []
+        cdses = []
+        trnas = []
+        rrnas = []
         # get genes
         for feature in record.features:
             if feature.type == 'source':
@@ -1443,7 +1432,17 @@ def divide(gbfile, arg):
                 continue
             if feature_type == 'gene':
                 genes.append([name, feature])
-            feature_name.append(name)
+                # only use gene name as sequence id
+                feature_name.append(name)
+            elif feature_type == 'CDS':
+                cdses.append([name, feature])
+            elif feature_type == 'tRNA':
+                trnas.append([name, feature])
+            elif feature_type == 'rRNA':
+                rrnas.append([name, feature])
+            else:
+                # ignore other types
+                pass
         # write genes
         wrote = write_seq(genes, seq_info, whole_seq, arg)
         wrote_by_gene.update(wrote)
