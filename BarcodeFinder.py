@@ -898,11 +898,13 @@ def get_feature_name(feature, arg):
         return name
 
     name = None
+    # ignore exist exon/intron
     accept_type = {'gene', 'CDS', 'tRNA', 'rRNA', 'misc_feature', 'misc_RNA'}
     if feature.type in accept_type:
         name = extract_name(feature)
     else:
-        log.warning('Unsupport annotation type {}'.format(feature.type))
+        pass
+        # log.warning('Unsupport annotation type {}'.format(feature.type))
     if feature.type == 'misc_feature':
         if (name is not None) and ('intergenic_spacer' in name or 'IGS' in
                                    name):
@@ -993,10 +995,9 @@ def get_intron(genes):
     Return:
         intron(list): [name, feature]
     """
-    genes_with_intron = [i for i in genes if i[1].location_operator == 'join']
     # exons = []
     introns = []
-    for gene_name, feature in genes_with_intron:
+    for gene_name, feature in genes:
         # for n, part in enumerate(feature.location.parts):
         #     exon = SeqFeature(
         #     type='exon',
@@ -1005,17 +1006,19 @@ def get_intron(genes):
         #     qualifiers={'gene': gene_name,
         #                 'count': n+1})
         # exons.append(exon)
-        n_part = len(feature.location.parts)
         strand = feature.location.strand
-        for i in range(n_part-1):
-            before = feature.location.parts[i]
-            current = feature.location.parts[i+1]
+        # sort by start, no matter which strand
+        parts = sorted(feature.location.parts, key=lambda x: x.start)
+        n_part = len(parts)
+        for i in range(len(parts)-1):
+            before = parts[i]
+            current = parts[i+1]
             # complement strand use reversed index
             # n_intron start with 1 instead of 0
             if strand != -1:
                 n_intron = i + 1
             else:
-                n_intron = n_part - i
+                n_intron = n_part - i - 1
             intron = SeqFeature(
                 type='intron',
                 id='{}.{}'.format(gene_name, n_intron),
@@ -1414,12 +1417,14 @@ def divide(gbfile, arg):
         seq_info = (taxon, accession, specimen)
         whole_seq = record.seq
         feature_name = []
+        have_intron = {}
         genes = []
         cdses = []
         trnas = []
         rrnas = []
         # get genes
         for feature in record.features:
+            # source do not have gene name
             if feature.type == 'source':
                 continue
             name, feature_type = get_feature_name(feature, arg)
@@ -1428,8 +1433,7 @@ def divide(gbfile, arg):
                 continue
             if len(name) > arg.max_name_len:
                 log.warning('Too long name: {}. Truncated.'.format(name))
-                name = name[:arg.max_name_len] + '...'
-                continue
+                name = name[:arg.max_name_len-3] + '...'
             if feature_type == 'gene':
                 genes.append([name, feature])
                 # only use gene name as sequence id
@@ -1442,7 +1446,11 @@ def divide(gbfile, arg):
                 rrnas.append([name, feature])
             else:
                 # ignore other types
-                pass
+                continue
+            if feature.location_operator == 'join':
+                # use dict to remove repeat name of gene/CDS/tRNA/rRNA
+                have_intron[name] = feature
+
         # write genes
         wrote = write_seq(genes, seq_info, whole_seq, arg)
         wrote_by_gene.update(wrote)
@@ -1453,7 +1461,7 @@ def divide(gbfile, arg):
             spacers = [i for i in spacers if i.type != 'mosaic_spacer']
         record.features.extend(spacers)
         # extract intron
-        introns = get_intron(genes)
+        introns = get_intron(have_intron.items())
         record.features.extend(introns)
         with open(gbfile+'.plus', 'a') as gb_plus:
             SeqIO.write(record, gb_plus, 'gb')
