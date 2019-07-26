@@ -987,6 +987,5 @@ alignment and tree construction steps.
 
 For Windows users, MAFFT [may be very slow due to anti-virus
 software](https://mafft.cbrc.jp/alignment/software/windows_without_cygwin.html).
-Please consider following [this instruction]
-(https://mafft.cbrc.jp/alignment/software/ubuntu_on_windows.html) to install
+Please consider following [this instruction](https://mafft.cbrc.jp/alignment/software/ubuntu_on_windows.html) to install
 Ubuntu on Windows to obtain better results.
