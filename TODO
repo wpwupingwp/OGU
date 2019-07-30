@@ -86,3 +86,4 @@
 86. indent for log
 #87. intron for trna and rrna that missed in gene
 #88. exist intron may me repeat
+89. primer3-py 0.5.7 for python3.6: macosx windows /python3.7:macosx
