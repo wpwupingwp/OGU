@@ -141,7 +141,7 @@ stable network and reasonable Internet traffic charge for downloading
 large-sized data sets.
 # Installation
 We assume that users have already installed [Python3](https://www.python.org/downloads/) (3.5 or above).
-**For Windows user, please use Python 3.6 if failed to install dependent packages.**
+**For Windows user, please use Python 3.6 or 3.7 if failed to install dependent packages.**
 
 Firstly, install BarcodeFinder.
 
