@@ -140,8 +140,8 @@ The data retrieval function requires an Internet connection. Please ensure a
 stable network and reasonable Internet traffic charge for downloading
 large-sized data sets.
 # Installation
-We assume that users have already installed [Python3](https://www.python.org/downloads/)
-(3.5 or above; *3.6* is recommended).
+We assume that users have already installed [Python3](https://www.python.org/downloads/) (3.5 or above).
+**For Windows user, please use Python 3.6 if failed to install dependent packages.**
 
 Firstly, install BarcodeFinder.
 
@@ -168,6 +168,8 @@ assistant function to install dependent software automatically if it cannot
 find the software, i.e., users can skip this step if they wish. However, it is
 *highly recommended* that the official installation procedure be followed for
 ease of management and a clean working directory.
+
+To avoid this, **please try to use Python 3.6.**
 
 For Linux users with root privileges, just use the package manager:
 ```
@@ -985,6 +987,5 @@ alignment and tree construction steps.
 
 For Windows users, MAFFT [may be very slow due to anti-virus
 software](https://mafft.cbrc.jp/alignment/software/windows_without_cygwin.html).
-Please consider following [this instruction]
-(https://mafft.cbrc.jp/alignment/software/ubuntu_on_windows.html) to install
+Please consider following [this instruction](https://mafft.cbrc.jp/alignment/software/ubuntu_on_windows.html) to install
 Ubuntu on Windows to obtain better results.
