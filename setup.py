@@ -13,6 +13,7 @@ setuptools.setup(
     author_email='wpwupingwp@outlook.com',
     description='All-in-one solution for discovering novel DNA barcode',
     install_requires=requires,
+    include_package_data=True,
     license='GNU AGPL v3',
     long_description=long_description,
     long_description_content_type='text/markdown',
