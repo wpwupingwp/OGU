@@ -100,4 +100,5 @@
 100. genaf for spacer
 101. gooey is too big, use tkinter?
 102. lineage exception sperated from source code (use pkg_resource?)
+103. remove temp log
 
