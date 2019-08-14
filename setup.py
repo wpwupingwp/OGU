@@ -2,7 +2,7 @@
 
 import setuptools
 
-with open('README.rst', 'r') as _:
+with open('README.md', 'r') as _:
     long_description = _.read()
 
 with open('requirements.txt', 'r') as _:
@@ -21,7 +21,7 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     py_modules=['BarcodeFinder'],
     url='https://github.com/wpwupingwp/BarcodeFinder',
-    version='0.9.41',
+    version='0.9.42',
     classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
