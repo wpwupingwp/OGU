@@ -886,6 +886,9 @@ def get_feature_name(feature, arg):
     Get feature name and collect genes for extract spacer.
     Only handle gene, product, misc_feature, misc_RNA.
     """
+    name = None
+    feature_type = None
+
     def extract_name(feature):
         if 'gene' in feature.qualifiers:
             name = feature.qualifiers['gene'][0]
@@ -895,27 +898,28 @@ def get_feature_name(feature, arg):
             name = feature.qualifiers['locus_tag'][0]
         else:
             log.warning('Cannot recognize annotation:\n{}'.format(feature))
+            name = None
         return name
 
-    name = None
     # ignore exist exon/intron
     accept_type = {'gene', 'CDS', 'tRNA', 'rRNA', 'misc_feature', 'misc_RNA'}
     if feature.type in accept_type:
         name = extract_name(feature)
+        # skip directly if None
+        if name is None:
+            return name, feature_type
     else:
         pass
         # log.warning('Unsupport annotation type {}'.format(feature.type))
     if feature.type == 'misc_feature':
-        if (name is not None) and ('intergenic_spacer' in name or 'IGS' in
-                                   name):
+        if 'intergenic_spacer' in name or 'IGS' in name:
             # 'IGS' in name) and len(name) < 100):
             name = name.replace('intergenic_spacer_region', 'IGS')
     if feature.type == 'misc_RNA':
         # handle ITS
-        if (name is not None) and 'internal_transcribed_spacer' in name:
+        if 'internal_transcribed_spacer' in name:
             name = 'ITS'
-    if name is not None:
-        name = safe(name)
+    name = safe(name)
     if arg.rename:
         name = gene_rename(name)[0]
     return name, feature.type
