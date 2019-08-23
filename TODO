@@ -86,8 +86,8 @@
 #86. indent for log
 #87. intron for trna and rrna that missed in gene
 #88. exist intron may me repeat
-89. primer3-py 0.5.7 for python3.6: macosx windows /python3.7:macosx
-90. docker or exe
+#89. primer3-py 0.5.7 for python3.6: macosx windows /python3.7:macosx
+#90. docker or exe
 91. GUI
 92. all DNASP method
 93. option for gap, another kind of base/ignore/penalty
@@ -103,3 +103,5 @@
 103. remove temp log
 104. filter length
 105. filter sequences with too much gap
+106. conda
+107. clean comment

@@ -617,8 +617,9 @@ def download(arg, query):
     """
 
     TOO_MUCH = 50000
-    # 100 is enough?
-    RETRY_MAX = 100
+    # although Bio.Entrez has max_tries, current cdoe could handle error
+    # clearly
+    RETRY_MAX = 10
     log.info('\tQuery string:')
     log.info('\t{}'.format(query))
     if arg.email is None:
@@ -636,9 +637,8 @@ def download(arg, query):
         log.info('Abort download.')
         return None
     elif count > TOO_MUCH:
-        log.warning('Got {} records. Please note that if you repeatedly '
-                    'sending huge queries you may be blocked by NCBI.'.format(
-                        count))
+        log.warning('Got {} records. May cost long time to download. '.format(
+            count))
     else:
         log.info('\tGot {} records.'.format(count))
     if arg.seq_n is not None:
@@ -747,7 +747,8 @@ def gene_rename(old_name):
     error of gene name or synonyms and try to use regular expression to fix
     it.
     Ideally, use BLAST to re-annotate sequence is the best(and slow) way to
-    find the correct name. This function only offers a "hotfix".
+    find the correct name. This function only offers a "hotfix" which is
+    enough.
     """
     if old_name is None:
         return None, None
