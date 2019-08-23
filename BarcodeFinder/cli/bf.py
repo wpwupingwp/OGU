@@ -58,9 +58,21 @@ log.addHandler(log_tmp)
 
 
 # load data
-with open(resource_filename('BarcodeFinder', 'data/superkingdoms.csv'), 'r') as _:
+with open(resource_filename('BarcodeFinder', 'data/superkingdoms.csv'),
+          'r') as _:
     SUPERKINGDOMS = set(_.read().split(','))
-print(SUPERKINGDOMS)
+with open(resource_filename('BarcodeFinder', 'data/kingdoms.csv'),
+          'r') as _:
+    KINGDOMS = set(_.read().split(','))
+with open(resource_filename('BarcodeFinder', 'data/phyla.csv'),
+          'r') as _:
+    PHYLA = set(_.read().split(','))
+with open(resource_filename('BarcodeFinder', 'data/classes.csv'),
+          'r') as _:
+    CLASSES = set(_.read().split(','))
+with open(resource_filename('BarcodeFinder', 'data/animal_orders.csv'),
+          'r') as _:
+    ANIMAL_ORDERS = set(_.read().split(','))
 
 
 class PrimerWithInfo(SeqRecord):
@@ -1047,315 +1059,7 @@ def divide(gbfile, arg):
     """
     Given genbank file, return divided fasta files.
     """
-    # From NCBI Taxonomy Database, 2019.2.21 update
-    # give all superkingdoms, kingdoms, phyla, classes because they do not
-    # have uniform suffix
     log.info('Divide {} by annotation.'.format(gbfile))
-    superkingdoms = {'Bacteria', 'Archaea', 'Eukaryota', 'Viruses', 'Viroids'}
-    kingdoms = {'Fungi', 'Viridiplantae', 'Metazoa'}
-    phyla_str = '''
-    Bacteroidetes, Chlorobi, Cyanobacteria, Proteobacteria, Firmicutes,
-    Deinococcus-Thermus, Xanthophyceae, Bacillariophyta, Phaeophyceae,
-    Euglenida, Chlorophyta, Chytridiomycota, Ascomycota, Basidiomycota,
-    Eustigmatophyceae, Apicomplexa, Microsporidia, Porifera, Cnidaria,
-    Platyhelminthes, Nemertea, Nematoda, Annelida, Mollusca, Arthropoda,
-    Brachiopoda, Echinodermata, Chordata, Rotifera, Ctenophora, Bryozoa,
-    Rhombozoa, Hemichordata, Placozoa, Chaetognatha, Acanthocephala,
-    Onychophora, Crenarchaeota, Euryarchaeota, Haplosporidia, Fusobacteria,
-    Orthonectida, Nematomorpha, Gastrotricha, Priapulida, Streptophyta,
-    Nitrospirae, Tardigrada, Entoprocta, Kinorhyncha, Candidatus Korarchaeota,
-    Acidobacteria, Candidatus Marinimicrobia, Fibrobacteres, Gnathostomulida,
-    Candidatus Bipolaricaulota, Candidatus Omnitrophica, Caldiserica,
-    Candidatus Aminicenantes, Candidatus Atribacteria, Armatimonadetes,
-    Candidatus Microgenomates, Dictyoglomi, Cycliophora, Candidatus
-    Latescibacteria, Elusimicrobia, Verrucomicrobia, Bolidophyceae, Candidatus
-    Saccharibacteria, Kiritimatiellaeota, Gemmatimonadetes, Candidatus
-    Hydrogenedentes, Pinguiophyceae, Nanoarchaeota, Aquificae, Chloroflexi,
-    Thermotogae, Deferribacteres, Chrysiogenetes, Thermodesulfobacteria,
-    Actinobacteria, Planctomycetes, Spirochaetes, Chlamydiae, Candidatus
-    Parcubacteria, Lentisphaerae, Candidatus Poribacteria, Loricifera,
-    Candidatus Gracilibacteria, Picozoa, candidate division WWE3,
-    Blastocladiomycota, Candidatus Cloacimonetes, Synergistetes, Tenericutes,
-    Aurearenophyceae, candidate division NC10, Thaumarchaeota, Candidatus
-    Aenigmarchaeota, Candidatus Diapherotrites, Chromerida, Candidatus
-    Bathyarchaeota, Cryptomycota, Candidatus Calescamantes, Candidatus
-    Aerophobetes, candidate division JL-ETNP-Z39, Candidatus Hydrothermae,
-    Ignavibacteriae, candidate division WPS-1, candidate division WPS-2,
-    Nitrospinae, Xenacoelomorpha, candidate division Zixibacteria, Candidatus
-    Fervidibacteria, candidate division GAL15, Candidatus Geoarchaeota,
-    candidate phylum NAG2, Candidatus Parvarchaeota, Colponemidia, Candidatus
-    Berkelbacteria, candidate division CPR1, candidate division CPR2,
-    candidate division CPR3, Candidatus Peregrinibacteria, Candidatus
-    Lokiarchaeota, Candidatus Kapabacteria, candidate division WOR-3,
-    candidate division KD3-62, Candidatus Thorarchaeota, Candidatus
-    Fermentibacteria, Candidatus Rokubacteria, Candidatus Dadabacteria,
-    Candidatus Curtissbacteria, Candidatus Daviesbacteria, Candidatus
-    Levybacteria, Candidatus Gottesmanbacteria, Candidatus Shapirobacteria,
-    Candidatus Woesebacteria, Candidatus Roizmanbacteria, Candidatus
-    Pacebacteria, Candidatus Collierbacteria, Candidatus Beckwithbacteria,
-    Candidatus Campbellbacteria, Candidatus Falkowbacteria, Candidatus
-    Nomurabacteria, Candidatus Amesbacteria, Candidatus Magasanikbacteria,
-    Candidatus Uhrbacteria, Candidatus Yanofskybacteria, Candidatus
-    Kaiserbacteria, Candidatus Wolfebacteria, Candidatus Adlerbacteria,
-    Candidatus Moranbacteria, Candidatus Giovannonibacteria, Candidatus
-    Jorgensenbacteria, Candidatus Kuenenbacteria, Candidatus Azambacteria,
-    Candidatus Melainabacteria, Candidatus Woesearchaeota, Candidatus
-    Micrarchaeota, Candidatus Tectomicrobia, Candidatus Abawacabacteria,
-    Candidatus Coatesbacteria, Candidatus Delongbacteria, Candidatus
-    Doudnabacteria, Candidatus Edwardsbacteria, Candidatus Eisenbacteria,
-    Candidatus Firestonebacteria, Candidatus Fischerbacteria, Candidatus
-    Fraserbacteria, Candidatus Glassbacteria, Candidatus Handelsmanbacteria,
-    Candidatus Lindowbacteria, Candidatus Margulisbacteria, Candidatus
-    Raymondbacteria, Candidatus Riflebacteria, Candidatus Schekmanbacteria,
-    Candidatus Wallbacteria, Candidatus Blackburnbacteria, Candidatus
-    Woykebacteria, Candidatus Chisholmbacteria, Candidatus Andersenbacteria,
-    Candidatus Brennerbacteria, Candidatus Buchananbacteria, Candidatus
-    Colwellbacteria, Candidatus Harrisonbacteria, Candidatus Jacksonbacteria,
-    Candidatus Kerfeldbacteria, Candidatus Komeilibacteria, Candidatus
-    Liptonbacteria, Candidatus Lloydbacteria, Candidatus Nealsonbacteria,
-    Candidatus Niyogibacteria, Candidatus Portnoybacteria, Candidatus
-    Ryanbacteria, Candidatus Spechtbacteria, Candidatus Staskawiczbacteria,
-    Candidatus Sungbacteria, Candidatus Tagabacteria, Candidatus
-    Taylorbacteria, Candidatus Terrybacteria, Candidatus Veblenbacteria,
-    Candidatus Vogelbacteria, Candidatus Wildermuthbacteria, Candidatus
-    Yonathbacteria, Candidatus Zambryskibacteria, Candidatus Wirthbacteria,
-    Candidatus Desantisbacteria, Rhodothermaeota, Candidatus Kryptonia,
-    Mucoromycota, Zoopagomycota, Candidatus Verstraetearchaeota,
-    Calditrichaeota, Candidatus Odinarchaeota, Candidatus Heimdallarchaeota,
-    Balneolaeota, Candidatus Marsarchaeota, Candidatus Goldbacteria, candidate
-    division AD3, candidate division FCPU426, Candidatus Abyssubacteria,
-    Candidatus Aureabacteria, Abditibacteriota, Coprothermobacterota,
-    Olpidiomycota'''
-    phyla = {i.strip() for i in phyla_str.split(sep=',')}
-    classes_str = '''
-    Gammaproteobacteria, Actinobacteria, Bangiophyceae, Florideophyceae,
-    Chrysophyceae, Dinophyceae, Cryptophyta, Chlorophyceae, Bryopsida,
-    Cycadopsida, Gnetopsida, Liliopsida, Oomycetes, Saccharomycetes,
-    Ustilaginomycetes, Heterolobosea, Colpodea, Litostomatea, Prostomatea,
-    Nassophorea, Oligohymenophorea, Demospongiae, Hydrozoa, Anthozoa, Cubozoa,
-    Scyphozoa, Trematoda, Cestoda, Pilidiophora, Enopla, Polychaeta,
-    Gastropoda, Bivalvia, Cephalopoda, Polyplacophora, Branchiopoda,
-    Ostracoda, Malacostraca, Merostomata, Arachnida, Chilopoda, Diplopoda,
-    Asteroidea, Ophiuroidea, Echinoidea, Holothuroidea, Ascidiacea,
-    Chondrichthyes, Amphibia, Aves, Monogononta, Gymnolaemata, Enteropneusta,
-    Archiacanthocephala, Calcarea, Alphaproteobacteria, Betaproteobacteria,
-    Deltaproteobacteria, Epsilonproteobacteria, Ginkgoopsida, Diplura,
-    Protura, Collembola, Appendicularia, Thaliacea, Acoela, Mollicutes,
-    Chloroflexia, Scaphopoda, Ulvophyceae, Pterobranchia, Karyorelictea,
-    Spirotrichea, Coscinodiscophyceae, Bacillariophyceae, Fragilariophyceae,
-    Synurophyceae, Phylactolaemata, Crinoidea, Labyrinthulomycetes,
-    Pedinophyceae, Pelagophyceae, Phyllopharyngea, Monogenea,
-    Glaucocystophyceae, Raphidophyceae, Dictyochophyceae, Catenulida,
-    Mammalia, Clitellata, Eutardigrada, Hyphochytriomycetes, Gordioida,
-    Bdelloidea, Palaeacanthocephala, Eoacanthocephala, Insecta,
-    Nemertodermatida, Caudofoveata, Chrysomerophyceae, Pycnogonida,
-    Coniferopsida, Hexactinellida, Symphyla, Entorrhizomycetes, Pauropoda,
-    Acantharea, Polycystinea, Thermodesulfobacteria, Deferribacteres,
-    Hexanauplia, Cephalocarida, Trebouxiophyceae, Homoscleromorpha,
-    Phaeothamniophyceae, Remipedia, Acidimicrobiia, Rubrobacteria,
-    Coriobacteriia, Seisonidea, Heterotardigrada, Bacilli,
-    Mesostigmatophyceae, Stenolaemata, Andreaeopsida, Sphagnopsida,
-    Polytrichopsida, Takakiopsida, Andreaeobryopsida, Lingulata, Craniata,
-    Rhynchonellata, Flavobacteriia, Sphingobacteriia, Chrysiogenetes, Enoplea,
-    Chromadorea, Ichthyosporea, Zygnemophyceae, Chlorokybophyceae,
-    Klebsormidiophyceae, Spartobacteria, Tentaculata, Arthoniomycetes,
-    Dothideomycetes, Eurotiomycetes, Lecanoromycetes, Leotiomycetes,
-    Pezizomycetes, Sordariomycetes, Pneumocystidomycetes,
-    Schizosaccharomycetes, Taphrinomycetes, Neolectomycetes, Tremellomycetes,
-    Agaricomycetes, Placididea, Agaricostilbomycetes, Microbotryomycetes,
-    Pucciniomycetes, Turbellaria, Methanonatronarchaeia, Polyacanthocephala,
-    Thermoprotei, Methanobacteria, Methanococci, Halobacteria, Thermoplasmata,
-    Thermococci, Archaeoglobi, Methanopyri, Actinopteri, Marchantiopsida,
-    Jungermanniopsida, Clostridia, Aquificae, Thermotogae, Deinococci,
-    Laboulbeniomycetes, Orbiliomycetes, Thermomicrobia, Nectonematoida,
-    Chlorobia, Heterotrichea, Micrognathozoa, Bacteroidia, Dictyoglomia,
-    Fusobacteriia, Verrucomicrobiae, Planctomycetia, Spirochaetia, Nitrospira,
-    Chlamydiia, Fibrobacteria, Acidobacteriia, Glomeromycetes,
-    Gemmatimonadetes, Methanomicrobia, Solenogastres, Actinophryidae,
-    Polypodiopsida, Hypermastigia, Anaerolineae, Chitinivibrionia,
-    Dehalococcoidia, Coleochaetophyceae, Charophyceae, Gloeobacteria,
-    Lichinomycetes, Solibacteres, Katablepharidophyta, Monoplacophora,
-    Ktedonobacteria, Leiosporocerotopsida, Anthocerotopsida, Haplomitriopsida,
-    Oedipodiopsida, Tetraphidopsida, Opitutae, Aconoidasida, Wallemiomycetes,
-    Atractiellomycetes, Classiculomycetes, Cryptomycocolacomycetes,
-    Cystobasidiomycetes, Mixiomycetes, Stylonematophyceae, Candidatus
-    Marinamargulisbacteria, Endomicrobia, Chytridiomycetes,
-    Monoblepharidomycetes, Neocallimastigomycetes, Blastocladiomycetes,
-    Exobasidiomycetes, Dacrymycetes, Thermolithobacteria, Caldilineae,
-    Erysipelotrichia, Holophagae, Synchromophyceae, Zetaproteobacteria,
-    Mediophyceae, Elusimicrobia, Synergistia, Armophorea, Rhodellophyceae,
-    Geoglossomycetes, Phycisphaerae, Caldisericia, Cytophagia, Ignavibacteria,
-    Nitriliruptoria, Negativicutes, Compsopogonophyceae, Mamiellophyceae,
-    Armatimonadia, Nanohaloarchaea, Tritirachiomycetes, Archaeorhizomycetes,
-    Chthonomonadetes, Xylonomycetes, Nephroselmidophyceae, Plagiopylea,
-    Conoidasida, Nitrospinia, Coniocybomycetes, Oligosphaeria, Lentisphaeria,
-    Picomonadea, Cladistia, Ardenticatenia, Basidiobolomycetes,
-    Neozygitomycetes, Entomophthoromycetes, Sagittoidea, Thermoflexia,
-    Thermoleophilia, Aphelidea, Lycopodiopsida, Chlorodendrophyceae,
-    Moniliellomycetes, Malasseziomycetes, Oligoflexia, Blastocatellia,
-    Nitrososphaeria, Globothalamea, Fimbriimonadia, Limnochordia, Candidatus
-    Thalassoarchaea, Palaeonemertea, Geminibasidiomycetes, Tissierellia,
-    Hadesarchaea, Spiculogloeomycetes, Candidatus Peribacteria, Longimicrobia,
-    Acidithiobacillia, Acidobacteria subdivision 6, Candidatus
-    Lambdaproteobacteria, Candidatus Muproteobacteria, Balneolia,
-    Rhodothermia, Chitinophagia, Chitinispirillia, Candidatus Methanomethylia,
-    Nuda, Kiritimatiellae, Staurozoa, Saprospiria, Methylacidiphilae,
-    Calditrichae, Theionarchaea, Hydrogenophilalia, Udeonychophora,
-    Priapulimorpha, Abditibacteria, Coprothermobacteria, Candidatus
-    Fermentibacteria (class), Ichthyostraca, Palmophyllophyceae,
-    Physodermatomycetes, Olpidiomycetes, Collemopsidiomycetes, Candidatus
-    Sericytochromatia, Candidatus Riflemargulisbacteria, Endogonomycetes,
-    Mucoromycetes, Umbelopsidomycetes, Mortierellomycetes, Kickxellomycetes,
-    Dimargaritomycetes, Harpellomycetes, Asellariomycetes, Bartheletiomycetes,
-    Zoopagomycetes
-    '''
-    classes = {i.strip() for i in classes_str.split(',')}
-    # order exceptions that not end with "ales"
-    order_exceptions = '''
-    Labiatae, Gramineae, Kinetoplastida, Physariida, Haemosporida,
-    Heterotrichida, Haptorida, Prorodontida, Haplosclerida, Actiniaria,
-    Scleractinia, Pennatulacea, Semaeostomeae, Tricladida, Polycladida,
-    Lecithoepitheliata, Strigeidida, Opisthorchiida, Cyclophyllidea,
-    Heteronemertea, Monostilifera, Rhabditida, Ascaridida, Spirurida,
-    Tylenchida, Trichinellida, Capitellida, Phyllodocida, Sabellida,
-    Terebellida, Haplotaxida, Rhynchobdellida, Xenopneusta, Neogastropoda,
-    Gymnosomata, Stylommatophora, Mytiloida, Arcoida, Ostreoida, Veneroida,
-    Octopoda, Neoloricata, Anostraca, Decapoda, Euphausiacea, Amphipoda,
-    Calanoida, Arguloida, Xiphosura, Scorpiones, Araneae, Ixodida, Odonata,
-    Orthoptera, Phasmatodea, Coleoptera, Lepidoptera, Diptera, Hymenoptera,
-    Mantodea, Siphonaptera, Neuroptera, Hemiptera, Porocephalida, Lingulida,
-    Terebratulida, Comatulida, Velatida, Forcipulatida, Ophiurida, Cidaroida,
-    Echinoida, Aspidochirotida, Molpadiida, Apodida, Dendrochirotida,
-    Stolidobranchia, Petromyzontiformes, Myxiniformes, Rajiformes,
-    Chimaeriformes, Lepidosireniformes, Coelacanthiformes, Acipenseriformes,
-    Semionotiformes, Amiiformes, Elopiformes, Anguilliformes, Cypriniformes,
-    Characiformes, Siluriformes, Gymnotiformes, Salmoniformes, Esociformes,
-    Gadiformes, Batrachoidiformes, Lophiiformes, Atheriniformes, Perciformes,
-    Pleuronectiformes, Beryciformes, Polypteriformes, Caudata, Anura,
-    Gymnophiona, Testudines, Sphenodontia, Squamata, Casuariiformes,
-    Rheiformes, Struthioniformes, Tinamiformes, Dinornithiformes,
-    Apterygiformes, Anseriformes, Apodiformes, Caprimulgiformes,
-    Charadriiformes, Ciconiiformes, Columbiformes, Coraciiformes,
-    Cuculiformes, Falconiformes, Galliformes, Gruiformes, Passeriformes,
-    Pelecaniformes, Phoenicopteriformes, Piciformes, Psittaciformes,
-    Sphenisciformes, Turniciformes, Monotremata, Insectivora, Scandentia,
-    Chiroptera, Primates, Cetacea, Sirenia, Proboscidea, Perissodactyla,
-    Hyracoidea, Tubulidentata, Pholidota, Lagomorpha, Rodentia,
-    Cheilostomatida, Dicyemida, Moniliformida, Arhynchobdellida, Cumacea,
-    Mecoptera, Dermaptera, Mermithida, Plagiorchiida, Rhabdocoela, Cestida,
-    Lobata, Poecilosclerida, Perkinsida, Choanoflagellida, Macroscelidea,
-    Cyprinodontiformes, Pseudophyllidea, Gonorynchiformes, Rotaliida, Isopoda,
-    Cephalobaenida, Archaeognatha, Ephemeroptera, Psocoptera, Strepsiptera,
-    Thysanoptera, Trichoptera, Zygentoma, Zoraptera, Spirobolida,
-    Spirostreptida, Salpida, Gaviiformes, Opisthocomiformes, Podicipediformes,
-    Procellariiformes, Strigiformes, Carcharhiniformes, Hexanchiformes,
-    Lamniformes, Orectolobiformes, Dermoptera, Tetraodontiformes, Zeiformes,
-    Diadematoida, Arbacoida, Temnopleuroida, Clypeasteroida, Hymenostomatida,
-    Clupeiformes, Nautilida, Dentaliida, Gadilida, Rhynchonellida,
-    Aphragmophora, Phragmophora, Carnivora, Cephalodiscida, Rhabdopleurida,
-    Bicosoecida, Peniculida, Loxodida, Armophorida, Euplotida, Stichotrichida,
-    Vestibuliferida, Mesostigmata, Phymosomatoida, Cassiduloida,
-    Eugregarinorida, Bivalvulida, Azygiida, Trichomonadida, Cyrtophorida,
-    Ceriantharia, Stauromedusae, Rhizostomeae, Beroida, Protostomatida,
-    Pygophora, Apygophora, Kentrogonida, Didelphimorphia, Paucituberculata,
-    Microbiotheria, Dasyuromorphia, Diprotodontia, Notoryctemorphia,
-    Peramelemorphia, Macrostomida, Proseriata, Nassulida, Polyopisthocotylea,
-    Entodiniomorphida, Heterodontiformes, Alcyonacea, Schizopyrenida,
-    Valvatida, Harpacticoida, Spatangoida, Chaetonotida, Solifugae,
-    Scutigeromorpha, Scolopendromorpha, Lithobiomorpha, Echinothurioida,
-    Julida, Osmeriformes, Osteoglossiformes, Echiuroinea, Mugiliformes,
-    Solemyoida, Slopalinida, Siphonophorae, Trachymedusae, Narcomedusae,
-    Schizomida, Opiliones, Acrasida, Synbranchiformes, Antipatharia,
-    Corallimorpharia, Pterioida, Zoantharia, Polymorphida, Neoechinorhynchida,
-    Clathrinida, Dorylaimida, Astrorhizida, Spionida, Nuculoida,
-    Gyracanthocephala, Unionoida, Trigonioida, Stomiiformes, Cydippida,
-    Raphidioptera, Megaloptera, Plecoptera, Embioptera, Diplogasterida,
-    Galaxiiformes, Homalorhagida, Pseudoscorpiones, Ctenostomatida,
-    Polyxenida, Proteocephalidea, Chaetodermatida, Limifossorida,
-    Albuliformes, Vampyromorpha, Euryalida, Elasipodida, Spinulosida,
-    Paxillosida, Isocrinida, Branchiobdellida, Musophagiformes, Trogoniformes,
-    Trypanorhyncha, Tetraphyllidea, Echinorhynchida, Enoplida, Bucerotiformes,
-    Coliiformes, Upupiformes, Ricinulei, Uropygi, Leptostraca,
-    Grylloblattodea, Notostraca, Craterostigmomorpha, Geophilomorpha,
-    Gigantorhynchida, Oligacanthorhynchida, Lyssacinosida, Acanthobdellida,
-    Amblypygi, Glomerida, Pholadomyoida, Eunicida, Chaunacanthida,
-    Symphyacanthida, Spumellaria, Holothyrida, Oxymonadida, Leptomyxida,
-    Haplopharyngida, Bursovaginoidea, Thecideida, Aulopiformes,
-    Myctophiformes, Multivalvulida, Monhysterida, Rhigonematida, Mononchida,
-    Chromadorida, Oxyurida, Nudibranchia, Polydesmida, Siphonostomatoida,
-    Desmodorida, Architaenioglossa, Amphionidacea, Bathynellacea, Anaspidacea,
-    Mictacea, Tanaidacea, Mysida, Lophogastrida, Spelaeogriphacea,
-    Thermosbaenacea, Eucoccidiorida, Beloniformes, Doliolida, Pyrosomata,
-    Macrodasyida, Symphypleona, Neelipleona, Prolecithophora,
-    Homosclerophorida, Percopsiformes, Polymixiiformes, Lampriformes,
-    Trombidiformes, Sarcoptiformes, Cyclopoida, Platycopioida,
-    Poecilostomatoida, Monstrilloida, Gelyelloida, Misophrioida,
-    Mormonilloida, Podocopida, Myodocopida, Brachypoda, Diplostraca, Ploima,
-    Arthracanthida, Lumbriculida, Agelasida, Phthiraptera, Blattodea,
-    Leucosolenida, Coronatae, Helioporacea, Ptychodactiaria, Palpigradi,
-    Bryophryida, Cyrtolophosidida, Colpodida, Bursariomorphida, Bryometopida,
-    Bdellonemertea, Opilioacarida, Telestacea, Clevelandellida, Plagiotomida,
-    Ophidiiformes, Cyclostomatida, Hexactinosida, Limoida, Myzostomida,
-    Adinetida, Philodinida, Flosculariacea, Pedinoida, Brisingida, Pectinoida,
-    Amphilinidea, Spathebothriidea, Caryophyllidea, Haplobothriidea,
-    Diphyllidea, Lecanicephalidea, Tetrabothriidea, Rhinebothriidea,
-    Araeolaimida, Craniida, Pedunculata, Sessilia, Dendrogastrida, Laurida,
-    Mystacocaridida, Nectiopoda, Platycopida, Nippotaeniidea, Myliobatiformes,
-    Pristiformes/Rhiniformes group, Torpediniformes, Echinorhiniformes,
-    Ceratodontiformes, Galbuliformes, Callipodida, Chordeumatida,
-    Sphaerotheriida, Polyzoniida, Playtdesmida, Dendroceratida,
-    Dictyoceratida, Filospermoidea, Gyrocotylidea, Limnomedusae,
-    Syngnathiformes, Litobothriidea, Peripodida, Argentiniformes, Stemonitida,
-    Platyctenida, Thalassocalycida, Ateleopodiformes, Notacanthiformes,
-    Parachela, Apochela, Thecosomata, Exogenida, Evaginogenida, Endogenida,
-    Sorogenida, Euglyphida, Halocyprida, Enterogona, Cercomonadida,
-    Thaumatomonadida, Chordodea, Gordea, Diplonemida, Mantophasmatodea,
-    Pleurostomatida, Cyclotrichida, Philasterida, Pleuronematida,
-    Thigmotrichida, Dermocystida, Ichthyophonida, Kiitrichida, Tintinnida,
-    Choreotrichida, Trichiida, Triplonchida, Isolaimida, Licnophorida,
-    Aspidosiphonidormes, Phascolosomatiformes, Littorinimorpha,
-    Protoheterotrichida, Bourgueticrinida, Cyrtocrinida, Exogemmida,
-    Neogregarinorida, Phaeosphaerida, Phaeodendrida, Phaeocystida,
-    Chlamydodontida, Dysteriida, Glomeridesmida, Stemmiulida, Acochlidiacea,
-    Amphidiscosida, Potamodrilidae, Myoida, Astomatida, Nassellaria,
-    Flabelligerida, Squaliformes, Murrayonida, Lithonida, Trichonymphida,
-    Spirotrichonymphida, Cyclorhagida, Himatismenida, Arcellinida,
-    Akentrogonida, Cathetocephalidea, Actinulida, Holasteroida, Phaeogromida,
-    Phaeoconchida, Philodinavidae, Synhymeniida, Notomyotida, Tubuliporida,
-    Monophragmophora, Pantopoda, Desmoscolecida, Pseudoamphisiellida,
-    Anthoathecata, Odontostomatida, Siphonophorida, Agamococcidiorida,
-    Grossglockneriida, Urostylida, Leptothecata, Microthoracida,
-    Malacovalvulida, Apostomatida, Nanaloricida, Sepiida, Sepiolida,
-    Spirulida, Teuthida, Telonemida, Cryomonadida, Polystilifera, Carybdeida,
-    Chirodropida, Baerida, Pleurobranchomorpha, Moniligastrida,
-    Sporadotrichida, Hyocrinida, Arthrotardigrada, Echiniscoidea, Opheliida,
-    Entomobryomorpha, Poduromorpha, Echinothuroida, Millericrinida,
-    Tritrichomonadida, Honigbergiellida, Cristamonadida, Hypotrichomonadida,
-    Golfingiida, Nuculanoida, Crustaceacida, Pilosa, Cingulata, Cycloneritida,
-    Lituolida, Spirillinida, Sticholonchida, Neomeniamorpha, Pholidoskepia,
-    Cavibelonia, Bacteroidetes Order II. Incertae sedis,Bacteroidetes Order
-    IV. Incertae sedis, Holacanthida, Muspiceida, Rhynchodida, Hypocomatida,
-    Rapaza, Miliolida, Diphyllobothriidea, Rigifilida, Glissomonadida,
-    Plagiopylida, Archigregarinorida, Crocodylia, Fecampiida, Picomonadida,
-    Bothriocephalidea, Vampyrellida, Carterinida, Phyllobothriidea,
-    Onchoproteocephalidea, Salenioida, Collodaria, Longamoebia,
-    Hiodontiformes, Alepocephaliformes, Lepidogalaxiiformes, Stylephoriformes,
-    Kurtiformes, Gobiiformes, Scombriformes, Anabantiformes, Istiophoriformes,
-    Carangiformes, Cichliformes, Pholidichthyiformes, Blenniiformes,
-    Uranoscopiformes, Labriformes, Lobotiformes, Ephippiformes, Spariformes,
-    Acanthuriformes, Pempheriformes, Centrarchiformes, Holocentriformes,
-    Chaetodontiformes, Notoungulata, Litopterna, Lucinoida, Phaeocalpida,
-    Phaeogymnocellida, Collothecaceae, Protura, Robertinida, Prostomatida,
-    Chondrillida, Verongiida, Axinellida, Biemnida, Bubarida, Clionaida,
-    Desmacellida, Merliida, Polymastiida, Sphaerocladina, Spongillida,
-    Suberitida, Tethyida, Tetractinellida, Trachycladida, Aulocalycoida,
-    Cariamiformes, Enchytraeida, Sessilida, Mobilida, Caproiformes,
-    Priacanthiformes, Gerreiformes, Lutjaniformes, Dioctophymatida,
-    Benthimermithida, Plectida, Euonychophora, Priapulimorphida,
-    Tetramerocerata, Rhaptothyreida, Sterrofustia, Aquavolonida, Micropygoida,
-    Metopida, Hirudinida
-    '''
-    orders = {i.strip() for i in order_exceptions.split(',')}
 
     def get_taxon(taxon_str):
         """
@@ -1369,16 +1073,16 @@ def divide(gbfile, arg):
         my_order = ''
         my_family = ''
         for item in taxon_str:
-            if item in superkingdoms:
+            if item in SUPERKINGDOMS:
                 my_kingdom = item
             # mix superkingdom and kingdom to reduce name length
-            elif item in kingdoms:
+            elif item in KINGDOMS:
                 my_kingdom = item
-            elif item in phyla:
+            elif item in PHYLA:
                 my_phylum = item
-            elif item in classes:
+            elif item in CLASSES:
                 my_class = item
-            if item.endswith('ales') or item in orders:
+            if item.endswith('ales') or item in ANIMAL_ORDERS:
                 my_order = item
             elif item.endswith('aceae') or item.endswith('idae'):
                 my_family = item

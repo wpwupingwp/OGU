@@ -66,7 +66,7 @@ def init_lineage():
     return
 
 
-#init_lineage()
+init_lineage()
 
 with open('README.md', 'r') as _:
     long_description = _.read()
@@ -90,7 +90,7 @@ setuptools.setup(
     name='BarcodeFinder',
     packages=setuptools.find_packages(),
     url='https://github.com/wpwupingwp/BarcodeFinder',
-    version='0.9.42',
+    version='0.9.43',
     classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
