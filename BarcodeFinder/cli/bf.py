@@ -12,6 +12,7 @@ from os import (cpu_count, devnull, environ, mkdir, pathsep, remove, rename,
                 sep)
 from os.path import abspath, basename, exists, splitext
 from os.path import join as join_path
+from pkg_resources import resource_filename
 from platform import system
 from random import choice
 from shutil import unpack_archive, ReadError
@@ -54,6 +55,12 @@ log_tmp = logging.FileHandler(TEMP_LOG, 'w')
 log_tmp.setLevel(logging.INFO)
 log_tmp.setFormatter(LOG_FMT)
 log.addHandler(log_tmp)
+
+
+# load data
+with open(resource_filename('BarcodeFinder', 'data/superkingdoms.csv'), 'r') as _:
+    SUPERKINGDOMS = set(_.read().split(','))
+print(SUPERKINGDOMS)
 
 
 class PrimerWithInfo(SeqRecord):
@@ -1042,7 +1049,7 @@ def divide(gbfile, arg):
     """
     # From NCBI Taxonomy Database, 2019.2.21 update
     # give all superkingdoms, kingdoms, phyla, classes because they do not
-    # have uniform prefix
+    # have uniform suffix
     log.info('Divide {} by annotation.'.format(gbfile))
     superkingdoms = {'Bacteria', 'Archaea', 'Eukaryota', 'Viruses', 'Viroids'}
     kingdoms = {'Fungi', 'Viridiplantae', 'Metazoa'}
@@ -2272,7 +2279,7 @@ def main():
     """
     main function
     """
-    log.info('Welcome to BarcodeFinder v{}.'.format(__version__))
+    log.info('Welcome to BarcodeFinder.')
     arg = parse_args()
     if arg is None:
         quit('Empty input! Please use "-h" options for help info.')
@@ -2371,6 +2378,5 @@ def main():
     return
 
 
-__version__ = '0.9.42'
 if __name__ == '__main__':
     main()
