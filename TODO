@@ -101,4 +101,5 @@
 101. gooey is too big, use tkinter?
 102. lineage exception sperated from source code (use pkg_resource?)
 103. remove temp log
-
+104. filter length
+105. filter sequences with too much gap
