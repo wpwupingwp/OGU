@@ -491,7 +491,7 @@ def download_software(url):
         log.info('Downloading {}...'.format(filename))
         down = urlopen(url)
     except HTTPError:
-        log.warn('Cannot download {}.'.format(filename))
+        log.warning('Cannot download {}.'.format(filename))
         return False
     with open(filename, 'wb') as out:
         out.write(down.read())
@@ -904,32 +904,28 @@ def write_seq(record, seq_info, whole_seq, arg):
 def get_feature_name(feature, arg):
     """
     Get feature name and collect genes for extract spacer.
-    Only handle gene, product, misc_feature, misc_RNA.
+    Only handle gene, CDS, tRNA, rRNA, misc_feature, misc_RNA.
     """
-    name = None
-    feature_type = None
-
-    def extract_name(feature):
+    def _extract_name(feature):
         if 'gene' in feature.qualifiers:
             name = feature.qualifiers['gene'][0]
         elif 'product' in feature.qualifiers:
             name = feature.qualifiers['product'][0]
         elif 'locus_tag' in feature.qualifiers:
             name = feature.qualifiers['locus_tag'][0]
+        elif 'note' in feature.qualifiers:
+            name = feature.qualifiers['note'][0]
         else:
             log.warning('Cannot recognize annotation:\n{}'.format(feature))
             name = None
         return name
-
-    # ignore exist exon/intron
+    name = None
+    # ignore exist exon/intron and source
     accept_type = {'gene', 'CDS', 'tRNA', 'rRNA', 'misc_feature', 'misc_RNA'}
     if feature.type in accept_type:
-        name = extract_name(feature)
-        # skip directly if None
-        if name is None:
-            return name, feature_type
+        name = _extract_name(feature)
     else:
-        pass
+        return name
         # log.warning('Unsupport annotation type {}'.format(feature.type))
     if feature.type == 'misc_feature':
         if 'intergenic_spacer' in name or 'IGS' in name:
@@ -939,10 +935,13 @@ def get_feature_name(feature, arg):
         # handle ITS
         if 'internal_transcribed_spacer' in name:
             name = 'ITS'
-    name = safe(name)
+    if name is not None:
+        name = safe(name)
+    else:
+        return name
     if arg.rename:
         name = gene_rename(name)[0]
-    return name, feature.type
+    return name
 
 
 def get_spacer(genes):
@@ -1106,63 +1105,52 @@ def divide(gbfile, arg):
     accession = ''
     for record in clean_gb(gbfile):
         # only accept gene, product, and spacer in misc_features.note
-        taxon_str = record.annotations['taxonomy']
-        kingdom, phylum, class_, order, family = get_taxon(taxon_str)
-        organism = record.annotations['organism'].replace(' ', '_')
-        genus, *species = organism.split('_')
+        taxon_str = record.annotations.get('taxonomy', None)
+        if taxon_str is None:
+            kingdom, phylum, class_, order, family = '', '', '', '', ''
+        else:
+            kingdom, phylum, class_, order, family = get_taxon(taxon_str)
+        # gb annotation may be empty
+        organism = record.annotations.get('organism', None)
+        if organism is not None:
+            organism = organism.replace(' ', '_')
+            genus, *species = organism.split('_')
+        else:
+            genus, species = '', ''
         # species name may contain other characters
         taxon = '{}|{}|{}|{}|{}|{}|{}'.format(kingdom, phylum, class_,
                                               order, family, genus,
                                               '_'.join(species))
-        try:
-            accession = record.annotations['accessions'][0]
-        except KeyError:
-            accession = ''
-        specimen = ''
-        isolate = ''
-        if 'specimen_voucher' in record.features[0].qualifiers:
-            specimen = record.features[0].qualifiers[
-                'specimen_voucher'][0].replace(' ', '_')
-        if 'isolate' in record.features[0].qualifiers:
-            isolate = record.features[0].qualifiers[
-                'isolate'][0].replace(' ', '_')
-        # do not change id format, use one field
+        accession = record.annotations.get('accessions', ['', ])[0]
+        specimen = record.features[0].qualifiers.get('specimen_voucher',
+                                                     ['', ])
+        specimen = specimen[0].replace(' ', '_')
+        isolate = record.features[0].qualifiers.get('isolate', ['', ])
+        isolate = isolate[0].replace(' ', '_')
         # usually the record only has one of them
         specimen = '_'.join([specimen, isolate]).rstrip('_')
-        # except (IndexError, KeyError):
         seq_info = (taxon, accession, specimen)
         whole_seq = record.seq
         feature_name = []
         have_intron = {}
         genes = []
-        cdses = []
-        trnas = []
-        rrnas = []
+        not_genes = []
         # get genes
         for feature in record.features:
-            # source do not have gene name
-            if feature.type == 'source':
-                continue
-            name, feature_type = get_feature_name(feature, arg)
+            name = get_feature_name(feature, arg)
             # skip unsupport feature
+            # support: gene, CDS, tRNA, rRNA, misc_feature, misc_RNA
             if name is None:
                 continue
             if len(name) > arg.max_name_len:
                 log.warning('Too long name: {}. Truncated.'.format(name))
                 name = name[:arg.max_name_len-3] + '...'
-            if feature_type == 'gene':
+            if feature.type == 'gene':
                 genes.append([name, feature])
                 # only use gene name as sequence id
                 feature_name.append(name)
-            elif feature_type == 'CDS':
-                cdses.append([name, feature])
-            elif feature_type == 'tRNA':
-                trnas.append([name, feature])
-            elif feature_type == 'rRNA':
-                rrnas.append([name, feature])
             else:
-                # ignore other types
-                continue
+                not_genes.append([name, feature])
             if feature.location_operator == 'join':
                 # use dict to remove repeat name of gene/CDS/tRNA/rRNA
                 have_intron[name] = feature
