@@ -420,14 +420,14 @@ def calc_ambiguous_seq(func, seq, seq2=None):
         return seq_str
 
     if len(seq) > LEN_LIMIT:
-        log.warning('Ambiguous sequences is too long. Skip')
+        log.warning('Too many ambiguous bases. Skip')
         return 0
     seq_str = _expand(seq)
     if seq2 is None:
         values = [func(i) for i in seq_str]
     else:
         if len(seq2) > LEN_LIMIT:
-            log.warning('Ambiguous sequences is too long. Skip')
+            log.warning('Too many ambiguous bases. Skip')
             return 0
         seq_str2 = _expand(seq2)
         products = cartesian_product(seq_str, seq_str2)
@@ -865,8 +865,8 @@ def write_seq(record, seq_info, whole_seq, arg):
         name, feature = i
         # skip abnormal annotation
         if len(feature) > arg.max_seq_len:
-            log.warning('Annotaion of {} (Accession {}) '
-                        'is too long. Skip.'.format(name, seq_info[1]))
+            log.debug('Annotaion of {} (Accession {}) '
+                      'is too long. Skip.'.format(name, seq_info[1]))
         sequence_id = '>' + '|'.join([name, *seq_info, feature.type])
         filename = join_path(path, name + '.fasta')
         sequence = careful_extract(name, feature, whole_seq)
@@ -916,7 +916,7 @@ def get_feature_name(feature, arg):
         elif 'note' in feature.qualifiers:
             name = feature.qualifiers['note'][0]
         else:
-            log.warning('Cannot recognize annotation:\n{}'.format(feature))
+            log.debug('Cannot recognize annotation:\n{}'.format(feature))
             name = None
         return name
     name = None
