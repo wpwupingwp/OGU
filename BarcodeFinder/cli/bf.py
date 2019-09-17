@@ -922,9 +922,10 @@ def get_feature_name(feature, arg):
     name = None
     # ignore exist exon/intron and source
     accept_type = {'gene', 'CDS', 'tRNA', 'rRNA', 'misc_feature', 'misc_RNA'}
-    if feature.type in accept_type:
-        name = _extract_name(feature)
-    else:
+    if feature.type not in accept_type:
+        return name
+    name = _extract_name(feature)
+    if name is None:
         return name
         # log.warning('Unsupport annotation type {}'.format(feature.type))
     if feature.type == 'misc_feature':

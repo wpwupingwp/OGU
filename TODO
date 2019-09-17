@@ -108,3 +108,5 @@
 108. type.name.fasta
 109. remove tmp files
 110. intron_intronIndex
+111. user-defined id format string
+112, rename trn, gene name list
