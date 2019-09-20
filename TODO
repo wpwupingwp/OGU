@@ -110,3 +110,6 @@
 110. intron_intronIndex
 111. user-defined id format string
 112, rename trn, gene name list
+113. shannon index may be negative
+114. digit 4
+115. gap in head and tail
