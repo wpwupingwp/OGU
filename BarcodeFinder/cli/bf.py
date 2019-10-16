@@ -1677,7 +1677,7 @@ def parse_blast_tab(filename):
         for line in raw:
             if line.startswith('# BLAST'):
                 yield query
-                query.clear()
+                query = []
             elif line.startswith('#'):
                 pass
             else:
@@ -1807,7 +1807,7 @@ def pick_pair(primers, alignment, arg):
         else:
             cluster.sort(key=lambda x: x.score, reverse=True)
             less_pairs.extend(cluster[:arg.top_n])
-            cluster.clear()
+            cluster = []
     cluster.sort(key=lambda x: x.score, reverse=True)
     less_pairs.extend(cluster[:arg.top_n])
     log.info('{} pairs of redundant primers were removed.'.format(
