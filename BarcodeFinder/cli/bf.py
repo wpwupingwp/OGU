@@ -287,9 +287,9 @@ def parse_args():
     pre = arg.add_argument_group('Preprocess')
     pre.add_argument('-expand', type=int,
                      help='expand length of upstream/downstream')
-    pre.add_argument('-max_name_len', default=50,
+    pre.add_argument('-max_name_len', default=0, type=int,
                      help='maximum length of feature name')
-    pre.add_argument('-max_seq_len', default=20000,
+    pre.add_argument('-max_seq_len', default=20000, type=int,
                      help='maximum length of feature sequence')
     pre.add_argument('-no_divide', action='store_true',
                      help='analyze whole sequence instead of divided fragment')
@@ -301,26 +301,26 @@ def parse_args():
     evaluate.add_argument('-fast', action='store_true', default=False,
                           help='faster evaluate variance by omit tree_value'
                           'and terminal branch length')
-    evaluate.add_argument('-step', type=int, default=50,
+    evaluate.add_argument('-step', default=50, type=int,
                           help='step length for sliding-window scan')
     primer = arg.add_argument_group('Primer')
-    primer.add_argument('-a', dest='ambiguous_base_n', type=int, default=4,
+    primer.add_argument('-a', dest='ambiguous_base_n', default=4, type=int,
                         help='number of ambiguous bases')
-    primer.add_argument('-c', dest='coverage', type=float, default=0.6,
+    primer.add_argument('-c', dest='coverage', default=0.6, type=float,
                         help='minium coverage of base and primer')
-    primer.add_argument('-m', dest='mismatch', type=int, default=4,
+    primer.add_argument('-m', dest='mismatch', default=4, type=int,
                         help='maximum mismatch bases in primer')
-    primer.add_argument('-pmin', dest='min_primer', type=int, default=18,
+    primer.add_argument('-pmin', dest='min_primer', default=18, type=int,
                         help='minimum primer length')
-    primer.add_argument('-pmax', dest='max_primer', type=int, default=24,
+    primer.add_argument('-pmax', dest='max_primer', default=28, type=int,
                         help='maximum primer length')
     primer.add_argument('-r', dest='resolution', type=float, default=0.5,
                         help='minium resolution')
     primer.add_argument('-t', dest='top_n', type=int, default=1,
                         help='keep n primers for each high varient region')
-    primer.add_argument('-tmin', dest='min_product', type=int, default=350,
+    primer.add_argument('-tmin', dest='min_product', default=350, type=int,
                         help='minimum product length(include primer)')
-    primer.add_argument('-tmax', dest='max_product', type=int, default=600,
+    primer.add_argument('-tmax', dest='max_product', default=600, type=int,
                         help='maximum product length(include primer)')
     parsed = arg.parse_args()
     if parsed.allow_repeat:
@@ -336,6 +336,9 @@ def parse_args():
                     '{}.'.format(parsed.expand))
     elif parsed.stop is not None and parsed.expand is None:
         parsed.expand = 0
+    # 0 to no limit
+    if parsed.max_name_len == 0:
+        parsed.max_name_len = 1000000
     if parsed.fast:
         log.info('The "-fast" mode was opened. '
                  'Skip sliding-window scan with tree.')
@@ -1144,6 +1147,7 @@ def divide(gbfile, arg):
             if name is None:
                 continue
             if len(name) > arg.max_name_len:
+                # warn to debug?
                 log.warning('Too long name: {}. Truncated.'.format(name))
                 name = name[:arg.max_name_len-3] + '...'
             if feature.type == 'gene':
