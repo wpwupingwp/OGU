@@ -929,6 +929,8 @@ def get_feature_name(feature, arg):
         return name
         # log.warning('Unsupport annotation type {}'.format(feature.type))
     if feature.type == 'misc_feature':
+        if 'internal transcribed spacer' in name:
+            name = 'ITS'
         if 'intergenic_spacer' in name or 'IGS' in name:
             name = name.replace('intergenic_spacer_region', 'IGS')
     if feature.type == 'misc_RNA':
@@ -1185,7 +1187,6 @@ def divide(gbfile, arg):
         wrote_by_gene.update(wrote)
         _ = write_seq(introns_to_write, seq_info, whole_seq, arg)
         # write to group_by name, i.e., one gb record one fasta
-        print(feature_name)
         if 'ITS' in feature_name:
             name_str = 'ITS'
         elif len(feature_name) >= 4:
