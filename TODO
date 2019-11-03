@@ -116,3 +116,6 @@
 116. better uniq
 117. x axis of figure
 118. analyse distribution of data on Genbank
+119. write name.type.fasta?
+120. remove by-name
+121. AH009860 have clear annotation of every part in ITS, but MN528716 only use "contains ITS, 5.8s, etc"

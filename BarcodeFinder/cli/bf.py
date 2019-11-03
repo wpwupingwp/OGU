@@ -287,7 +287,7 @@ def parse_args():
     pre = arg.add_argument_group('Preprocess')
     pre.add_argument('-expand', type=int,
                      help='expand length of upstream/downstream')
-    pre.add_argument('-max_name_len', default=0, type=int,
+    pre.add_argument('-max_name_len', default=100, type=int,
                      help='maximum length of feature name')
     pre.add_argument('-max_seq_len', default=20000, type=int,
                      help='maximum length of feature sequence')
@@ -336,9 +336,6 @@ def parse_args():
                     '{}.'.format(parsed.expand))
     elif parsed.stop is not None and parsed.expand is None:
         parsed.expand = 0
-    # 0 to no limit
-    if parsed.max_name_len == 0:
-        parsed.max_name_len = 1000000
     if parsed.fast:
         log.info('The "-fast" mode was opened. '
                  'Skip sliding-window scan with tree.')
@@ -933,12 +930,11 @@ def get_feature_name(feature, arg):
         # log.warning('Unsupport annotation type {}'.format(feature.type))
     if feature.type == 'misc_feature':
         if 'intergenic_spacer' in name or 'IGS' in name:
-            # 'IGS' in name) and len(name) < 100):
             name = name.replace('intergenic_spacer_region', 'IGS')
     if feature.type == 'misc_RNA':
         # handle ITS
-        if 'internal_transcribed_spacer' in name:
-            name = 'ITS'
+        if 'internal transcribed spacer' in name:
+            name = name.replace('internal transcribed spacer', 'ITS')
     if name is not None:
         name = safe(name)
     else:
@@ -1141,14 +1137,15 @@ def divide(gbfile, arg):
         not_genes = []
         # get genes
         for feature in record.features:
+            if feature.type == 'source':
+                continue
             name = get_feature_name(feature, arg)
             # skip unsupport feature
             # support: gene, CDS, tRNA, rRNA, misc_feature, misc_RNA
             if name is None:
                 continue
             if len(name) > arg.max_name_len:
-                # warn to debug?
-                log.warning('Too long name: {}. Truncated.'.format(name))
+                log.debug('Too long name: {}. Truncated.'.format(name))
                 name = name[:arg.max_name_len-3] + '...'
             if feature.type == 'gene':
                 genes.append([name, feature])
@@ -1162,6 +1159,9 @@ def divide(gbfile, arg):
 
         # write genes
         wrote = write_seq(genes, seq_info, whole_seq, arg)
+        wrote_by_gene.update(wrote)
+        # write non-genes
+        wrote = write_seq(not_genes, seq_info, whole_seq, arg)
         wrote_by_gene.update(wrote)
         # extract spacer
         spacers = get_spacer(genes)
@@ -1179,11 +1179,13 @@ def divide(gbfile, arg):
                 'invert_repeat'] == 'False']
         # write seq
         spacers_to_write = [[i.id, i] for i in spacers]
+        # write intron or not?
         introns_to_write = [(i.id, i) for i in introns]
         wrote = write_seq(spacers_to_write, seq_info, whole_seq, arg)
         wrote_by_gene.update(wrote)
         _ = write_seq(introns_to_write, seq_info, whole_seq, arg)
         # write to group_by name, i.e., one gb record one fasta
+        print(feature_name)
         if 'ITS' in feature_name:
             name_str = 'ITS'
         elif len(feature_name) >= 4:
