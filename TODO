@@ -119,3 +119,10 @@
 119. write name.type.fasta?
 120. remove by-name
 121. AH009860 have clear annotation of every part in ITS, but MN528716 only use "contains ITS, 5.8s, etc"
+122. HC476670 have CDS but not gene
+123. check genbank file to remove empty record is too slow, how to directly exclude them when querying in Genbank
+124. option for long/short sequence id
+125. integrate rename
+126. regular expression for rename gene is not good
+127. Z00028 has bad annotation of introns
+

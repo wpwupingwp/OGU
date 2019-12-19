@@ -920,7 +920,7 @@ def get_feature_name(feature, arg):
             name = None
         return name
     name = None
-    # ignore exist exon/intron and source
+    # ignore exist exon/intron
     accept_type = {'gene', 'CDS', 'tRNA', 'rRNA', 'misc_feature', 'misc_RNA'}
     if feature.type not in accept_type:
         return name
@@ -1038,6 +1038,9 @@ def get_intron(genes):
         for i in range(len(parts)-1):
             before = parts[i]
             current = parts[i+1]
+            # Z00028
+            if before.end >= current.start:
+                break
             # complement strand use reversed index
             # n_intron start with 1 instead of 0
             if strand != -1:
