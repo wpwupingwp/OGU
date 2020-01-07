@@ -730,9 +730,7 @@ def clean_gb(gbfile):
     abnormal records.
     Cannot catch Exception during SeqIO.parse, have to use this function.
     """
-    log.info('\tCheck Genbank file to remove abnormal records.')
-
-    def parse_gb(handle):
+    def _parse_gb(handle):
         record = []
         for line in handle:
             record.append(line)
@@ -744,7 +742,7 @@ def clean_gb(gbfile):
 
     wrong = 0
     old_gb = open(gbfile, 'r')
-    for record in parse_gb(old_gb):
+    for record in _parse_gb(old_gb):
         # StringIO is faster than write tmp file to disk and read
         tmp_gb = StringIO()
         for _ in record:
@@ -852,7 +850,6 @@ def write_seq(record, seq_info, whole_seq, arg):
                 name, seq_info[1]))
         return sequence
 
-    path = arg.by_gene_folder
     seq_len = len(whole_seq)
     filenames = set()
     expand_files = set()
@@ -873,7 +870,7 @@ def write_seq(record, seq_info, whole_seq, arg):
             log.debug('Annotaion of {} (Accession {}) '
                       'is too long. Skip.'.format(name, seq_info[1]))
         sequence_id = '>' + '|'.join([name, *seq_info, feature.type])
-        filename = join_path(path, feature.type+'.'+name+'.fasta')
+        filename = arg.by_gene_folder / (feature.type+'.'+name+'.fasta')
         sequence = careful_extract(name, feature, whole_seq)
         with open(filename, 'a', encoding='utf-8') as handle:
             handle.write(sequence_id + '\n')
@@ -896,7 +893,7 @@ def write_seq(record, seq_info, whole_seq, arg):
                 feature.location = new_loc
             feature.type = 'expand'
             sequence = careful_extract(name, feature, whole_seq)
-            filename2 = join_path(path, '{}.expand'.format(name))
+            filename2 = arg.by_gene_folder / '{}.expand'.format(name)
             with open(filename2, 'a', encoding='utf-8') as handle:
                 handle.write(sequence_id + '\n')
                 handle.write(str(sequence) + '\n')
@@ -1115,7 +1112,7 @@ def divide(gbfile, arg):
         return (my_kingdom, my_phylum, my_class, my_order, my_family)
 
     # put raw fasta into root of output folder, so not to use clean_path
-    raw_fasta = join_path(arg.out, splitext(basename(gbfile))[0] + '.fasta')
+    raw_fasta = gbfile.with_suffix('.fasta')
     handle_raw = open(raw_fasta, 'w', encoding='utf-8')
     wrote_by_gene = set()
     wrote_by_name = set()
@@ -1215,7 +1212,7 @@ def divide(gbfile, arg):
             name_str = '{}_genome'.format(arg.organelle)
         record.id = '|'.join([name_str, taxon, accession, specimen])
         record.description = ''
-        filename = join_path(arg.by_name_folder, name_str + '.fasta')
+        filename = arg.by_name_folder / (name_str+'.fasta')
         with open(filename, 'a', encoding='utf-8') as out:
             SeqIO.write(record, out, 'fasta')
             wrote_by_name.add(filename)
@@ -1223,9 +1220,9 @@ def divide(gbfile, arg):
         SeqIO.write(record, handle_raw, 'fasta')
 
     # skip analyze of Unknown.fasta
-    unknown = join_path(arg.by_name_folder, 'Unknown.fasta')
+    unknown = arg.by_name_folder / 'Unknown.fasta'
     if unknown in wrote_by_name:
-        log.info('Skip Unknown.fasta')
+        log.debug('Skip Unknown.fasta')
         wrote_by_name.remove(unknown)
     log.info('Divide finished.')
     return list(wrote_by_gene), list(wrote_by_name)
@@ -2031,6 +2028,7 @@ def main():
             log.critical('Query is empty.')
     if arg.gb is not None:
         for i in list(glob(arg.gb)):
+            i = Path(i).absolute()
             by_gene, by_name = divide(i, arg)
             wrote_by_gene.extend(by_gene)
             wrote_by_name.extend(by_name)
