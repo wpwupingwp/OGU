@@ -702,7 +702,8 @@ def download(arg, query):
                                  retmax=ret_max)
             output.write(data.read())
         # just retry if connection failed
-        except IOError:
+        # IOError could not handle all types of failure
+        except Exception:
             if retry <= RETRY_MAX:
                 log.warning('Failed on download. Retrying...')
                 retry += 1
