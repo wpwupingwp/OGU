@@ -868,7 +868,7 @@ def write_seq(record, seq_info, whole_seq, arg):
             log.debug('Annotaion of {} (Accession {}) '
                       'is too long. Skip.'.format(name, seq_info[1]))
         sequence_id = '>' + '|'.join([name, *seq_info, feature.type])
-        filename = join_path(path, name + '-' + feature.type + '.fasta')
+        filename = join_path(path, feature.type+'.'+name+'.fasta')
         sequence = careful_extract(name, feature, whole_seq)
         with open(filename, 'a', encoding='utf-8') as handle:
             handle.write(sequence_id + '\n')
