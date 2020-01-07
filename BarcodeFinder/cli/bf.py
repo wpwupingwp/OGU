@@ -725,6 +725,7 @@ def clean_gb(gbfile):
     """
     Records in Genbank may be problematic. Check it before parse and skip
     abnormal records.
+    Cannot catch Exception during SeqIO.parse, have to use this function.
     """
     log.info('\tCheck Genbank file to remove abnormal records.')
 
