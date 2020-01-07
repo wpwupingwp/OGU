@@ -13,6 +13,7 @@ from os import (cpu_count, devnull, environ, mkdir, pathsep, remove, rename,
 from os.path import abspath, basename, exists, splitext
 from os.path import join as join_path
 from pkg_resources import resource_filename
+from pathlib import Path
 from platform import system
 from random import choice
 from shutil import unpack_archive, ReadError
@@ -46,7 +47,7 @@ rcParams['lines.linewidth'] = 1.5
 # define logger
 FMT = '%(asctime)s %(levelname)-8s %(message)s'
 DATEFMT = '%I:%M:%S'
-TEMP_LOG = 'Temp.log'
+TEMP_LOG = Path('Temp.log')
 LOG_FMT = logging.Formatter(fmt=FMT, datefmt=DATEFMT)
 log = logging.getLogger(__name__)
 coloredlogs.install(level=logging.INFO, fmt=FMT, datefmt=DATEFMT)
@@ -359,12 +360,14 @@ def parse_args():
     if parsed.out is None:
         log.warning('Output folder was not set.')
         log.info('\tUse "Result" instead.')
-        parsed.out = 'Result'
-    parsed.by_gene_folder = join_path(parsed.out, 'by-gene')
-    parsed.by_name_folder = join_path(parsed.out, 'by-name')
+        parsed.out = Path('.').absolute() / 'Result'
+    else:
+        parsed.out = Path(parsed.out)
+    parsed.by_gene_folder = parsed.out / 'by-gene'
+    parsed.by_name_folder = parsed.out / 'by-name'
     # temporary filename, omit one parameters in many functions
-    parsed.db_file = join_path(parsed.out, 'interleaved.fasta')
-    parsed.out_file = ''
+    parsed.db_file = parsed.out / 'interleaved.fasta'
+    parsed.out_file = parsed.out / ''
     # load option.json may cause chaos, remove
     return parsed
 
@@ -676,7 +679,7 @@ def download(arg, query):
     else:
         name = 'sequence'
     name = safe(name)
-    file_name = join_path(arg.out, name + '.gb')
+    file_name = arg.out / (name+'.gb')
     output = open(file_name, 'w', encoding='utf-8')
     ret_start = 0
     if count >= 1000:
@@ -714,7 +717,7 @@ def download(arg, query):
                 return None
         ret_start += ret_max
     log.info('Download finished.')
-    json_file = join_path(arg.out, 'Query.json')
+    json_file = arg.out / 'Query.json'
     with open(json_file, 'w', encoding='utf-8') as _:
         json.dump(query_handle, _, indent=4, sort_keys=True)
     log.info('The query info was dumped into {}'.format(json_file))
@@ -1995,18 +1998,18 @@ def main():
     arg = parse_args()
     if arg is None:
         quit('Empty input! Please use "-h" options for help info.')
-    try:
-        mkdir(arg.out)
-    except FileExistsError:
+    if arg.out.exists():
         quit('Output folder "{}" is existed. Please use "-out" option to set '
              'a new output folder.'.format(arg.out))
+    else:
+        arg.out.mkdir()
     # move log to new log file
     log_tmp.close()
     log.removeHandler(log_tmp)
-    log_file = join_path(arg.out, 'Log.txt')
+    log_file = arg.out / 'Log.txt'
     with open(TEMP_LOG, 'r') as a, open(log_file, 'w') as b:
         b.write(a.read())
-    remove(TEMP_LOG)
+    TEMP_LOG.unlink()
     log_file_handler = logging.FileHandler(log_file)
     log_file_handler.setLevel(logging.INFO)
     log_file_handler.setFormatter(LOG_FMT)
@@ -2015,8 +2018,8 @@ def main():
     # prepare
     wrote_by_gene = []
     wrote_by_name = []
-    mkdir(arg.by_gene_folder)
-    mkdir(arg.by_name_folder)
+    arg.by_gene_folder.mkdir()
+    arg.by_name_folder.mkdir()
     # collect and preprocess
     query = get_query_string(arg)
     if query is not None:
