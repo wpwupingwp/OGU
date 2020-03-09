@@ -925,7 +925,7 @@ def write_seq(record, seq_info, whole_seq, arg):
     file_to_analyze = []
     keep = ('gene.fasta', 'misc_feature', 'misc_RNA', 'spacer')
     for i in filenames:
-        if i.endswith(keep):
+        if i.suffix in keep:
             file_to_analyze.append(i)
         else:
             log.debug('Skip {}'.format(i))
