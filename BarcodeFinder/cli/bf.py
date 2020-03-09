@@ -8,8 +8,7 @@ from collections import defaultdict
 from glob import glob
 from itertools import product as cartesian_product
 from io import StringIO
-from os import (cpu_count, devnull, environ, mkdir, pathsep, remove, rename,
-                sep)
+from os import (cpu_count, devnull, environ, pathsep, remove, rename, sep)
 from os.path import abspath, basename, exists, splitext
 from os.path import join as join_path
 from pkg_resources import resource_filename
@@ -363,6 +362,7 @@ def parse_args():
         parsed.out = Path('.').absolute() / 'Result'
     else:
         parsed.out = Path(parsed.out)
+    # to be continue
     parsed.by_gene_folder = parsed.out / 'by-gene'
     parsed.by_name_folder = parsed.out / 'by-name'
     # temporary filename, omit one parameters in many functions
@@ -370,6 +370,24 @@ def parse_args():
     parsed.out_file = parsed.out / ''
     # load option.json may cause chaos, remove
     return parsed
+
+
+def init_out(arg):
+    """
+    Initialize output folder.
+    """
+    arg.out.mkdir()
+    # input data, genbank downloaded data
+    arg.raw_ = arg.out / 'Raw'
+    arg.raw_.mkdir()
+    # divided files, uniq files, expand files
+    arg.divide_ = arg.out / 'Divide'
+    arg.divide_.mkdir()
+    # alignment files, analyze files?
+    # to be continue
+    arg.align_ = arg.out / 'Alignment'
+    arg.align_.mkdir()
+    return arg
 
 
 def average(x):
@@ -389,9 +407,10 @@ def safe(old):
     return re.sub(r'\W', '_', old)
 
 
+# to remove
 def clean_path(old, arg):
     """
-    Join path if the file is not under by-gene or by-uniq to make working
+    Join path if the file is not under by-gene or by-name to make working
     folder clean.
     """
     split = old.split(sep)
@@ -515,28 +534,31 @@ def deploy(software):
                 'instruction to get a CLEAN system.')
     sys = system()
     # url dict
-    blast_url = ('ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.8.1/'
-                 'ncbi-blast-2.8.1+')
+    blast_url = ('ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.10.0/'
+                 'ncbi-blast-2.10.0+')
     iqtree_url = ('https://github.com/Cibiv/IQ-TREE/releases/download/v1.6.9/'
                   'iqtree-1.6.9')
     mafft_url = 'https://mafft.cbrc.jp/alignment/software/mafft'
     # windows blast path not sure
+    # to be continue: update url
     urls = {'Linux':
             {'BLAST': {'url': blast_url+'-x64-linux.tar.gz',
-                       'path': abspath('ncbi-blast-2.8.1+'+sep+'bin')},
+                       'path': abspath('ncbi-blast-2.10.0+'+sep+'bin')},
              'IQTREE': {'url': iqtree_url+'-Linux.tar.gz',
                         'path': abspath('iqtree-1.6.9-Linux'+sep+'bin')},
              'MAFFT': {'url': mafft_url+'-7.407-linux.tgz',
                        'path': abspath('mafft-linux64')}},
             'Darwin':
             {'BLAST': {'url': blast_url+'-x64-macosx.tar.gz',
-                       'path': abspath('ncbi-blast-2.8.1+'+sep+'bin')},
+                       'path': abspath('ncbi-blast-2.10.0+'+sep+'bin')},
              'IQTREE': {'url': iqtree_url+'-MacOSX.zip',
                         'path': abspath('iqtree-1.6.9-MacOSX'+sep+'bin')},
              'MAFFT': {'url': mafft_url+'-7.407-mac.zip',
                        'path': abspath('mafft-mac')}},
             'Windows':
-            {'BLAST': {'url': blast_url+'-win64.exe',
+            # to be continue
+            # use zip instead of exe
+            {'BLAST': {'url': blast_url+'-x64-win64.tar.gz',
                        'path': abspath('.')},
              'IQTREE': {'url': iqtree_url+'-Windows.zip',
                         'path': abspath('iqtree-1.6.9-Windows'+sep+'bin')},
@@ -1186,7 +1208,7 @@ def divide(gbfile, arg):
         # extract intron
         introns = get_intron(have_intron.items())
         record.features.extend(introns)
-        with open(gbfile+'.plus', 'a') as gb_plus:
+        with open(gbfile.with_suffix('.plus'), 'a') as gb_plus:
             SeqIO.write(record, gb_plus, 'gb')
         if not arg.allow_invert_repeat:
             spacers = [i for i in spacers if i.qualifiers[
@@ -1263,6 +1285,7 @@ def uniq(files, arg):
                 info[i] = choice(info[i])
             keep = {info[i][0] for i in info}
         kept += len(keep)
+        # to be continue
         new = clean_path(fasta, arg) + '.uniq'
         with open(new, 'w', encoding='utf-8') as out:
             for idx, record in enumerate(SeqIO.parse(fasta, 'fasta')):
@@ -1999,7 +2022,7 @@ def main():
         quit('Output folder "{}" is existed. Please use "-out" option to set '
              'a new output folder.'.format(arg.out))
     else:
-        arg.out.mkdir()
+        arg = init_out(arg)
     # move log to new log file
     log_tmp.close()
     log.removeHandler(log_tmp)
@@ -2027,6 +2050,7 @@ def main():
         else:
             log.critical('Query is empty.')
     if arg.gb is not None:
+        # to be continue
         for i in list(glob(arg.gb)):
             i = Path(i).absolute()
             by_gene, by_name = divide(i, arg)
