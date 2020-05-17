@@ -19,6 +19,7 @@ from shutil import unpack_archive, ReadError
 from subprocess import run
 from urllib.error import HTTPError
 from urllib.request import urlopen
+from time import sleep
 
 import coloredlogs
 import numpy as np
@@ -704,6 +705,7 @@ def download(arg, query):
         # just retry if connection failed
         # IOError could not handle all types of failure
         except Exception:
+            sleep(1)
             if retry <= RETRY_MAX:
                 log.warning('Failed on download. Retrying...')
                 retry += 1
