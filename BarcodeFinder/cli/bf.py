@@ -1452,7 +1452,11 @@ def get_resolution(alignment, start, end, fast=False):
     for i in range(n):
         d_ij = np.sum(subalign[i] != subalign[(i + 1):])
         sum_d_ij += d_ij
-    pi = (2 / (n * (n - 1)) * sum_d_ij) / m
+    try:
+        pi = (2 / (n * (n - 1)) * sum_d_ij) / m
+    except ZeroDivisionError:
+        log.warning('Bad Pi value.')
+        pi = 0
     # tree value
     aln_file = '{}-{}.aln.tmp'.format(start, end)
 
