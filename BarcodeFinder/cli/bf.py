@@ -201,6 +201,7 @@ class Pair:
         if not self.right.is_reverse_complement:
             self.right = self.right.reverse_complement()
         # include end base, use alignment loc for slice
+        # to be continue, skip tree
         (self.gap_ratio, self.resolution, self.entropy, self.pi,
          self.tree_value, self.avg_terminal_len) = get_resolution(
              alignment, self.left.start, self.right.end + 1)
@@ -1887,7 +1888,7 @@ def analyze(fasta, arg):
     log.info('Evaluate whole alignment of {}.'.format(fasta))
     # a_ : alignment
     (a_gap_ratio, a_observed_res, a_entropy, a_pi, a_tree_res,
-     a_branch_len) = get_resolution(alignment, 0, columns)
+     a_branch_len) = get_resolution(alignment, 0, columns, arg.fast)
     log.info('\tGap ratio:\t{}'.format(a_gap_ratio))
     log.info('\tObserved resolution:\t{}'.format(a_observed_res))
     log.info('\tNormalized Shannon Index:\t{}'.format(a_entropy))

@@ -135,3 +135,4 @@
 135. filename may be duplicate in Windows
 136. abnormal length in divide_gene
 137. continue to download if break
+138. skip tree in Pair if arg.fast
