@@ -1450,7 +1450,7 @@ def get_resolution(alignment, start, end, fast=False):
     n = rows
     sum_d_ij = 0
     for i in range(n):
-        d_ij = np.sum(subalign[i] != subalign[(i + 1):])
+        d_ij = np.count_nonzero(subalign[i] != subalign[(i + 1):])
         sum_d_ij += d_ij
     try:
         pi = (2 / (n * (n - 1)) * sum_d_ij) / m
