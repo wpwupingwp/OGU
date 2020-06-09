@@ -10,7 +10,7 @@ def init_lineage():
     """
     Only called by setup.py
     """
-    data_folder = Path('data')
+    data_folder = Path('.') / 'BarcodeFinder' / 'data'
     url = 'ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdmp.zip'
     with open('taxdmp.zip', 'wb') as out:
         out.write(urlopen(url).read())
@@ -90,7 +90,7 @@ setuptools.setup(
     name='BarcodeFinder',
     packages=setuptools.find_packages(),
     url='https://github.com/wpwupingwp/BarcodeFinder',
-    version='0.9.45',
+    version='0.9.47',
     classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',

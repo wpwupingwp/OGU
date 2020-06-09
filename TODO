@@ -134,3 +134,4 @@
 134. copy user's input to output folder to make working folder clean
 135. filename may be duplicate in Windows
 136. abnormal length in divide_gene
+137. continue to download if break
