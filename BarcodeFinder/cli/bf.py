@@ -2106,6 +2106,8 @@ def main():
         log.info('Quit.')
         raise SystemExit(-1)
     json_file = join_path(arg.out, 'Options.json')
+    # to be continued
+    # Path do not support json
     with open(json_file, 'w', encoding='utf-8') as out:
         json.dump(vars(arg), out, indent=4, sort_keys=True)
     log.info('Options were dumped into {}.'.format(json_file))
