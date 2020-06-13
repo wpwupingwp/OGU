@@ -1482,9 +1482,16 @@ def get_resolution(alignment, start, end, fast=False):
         else:
             tree = Phylo.read(aln_file + '.treefile', 'newick')
             # skip the first empty node
-            internals = tree.get_nonterminals()[1:]
-            terminals = tree.get_terminals()
-            sum_terminal_branch_len = sum([i.branch_length for i in terminals])
+            try:
+                internals = tree.get_nonterminals()[1:]
+                terminals = tree.get_terminals()
+                sum_terminal_branch_len = sum([i.branch_length
+                                               for i in terminals])
+            except RecursionError:
+                log.info('Bad phylogentic tree.')
+                internals = 0
+                terminals = 1
+                sum_terminal_branch_len = 0
             # miss stdev, to be continued
             avg_terminal_branch_len = sum_terminal_branch_len / len(terminals)
             tree_value = len(internals) / len(terminals)
