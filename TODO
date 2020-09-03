@@ -137,3 +137,4 @@
 137. continue to download if break
 138. skip tree in Pair if arg.fast
 139. remove clean_path
+140. remove Temp.log
