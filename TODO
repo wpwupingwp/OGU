@@ -138,3 +138,4 @@
 138. skip tree in Pair if arg.fast
 139. remove clean_path
 140. remove Temp.log
+141. clean empty fasta record

@@ -414,7 +414,7 @@ def clean_path(old, arg):
     Join path if the file is not under by-gene or by-name to make working
     folder clean.
     """
-    split = old.split(sep)
+    split = str(old).split(sep)
     if 'by-gene' not in split and 'by-name' not in split:
         return join_path(arg.by_name_folder, basename(old))
     else:
