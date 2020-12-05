@@ -1192,8 +1192,6 @@ def divide(gbfile, arg):
         # extract intron
         introns = get_intron(have_intron.items())
         record.features.extend(introns)
-        with open(gbfile+'.plus', 'a') as gb_plus:
-            SeqIO.write(record, gb_plus, 'gb')
         if not arg.allow_invert_repeat:
             spacers = [i for i in spacers if i.qualifiers[
                 'invert_repeat'] == 'False']
