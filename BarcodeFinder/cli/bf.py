@@ -4,6 +4,7 @@ import argparse
 import logging
 import json
 import re
+import sys
 from collections import defaultdict
 from glob import glob
 from itertools import product as cartesian_product
@@ -1424,6 +1425,8 @@ def get_resolution(alignment, start, end, fast=False):
     """
     subalign = alignment[:, start:end]
     rows, columns = subalign.shape
+    old_max_recursion = sys.getrecursionlimit()
+    sys.setrecursionlimit(max(rows+10, old_max_recursion))
     max_h = np.log2(rows)
     total = rows * columns
     gap_ratio = 0
@@ -1496,6 +1499,7 @@ def get_resolution(alignment, start, end, fast=False):
             avg_terminal_branch_len = sum_terminal_branch_len / len(terminals)
             tree_value = len(internals) / len(terminals)
             clean()
+    sys.setrecursionlimit(old_max_recursion)
     return (gap_ratio, resolution, entropy, pi, tree_value,
             avg_terminal_branch_len)
 
