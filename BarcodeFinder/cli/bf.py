@@ -790,8 +790,14 @@ def gene_rename(old_name):
         else:
             return old_name, 'bad_name'
         try:
-            new_name = 'trn{}{}'.format(codon.reverse_complement().translate(),
-                                        codon.transcribe())
+            if old_name.startswith('trnf'):
+                new_name = 'trnf{}{}'.format(
+                    codon.reverse_complement().translate(),
+                    codon.transcribe())
+            else:
+                new_name = 'trn{}{}'.format(
+                    codon.reverse_complement().translate(),
+                    codon.transcribe())
         except ValueError:
             return old_name, 'bad_name'
         gene_type = 'tRNA'
