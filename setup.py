@@ -66,7 +66,7 @@ def init_lineage():
     return
 
 
-init_lineage()
+#init_lineage()
 
 with open('README.md', 'r') as _:
     long_description = _.read()

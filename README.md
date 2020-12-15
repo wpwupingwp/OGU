@@ -360,7 +360,7 @@ output path via "-out", BarcodeFinder will create a folder labelled "Result".
 * _a_.gb
 
     The raw Genbank file. The _a_ comes from the query's keyword.
-* _a_.gb.plus
+* _a_.plus
 
     The raw Genbank file plus extended annotations for spacers and introns.
 * _a_.fasta

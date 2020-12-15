@@ -127,7 +127,16 @@
 127. Z00028 has bad annotation of introns
 128. check genbank file is too slow
 129. cannot extract X68919,X68889,X68921
-130. ITS Unknown
+130. ITS too much is Unknown
 131. spacer misc_feature, intergenic_spacer_region/intergenic_spacer
 132. split to 3 modules
-133. continue to download if break
+133. trnH-psbA or psbA-trnH
+134. copy user's input to output folder to make working folder clean
+135. filename may be duplicate in Windows
+136. abnormal length in divide_gene
+137. continue to download if break
+138. skip tree in Pair if arg.fast
+139. remove clean_path
+140. remove Temp.log
+141. clean empty fasta record
+142. trnfM, trnM, trnF
