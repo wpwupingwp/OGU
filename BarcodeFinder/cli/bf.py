@@ -790,7 +790,7 @@ def gene_rename(old_name):
         else:
             return old_name, 'bad_name'
         try:
-            if old_name.startswith('trnf'):
+            if lower.startswith('trnf'):
                 new_name = 'trnf{}{}'.format(
                     codon.reverse_complement().translate(),
                     codon.transcribe())
