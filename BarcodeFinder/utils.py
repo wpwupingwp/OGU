@@ -25,6 +25,27 @@ except ImportError:
     pass
 
 
+class BlastResult:
+    # slightly faster than namedtuple
+    __slots = ('query_id', 'hit_id', 'query_seq', 'ident_num', 'mismatch_num',
+               'bitscore_raw', 'query_start', 'query_end', 'hit_start',
+               'hit_end')
+
+    def __init__(self, line):
+        record = line.strip().split('\t')
+        self.query_id, self.hit_id, self.query_seq = record[0:3]
+        (self.ident_num, self.mismatch_num, self.bitscore_raw,
+         self.query_start, self.query_end, self.hit_start,
+         self.hit_end) = [int(i) for i in record[3:]]
+
+    def __repr__(self):
+        fmt = ('query_id: {}\thit_id: {}\tbitscore_raw: {}\tquery_start:{}\t'
+               'query_end: {}\thit_start: {}\thit_end: {}')
+        return fmt.format(self.query_id, self.hit_id, self.bitscore_raw,
+                          self.query_start, self.query_end, self.hit_start,
+                          self.hit_end)
+
+
 def plastid_rename():
     """
     Use name database.
@@ -197,3 +218,22 @@ def deploy(software):
         rename(join_path(urls[sys]['MAFFT']['path'], 'mafft.bat'),
                join_path(urls[sys]['MAFFT']['path'], 'mafft'))
     return abspath(urls[sys][software]['path'])
+
+
+def parse_blast_tab(filename):
+    """
+    Parse BLAST result (tab format).
+    """
+    query = []
+    with open(filename, 'r', encoding='utf-8') as raw:
+        for line in raw:
+            if line.startswith('# BLAST'):
+                yield query
+                query = []
+            elif line.startswith('#'):
+                pass
+            else:
+                query.append(BlastResult(line))
+
+
+
