@@ -540,7 +540,7 @@ def deploy(software):
                        'path': abspath('mafft-mac')}},
             'Windows':
             {'BLAST': {'url': blast_url+'-win64.exe',
-                       'path': abspath('.')},
+                       'path': abspath('cli')},
              'IQTREE': {'url': iqtree_url+'-Windows.zip',
                         'path': abspath('iqtree-1.6.9-Windows'+sep+'bin')},
              'MAFFT': {'url': mafft_url+'-7.409-win64-signed.zip',

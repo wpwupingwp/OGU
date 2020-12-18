@@ -1,7 +1,5 @@
-def main():
-    import BarcodeFinder.cli
-    BarcodeFinder.cli.main()
+#!/usr/bin/python3
 
+from BarcodeFinder import bf
 
-if __name__ == '__main__':
-    main()
+bf.main()
