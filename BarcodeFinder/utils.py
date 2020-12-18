@@ -7,8 +7,19 @@ from Bio.Seq import Seq
 
 
 @lru_cache(maxsize=None)
-def rename(old_name: str, genbank_format=False) -> (str, str):
+def gene_rename(old_name: str, genbank_format=False) -> (str, str):
     """
+    Old doc:
+        Different name of same gene will cause data to be splited to numerous
+        files instead of one and some data may be dropped.
+
+        For chloroplast genes, the author summarized various kinds of
+        annotation error of gene name or synonyms and try to use regular
+        expression to fix it.
+
+        Ideally, use BLAST to re-annotate sequence is the best(and slow) way to
+        find the correct name. This function only offers a "hotfix" which is
+        enough.
     Rename plastid genes.
     May be dangerous.
     Will cache results.
@@ -85,3 +96,20 @@ def plastid_rename():
     Use name database.
     """
     pass
+
+
+def safe_average(x):
+    """
+    Safe average.
+    """
+    if len(x) == 0:
+        return 0
+    else:
+        return sum(x) / len(x)
+
+
+def safe_path(old):
+    """
+    Remove illegal character in file path or name.
+    """
+    return re.sub(r'\W', '_', old)

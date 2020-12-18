@@ -31,6 +31,8 @@ from Bio.Seq import Seq
 from Bio.SeqFeature import SeqFeature, FeatureLocation
 from Bio.SeqRecord import SeqRecord
 
+from BarcodeFinder import utils
+
 from matplotlib import use as mpl_use
 if environ.get('DISPLAY', '') == '':
     mpl_use('Agg')
@@ -132,7 +134,8 @@ class PrimerWithInfo(SeqRecord):
     def update_id(self):
         self.end = self.annotations['end'] = self.start + self.__len__() - 1
         if self.mid_loc is not None and len(self.mid_loc) != 0:
-            self.avg_mid_loc = int(average(list(self.mid_loc.values())))
+            self.avg_mid_loc = int(utils.safe_average(list(
+                self.mid_loc.values())))
         self.id = ('AvgMidLocation({:.0f})-Tm({:.2f})-Coverage({:.2%})-'
                    'AvgBitScore({:.2f})-Start({})-End({})'.format(
                     self.avg_mid_loc, self.tm, self.coverage,
@@ -179,14 +182,15 @@ class Pair:
             'Pair(score={:.2f}, product={:.0f}, start={}, end={}, left={}, '
             'right={}, observerd_resolution={:.2%}, coverage={:.2%},'
             'delta_tm={:.2f}, have_heterodimer={})'.format(
-                self.score, average(list(self.length.values())), self.start,
+                self.score, utils.safe_average(
+                    list(self.length.values())), self.start,
                 self.end, self.left.seq, self.right.seq, self.resolution,
                 self.coverage, self.delta_tm, self.have_heterodimer))
 
     def get_score(self):
         # calculate score of given primer pairs. Suggestion only
         # use score to filter primer pairs
-        return (average(list(self.length.values())) * 0.5
+        return (utils.safe_average(list(self.length.values())) * 0.5
                 + self.coverage * 200
                 + len(self.left) * 10
                 + len(self.right) * 10
@@ -370,23 +374,6 @@ def parse_args():
     return parsed
 
 
-def average(x):
-    """
-    Safe average.
-    """
-    if len(x) == 0:
-        return 0
-    else:
-        return sum(x) / len(x)
-
-
-def safe(old):
-    """
-    Remove illegal character in file path or name.
-    """
-    return re.sub(r'\W', '_', old)
-
-
 def clean_path(old, arg):
     """
     Join path if the file is not under by-gene or by-uniq to make working
@@ -440,7 +427,7 @@ def calc_ambiguous_seq(func, seq, seq2=None):
         values = [func(i[0], i[1]) for i in products]
     # primer3 will return negative values sometime
     values_positive = [max(0, i) for i in values]
-    return average(values_positive)
+    return utils.safe_average(values_positive)
 
 
 def check_tools():
@@ -678,10 +665,10 @@ def download(arg, query):
         if i is not None:
             name_words.append(i)
     if len(name_words) != 0:
-        name = safe('-'.join(name_words))
+        name = utils.safe_path('-'.join(name_words))
     else:
         name = 'sequence'
-    name = safe(name)
+    name = utils.safe_path(name)
     file_name = join_path(arg.out, name + '.gb')
     output = open(file_name, 'w', encoding='utf-8')
     ret_start = 0
@@ -764,81 +751,6 @@ def clean_gb(gbfile):
     old_gb.close()
     if wrong != 0:
         log.info('\tRemove {} abnormal records.'.format(wrong))
-
-
-def gene_rename(old_name):
-    """
-    Different name of same gene will cause data to be splited to numerous
-    files instead of one and some data may be dropped.
-    For chloroplast genes, the auther summarized various kinds of annotation
-    error of gene name or synonyms and try to use regular expression to fix
-    it.
-    Ideally, use BLAST to re-annotate sequence is the best(and slow) way to
-    find the correct name. This function only offers a "hotfix" which is
-    enough.
-    """
-    if old_name is None:
-        return None, None
-    lower = old_name.lower()
-    # (trna|trn(?=[b-z]))
-    s = re.compile(r'(\d+\.?\d?)(s|rrn|rdna)')
-    if lower.startswith('trn'):
-        pattern = re.compile(r'([atcgu]{3})')
-        search = re.search(pattern, lower)
-        if search is not None:
-            codon = Seq(search.group(1))
-        else:
-            return old_name, 'bad_name'
-        try:
-            if lower.startswith('trnfm'):
-                new_name = 'trnf{}{}'.format(
-                    codon.reverse_complement().translate(),
-                    codon.transcribe())
-            else:
-                new_name = 'trn{}{}'.format(
-                    codon.reverse_complement().translate(),
-                    codon.transcribe())
-        except ValueError:
-            return old_name, 'bad_name'
-        gene_type = 'tRNA'
-    elif lower.startswith('rrn'):
-        pattern = re.compile(r'(\d+\.?\d?)')
-        search = re.search(pattern, lower)
-        if search is not None:
-            number = search.group(1)
-        else:
-            return old_name, 'bad_name'
-        new_name = 'rrn{}'.format(number)
-        gene_type = 'rRNA'
-    elif re.search(s, lower) is not None:
-        new_name = 'rrn{}'.format(re.search(s, lower).group(1))
-        gene_type = 'rRNA'
-    else:
-        pattern = re.compile(r'[^a-z]*'
-                             '(?P<gene>[a-z]+)'
-                             '[^a-z0-9]*'
-                             '(?P<suffix>[a-z]|[0-9]+)')
-        match = re.search(pattern, lower)
-        if match is not None:
-            try:
-                gene = match.group('gene')
-                suffix = match.group('suffix')
-            except ValueError:
-                return old_name, 'bad_name'
-        else:
-            return old_name, 'bad_name'
-        new_name = '{}{}'.format(gene, suffix.upper())
-        # captitalize last letter
-        if len(new_name) > 3:
-            s = list(new_name)
-            if s[-1].isalpha():
-                new_name = '{}{}'.format(
-                    ''.join(s[:-1]), ''.join(s[-1]).upper())
-        gene_type = 'normal'
-    # too long to be valid name
-    if len(lower) >= 15:
-        gene_type = 'suspicious_name'
-    return new_name, gene_type
 
 
 def write_seq(record, seq_info, whole_seq, arg):
@@ -959,11 +871,11 @@ def get_feature_name(feature, arg):
         if 'internal transcribed spacer' in name:
             name = name.replace('internal transcribed spacer', 'ITS')
     if name is not None:
-        name = safe(name)
+        name = utils.safe_path(name)
     else:
         return name
     if arg.rename:
-        name = gene_rename(name)[0]
+        name = utils.gene_rename(name)[0]
     return name
 
 
@@ -1763,7 +1675,7 @@ def validate(primer_candidate, db_file, n_seqs, arg):
             hsp_bitscore_raw = hit.bitscore_raw
             positive = hit.ident_num
             mismatch = hit.mismatch_num
-            loc = average([hit.hit_start, hit.hit_end])
+            loc = utils.safe_average([hit.hit_start, hit.hit_end])
             if positive >= min_positive and mismatch <= arg.mismatch:
                 sum_bitscore_raw += hsp_bitscore_raw
                 sum_mismatch += mismatch
@@ -1951,7 +1863,8 @@ def analyze(fasta, arg):
     out2.write(csv_title)
     for pair in pairs:
         line = style.format(
-            locus, pair.score, rows, average(list(pair.length.values())),
+            locus, pair.score, rows, utils.safe_average(
+                list(pair.length.values())),
             np.std(list(pair.length.values())), min(pair.length.values()),
             max(pair.length.values()),
             pair.coverage, pair.resolution, pair.tree_value,
