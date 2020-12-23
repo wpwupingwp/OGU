@@ -273,48 +273,7 @@ def clean_path(old, arg):
 
 
 
-def uniq(files, arg):
-    """
-    Remove redundant sequences of same species.
-    """
-    uniq_files = []
-    total = 0
-    kept = 0
-    for fasta in files:
-        info = defaultdict(lambda: list())
-        keep = dict()
-        index = 0
-        for record in SeqIO.parse(fasta, 'fasta'):
-            # gene|kingdom|phylum|class|order|family|genus|species|specimen|type
-            total += 1
-            if '|' in record.id:
-                name = ' '.join(record.id.split('|')[6:8])
-            else:
-                name = record.id
-            length = len(record)
-            # skip empty file
-            if length != 0:
-                info[name].append([index, length])
-            index += 1
-        if arg.uniq == 'first':
-            # keep only the first record
-            keep = {info[i][0][0] for i in info}
-        elif arg.uniq == 'longest':
-            for i in info:
-                info[i] = sorted(info[i], key=lambda x: x[1], reverse=True)
-            keep = {info[i][0][0] for i in info}
-        elif arg.uniq == 'random':
-            for i in info:
-                info[i] = choice(info[i])
-            keep = {info[i][0] for i in info}
-        kept += len(keep)
-        new = clean_path(fasta, arg) + '.uniq'
-        with open(new, 'w', encoding='utf-8') as out:
-            for idx, record in enumerate(SeqIO.parse(fasta, 'fasta')):
-                if idx in keep:
-                    SeqIO.write(record, out, 'fasta')
-        uniq_files.append(new)
-    return uniq_files
+
 
 
 def align(files, arg):
@@ -760,8 +719,6 @@ def main():
         log.info('Skip removing redundant sequences.')
     else:
         log.info('Remove redundant sequences by "{}".'.format(arg.uniq))
-        wrote_by_gene = uniq(wrote_by_gene, arg)
-        wrote_by_name = uniq(wrote_by_name, arg)
     if arg.stop == 1:
         log.info('Exit.')
         return

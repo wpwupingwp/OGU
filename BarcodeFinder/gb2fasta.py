@@ -5,6 +5,7 @@ import json
 import logging
 import re
 
+from collections import defaultdict
 from functools import lru_cache
 from io import StringIO
 from os.path import join as join_path
@@ -74,7 +75,7 @@ def parse_args(arg_list=None):
                      help='only download')
     # for plastid genes
     arg.add_argument('-rename', action='store_true', help='try to rename gene')
-    arg.add_argument('-uniq', choices=('longest', 'random', 'first', 'no'),
+    arg.add_argument('-uniq', choices=('longest', 'first', 'no'),
                      default='first',
                      help='method to remove redundant sequences')
     query = arg.add_argument_group('Query')
@@ -410,17 +411,17 @@ def get_feature_name(feature, arg):
     """
     def _extract_name(feature):
         if 'gene' in feature.qualifiers:
-            name = feature.qualifiers['gene'][0]
+            feature_name = feature.qualifiers['gene'][0]
         elif 'product' in feature.qualifiers:
-            name = feature.qualifiers['product'][0]
+            feature_name = feature.qualifiers['product'][0]
         elif 'locus_tag' in feature.qualifiers:
-            name = feature.qualifiers['locus_tag'][0]
+            feature_name = feature.qualifiers['locus_tag'][0]
         elif 'note' in feature.qualifiers:
-            name = feature.qualifiers['note'][0]
+            feature_name = feature.qualifiers['note'][0]
         else:
             log.debug('Cannot recognize annotation:\n{}'.format(feature))
-            name = None
-        return name
+            feature_name = None
+        return feature_name
 
     name = None
     # ignore exist exon/intron
@@ -695,15 +696,13 @@ def divide(gbfile, arg):
             name_str = '{}_genome'.format(arg.organelle)
         record.id = '|'.join([name_str, taxon, accession, specimen])
         record.description = ''
-        filename = arg._divide / (name_str+'.fasta')
+        filename = arg._fasta / (name_str+'.fasta')
         with open(filename, 'a', encoding='utf-8') as out:
             SeqIO.write(record, out, 'fasta')
         # write raw fasta
         SeqIO.write(record, handle_raw, 'fasta')
-
     # skip analyze of Unknown.fasta
-    unknown = arg._divide / 'Unknown.fasta'
-    # log.info('Skip Unknown.fasta')
+    # unknown = arg._divide / 'Unknown.fasta'
     log.info('Divide finished.')
     return arg._fasta, arg._divide
 
@@ -711,15 +710,14 @@ def divide(gbfile, arg):
 def write_seq(record, seq_info, whole_seq, arg):
     """
     Write fasta files to "by-gene" folder only.
-    record: [name, feature]
-    seq_info: (taxon, accession, specimen)
-    ID format: >name|taxon|accession|specimen|type
+    Args:
+        record: [name, feature]
+        seq_info: (taxon, accession, specimen)
+        ID format: >name|taxon|accession|specimen|type
     Return: {filename}
     """
-
     def careful_extract(name, feature, whole_seq):
         # illegal annotation may cause extraction failed
-
         try:
             sequence = feature.extract(whole_seq)
         except ValueError:
@@ -728,7 +726,7 @@ def write_seq(record, seq_info, whole_seq, arg):
                 name, seq_info[1]))
         return sequence
 
-    path = arg.by_gene_folder
+    path = arg._divide
     seq_len = len(whole_seq)
     filenames = set()
     expand_files = set()
@@ -748,12 +746,12 @@ def write_seq(record, seq_info, whole_seq, arg):
         if len(feature) > arg.max_seq_len:
             log.debug('Annotaion of {} (Accession {}) '
                       'is too long. Skip.'.format(name, seq_info[1]))
-        sequence_id = '>' + '|'.join([name, *seq_info, feature.type])
-        filename = join_path(path, feature.type+'.'+name+'.fasta')
-        sequence = careful_extract(name, feature, whole_seq)
+        filename = arg._divide / (feature.type+'-'+name+'.fasta')
         with open(filename, 'a', encoding='utf-8') as handle:
-            handle.write(sequence_id + '\n')
-            handle.write(str(sequence) + '\n')
+            sequence_id = '>' + '|'.join([name, *seq_info, feature.type])
+            sequence = careful_extract(name, feature, whole_seq)
+            handle.write(sequence_id+'\n')
+            handle.write(str(sequence)+'\n')
         filenames.add(filename)
         if arg.expand != 0:
             if feature.location_operator == 'join':
@@ -770,23 +768,59 @@ def write_seq(record, seq_info, whole_seq, arg):
                                     min(seq_len, loc[-1].end+arg.expand),
                                     loc[-1].strand)])
                 feature.location = new_loc
-            feature.type = 'expand'
             sequence = careful_extract(name, feature, whole_seq)
-            filename2 = join_path(path, '{}.expand'.format(name))
+            filename2 = arg._expand / (feature.type+'-'+name+'.fasta')
             with open(filename2, 'a', encoding='utf-8') as handle:
                 handle.write(sequence_id + '\n')
                 handle.write(str(sequence) + '\n')
             expand_files.add(filename2)
-    if arg.expand != 0:
-        filenames = expand_files
-    file_to_analyze = []
-    keep = ('gene.fasta', 'misc_feature', 'misc_RNA', 'spacer')
-    for i in filenames:
-        if i.endswith(keep):
-            file_to_analyze.append(i)
-        else:
-            log.debug('Skip {}'.format(i))
+    # keep = ('gene.fasta', 'misc_feature', 'misc_RNA', 'spacer')
+    # for i in filenames:
+        # if i.endswith(keep):
+            # file_to_analyze.append(i)
+        # else:
+            # log.debug('Skip {}'.format(i))
     return filenames
+
+
+def uniq(files: list, arg) -> list:
+    """
+    Remove redundant sequences of same species.
+    """
+    uniq_files = []
+    total = 0
+    kept = 0
+    for fasta in files:
+        info = defaultdict(lambda: list())
+        keep = dict()
+        index = 0
+        for record in SeqIO.parse(fasta, 'fasta'):
+            # gene|kingdom|phylum|class|order|family|genus|species|specimen|type
+            total += 1
+            if '|' in record.id:
+                name = ' '.join(record.id.split('|')[6:8])
+            else:
+                name = record.id
+            length = len(record)
+            # skip empty file
+            if length != 0:
+                info[name].append([index, length])
+            index += 1
+        if arg.uniq == 'first':
+            # keep only the first record
+            keep = {info[i][0][0] for i in info}
+        elif arg.uniq == 'longest':
+            for i in info:
+                info[i] = sorted(info[i], key=lambda x: x[1], reverse=True)
+            keep = {info[i][0][0] for i in info}
+        kept += len(keep)
+        new = arg._uniq / fasta.name
+        with open(new, 'w', encoding='utf-8') as out:
+            for idx, record in enumerate(SeqIO.parse(fasta, 'fasta')):
+                if idx in keep:
+                    SeqIO.write(record, out, 'fasta')
+        uniq_files.append(new)
+    return uniq_files
 
 
 def gb2fasta_main(arg_str=None):
@@ -811,7 +845,28 @@ def gb2fasta_main(arg_str=None):
     arg.gb.append(gb_file)
     for i in arg.gb:
         divide(i, arg)
-    return arg
+    if arg.uniq == 'no':
+        log.info('Skip removing redundant sequences.')
+        uniq_files = arg._divide.glob('*.fasta')
+        uniq_files = [i for i in uniq_files if i.name != 'Unknown.fasta']
+    else:
+        if arg.no_divide:
+            fasta_files = arg._fasta.glob('*.fasta')
+            fasta_files = [i for i in fasta_files
+                           if i.name != 'Unknown.fasta']
+            uniq_files = uniq(fasta_files, arg)
+        else:
+            if arg.expand == 0:
+                divided_files = arg._divide.glob('*.fasta')
+                divided_files = [i for i in divided_files
+                                 if i.name != 'Unknown.fasta']
+                uniq_files = uniq(divided_files, arg)
+            else:
+                expanded_files = arg._expand.glob('*.fasta')
+                expanded_files = [i for i in expanded_files
+                                 if i.name != 'Unknown.fasta']
+                uniq_files = uniq(expanded_files, arg)
+    return arg, uniq_files
 
 
 if __name__ == '__main__':
