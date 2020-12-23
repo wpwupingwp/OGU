@@ -270,98 +270,7 @@ def clean_path(old, arg):
 
 
 
-def download(arg, query):
-    """
-    Download records from Genbank.
-    Because of connection to Genbank website is not stable (especially in
-    Asia), it will retry if failed. Ctrl+C to break.
-    """
 
-    TOO_MUCH = 50000
-    # although Bio.Entrez has max_tries, current code could handle error
-    # clearly
-    RETRY_MAX = 10
-    log.info('\tQuery string:')
-    log.info('\t{}'.format(query))
-    if arg.email is None:
-        Entrez.email = 'guest@example.com'
-        log.info('\tEmail address for using Entrez missing, '
-                 'use {} instead.'.format(Entrez.email))
-    else:
-        Entrez.email = arg.email
-    query_handle = Entrez.read(Entrez.esearch(db='nuccore', term=query,
-                                              usehistory='y'))
-    count = int(query_handle['Count'])
-
-    if count == 0:
-        log.warning('Got 0 record. Please check the query.')
-        log.info('Abort download.')
-        return None
-    elif count > TOO_MUCH:
-        log.warning('Got {} records. May cost long time to download. '.format(
-            count))
-    else:
-        log.info('\tGot {} records.'.format(count))
-    if arg.seq_n is not None:
-        if count > arg.seq_n:
-            count = arg.seq_n
-            log.info('\tDownload {} records because of "-seq_n".'.format(
-                arg.seq_n))
-    log.info('\tDownloading...')
-    log.warning('\tMay be slow if connection is bad. Ctrl+C to quit.')
-    name_words = []
-    for i in (arg.group, arg.taxon, arg.organelle, arg.gene, arg.query):
-        if i is not None:
-            name_words.append(i)
-    if len(name_words) != 0:
-        name = utils.safe_path('-'.join(name_words))
-    else:
-        name = 'sequence'
-    name = utils.safe_path(name)
-    file_name = join_path(arg.out, name + '.gb')
-    output = open(file_name, 'w', encoding='utf-8')
-    ret_start = 0
-    if count >= 1000:
-        ret_max = 1000
-    elif count >= 100:
-        ret_max = 100
-    elif count >= 10:
-        ret_max = 10
-    else:
-        ret_max = 1
-    retry = 0
-    while ret_start < count:
-        log.info('\t{:d}--{:d}'.format(ret_start, ret_start + ret_max))
-        # Entrez accept at most 3 times per second
-        # However, due to slow network, it's fine :)
-        try:
-            data = Entrez.efetch(db='nuccore',
-                                 webenv=query_handle['WebEnv'],
-                                 query_key=query_handle['QueryKey'],
-                                 rettype='gb',
-                                 retmode='text',
-                                 retstart=ret_start,
-                                 retmax=ret_max)
-            output.write(data.read())
-        # just retry if connection failed
-        # IOError could not handle all types of failure
-        except Exception:
-            sleep(1)
-            if retry <= RETRY_MAX:
-                log.warning('Failed on download. Retrying...')
-                retry += 1
-                continue
-            else:
-                log.critical('Too much failure ({} times).'.format(RETRY_MAX))
-                log.info('Abort download.')
-                return None
-        ret_start += ret_max
-    log.info('Download finished.')
-    json_file = join_path(arg.out, 'Query.json')
-    with open(json_file, 'w', encoding='utf-8') as _:
-        json.dump(query_handle, _, indent=4, sort_keys=True)
-    log.info('The query info was dumped into {}'.format(json_file))
-    return file_name
 
 
 def uniq(files, arg):
@@ -835,14 +744,6 @@ def main():
     mkdir(arg.by_gene_folder)
     mkdir(arg.by_name_folder)
     # collect and preprocess
-    query = get_query_string(arg)
-    if query is not None:
-        log.info('Download data from Genbank.')
-        gbfile = download(arg, query)
-        if gbfile is not None:
-            wrote_by_gene, wrote_by_name = gb2fasta.divide(gbfile, arg)
-        else:
-            log.critical('Query is empty.')
     if arg.gb is not None:
         for i in list(glob(arg.gb)):
             by_gene, by_name = gb2fasta.divide(i, arg)

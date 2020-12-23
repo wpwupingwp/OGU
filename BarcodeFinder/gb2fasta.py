@@ -1,20 +1,23 @@
 #!/usr/bin/python3
 
+import argparse
+import json
 import logging
 import re
-import argparse
 
-from pkg_resources import resource_filename
 from functools import lru_cache
-from pathlib import Path
+from io import StringIO
 from os.path import join as join_path
 from os.path import splitext, basename
-from io import StringIO
+from pathlib import Path
+from pkg_resources import resource_filename
+from time import sleep
 
-from Bio.SeqFeature import SeqFeature, FeatureLocation
+from Bio import Entrez, SeqIO
 from Bio.Seq import Seq
+from Bio.SeqFeature import SeqFeature, FeatureLocation
 from Bio.SeqRecord import SeqRecord
-from Bio import SeqIO
+
 from BarcodeFinder import utils
 
 # define logger
@@ -50,7 +53,7 @@ with open(resource_filename('BarcodeFinder', 'data/animal_orders.csv'),
 def parse_args(arg_list=None):
     arg = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    arg.add_argument('-gb', help='input filename')
+    arg.add_argument('-gb', nargs='*', help='input filename')
     # trnK-matK
     arg.add_argument('-allow_mosaic_spacer', action='store_true',
                        help='allow mosaic spacer')
@@ -181,7 +184,100 @@ def init_arg(arg):
     if arg.gb is None and arg.query is None:
         log.error('Empty input.')
         return None
+    if arg.gb is not None:
+        # don't move given gb files?
+        arg.gb = [Path(i).absolute() for i in arg.gb]
+    else:
+        arg.gb = list()
     return arg
+
+
+def download(arg) -> Path:
+    """
+    Download records from Genbank.
+    Because of connection to Genbank website is not stable (especially in
+    Asia), it will retry if failed. Ctrl+C to break.
+    """
+    TOO_MUCH = 50000
+    # although Bio.Entrez has max_tries, current code could handle error
+    # clearly
+    RETRY_MAX = 10
+    if arg.email is None:
+        Entrez.email = 'guest@example.com'
+        log.info(f'\tEmail address for using Entrez missing, '
+                 f'use {Entrez.email} instead.')
+    else:
+        Entrez.email = arg.email
+    query_handle = Entrez.read(Entrez.esearch(db='nuccore', term=arg.query,
+                                              usehistory='y'))
+    count = int(query_handle['Count'])
+
+    if count == 0:
+        log.warning('Got 0 record. Please check the query.')
+        log.info('Abort download.')
+        return None
+    elif count > TOO_MUCH:
+        log.warning(f'Got {count} records. May cost long time to download.')
+    else:
+        log.info(f'\tGot {count} records.')
+    if arg.seq_n is not None:
+        if count > arg.seq_n:
+            count = arg.seq_n
+            log.info(f'\tDownload {arg.seq_n} records because of "-seq_n".')
+    log.info('\tDownloading...')
+    log.warning('\tMay be slow if connection is bad. Ctrl+C to quit.')
+    name_words = []
+    for i in (arg.group, arg.taxon, arg.organelle, arg.gene, arg.query):
+        if i is not None:
+            name_words.append(i)
+    if len(name_words) != 0:
+        name = utils.safe_path('-'.join(name_words)) + '.gb'
+    else:
+        name = 'sequence.gb'
+    file_name = arg._gb / name
+    output = open(file_name, 'w', encoding='utf-8')
+    ret_start = 0
+    if count >= 1000:
+        ret_max = 1000
+    elif count >= 100:
+        ret_max = 100
+    elif count >= 10:
+        ret_max = 10
+    else:
+        ret_max = 1
+    retry = 0
+    while ret_start < count:
+        log.info('\t{:d}--{:d}'.format(ret_start, ret_start + ret_max))
+        # Entrez accept at most 3 times per second
+        # However, due to slow network, it's fine :)
+        try:
+            data = Entrez.efetch(db='nuccore',
+                                 webenv=query_handle['WebEnv'],
+                                 query_key=query_handle['QueryKey'],
+                                 rettype='gb',
+                                 retmode='text',
+                                 retstart=ret_start,
+                                 retmax=ret_max)
+            output.write(data.read())
+        # just retry if connection failed
+        # IOError could not handle all types of failure
+        except Exception:
+            sleep(1)
+            if retry <= RETRY_MAX:
+                log.warning('Failed on download. Retrying...')
+                retry += 1
+                continue
+            else:
+                log.critical(f'Too much failure ({RETRY_MAX} times).')
+                log.info('Abort download.')
+                return None
+        ret_start += ret_max
+    log.info('Download finished.')
+    json_file = arg._tmp / 'Query.json'
+    with open(json_file, 'w', encoding='utf-8') as _:
+        json.dump(query_handle, _, indent=4, sort_keys=True)
+    log.info(f'The query info was dumped into {json_file}')
+    return file_name
 
 
 def clean_gb(gbfile):
@@ -723,6 +819,10 @@ def gb2fasta_main(arg_str=None):
         return None
     log.info(f'Input genbank files:\t{arg.gb}')
     log.info(f'Query: {arg.query}')
+    gb_file = download(arg)
+    arg.gb.append(gb_file)
+    for i in arg.gb:
+        divide(i, arg)
     return arg
 
 
