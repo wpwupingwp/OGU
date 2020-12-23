@@ -66,13 +66,12 @@ def init_out(arg):
         return None
     try:
         arg.out.mkdir()
-        arg._gb = arg.out / 'GB'
+        arg._gb = arg.out / 'GenBank'
         arg._gb.mkdir()
-        # divide, no divide?
-        arg._divide_by_gene = arg.out / 'Divide_by_gene'
-        arg._divide_by_gene.mkdir()
-        arg._divide_by_name = arg.out / 'Divide_by_name'
-        arg._divide_by_name.mkdir()
+        arg._fasta = arg.out / 'Fasta'
+        arg._fasta.mkdir()
+        arg._divide = arg.out / 'Divide'
+        arg._divide.mkdir()
         arg._uniq = arg.out / 'Uniq'
         arg._uniq.mkdir()
         arg._alignment = arg.out / 'Alignment'

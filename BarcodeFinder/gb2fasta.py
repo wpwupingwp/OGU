@@ -605,12 +605,8 @@ def divide(gbfile, arg):
                 my_class = ''
         return (my_kingdom, my_phylum, my_class, my_order, my_family)
 
-    # put raw fasta into root of output folder, so not to use clean_path
-    raw_fasta = join_path(arg.out, splitext(basename(gbfile))[0] + '.fasta')
+    raw_fasta = arg._fasta / (gbfile.stem+'.fasta')
     handle_raw = open(raw_fasta, 'w', encoding='utf-8')
-    wrote_by_gene = set()
-    wrote_by_name = set()
-    accession = ''
     for record in clean_gb(gbfile):
         # only accept gene, product, and spacer in misc_features.note
         taxon_str = record.annotations.get('taxonomy', None)
@@ -645,15 +641,13 @@ def divide(gbfile, arg):
         not_genes = []
         # get genes
         for feature in record.features:
-            if feature.type == 'source':
-                continue
-            name = get_feature_name(feature, arg)
             # skip unsupport feature
             # support: gene, CDS, tRNA, rRNA, misc_feature, misc_RNA
+            name = get_feature_name(feature, arg)
             if name is None:
                 continue
             if len(name) > arg.max_name_len:
-                log.debug('Too long name: {}. Truncated.'.format(name))
+                log.debug(f'Too long name: {name}. Truncated.')
                 name = name[:arg.max_name_len-3] + '...'
             if feature.type == 'gene':
                 genes.append([name, feature])
@@ -667,19 +661,17 @@ def divide(gbfile, arg):
 
         # write genes
         wrote = write_seq(genes, seq_info, whole_seq, arg)
-        wrote_by_gene.update(wrote)
         # write non-genes
         wrote = write_seq(not_genes, seq_info, whole_seq, arg)
-        wrote_by_gene.update(wrote)
         # extract spacer
         spacers = get_spacer(genes)
         # write spacer annotations
         if not arg.allow_mosaic_spacer:
             spacers = [i for i in spacers if i.type != 'mosaic_spacer']
-        record.features.extend(spacers)
+        # record.features.extend(spacers)
         # extract intron
         introns = get_intron(have_intron.items())
-        record.features.extend(introns)
+        # record.features.extend(introns)
         if not arg.allow_invert_repeat:
             spacers = [i for i in spacers if i.qualifiers[
                 'invert_repeat'] == 'False']
@@ -688,8 +680,7 @@ def divide(gbfile, arg):
         # write intron or not?
         introns_to_write = [(i.id, i) for i in introns]
         wrote = write_seq(spacers_to_write, seq_info, whole_seq, arg)
-        wrote_by_gene.update(wrote)
-        _ = write_seq(introns_to_write, seq_info, whole_seq, arg)
+        wrote = write_seq(introns_to_write, seq_info, whole_seq, arg)
         # write to group_by name, i.e., one gb record one fasta
         if 'ITS' in feature_name:
             name_str = 'ITS'
@@ -704,20 +695,17 @@ def divide(gbfile, arg):
             name_str = '{}_genome'.format(arg.organelle)
         record.id = '|'.join([name_str, taxon, accession, specimen])
         record.description = ''
-        filename = join_path(arg.by_name_folder, name_str + '.fasta')
+        filename = arg._divide / (name_str+'.fasta')
         with open(filename, 'a', encoding='utf-8') as out:
             SeqIO.write(record, out, 'fasta')
-            wrote_by_name.add(filename)
         # write raw fasta
         SeqIO.write(record, handle_raw, 'fasta')
 
     # skip analyze of Unknown.fasta
-    unknown = join_path(arg.by_name_folder, 'Unknown.fasta')
-    if unknown in wrote_by_name:
-        log.info('Skip Unknown.fasta')
-        wrote_by_name.remove(unknown)
+    unknown = arg._divide / 'Unknown.fasta'
+    # log.info('Skip Unknown.fasta')
     log.info('Divide finished.')
-    return list(wrote_by_gene), list(wrote_by_name)
+    return arg._fasta, arg._divide
 
 
 def write_seq(record, seq_info, whole_seq, arg):
