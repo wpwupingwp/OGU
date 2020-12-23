@@ -69,7 +69,7 @@ def parse_args(arg_list=None):
                      help='only download')
     # for plastid genes
     arg.add_argument('-rename', action='store_true', help='try to rename gene')
-    arg.add_argument('-uniq', choices=('longest', 'first', 'no'),
+    arg.add_argument('-unique', choices=('longest', 'first', 'no'),
                      default='first',
                      help='method to remove redundant sequences')
     query = arg.add_argument_group('Query')
@@ -79,28 +79,28 @@ def parse_args(arg_list=None):
     query.add_argument('-gene', type=str, help='gene name')
     # in case of same taxonomy name in different group
     query.add_argument('-group',
-                         choices=('animals', 'plants', 'fungi', 'protists',
-                                  'bacteria', 'archaea', 'viruses'),
-                         help='Species kind')
+                       choices=('animals', 'plants', 'fungi', 'protists',
+                                'bacteria', 'archaea', 'viruses'),
+                       help='Species kind')
     query.add_argument('-min_len', default=100, type=int,
-                         help='minimum length')
+                       help='minimum length')
     query.add_argument('-max_len', default=10000, type=int,
-                         help='maximum length')
+                       help='maximum length')
     query.add_argument('-date_start', type='str',
                        help='release date beginning, (eg. 1970/1/1)')
     query.add_argument('-date_end', type='str',
                        help='release date end, (eg. 2020/12/31)')
     query.add_argument('-molecular', choices=('DNA', 'RNA'),
-                         help='molecular type')
+                       help='molecular type')
     query.add_argument('-og', '-organelle', dest='organelle',
-                         choices=('mt', 'mitochondrion', 'cp',
-                                  'chloroplast', 'pl', 'plastid'),
-                         help='organelle type')
+                       choices=('mt', 'mitochondrion', 'cp',
+                                'chloroplast', 'pl', 'plastid'),
+                       help='organelle type')
     query.add_argument('-query', nargs='*', help='query text')
     query.add_argument('-refseq', action='store_true',
-                         help='Only search in RefSeq database')
+                       help='Only search in RefSeq database')
     query.add_argument('-seq_n', default=None, type=int,
-                         help='maximum number of records to download')
+                       help='maximum number of records to download')
     query.add_argument('-taxon', help='Taxonomy name')
     if arg_list is None:
         return arg.parse_args()
@@ -571,9 +571,9 @@ def divide(gbfile, arg):
                 have_intron[name] = feature
 
         # write genes
-        wrote = write_seq(genes, seq_info, whole_seq, arg)
+        write_seq(genes, seq_info, whole_seq, arg)
         # write non-genes
-        wrote = write_seq(not_genes, seq_info, whole_seq, arg)
+        write_seq(not_genes, seq_info, whole_seq, arg)
         # extract spacer
         spacers = get_spacer(genes)
         # write spacer annotations
@@ -590,8 +590,8 @@ def divide(gbfile, arg):
         spacers_to_write = [[i.id, i] for i in spacers]
         # write intron or not?
         introns_to_write = [(i.id, i) for i in introns]
-        wrote = write_seq(spacers_to_write, seq_info, whole_seq, arg)
-        wrote = write_seq(introns_to_write, seq_info, whole_seq, arg)
+        write_seq(spacers_to_write, seq_info, whole_seq, arg)
+        write_seq(introns_to_write, seq_info, whole_seq, arg)
         # write to group_by name, i.e., one gb record one fasta
         if 'ITS' in feature_name:
             name_str = 'ITS'
@@ -640,17 +640,17 @@ def write_seq(record, seq_info, whole_seq, arg):
     seq_len = len(whole_seq)
     filenames = set()
     expand_files = set()
-    record_uniq = []
+    record_unique = []
     if not arg.allow_repeat:
         names = set()
         for i in record:
             if i[0] not in names:
-                record_uniq.append(i)
+                record_unique.append(i)
                 names.add(i[0])
     else:
-        record_uniq = record
+        record_unique = record
 
-    for i in record_uniq:
+    for i in record_unique:
         name, feature = i
         # skip abnormal annotation
         if len(feature) > arg.max_seq_len:
@@ -693,11 +693,11 @@ def write_seq(record, seq_info, whole_seq, arg):
     return filenames
 
 
-def uniq(files: list, arg) -> list:
+def unique(files: list, arg) -> list:
     """
     Remove redundant sequences of same species.
     """
-    uniq_files = []
+    unique_files = []
     total = 0
     kept = 0
     for fasta in files:
@@ -716,7 +716,7 @@ def uniq(files: list, arg) -> list:
             if length != 0:
                 info[name].append([index, length])
             index += 1
-        if arg.uniq == 'first':
+        if arg.unique == 'first':
             # keep only the first record
             keep = {info[i][0][0] for i in info}
         elif arg.uniq == 'longest':
@@ -724,13 +724,13 @@ def uniq(files: list, arg) -> list:
                 info[i] = sorted(info[i], key=lambda x: x[1], reverse=True)
             keep = {info[i][0][0] for i in info}
         kept += len(keep)
-        new = arg._uniq / fasta.name
+        new = arg._unique / fasta.name
         with open(new, 'w', encoding='utf-8') as out:
             for idx, record in enumerate(SeqIO.parse(fasta, 'fasta')):
                 if idx in keep:
                     SeqIO.write(record, out, 'fasta')
-        uniq_files.append(new)
-    return uniq_files
+        unique_files.append(new)
+    return unique_files
 
 
 def gb2fasta_main(arg_str=None):
@@ -755,28 +755,28 @@ def gb2fasta_main(arg_str=None):
     arg.gb.append(gb_file)
     for i in arg.gb:
         divide(i, arg)
-    if arg.uniq == 'no':
+    if arg.unique == 'no':
         log.info('Skip removing redundant sequences.')
-        uniq_files = arg._divide.glob('*.fasta')
-        uniq_files = [i for i in uniq_files if i.name != 'Unknown.fasta']
+        unique_files = arg._divide.glob('*.fasta')
+        unique_files = [i for i in unique_files if i.name != 'Unknown.fasta']
     else:
         if arg.no_divide:
             fasta_files = arg._fasta.glob('*.fasta')
             fasta_files = [i for i in fasta_files
                            if i.name != 'Unknown.fasta']
-            uniq_files = uniq(fasta_files, arg)
+            unique_files = unique(fasta_files, arg)
         else:
             if arg.expand == 0:
                 divided_files = arg._divide.glob('*.fasta')
                 divided_files = [i for i in divided_files
                                  if i.name != 'Unknown.fasta']
-                uniq_files = uniq(divided_files, arg)
+                unique_files = unique(divided_files, arg)
             else:
                 expanded_files = arg._expand.glob('*.fasta')
                 expanded_files = [i for i in expanded_files
                                  if i.name != 'Unknown.fasta']
-                uniq_files = uniq(expanded_files, arg)
-    return arg, uniq_files
+                unique_files = unique(expanded_files, arg)
+    return arg, unique_files
 
 
 if __name__ == '__main__':
