@@ -3,6 +3,7 @@
 import re
 import logging
 
+from pathlib import Path
 from platform import system
 from os.path import abspath, basename, exists, splitext, pathsep, sep
 from os.path import join as join_path
@@ -44,6 +45,43 @@ class BlastResult:
         return fmt.format(self.query_id, self.hit_id, self.bitscore_raw,
                           self.query_start, self.query_end, self.hit_start,
                           self.hit_end)
+
+
+def init_out(arg):
+    """
+    Initilize output folder.
+    Args:
+        arg(NameSpace): arguments
+    Returns:
+        arg(NameSpace): arguments
+    """
+    if arg.out is None:
+        log.warning('Output folder was not set.')
+        log.info('\tUse "Result" instead.')
+        arg.out = Path().cwd().absolute() / 'Result'
+    else:
+        arg.out = Path(arg.out).absolute()
+    if arg.out.exists():
+        log.error(f'Output folder {arg.out} exists.')
+        return None
+    try:
+        arg.out.mkdir()
+        arg._gb = arg.out / 'GB'
+        arg._gb.mkdir()
+        # divide, no divide?
+        arg._divide_by_gene = arg.out / 'Divide_by_gene'
+        arg._divide_by_gene.mkdir()
+        arg._divide_by_name = arg.out / 'Divide_by_name'
+        arg._divide_by_name.mkdir()
+        arg._uniq = arg.out / 'Uniq'
+        arg._uniq.mkdir()
+        arg._alignment = arg.out / 'Alignment'
+        arg._alignment.mkdir()
+        arg._tmp = arg.out / 'Temp'
+        arg._tmp.mkdir()
+    except Exception:
+        log.warning('Folder exists.')
+    return arg
 
 
 def plastid_rename():

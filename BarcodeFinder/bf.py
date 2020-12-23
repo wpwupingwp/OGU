@@ -24,7 +24,7 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
 from BarcodeFinder import utils
-from BarcodeFinder import organize
+from BarcodeFinder import gb2fasta
 from BarcodeFinder import primer
 
 from matplotlib import use as mpl_use
@@ -267,45 +267,7 @@ def clean_path(old, arg):
         return old
 
 
-def get_query_string(arg):
-    """
-    Based on given options, generate query string from Genbank.
-    """
-    condition = []
-    if arg.group is not None:
-        condition.append('{}[filter]'.format(arg.group))
-    if arg.query is not None:
-        condition.append(arg.query)
-    if arg.gene is not None:
-        if ' ' in arg.gene:
-            condition.append('"{}"[gene]'.format(arg.gene))
-        else:
-            condition.append('{}[gene]'.format(arg.gene))
-    if arg.molecular is not None:
-        d = {'DNA': 'biomol_genomic[PROP]',
-             'RNA': 'biomol_mrna[PROP]'}
-        condition.append(d[arg.molecular])
-    if arg.taxon is not None:
-        condition.append('{}[ORGANISM]'.format(arg.taxon))
-    if arg.organelle is not None:
-        if arg.organelle in ('mt', 'mitochondrion'):
-            condition.append('{mitochondrion}[filter]')
-        else:
-            condition.append('(plastid[filter] OR chloroplast[filter])')
-    if arg.refseq:
-        condition.append('refseq[filter]')
-    if (len(condition) > 0) and (arg.min_len is not None and arg.max_len is
-                                 not None):
-        condition.append('("{}"[SLEN] : "{}"[SLEN])'.format(
-            arg.min_len, arg.max_len))
-    if arg.exclude is not None:
-        condition.append('NOT ({})'.format(arg.exclude))
-    if not condition:
-        return None
-    else:
-        string = ' AND '.join(condition)
-        string = string.replace('AND NOT', 'NOT')
-        return string
+
 
 
 def download(arg, query):
@@ -878,12 +840,12 @@ def main():
         log.info('Download data from Genbank.')
         gbfile = download(arg, query)
         if gbfile is not None:
-            wrote_by_gene, wrote_by_name = organize.divide(gbfile, arg)
+            wrote_by_gene, wrote_by_name = gb2fasta.divide(gbfile, arg)
         else:
             log.critical('Query is empty.')
     if arg.gb is not None:
         for i in list(glob(arg.gb)):
-            by_gene, by_name = organize.divide(i, arg)
+            by_gene, by_name = gb2fasta.divide(i, arg)
             wrote_by_gene.extend(by_gene)
             wrote_by_name.extend(by_name)
     if arg.fasta is not None:

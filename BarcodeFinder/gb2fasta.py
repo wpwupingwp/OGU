@@ -2,9 +2,11 @@
 
 import logging
 import re
+import argparse
 
 from pkg_resources import resource_filename
 from functools import lru_cache
+from pathlib import Path
 from os.path import join as join_path
 from os.path import splitext, basename
 from io import StringIO
@@ -43,6 +45,143 @@ with open(resource_filename('BarcodeFinder', 'data/classes.csv'),
 with open(resource_filename('BarcodeFinder', 'data/animal_orders.csv'),
           'r') as _:
     ANIMAL_ORDERS = set(_.read().split(','))
+
+
+def parse_args(arg_list=None):
+    arg = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    arg.add_argument('-gb', help='input filename')
+    # trnK-matK
+    arg.add_argument('-allow_mosaic_spacer', action='store_true',
+                       help='allow mosaic spacer')
+    # genes in IR regions
+    arg.add_argument('-allow_repeat', action='store_true',
+                       help='allow repeat genes or spacer')
+    arg.add_argument('-allow_invert_repeat', action='store_true',
+                       help='allow invert-repeat spacers')
+    # for primer
+    arg.add_argument('-expand', type=int, default=0,
+                     help='expand length of upstream/downstream')
+    arg.add_argument('-max_name_len', default=100, type=int,
+                     help='maximum length of feature name')
+    # handle rps12
+    arg.add_argument('-max_seq_len', default=20000, type=int,
+                     help='maximum length of feature sequence')
+    arg.add_argument('-no_divide', action='store_true',
+                     help='only download')
+    # for plastid genes
+    arg.add_argument('-rename', action='store_true', help='try to rename gene')
+    arg.add_argument('-uniq', choices=('longest', 'random', 'first', 'no'),
+                     default='first',
+                     help='method to remove redundant sequences')
+    query = arg.add_argument_group('Query')
+    query.add_argument('-email', type=str,
+                       help='email address for querying Genbank')
+    query.add_argument('-exclude', type='str', help='exclude option')
+    query.add_argument('-gene', type=str, help='gene name')
+    # in case of same taxonomy name in different group
+    query.add_argument('-group',
+                         choices=('animals', 'plants', 'fungi', 'protists',
+                                  'bacteria', 'archaea', 'viruses'),
+                         help='Species kind')
+    query.add_argument('-min_len', default=100, type=int,
+                         help='minimum length')
+    query.add_argument('-max_len', default=10000, type=int,
+                         help='maximum length')
+    query.add_argument('-date_start', type='str',
+                       help='release date beginning, (eg. 1970/1/1)')
+    query.add_argument('-date_end', type='str',
+                       help='release date end, (eg. 2020/12/31)')
+    query.add_argument('-molecular', choices=('DNA', 'RNA'),
+                         help='molecular type')
+    query.add_argument('-og', '-organelle', dest='organelle',
+                         choices=('mt', 'mitochondrion', 'cp',
+                                  'chloroplast', 'pl', 'plastid'),
+                         help='organelle type')
+    query.add_argument('-query', nargs='*', help='query text')
+    query.add_argument('-refseq', action='store_true',
+                         help='Only search in RefSeq database')
+    query.add_argument('-seq_n', default=None, type=int,
+                         help='maximum number of records to download')
+    query.add_argument('-taxon', help='Taxonomy name')
+    if arg_list is None:
+        return arg.parse_args()
+    else:
+        return arg.parse_args(arg_list)
+
+
+def get_query_string(arg):
+    """
+    Based on given options, generate query string from Genbank.
+    """
+    if arg.allow_repeat:
+        log.warning("Repeat genes or spacers will be kept as user's wish.")
+    if arg.allow_invert_repeat:
+        log.warning("Invert-repeat spacers will be kept.")
+    if arg.allow_mosaic_spacer:
+        log.warning('The "spacers" of overlapped genes will be kept.')
+    if arg.expand is not None:
+        log.warning(f'Extend sequences to their upstream/'
+                    'downstream with {arg.expand} bp')
+    if arg.group is not None:
+        log.warning('The filters "group" was reported to return abnormal '
+                    'records by Genbank. Please consider to use "-taxon" '
+                    'instead.')
+    if arg.refseq and arg.gene is None:
+        log.info('Reset the limitation of sequence length for RefSeq.')
+        arg.min_len = None
+        arg.max_len = None
+    if arg.rename:
+        log.warning('BarcodeFinder will try to rename genes by regular '
+                    'expression.')
+    condition = []
+    if arg.group is not None:
+        condition.append(f'{arg.group}[filter]')
+    if arg.gene is not None:
+        if ' ' in arg.gene:
+            condition.append('"{arg.gene}"[gene]')
+        else:
+            condition.append('{arg.gene}[gene]')
+    if arg.molecular is not None:
+        d = {'DNA': 'biomol_genomic[PROP]',
+             'RNA': 'biomol_mrna[PROP]'}
+        condition.append(d[arg.molecular])
+    if arg.taxon is not None:
+        condition.append('{arg.taxon}[organism]')
+    if arg.organelle is not None:
+        if arg.organelle in ('mt', 'mitochondrion'):
+            condition.append('{mitochondrion}[filter]')
+        else:
+            condition.append('(plastid[filter] OR chloroplast[filter])')
+    if arg.refseq:
+        condition.append('refseq[filter]')
+    if (len(condition) > 0) and (arg.min_len is not None and arg.max_len is
+                                 not None):
+        condition.append(f'("{arg.min_len}"[SLEN] : "{arg.max_len}"[SLEN])')
+    if arg.exclude is not None:
+        condition.append('NOT ({})'.format(arg.exclude))
+    if arg.date_start is not None and arg.date_end is not None:
+        condition.append(f'"{arg.date_start}"[PDAT] : "{arg.date_end}"[PDAT]')
+    if not condition:
+        return None
+    else:
+        string = ' AND '.join(condition)
+        string = string.replace('AND NOT', 'NOT')
+        return string
+
+
+def init_arg(arg):
+    # join nars
+    if arg.query is not None:
+        arg.query = ' '.join(arg.query)
+        log.warning('Query string is not empty, ignore other options.')
+    else:
+        arg.query = get_query_string(arg)
+    arg.out = utils.init_out(arg)
+    if arg.gb is None and arg.query is None:
+        log.error('Empty input.')
+        return None
+    return arg
 
 
 def clean_gb(gbfile):
@@ -223,7 +362,7 @@ def get_spacer(genes):
         return []
     spacers = list()
     names = set()
-    # sorted according to sequence starting postion
+    # sorted according to sequence starting position
     genes.sort(key=lambda x: int(x[1].location.start))
     for i in range(len(genes)-1):
         b_name, before = genes[i]
@@ -325,6 +464,8 @@ def get_intron(genes):
                             'count': n_intron})
             introns.append(intron)
     return introns
+
+
 def divide(gbfile, arg):
     """
     Given genbank file, return divided fasta files.
@@ -482,6 +623,7 @@ def divide(gbfile, arg):
     log.info('Divide finished.')
     return list(wrote_by_gene), list(wrote_by_name)
 
+
 def write_seq(record, seq_info, whole_seq, arg):
     """
     Write fasta files to "by-gene" folder only.
@@ -561,3 +703,28 @@ def write_seq(record, seq_info, whole_seq, arg):
         else:
             log.debug('Skip {}'.format(i))
     return filenames
+
+
+def gb2fasta_main(arg_str=None):
+    """
+    Collect genbank files and convert them to fasta files.
+    Args:
+        arg_str(str): arguments string
+    Return:
+        output(Path): output folder
+    """
+    if arg_str is None:
+        arg = parse_args()
+    else:
+        arg = parse_args(arg_str.split(' '))
+    init_ok, arg = init_arg(arg)
+    if not init_ok:
+        log.critical('Quit.')
+        return None
+    log.info(f'Input genbank files:\t{arg.gb}')
+    log.info(f'Query: {arg.query}')
+    return arg
+
+
+if __name__ == '__main__':
+    gb2fasta_main()

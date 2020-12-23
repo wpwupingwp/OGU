@@ -21,6 +21,13 @@ except ImportError:
     pass
 
 
+def parse_arg(arg):
+    if arg.fast:
+        log.info('The "-fast" mode was opened. '
+                 'Skip sliding-window scan with tree.')
+    pass
+
+
 def get_resolution(alignment, start, end, fast=False):
     """
     Given alignment (2d numpy array), location of fragment(start and end, int,
