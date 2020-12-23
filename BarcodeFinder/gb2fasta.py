@@ -3,21 +3,15 @@
 import argparse
 import json
 import logging
-import re
 
 from collections import defaultdict
-from functools import lru_cache
 from io import StringIO
-from os.path import join as join_path
-from os.path import splitext, basename
 from pathlib import Path
 from pkg_resources import resource_filename
 from time import sleep
 
 from Bio import Entrez, SeqIO
-from Bio.Seq import Seq
 from Bio.SeqFeature import SeqFeature, FeatureLocation
-from Bio.SeqRecord import SeqRecord
 
 from BarcodeFinder import utils
 
@@ -81,7 +75,7 @@ def parse_args(arg_list=None):
     query = arg.add_argument_group('Query')
     query.add_argument('-email', type=str,
                        help='email address for querying Genbank')
-    query.add_argument('-exclude', type='str', help='exclude option')
+    query.add_argument('-exclude', type=str, help='exclude option')
     query.add_argument('-gene', type=str, help='gene name')
     # in case of same taxonomy name in different group
     query.add_argument('-group',
@@ -193,7 +187,7 @@ def init_arg(arg):
     return arg
 
 
-def download(arg) -> Path:
+def download(arg):
     """
     Download records from Genbank.
     Because of connection to Genbank website is not stable (especially in
@@ -300,6 +294,7 @@ def clean_gb(gbfile):
 
     wrong = 0
     old_gb = open(gbfile, 'r')
+    tmp_gb = StringIO()
     for record in parse_gb(old_gb):
         # StringIO is faster than write tmp file to disk and read
         tmp_gb = StringIO()
@@ -319,91 +314,6 @@ def clean_gb(gbfile):
         log.info('\tRemove {} abnormal records.'.format(wrong))
 
 
-@lru_cache(maxsize=None)
-def gene_rename(old_name: str, genbank_format=False) -> (str, str):
-    """
-    Old doc:
-        Different name of same gene will cause data to be splited to numerous
-        files instead of one and some data may be dropped.
-
-        For chloroplast genes, the author summarized various kinds of
-        annotation error of gene name or synonyms and try to use regular
-        expression to fix it.
-
-        Ideally, use BLAST to re-annotate sequence is the best(and slow) way to
-        find the correct name. This function only offers a "hotfix" which is
-        enough.
-    Rename plastid genes.
-    May be dangerous.
-    Will cache results.
-    Args:
-        old_name: old gene name
-        genbank_format: use style like "trnH-GUG" or "trnHgug"
-    Returns:
-        new_name(str): new name, if fail, return old name
-        gene_type(str): gene types, guessed from name
-    """
-    lower = old_name.lower()
-    # (trna|trn(?=[b-z]))
-    s = re.compile(r'(\d+\.?\d?)(s|rrn|rdna)')
-    if lower.startswith('trn'):
-        pattern = re.compile(r'([atcgu]{3})')
-        prefix = 'trn'
-        aa_letter = 'X'
-        try:
-            anticodon = Seq(re.search(pattern, lower[3:]).group(1))
-        except Exception:
-            return old_name, 'bad_name'
-        # rna editing? trnI-CAU
-        if anticodon == 'cau' and lower.startswith('trni'):
-            aa_letter = 'I'
-        # for trnfM-CAU
-        elif lower.startswith('trnfm'):
-            prefix = 'trnf'
-            aa_letter = 'M'
-        else:
-            aa_letter = anticodon.reverse_complement().translate().upper()
-            #anticodon = anticodon.transcribe()
-        if genbank_format:
-            new_name = f'{prefix}{aa_letter}-{anticodon.upper()}'
-        else:
-            new_name = f'{prefix}{aa_letter}{anticodon.lower()}'
-        gene_type = 'tRNA'
-    elif lower.startswith('rrn'):
-        pattern = re.compile(r'(\d+\.?\d?)')
-        try:
-            number = re.search(pattern, lower).group(1)
-        except Exception:
-            return old_name, 'bad_name'
-        new_name = 'rrn{}'.format(number)
-        gene_type = 'rRNA'
-    elif re.search(s, lower) is not None:
-        new_name = 'rrn{}'.format(re.search(s, lower).group(1))
-        gene_type = 'rRNA'
-    else:
-        pattern = re.compile(r'[^a-z]*'
-                             '(?P<gene>[a-z]+)'
-                             '[^a-z0-9]*'
-                             '(?P<suffix>[a-z]|[0-9]+)')
-        match = re.search(pattern, lower)
-        try:
-            gene = match.group('gene')
-            suffix = match.group('suffix')
-        except Exception:
-            return old_name, 'bad_name'
-        new_name = '{}{}'.format(gene, suffix.upper())
-        # capitalize last letter
-        if len(new_name) > 3:
-            s = list(new_name)
-            if s[-1].isalpha():
-                new_name = '{}{}'.format(
-                    ''.join(s[:-1]), ''.join(s[-1]).upper())
-        gene_type = 'normal'
-    if len(lower) >= 15:
-        gene_type = 'suspicious_name'
-    return new_name, gene_type
-
-
 def get_feature_name(feature, arg):
     """
     Get feature name and collect genes for extract spacer.
@@ -411,17 +321,17 @@ def get_feature_name(feature, arg):
     """
     def _extract_name(feature):
         if 'gene' in feature.qualifiers:
-            feature_name = feature.qualifiers['gene'][0]
+            name = feature.qualifiers['gene'][0]
         elif 'product' in feature.qualifiers:
-            feature_name = feature.qualifiers['product'][0]
+            name = feature.qualifiers['product'][0]
         elif 'locus_tag' in feature.qualifiers:
-            feature_name = feature.qualifiers['locus_tag'][0]
+            name = feature.qualifiers['locus_tag'][0]
         elif 'note' in feature.qualifiers:
-            feature_name = feature.qualifiers['note'][0]
+            name = feature.qualifiers['note'][0]
         else:
             log.debug('Cannot recognize annotation:\n{}'.format(feature))
-            feature_name = None
-        return feature_name
+            name = None
+        return name
 
     name = None
     # ignore exist exon/intron
