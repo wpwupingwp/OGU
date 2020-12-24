@@ -291,7 +291,8 @@ def get_blast(third_party=None) -> (bool, str):
         third_party_ok, third_party = get_third_party()
         if not third_party_ok:
             return third_party_ok, ''
-    home_blast = third_party / 'ncbi-blast-2.10.0+' / 'bin' / 'blastn'
+    blast = 'blastn'
+    home_blast = third_party / 'ncbi-blast-2.10.0+' / 'bin' / blast
     # in Windows, ".exe" can be omitted
     # win_home_blast = home_blast.with_name('blastn.exe')
     ok = False
@@ -301,7 +302,6 @@ def get_blast(third_party=None) -> (bool, str):
     urls = {'Linux': url+'-x64-linux.tar.gz',
             'Darwin': url+'-x64-macosx.tar.gz',
             'Windows': url+'-x64-win64.tar.gz'}
-    blast = 'blastn'
     if test_cmd(blast)
         ok = True
         return ok, blast
@@ -354,16 +354,19 @@ def get_iqtree(third_party=None) -> (bool, str):
         third_party_ok, third_party = get_third_party()
         if not third_party_ok:
             return third_party_ok, ''
-    home_iqtree = third_party / 'iqtree-2.0.6' / 'bin' / 'iqtree2'
+    iqtree = 'iqtree2'
     # in Windows, ".exe" can be omitted
     # win_home_blast = home_blast.with_name('blastn.exe')
     ok = False
-    # older than 2.8.1 is buggy
     url = 'https://github.com/Cibiv/IQ-TREE/releases/download/v2.0.6/'
-    urls = {'Linux': url+'iqtree-2.0.6-Linux.tar.gz',
-            'Darwin': url+'iqtree-2.0.6-MacOSX.zip',
-            'Windows': url+'iqtree-2.0.6-Windows.zip'}
-    iqtree = 'iqtree2'
+    # platform: (filename, folder)
+    fileinfo = {'Linux': ('iqtree-2.0.6-Linux.tar.gz', 'iqtree-2.0.6-Linux'),
+                'Darwin': ('iqtree-2.0.6-MacOSX.zip', 'iqtree-2.0.6-MacOSX'),
+                'Windows': ('iqtree-2.0.6-Windows.zip',
+                            'iqtree-2.0.6-Windows')}
+    system = platform.system()
+    filename = fileinfo[system][0]
+    home_iqtree = third_party / fileinfo[system][1] / 'bin' / iqtree
     if test_cmd(iqtree)
         ok = True
         return ok, iqtree
@@ -381,17 +384,17 @@ def get_iqtree(third_party=None) -> (bool, str):
         return ok, ''
     try:
         # file is ~10mb
-        down = urlopen(urls[platform.system()], timeout=1000)
+        down = urlopen(f'{url}{filename}', timeout=1000)
     except Exception:
         log.critical('Cannot download iqtree.')
         log.critical('Please manually download it from '
                      'https://github.com/Cibiv/IQ-TREE/')
         return ok, ''
-    down_file = third_party / 'iqtree-2.0.6.bin'
+    down_file = third_party / fileinfo[system][0]
     with open(down_file, 'wb') as out:
         out.write(down.read())
     try:
-        unpack_archive(down_file, third_party)
+        unpack_archive(down_file, fileinfo[system][1])
     except Exception:
         log.critical('The file is damaged.')
         log.critical('Please check your connection.')
@@ -415,51 +418,52 @@ def get_mafft(third_party=None) -> (bool, str):
         third_party_ok, third_party = get_third_party()
         if not third_party_ok:
             return third_party_ok, ''
-    home_iqtree = third_party / 'iqtree-2.0.6' / 'bin' / 'iqtree2'
+    mafft = 'mafft.bat'
     # in Windows, ".exe" can be omitted
     # win_home_blast = home_blast.with_name('blastn.exe')
     ok = False
-    # older than 2.8.1 is buggy
-    url = 'https://github.com/Cibiv/IQ-TREE/releases/download/v2.0.6/'
-    urls = {'Linux': url+'iqtree-2.0.6-Linux.tar.gz',
-            'Darwin': url+'iqtree-2.0.6-MacOSX.zip',
-            'Windows': url+'iqtree-2.0.6-Windows.zip'}
-    iqtree = 'iqtree2'
-    if test_cmd(iqtree)
+    url = 'https://mafft.cbrc.jp/alignment/software/'
+    fileinfo = {'Linux': ('mafft-7.475-linux.tgz', 'mafft-linux64'),
+                'Darwin': ('mafft-7.475-mac.zip', 'mafft-mac'),
+                'Windows': ('mafft-7.475-win64-signed.zip', 'mafft-win')}
+    system = platform.system()
+    home_mafft = third_party / fileinfo[system][1] / mafft
+    if test_cmd(mafft)
         ok = True
-        return ok, iqtree
-    if test_cmd(home_iqtree)
+        return ok, mafft
+    if test_cmd(home_mafft)
         ok = True
-        return ok, str(home_iqtree)
+        return ok, str(home_mafft)
     log.warning('Cannot find iqtree, try to install.')
     log.info('According to Internet speed, may be slow.')
     try:
         # 50kb/10s=5kb/s, enough for test
-        _ = urlopen('https://github.com', timeout=10)
+        _ = urlopen('https://mafft.cbrc.jp', timeout=10)
     except Exception:
-        log.critical('Cannot connect to github.com')
+        log.critical('Cannot connect to mafft.cbrc.jp')
         log.critical('Please check your Internet connection.')
         return ok, ''
     try:
         # file is ~10mb
-        down = urlopen(urls[platform.system()], timeout=1000)
+        down = urlopen(url+fileinfo[system][0], timeout=1000)
     except Exception:
-        log.critical('Cannot download iqtree.')
-        log.critical('Please manually download it from '
-                     'https://github.com/Cibiv/IQ-TREE/')
+        log.critical('Cannot download mafft.')
+        log.critical(f'Please manually download it from {url}')
         return ok, ''
-    down_file = third_party / 'iqtree-2.0.6.bin'
+    down_file = third_party / fileinfo[system][0]
     with open(down_file, 'wb') as out:
         out.write(down.read())
     try:
-        unpack_archive(down_file, third_party)
+        unpack_archive(down_file, fileinfo[system][1])
     except Exception:
         log.critical('The file is damaged.')
         log.critical('Please check your connection.')
         return ok, ''
-    assert test_cmd(home_iqtree, '-version')
+    assert test_cmd(home_mafft, '-version')
     ok = True
-    return ok, str(home_iqtree)
+    return ok, str(home_mafft)
+
+
 def get_all_third_party():
     """
     Use three threads to speed up.
@@ -480,27 +484,6 @@ def get_all_third_party():
     blast.join()
     log.info('Finished.')
     return
-
-
-def download_software(url):
-    """
-    Download, return False if failed.
-    http_proxy may affect this function.
-    """
-    filename = url.split('/')[-1]
-    try:
-        log.info('Downloading {}...'.format(filename))
-        down = urlopen(url)
-    except HTTPError:
-        log.warning('Cannot download {}.'.format(filename))
-        return False
-    with open(filename, 'wb') as out:
-        out.write(down.read())
-    try:
-        unpack_archive(filename)
-    except ReadError:
-        pass
-    return True
 
 
 def deploy(software):
