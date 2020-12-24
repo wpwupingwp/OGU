@@ -5,6 +5,7 @@ import logging
 import platform
 
 from functools import lru_cache
+from threading import Thread
 from pathlib import Path
 from platform import system
 from os import devnull as DEVNULL
@@ -231,7 +232,7 @@ def accessible(name: Path, type_: str) -> bool:
     return ok
 
 
-def test_cmd(program, option='-version'):
+def test_cmd(program, option='-version') -> bool:
     """
     Test given program and option is ok to run or not.
     Args:
@@ -339,6 +340,67 @@ def get_blast(third_party=None):
     return ok, str(home_blast)
 
 
+def get_iqtree(third_party=None):
+    """
+    Get iqtree location.
+    If not found, download it.
+    Args:
+        third_party(Path or None): path for install
+    Return:
+        ok(bool): success or not
+        iqtree(str): blast path
+    """
+    if third_party is None:
+        third_party_ok, third_party = get_third_party()
+        if not third_party_ok:
+            return third_party_ok, ''
+    home_iqtree = third_party / 'iqtree-2.0.6' / 'bin' / 'iqtree2'
+    # in Windows, ".exe" can be omitted
+    # win_home_blast = home_blast.with_name('blastn.exe')
+    ok = False
+    # older than 2.8.1 is buggy
+    url = 'https://github.com/Cibiv/IQ-TREE/releases/download/v2.0.6/'
+    urls = {'Linux': url+'iqtree-2.0.6-Linux.tar.gz',
+            'Darwin': url+'iqtree-2.0.6-MacOSX.zip',
+            'Windows': url+'iqtree-2.0.6-Windows.zip'}
+    iqtree = 'iqtree2'
+    if test_cmd(iqtree)
+        ok = True
+        return ok, iqtree
+    if test_cmd(home_iqtree)
+        ok = True
+        return ok, str(home_iqtree)
+    log.warning('Cannot find iqtree, try to install.')
+    log.info('According to Internet speed, may be slow.')
+    try:
+        # 50kb/10s=5kb/s, enough for test
+        _ = urlopen('https://github.com', timeout=10)
+    except Exception:
+        log.critical('Cannot connect to github.com')
+        log.critical('Please check your Internet connection.')
+        return ok, ''
+    try:
+        # file is ~10mb
+        down = urlopen(urls[platform.system()], timeout=1000)
+    except Exception:
+        log.critical('Cannot download iqtree.')
+        log.critical('Please manually download it from '
+                     'https://github.com/Cibiv/IQ-TREE/')
+        return ok, ''
+    down_file = third_party / 'iqtree-2.0.6.bin'
+    with open(down_file, 'wb') as out:
+        out.write(down.read())
+    try:
+        unpack_archive(down_file, third_party)
+    except Exception:
+        log.critical('The file is damaged.')
+        log.critical('Please check your connection.')
+        return ok, ''
+    assert test_cmd(home_iqtree, '-version')
+    ok = True
+    return ok, str(home_iqtree)
+
+
 def get_all_third_party():
     """
     Use three threads to speed up.
@@ -348,14 +410,14 @@ def get_all_third_party():
     if not third_party_ok:
         return -1
     iqtree = Thread(target=get_iqtree, args=(third_party,), daemon=True)
-    novoplasty = Thread(target=get_novoplasty, args=(third_party,),
+    mafft = Thread(target=get_mafft, args=(third_party,),
                         daemon=True)
     blast = Thread(target=get_blast, args=(third_party,), daemon=True)
-    perl.start()
-    novoplasty.start()
+    iqtree.start()
+    mafft.start()
     blast.start()
-    perl.join()
-    novoplasty.join()
+    iqtree.join()
+    mafft.join()
     blast.join()
     log.info('Finished.')
     return
