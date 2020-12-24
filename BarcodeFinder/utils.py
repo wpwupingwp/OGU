@@ -276,7 +276,7 @@ def get_third_party():
     return success, third_party
 
 
-def get_blast(third_party=None):
+def get_blast(third_party=None) -> (bool, str):
     """
     Get BLAST location.
     If BLAST was found, assume makeblastdb is found, too.
@@ -340,7 +340,7 @@ def get_blast(third_party=None):
     return ok, str(home_blast)
 
 
-def get_iqtree(third_party=None):
+def get_iqtree(third_party=None) -> (bool, str):
     """
     Get iqtree location.
     If not found, download it.
@@ -401,6 +401,65 @@ def get_iqtree(third_party=None):
     return ok, str(home_iqtree)
 
 
+def get_mafft(third_party=None) -> (bool, str):
+    """
+    Get iqtree location.
+    If not found, download it.
+    Args:
+        third_party(Path or None): path for install
+    Return:
+        ok(bool): success or not
+        iqtree(str): blast path
+    """
+    if third_party is None:
+        third_party_ok, third_party = get_third_party()
+        if not third_party_ok:
+            return third_party_ok, ''
+    home_iqtree = third_party / 'iqtree-2.0.6' / 'bin' / 'iqtree2'
+    # in Windows, ".exe" can be omitted
+    # win_home_blast = home_blast.with_name('blastn.exe')
+    ok = False
+    # older than 2.8.1 is buggy
+    url = 'https://github.com/Cibiv/IQ-TREE/releases/download/v2.0.6/'
+    urls = {'Linux': url+'iqtree-2.0.6-Linux.tar.gz',
+            'Darwin': url+'iqtree-2.0.6-MacOSX.zip',
+            'Windows': url+'iqtree-2.0.6-Windows.zip'}
+    iqtree = 'iqtree2'
+    if test_cmd(iqtree)
+        ok = True
+        return ok, iqtree
+    if test_cmd(home_iqtree)
+        ok = True
+        return ok, str(home_iqtree)
+    log.warning('Cannot find iqtree, try to install.')
+    log.info('According to Internet speed, may be slow.')
+    try:
+        # 50kb/10s=5kb/s, enough for test
+        _ = urlopen('https://github.com', timeout=10)
+    except Exception:
+        log.critical('Cannot connect to github.com')
+        log.critical('Please check your Internet connection.')
+        return ok, ''
+    try:
+        # file is ~10mb
+        down = urlopen(urls[platform.system()], timeout=1000)
+    except Exception:
+        log.critical('Cannot download iqtree.')
+        log.critical('Please manually download it from '
+                     'https://github.com/Cibiv/IQ-TREE/')
+        return ok, ''
+    down_file = third_party / 'iqtree-2.0.6.bin'
+    with open(down_file, 'wb') as out:
+        out.write(down.read())
+    try:
+        unpack_archive(down_file, third_party)
+    except Exception:
+        log.critical('The file is damaged.')
+        log.critical('Please check your connection.')
+        return ok, ''
+    assert test_cmd(home_iqtree, '-version')
+    ok = True
+    return ok, str(home_iqtree)
 def get_all_third_party():
     """
     Use three threads to speed up.
@@ -421,50 +480,6 @@ def get_all_third_party():
     blast.join()
     log.info('Finished.')
     return
-
-
-def check_tools():
-    """
-    Check dependent software, if not found, try to install.
-    Return original PATH.
-    Return None if failed.
-    """
-    if exists('PATH.txt'):
-        log.info('Reading configuration of previous run from PATH.txt.')
-        with open('PATH.txt', 'r', encoding='utf-8') as path_file:
-            exists_path = path_file.read().strip()
-            environ['PATH'] = pathsep.join([environ['PATH'], exists_path])
-    f = open(devnull, 'w', encoding='utf-8')
-    installed = []
-    # blast use different option style, have to use dict
-    tools_cmd = {'MAFFT': 'mafft --version',
-                 'IQTREE': 'iqtree --version',
-                 'BLAST': 'makeblastdb -version'}
-    for tools in tools_cmd:
-        check = run(tools_cmd[tools], shell=True, stdout=f, stderr=f)
-        # mafft --help return 0 or 1 in different version, use --version
-        # instead
-        if check.returncode != 0:
-            log.warning('Cannot find {}.'.format(tools))
-            install_path = deploy(tools)
-            if install_path is None:
-                log.error('Failed to install {}. Please try to manually '
-                          'install it (See README.md).'.format(tools))
-                return None
-            installed.append(install_path)
-    # do not edit original PATH
-    to_add = pathsep.join(installed)
-    original = str(environ['PATH'])
-    environ['PATH'] = pathsep.join([original, to_add])
-    if len(installed) != 0:
-        log.info('Installation info of dependent software was written into '
-                 'PATH.txt')
-        with open('PATH.txt', 'w', encoding='utf-8') as path_out:
-            path_out.write(to_add + '\n')
-    else:
-        log.info('All dependent software found.')
-    f.close()
-    return original
 
 
 def download_software(url):
