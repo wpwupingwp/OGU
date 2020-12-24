@@ -1,10 +1,12 @@
 #!/usr/bin/python3
 
+import argparse
 import logging
 import sys
 import numpy as np
+from pathlib import Path
 from glob import glob
-from os import remove, devnull
+from os import remove, devnull, cpu_count
 from subprocess import run
 
 from Bio import Phylo
@@ -21,11 +23,79 @@ except ImportError:
     pass
 
 
-def parse_arg(arg):
+def parse_args(arg_list=None):
+    arg = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description=evaluate_main.__doc__)
+    arg.add_argument('-fasta', nargs='*', help='unaligned fasta files')
+    arg.add_argument('-aln', nargs='*', help='aligned files')
+    arg.add_argument('-out', help='output folder')
+    options = arg.add_argument_group('Options')
+    options.add_argument('-ig', '-ignore_gap', action='store_true',
+                         help='ignore gaps in alignments')
+    options.add_argument('-iab', '-ignore_ambiguous_base', action='store_true',
+                         help='ignore ambiguous bases like "M" or "N"')
+    sliding_window = arg.add_argument_group('Sliding-window')
+    sliding_window.add_argument('-fast', action='store_true',
+                                help='skip evaluate phylogenetic diversity')
+    sliding_window.add_argument('-size', type=int, default=500,
+                                help='window size')
+    sliding_window.add_argument('-step', type=int, default=50,
+                                help='step length')
+    if arg_list is None:
+        return arg.parse_args()
+    else:
+        return arg.parse_args(arg_list)
+
+
+def init_arg(arg):
     if arg.fast:
         log.info('The "-fast" mode was opened. '
-                 'Skip sliding-window scan with tree.')
-    pass
+                 'Skip evaluating phylogenetic diversity')
+    return arg
+
+
+def align(files: list, arg) -> (list, list):
+    """
+    Align sequences with mafft.
+    Args:
+        files(list): fasta files
+        arg: arg
+    Returns:
+        aligned(list): aligned fasta
+        unaligned(list): unaligned files
+
+    """
+    log.info('Align sequences.')
+    aligned = list()
+    unaligned = list()
+    # get available CPU cores
+    cores = max(1, cpu_count() - 1)
+    for fasta in files:
+        log.info('Aligning {}.'.format(fasta))
+        out = arg._align / fasta.with_suffix('.aln').name
+        with open(devnull, 'w', encoding='utf-8') as f:
+            # if computer is good enough, "--genafpair" is recommended
+            # where is mafft?
+            _ = (f'{mafft} --auto --thread {} --reorder --quiet '
+                 f'--adjustdirection {fasta} > {out}')
+            m = run(_, shell=True, stdout=f, stderr=f)
+        if m.returncode == 0:
+            aligned.append(out)
+        else:
+            unaligned.append(fasta)
+    log.info('Alignment finished.')
+    for i in Path().cwd().glob('_order*'):
+        i.unlink()
+    log.info(f'Total {len(files)} files')
+    log.info(f'Aligned {len(aligned)}')
+    log.info(f'Unaligned {len(unaligned)}')
+    return aligned, unaligned
+
+
+def remove_gap(alignment):
+    new_alignment = None
+    return new_alignment
 
 
 def get_resolution(alignment, start, end, fast=False):
@@ -109,3 +179,17 @@ def get_resolution(alignment, start, end, fast=False):
     sys.setrecursionlimit(old_max_recursion)
     return (gap_ratio, resolution, entropy, pi, tree_value,
                 avg_terminal_branch_len)
+
+
+def evaluate_main(arg_str):
+    """
+    Evaluate variance of alignments.
+    Args:
+        arg_str:
+
+    Returns:
+    """
+    if arg_str is None:
+        arg = parse_args()
+    else:
+        arg = parse_args(arg_str.split(' '))

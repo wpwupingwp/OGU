@@ -739,7 +739,7 @@ def gb2fasta_main(arg_str=None):
     Args:
         arg_str(str): arguments string
     Return:
-        output(Path): output folder
+        unique_files(list): output files
     """
     if arg_str is None:
         arg = parse_args()
@@ -776,6 +776,7 @@ def gb2fasta_main(arg_str=None):
                 expanded_files = [i for i in expanded_files
                                  if i.name != 'Unknown.fasta']
                 unique_files = unique(expanded_files, arg)
+    log.info('gb2fasta finished.')
     return arg, unique_files
 
 

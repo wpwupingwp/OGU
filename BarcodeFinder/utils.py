@@ -78,8 +78,10 @@ def init_out(arg):
         arg._expand.mkdir()
         arg._uniq = arg.out / 'Uniq'
         arg._uniq.mkdir()
-        arg._alignment = arg.out / 'Alignment'
-        arg._alignment.mkdir()
+        arg._align = arg.out / 'Alignment'
+        arg._align.mkdir()
+        arg._evaluate = arg.out /'Evaluate'
+        arg._evaluate.mkdir()
         arg._tmp = arg.out / 'Temp'
         arg._tmp.mkdir()
     except Exception:

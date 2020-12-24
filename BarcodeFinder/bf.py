@@ -173,59 +173,7 @@ def parse_args():
     return parsed
 
 
-def clean_path(old, arg):
-    """
-    Join path if the file is not under by-gene or by-uniq to make working
-    folder clean.
-    """
-    # to be continued
-    try:
-        split = old.split(sep)
-    except:
-        log.critical('Halt.')
-        raise
-    if 'by-gene' not in split and 'by-name' not in split:
-        return join_path(arg.by_name_folder, basename(old))
-    else:
-        return old
 
-
-
-
-
-
-
-
-
-
-
-def align(files, arg):
-    """
-    Calls mafft to align sequences.
-    """
-    log.info('Align sequences.')
-    result = []
-    # get available CPU cores
-    cores = max(1, cpu_count() - 1)
-    for fasta in files:
-        log.info('Aligning {}.'.format(fasta))
-        out = clean_path(fasta, arg) + '.aln'
-        with open(devnull, 'w', encoding='utf-8') as f:
-            # if computer is good enough, "--genafpair" is recommended
-            _ = ('mafft --thread {} --reorder --quiet --adjustdirection '
-                 '{} > {}'.format(cores, fasta, out))
-            m = run(_, shell=True, stdout=f, stderr=f)
-        if m.returncode == 0:
-            result.append(out)
-        else:
-            # ignore empty result
-            pass
-    log.info('Alignment finished.')
-    for i in glob('_order*'):
-        remove(i)
-    log.info('{} of {} files were successfully aligned.'.format(len(result),
-                                                                len(files)))
-    return result
 
 
 def prepare(aln_fasta, arg):
@@ -602,6 +550,14 @@ def quit(msg):
     raise SystemExit(-1)
 
 
+def init_arg(arg):
+    if arg.out is not None:
+        arg.out = utils.init_out(arg)
+    if not any([arg.gb, arg.fasta, arg.aln]):
+        pass
+    return arg
+
+
 def main():
     """
     main function
@@ -614,31 +570,21 @@ def main():
     log_file_handler.setLevel(logging.INFO)
     log.addHandler(log_file_handler)
 
-    # prepare
-    wrote_by_gene = []
-    wrote_by_name = []
-    mkdir(arg.by_gene_folder)
-    mkdir(arg.by_name_folder)
+    if arg.action == 'all':
+        pass
+    elif arg.action == 'gb2fasta':
+        gb2fasta.gb2fasta_main()
+        return
+    elif arg.action == 'evaluate':
+        pass
+    elif arg.action == 'primer':
+        pass
+
     # collect and preprocess
-    if arg.gb is not None:
-        for i in list(glob(arg.gb)):
-            by_gene, by_name = gb2fasta.divide(i, arg)
-            wrote_by_gene.extend(by_gene)
-            wrote_by_name.extend(by_name)
-    if arg.fasta is not None:
-        user_data = list(glob(arg.fasta))
-        wrote_by_name.extend(user_data)
     if not any([wrote_by_gene, wrote_by_name, arg.aln]):
         log.critical('Data is empty, please check your input!')
         log.info('Quit.')
         raise SystemExit(-1)
-    if arg.uniq == 'no':
-        log.info('Skip removing redundant sequences.')
-    else:
-        log.info('Remove redundant sequences by "{}".'.format(arg.uniq))
-    if arg.stop == 1:
-        log.info('Exit.')
-        return
     # check dependent
     log.info('Checking dependent software.')
     original_path = utils.check_tools()
