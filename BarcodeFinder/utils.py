@@ -2,10 +2,12 @@
 
 import re
 import logging
+import platform
 
 from functools import lru_cache
 from pathlib import Path
 from platform import system
+from os import devnull as DEVNULL
 from os.path import abspath, exists, pathsep, sep
 from os.path import join as join_path
 from os import (cpu_count, devnull, environ, pathsep, rename)
@@ -196,6 +198,167 @@ def safe_path(old):
     Remove illegal character in file path or name.
     """
     return re.sub(r'\W', '_', old)
+
+
+def accessible(name: Path, type_: str) -> bool:
+    """
+    Check given path is accessible or not.
+    Given path does not exist.
+    Args:
+        name(Path): folder or file, absolute path
+        type_(str): 'folder' or 'file'
+    Return:
+        ok(bool): accessible or not
+    """
+    p = Path(name)
+    if type_ == 'folder':
+        try:
+            p.mkdir()
+            p.rmdir()
+            ok = True
+        except PermissionError:
+            ok = False
+    elif type_ == 'file':
+        try:
+            p.touch()
+            p.unlink()
+            ok = True
+        except PermissionError:
+            ok = False
+    else:
+        log.critical(f'Illegal type: {type_}')
+        ok = False
+    return ok
+
+
+def test_cmd(program, option='-version'):
+    """
+    Test given program and option is ok to run or not.
+    Args:
+        program(Path or str): program path, could be relative path if it can
+        be found in $PATH or %PATH%
+        option(str): option for program, usually use "-v" to show version to
+        test the program
+    Return:
+        success(bool): success or not
+    """
+    test = run(f'{program} {option}', shell=True, stdout=DEVNULL,
+               stderr=DEVNULL)
+    success = True if test.returncode == 0 else False
+    return success
+
+
+def get_third_party():
+    """
+    Get third_party folder.
+    If do not exist, create it.
+    If cannot access, report.
+    Return:
+        success(bool): ok or not
+        third_party(Path): absolute path of third_party folder
+    """
+    third_party = Path().home().absolute() / '.barcodefinder'
+    success = False
+    if not third_party.exists():
+        log.debug(f'Create folder {third_party}')
+        try:
+            third_party.mkdir()
+        except Exception:
+            log.critical(f'Failed to create {third_party}.'
+                         'Please contact the administrator.')
+            return success, third_party
+    if not accessible(third_party/'test', 'file'):
+        log.critical(f'Failed to access {third_party}.'
+                     f'Please contact the administrator.')
+        return success, third_party
+    success = True
+    return success, third_party
+
+
+def get_blast(third_party=None):
+    """
+    Get BLAST location.
+    If BLAST was found, assume makeblastdb is found, too.
+    If not found, download it.
+    Args:
+        third_party(Path or None): path for install
+    Return:
+        ok(bool): success or not
+        blast(str): blast path
+    """
+    if third_party is None:
+        third_party_ok, third_party = get_third_party()
+        if not third_party_ok:
+            return third_party_ok, ''
+    home_blast = third_party / 'ncbi-blast-2.10.0+' / 'bin' / 'blastn'
+    # in Windows, ".exe" can be omitted
+    # win_home_blast = home_blast.with_name('blastn.exe')
+    ok = False
+    # older than 2.8.1 is buggy
+    url = ('ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.10.0/'
+           'ncbi-blast-2.10.0+')
+    urls = {'Linux': url+'-x64-linux.tar.gz',
+            'Darwin': url+'-x64-macosx.tar.gz',
+            'Windows': url+'-x64-win64.tar.gz'}
+    blast = 'blastn'
+    if test_cmd(blast)
+        ok = True
+        return ok, blast
+    if test_cmd(home_blast)
+        ok = True
+        return ok, str(home_blast)
+    log.warning('Cannot find NCBI BLAST, try to install.')
+    log.info('According to Internet speed, may be slow.')
+    try:
+        # 50kb/10s=5kb/s, enough for test
+        _ = urlopen('https://www.ncbi.nlm.nih.gov', timeout=10)
+    except Exception:
+        log.critical('Cannot connect to NCBI.')
+        log.critical('Please check your Internet connection.')
+        return ok, ''
+    try:
+        # file is 86-222mb, 222mb/3600s=60kb/s, consider it's ok for users all
+        # over the world
+        down = urlopen(urls[platform.system()], timeout=3600)
+    except Exception:
+        log.critical('Cannot download BLAST.')
+        log.critical('Please manually download it from'
+                     'ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/')
+        return ok, ''
+    down_file = third_party / 'BLAST_2.10.0.tar.gz'
+    with open(down_file, 'wb') as out:
+        out.write(down.read())
+    try:
+        unpack_archive(down_file, third_party)
+    except Exception:
+        log.critical('The file is damaged.')
+        log.critical('Please check your connection.')
+        return ok, ''
+    assert test_cmd(home_blast, '-version')
+    ok = True
+    return ok, str(home_blast)
+
+
+def get_all_third_party():
+    """
+    Use three threads to speed up.
+    """
+    log.info('Try to locate or install all third-party software.')
+    third_party_ok, third_party = get_third_party()
+    if not third_party_ok:
+        return -1
+    iqtree = Thread(target=get_iqtree, args=(third_party,), daemon=True)
+    novoplasty = Thread(target=get_novoplasty, args=(third_party,),
+                        daemon=True)
+    blast = Thread(target=get_blast, args=(third_party,), daemon=True)
+    perl.start()
+    novoplasty.start()
+    blast.start()
+    perl.join()
+    novoplasty.join()
+    blast.join()
+    log.info('Finished.')
+    return
 
 
 def check_tools():

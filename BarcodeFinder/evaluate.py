@@ -11,6 +11,8 @@ from subprocess import run
 
 from Bio import Phylo
 
+from BarcodeFinder import utils
+
 # define logger
 FMT = '%(asctime)s %(levelname)-8s %(message)s'
 DATEFMT = '%H:%M:%S'
@@ -69,6 +71,10 @@ def align(files: list, arg) -> (list, list):
     log.info('Align sequences.')
     aligned = list()
     unaligned = list()
+    _, mafft = utils.get_mafft()
+    if not _:
+        log.error('Cannot run mafft.')
+        return aligned, unaligned
     # get available CPU cores
     cores = max(1, cpu_count() - 1)
     for fasta in files:
