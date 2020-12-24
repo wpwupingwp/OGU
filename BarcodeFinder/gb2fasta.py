@@ -125,10 +125,6 @@ def get_query_string(arg):
         log.warning('The filters "group" was reported to return abnormal '
                     'records by Genbank. Please consider to use "-taxon" '
                     'instead.')
-    if arg.refseq and arg.gene is None:
-        log.info('Reset the limitation of sequence length for RefSeq.')
-        arg.min_len = None
-        arg.max_len = None
     if arg.rename:
         log.warning('BarcodeFinder will try to rename genes by regular '
                     'expression.')
@@ -179,6 +175,10 @@ def init_arg(arg):
     if arg.gb is None and arg.query is None:
         log.error('Empty input.')
         return None
+    if arg.refseq and arg.gene is None:
+        log.info('Reset the limitation of sequence length for RefSeq.')
+        arg.min_len = None
+        arg.max_len = None
     if arg.gb is not None:
         # don't move given gb files?
         arg.gb = [Path(i).absolute() for i in arg.gb]
@@ -514,7 +514,7 @@ def divide(gbfile, arg):
                 my_class = taxon_str[taxon_str.index(last_phyta) + 1]
             except IndexError:
                 my_class = ''
-        return (my_kingdom, my_phylum, my_class, my_order, my_family)
+        return my_kingdom, my_phylum, my_class, my_order, my_family
 
     raw_fasta = arg._fasta / (gbfile.stem+'.fasta')
     handle_raw = open(raw_fasta, 'w', encoding='utf-8')
@@ -745,9 +745,9 @@ def gb2fasta_main(arg_str=None):
         arg = parse_args()
     else:
         arg = parse_args(arg_str.split(' '))
-    init_ok, arg = init_arg(arg)
-    if not init_ok:
-        log.critical('Quit.')
+    arg = init_arg(arg)
+    if arg is None:
+        log.error('Quit.')
         return None
     log.info(f'Input genbank files:\t{arg.gb}')
     log.info(f'Query: {arg.query}')

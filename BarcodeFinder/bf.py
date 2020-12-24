@@ -126,58 +126,17 @@ def parse_args():
     arg = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description=main.__doc__)
+    arg.add_argument('action',
+                     choices=('all', 'gb2fasta', 'evaluate', 'primer'),
+                     help=('all: do all analysis\t'
+                           'gb2fasta: collect and organize\t'
+                           'evaluate: align and evaluate\t'
+                           'primer: design universal primer'))
     general = arg.add_argument_group('General')
     general.add_argument('-aln', help='aligned fasta files to analyze')
     general.add_argument('-fasta', help='unaligned fasta format data to add')
     general.add_argument('-gb', help='genbank files')
-    general.add_argument('-stop', type=int, choices=(1, 2),
-                         help=('Stop after which step:'
-                               '\t1. Download and pre-process;'
-                               '\t2. Analyze variance;'))
     general.add_argument('-out', help='output directory')
-    genbank = arg.add_argument_group('Genbank')
-    genbank.add_argument('-email', help='email address for querying Genbank')
-    genbank.add_argument('-exclude', help='exclude option')
-    genbank.add_argument('-gene', type=str, help='gene name')
-    genbank.add_argument('-group',
-                         choices=('animals', 'plants', 'fungi', 'protists',
-                                  'bacteria', 'archaea', 'viruses'),
-                         help='Species kind')
-    genbank.add_argument('-min_len', default=100, type=int,
-                         help='minium length')
-    genbank.add_argument('-max_len', default=10000, type=int,
-                         help='maximum length')
-    genbank.add_argument('-molecular', choices=('DNA', 'RNA'),
-                         help='molecular type')
-    genbank.add_argument('-allow_mosaic_spacer', action='store_true',
-                         help='allow mosaic spacer')
-    genbank.add_argument('-allow_repeat', action='store_true',
-                         help='allow repeat genes or spacer')
-    genbank.add_argument('-allow_invert_repeat', action='store_true',
-                         help='allow invert-repeat spacers')
-    genbank.add_argument('-og', '-organelle', dest='organelle',
-                         choices=('mt', 'mitochondrion', 'cp',
-                                  'chloroplast', 'pl', 'plastid'),
-                         help='organelle type')
-    genbank.add_argument('-query', nargs='*', help='query text')
-    genbank.add_argument('-refseq', action='store_true',
-                         help='Only search in RefSeq database')
-    genbank.add_argument('-seq_n', default=None, type=int,
-                         help='maximum number of records to download')
-    genbank.add_argument('-taxon', help='Taxonomy name')
-    pre = arg.add_argument_group('Preprocess')
-    pre.add_argument('-expand', type=int,
-                     help='expand length of upstream/downstream')
-    pre.add_argument('-max_name_len', default=100, type=int,
-                     help='maximum length of feature name')
-    pre.add_argument('-max_seq_len', default=20000, type=int,
-                     help='maximum length of feature sequence')
-    pre.add_argument('-no_divide', action='store_true',
-                     help='analyze whole sequence instead of divided fragment')
-    pre.add_argument('-rename', action='store_true', help='try to rename gene')
-    pre.add_argument('-uniq', choices=('longest', 'random', 'first', 'no'),
-                     default='first',
-                     help='method to remove redundant sequences')
     evaluate = arg.add_argument_group('Evaluate')
     evaluate.add_argument('-fast', action='store_true', default=False,
                           help='faster evaluate variance by omit tree_value'
@@ -204,45 +163,9 @@ def parse_args():
     primer.add_argument('-tmax', dest='max_product', default=600, type=int,
                         help='maximum product length(include primer)')
     parsed = arg.parse_args()
-    if parsed.allow_repeat:
-        log.warning("Repeat genes or spacers will be kept as user's wish.")
-    if parsed.allow_invert_repeat:
-        log.warning("Invert-repeat spacers will be kept.")
-    if parsed.allow_mosaic_spacer:
-        log.warning('The "spacers" of overlapped genes will be kept.')
-    if parsed.stop is None and parsed.expand is None:
-        # expand 200 for primer design
-        parsed.expand = 200
-        log.warning('In order to design primers, set "--expand" to '
-                    '{}.'.format(parsed.expand))
-    elif parsed.stop is not None and parsed.expand is None:
-        parsed.expand = 0
     if parsed.fast:
         log.info('The "-fast" mode was opened. '
                  'Skip sliding-window scan with tree.')
-    if parsed.group is not None:
-        log.warning('The filters "group" was reported to return abnormal '
-                    'records by Genbank. Please consider to use "-taxon" '
-                    'instead.')
-    # join nargs
-    if parsed.query is not None:
-        parsed.query = ' '.join(parsed.query)
-    if parsed.refseq and parsed.gene is None:
-        log.info('Reset the limitation of sequence length for RefSeq.')
-        parsed.min_len = None
-        parsed.max_len = None
-    if parsed.rename:
-        log.warning('BarcodeFinder will try to rename genes by regular '
-                    'expression.')
-    if not any([parsed.query, parsed.taxon, parsed.group, parsed.gene,
-                parsed.fasta, parsed.aln, parsed.gb, parsed.organelle]):
-        return None
-    if parsed.out is None:
-        log.warning('Output folder was not set.')
-        log.info('\tUse "Result" instead.')
-        parsed.out = 'Result'
-    parsed.by_gene_folder = join_path(parsed.out, 'by-gene')
-    parsed.by_name_folder = join_path(parsed.out, 'by-name')
     # temporary filename, omit one parameters in many functions
     parsed.db_file = join_path(parsed.out, 'interleaved.fasta')
     parsed.out_file = ''
@@ -685,15 +608,9 @@ def main():
     """
     log.info('Welcome to BarcodeFinder.')
     arg = parse_args()
-    if arg is None:
-        quit('Empty input! Please use "-h" options for help info.')
-    try:
-        mkdir(arg.out)
-    except FileExistsError:
-        quit('Output folder "{}" is existed. Please use "-out" option to set '
-             'a new output folder.'.format(arg.out))
-    log_file = join_path(arg.out, 'Log.txt')
-    log_file_handler = logging.FileHandler(log_file)
+    init_ok, arg = init_arg(arg)
+    log_file = arg.out / 'Log.txt'
+    log_file_handler = logging.FileHandler(log_file, mode='a')
     log_file_handler.setLevel(logging.INFO)
     log.addHandler(log_file_handler)
 
