@@ -5,6 +5,7 @@ import logging
 import sys
 import numpy as np
 from pathlib import Path
+from io import StringIO
 from glob import glob
 from os import remove, devnull, cpu_count
 from subprocess import run
@@ -51,18 +52,26 @@ def parse_args(arg_list=None):
 
 
 def init_arg(arg):
+    if arg.fasta is None and arg.aln is None:
+        log.error('Empty input.')
+        return None
+    if arg.fasta is not None:
+        arg.fasta = [Path(i).absolute() for i in arg.fasta]
+    if arg.aln is not None:
+        arg.aln = [Path(i).absolute() for i in arg.aln]
+    arg.out = utils.init_out(arg)
     if arg.fast:
         log.info('The "-fast" mode was opened. '
                  'Skip evaluating phylogenetic diversity')
     return arg
 
 
-def align(files: list, arg) -> (list, list):
+def align(files: list, folder: Path) -> (list, list):
     """
     Align sequences with mafft.
     Args:
         files(list): fasta files
-        arg: arg
+        folder(path): folder for output
     Returns:
         aligned(list): aligned fasta
         unaligned(list): unaligned files
@@ -79,17 +88,21 @@ def align(files: list, arg) -> (list, list):
     cores = max(1, cpu_count() - 1)
     for fasta in files:
         log.info('Aligning {}.'.format(fasta))
-        out = arg._align / fasta.with_suffix('.aln').name
+        out = folder / fasta.with_suffix('.aln').name
         with open(devnull, 'w', encoding='utf-8') as f:
             # if computer is good enough, "--genafpair" is recommended
             # where is mafft?
-            _ = (f'{mafft} --auto --thread {} --reorder --quiet '
+            _ = (f'{mafft} --auto --thread {cores} --reorder --quiet '
                  f'--adjustdirection {fasta} > {out}')
             m = run(_, shell=True, stdout=f, stderr=f)
         if m.returncode == 0:
             aligned.append(out)
         else:
             unaligned.append(fasta)
+            try:
+                out.unlink()
+            except Exception:
+                pass
     log.info('Alignment finished.')
     for i in Path().cwd().glob('_order*'):
         i.unlink()
@@ -102,6 +115,71 @@ def align(files: list, arg) -> (list, list):
 def remove_gap(alignment):
     new_alignment = None
     return new_alignment
+
+
+def old_remove_gap(aln_fasta: Path, new_file: Path) -> Path:
+    """
+    old function, for BLAST
+    Args:
+        aln_fasta: fasta with gap
+        new_file: fasta without gap
+    Returns:
+        new_file: fasta without gap
+    """
+    no_gap = StringIO()
+    with open(aln_fasta, 'r', encoding='utf-8') as raw:
+        for line in raw:
+            no_gap.write(line.replace('-', ''))
+    # try to avoid makeblastdb error
+    no_gap.seek(0)
+    from Bio import SeqIO
+    SeqIO.convert(no_gap, 'fasta', new_file, 'fasta')
+    no_gap.close()
+    return new_file
+
+
+def aln_to_array(aln_fasta: Path) -> (np.array, np.array):
+    """
+    Given fasta format alignment filename, return a numpy array for sequence:
+    Faster and use smaller mem
+    Args:
+        aln_fasta(Path): aligned fasta file
+    Returns:
+        name(np.array): name array
+        sequence(np.array): sequence array
+    """
+    data = []
+    record = ['id', 'sequence']
+    with open(aln_fasta, 'r', encoding='utf-8') as raw:
+        for line in raw:
+            if line.startswith('>'):
+                data.append([record[0], ''.join(record[1:])])
+                # remove ">" and CRLF
+                name = line[1:].strip()
+                record = [name, '']
+            else:
+                record.append(line.strip().upper())
+        # add last sequence
+        data.append([record[0], ''.join(record[1:])])
+    # skip head['id', 'seq']
+    data = data[1:]
+    # check sequence length
+    length_check = [len(i[1]) for i in data]
+    if len(set(length_check)) != 1:
+        log.error('{} does not have uniform width!'.format(aln_fasta))
+        return None, None
+    # Convert List to numpy array.
+    # order 'F' is a bit faster than 'C'
+    # new = np.hstack((name, seq)) -> is slower
+    name_array = np.array([[i[0]] for i in data], dtype=np.bytes_)
+    # fromiter is faster than from list
+    # S1: bytes
+    sequence_array = np.array(
+        [np.fromiter(i[1], dtype=np.dtype('S1')) for i in data],
+        order='F')
+    if name_array is None:
+        log.error('Bad fasta file {}.'.format(aln_fasta))
+    return name_array, sequence_array
 
 
 def get_resolution(alignment, start, end, fast=False):
@@ -199,3 +277,8 @@ def evaluate_main(arg_str):
         arg = parse_args()
     else:
         arg = parse_args(arg_str.split(' '))
+    if arg is None:
+        log.info('Quit.')
+        return None
+    aligned, unaligned = align(arg.fasta, arg._align)
+    aligned.extend(arg.aln)

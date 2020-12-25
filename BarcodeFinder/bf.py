@@ -176,49 +176,7 @@ def parse_args():
 
 
 
-def prepare(aln_fasta, arg):
-    """
-    Given fasta format alignment filename, return a numpy array for sequence:
-    Generate fasta file without gap for makeblastdb, return file name.
-    Faster and use smaller mem :)
-    """
-    data = []
-    record = ['id', 'sequence']
-    no_gap = StringIO()
-    with open(aln_fasta, 'r', encoding='utf-8') as raw:
-        for line in raw:
-            no_gap.write(line.replace('-', ''))
-            if line.startswith('>'):
-                data.append([record[0], ''.join(record[1:])])
-                # remove ">" and CRLF
-                name = line.strip('>\r\n')
-                record = [name, '']
-            else:
-                record.append(line.strip().upper())
-        # add last sequence
-        data.append([record[0], ''.join(record[1:])])
-    # skip head['id', 'seq']
-    data = data[1:]
-    # check sequence length
-    length_check = [len(i[1]) for i in data]
-    if len(set(length_check)) != 1:
-        log.error('{} does not have uniform width!'.format(aln_fasta))
-        return None, None, None
 
-    # Convert List to numpy array.
-    # order 'F' is a bit faster than 'C'
-    # new = np.hstack((name, seq)) -> is slower
-    name = np.array([[i[0]] for i in data], dtype=np.bytes_)
-    sequence = np.array([list(i[1]) for i in data], dtype=np.bytes_, order='F')
-
-    if name is None:
-        log.error('Bad fasta file {}.'.format(aln_fasta))
-        name = None
-    # try to avoid makeblastdb error
-    no_gap.seek(0)
-    SeqIO.convert(no_gap, 'fasta', arg.db_file, 'fasta')
-    no_gap.close()
-    return name, sequence, arg.db_file
 
 
 def count_base(alignment, rows, columns):

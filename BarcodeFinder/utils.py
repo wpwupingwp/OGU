@@ -434,7 +434,7 @@ def get_mafft(third_party=None) -> (bool, str):
     if test_cmd(home_mafft):
         ok = True
         return ok, str(home_mafft)
-    log.warning('Cannot find iqtree, try to install.')
+    log.warning('Cannot find mafft, try to install.')
     log.info('According to Internet speed, may be slow.')
     try:
         # 50kb/10s=5kb/s, enough for test
@@ -489,8 +489,6 @@ def get_all_third_party():
     return
 
 
-
-
 def parse_blast_tab(filename):
     """
     Parse BLAST result (tab format).
@@ -505,6 +503,4 @@ def parse_blast_tab(filename):
                 pass
             else:
                 query.append(BlastResult(line))
-
-
-
+    pass
