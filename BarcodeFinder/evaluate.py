@@ -34,13 +34,16 @@ def parse_args(arg_list=None):
     arg.add_argument('-aln', nargs='*', help='aligned files')
     arg.add_argument('-out', help='output folder')
     options = arg.add_argument_group('Options')
-    options.add_argument('-ig', '-ignore_gap', action='store_true',
+    options.add_argument('-ig', '-ignore_gap', dest='ignore_gap',
+                         action='store_true',
                          help='ignore gaps in alignments')
-    options.add_argument('-iab', '-ignore_ambiguous_base', action='store_true',
+    options.add_argument('-iab', '-ignore_ambiguous_base',
+                         dest='ignore_ambiguous_base',
+                         action='store_true',
                          help='ignore ambiguous bases like "M" or "N"')
     sliding_window = arg.add_argument_group('Sliding-window')
-    sliding_window.add_argument('-fast', action='store_true',
-                                help='skip evaluate phylogenetic diversity')
+    sliding_window.add_argument('-quick', action='store_true',
+                                help='skip sliding-window analysis')
     sliding_window.add_argument('-size', type=int, default=500,
                                 help='window size')
     sliding_window.add_argument('-step', type=int, default=50,
@@ -61,8 +64,8 @@ def init_arg(arg):
         arg.aln = [Path(i).absolute() for i in arg.aln]
     arg.out = utils.init_out(arg)
     if arg.fast:
-        log.info('The "-fast" mode was opened. '
-                 'Skip evaluating phylogenetic diversity')
+        log.info('The "-quick" mode was opened. '
+                 'Skip sliding-window analysis')
     return arg
 
 
@@ -112,9 +115,26 @@ def align(files: list, folder: Path) -> (list, list):
     return aligned, unaligned
 
 
-def remove_gap(alignment):
-    new_alignment = None
-    return new_alignment
+def remove_gap(alignment: np.array) -> (np.array, np.array):
+    """
+    Split alignment into with_gap and without_gap.
+    Args:
+        alignment: raw array
+    Returns:
+        no_gap_columns: without gap
+        gap_columns: columns having gaps
+    """
+    gap = b'-'
+    # axis 0 for column
+    have_gap = np.any(alignment==gap, axis=0)
+    gap_columns = alignment[:, have_gap]
+    no_gap_columns = alignment[:, ~have_gap]
+    n_columns = alignment.shape()[1]
+    n_gap_columns = gap_columns.shape()[1]
+    log.info(f'{n_columns} columns, {n_gap_columns} have gaps.')
+    if n_gap_columns/n_columns > 0.5:
+        log.warning('Too much columns with gaps.')
+    return no_gap_columns, gap_columns
 
 
 def old_remove_gap(aln_fasta: Path, new_file: Path) -> Path:
@@ -265,6 +285,31 @@ def get_resolution(alignment, start, end, fast=False):
                 avg_terminal_branch_len)
 
 
+def evaluate(aln: Path, result: Path, arg) -> bool:
+    name, alignment = aln_to_array(aln)
+    if name is None:
+        log.info('Invalid fasta file {}.'.format(aln))
+        return False
+    if arg.ignore_gap:
+        alignment = remove_gap(alignment)
+    rows, columns = alignment.shape
+    log.info(f'Evaluate {aln}')
+    (gap_ratio, observed_res, entropy, pi, tree_res,
+     branch_len) = get_resolution(alignment, 0, columns)
+    log.info(f'\tGap ratio:\t{gap_ratio:.8f}')
+    log.info(f'\tObserved resolution:\t{observed_res:.8f}')
+    log.info(f'\tNormalized Shannon Index:\t{entropy:.8f}')
+    log.info(f'\tPi:\t{pi:.8f}')
+    log.info(f'\tTree resolution:\t{tree_res:.8f}')
+    log.info(f'\tAverage terminal branch length:\t{branch_len:.8f}')
+    with open(result, 'a', encoding='utf-8') as out:
+        out.write('{},{},{},{:.4%},{:.8f},{:.8f},{:.8f},{:.8f},{:.8f}'
+                  '\n'.format(aln.stem, rows, columns, gap_ratio,
+                                observed_res, tree_res, entropy,
+                                branch_len, pi))
+    return True
+
+
 def evaluate_main(arg_str):
     """
     Evaluate variance of alignments.
@@ -282,3 +327,10 @@ def evaluate_main(arg_str):
         return None
     aligned, unaligned = align(arg.fasta, arg._align)
     aligned.extend(arg.aln)
+    evaluation_result = arg.out / 'Evaluation.csv'
+    with open(evaluation_result, 'w', encoding='utf-8') as out_csv:
+       out_csv.write('Loci,Samples,Length,GapRatio,ObservedResolution,'
+                     'TreeResolution,ShannonIndex,AvgTerminalBranchLen,'
+                     'Pi\n')
+    for aln in aligned:
+        evaluate(aln, evaluation_result, arg)
