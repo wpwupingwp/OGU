@@ -92,6 +92,12 @@ def init_out(arg):
     return arg
 
 
+def clean_tmp(filename: Path):
+    for i in filename.glob('*'):
+        i.unlink()
+    return
+
+
 @lru_cache(maxsize=None)
 def gene_rename(old_name: str, genbank_format=False) -> (str, str):
     """

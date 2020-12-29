@@ -202,7 +202,48 @@ def aln_to_array(aln_fasta: Path) -> (np.array, np.array):
     return name_array, sequence_array
 
 
-def get_resolution(alignment, start, end, fast=False):
+def normalized_entropy(count: np.array, rows: int) -> float:
+    """
+    Calculate normalized entropy.
+    Args:
+        count: np.unique(axis=0)
+        rows: rows number
+    Returns:
+        entropy(float): normalized entropy
+    """
+    max_h = np.log2(rows)
+    entropy = 0
+    for j in count:
+        p_j = j / rows
+        log2_p_j = np.log2(p_j)
+        entropy += log2_p_j * p_j
+    entropy = -1 * entropy / max_h
+    # entropy should > 0
+    return max(0, entropy)
+
+
+def nucleotide_diversity(alignment: np.array) -> float:
+    """
+    Nucleotide diversity (pi)
+    Args:
+        alignment: np.array
+    Returns:
+        pi: float
+    """
+    rows, columns = alignment.shape
+    m = columns
+    n = rows
+    sum_d_ij = 0
+    for i in range(n):
+        d_ij = np.sum(alignment[i] != alignment[(i + 1):])
+        sum_d_ij += d_ij
+    pi = (2 / (n * (n - 1)) * sum_d_ij) / m
+    # pi should > 0
+    return min(0, pi)
+
+
+def get_resolution(alignment: np.array, start: int, end: int,
+                   tmp: Path, quick=False):
     """
     Given alignment (2d numpy array), location of fragment(start and end, int,
     start from zero, exclude end),
@@ -213,7 +254,6 @@ def get_resolution(alignment, start, end, fast=False):
     rows, columns = subalign.shape
     old_max_recursion = sys.getrecursionlimit()
     sys.setrecursionlimit(max(rows+10, old_max_recursion))
-    max_h = np.log2(rows)
     total = rows * columns
     gap_ratio = 0
     resolution = 0
@@ -229,26 +269,11 @@ def get_resolution(alignment, start, end, fast=False):
     item, count = np.unique(subalign, return_counts=True, axis=0)
     resolution = len(count) / rows
     # normalized entropy
-    entropy = 0
-    for j in count:
-        p_j = j / rows
-        log2_p_j = np.log2(p_j)
-        entropy += log2_p_j * p_j
-    entropy = -1 * entropy / max_h
+    entropy = normalized_entropy(count, rows)
+    pi = nucleotide_diversity(subalign)
     # Nucleotide diversity (pi)
-    m = columns
-    n = rows
-    sum_d_ij = 0
-    for i in range(n):
-        d_ij = np.sum(subalign[i] != subalign[(i + 1):])
-        sum_d_ij += d_ij
-    pi = (2 / (n * (n - 1)) * sum_d_ij) / m
     # tree value
-    aln_file = '{}-{}.aln.tmp'.format(start, end)
-
-    def clean():
-        for _ in glob(aln_file + '*'):
-            remove(_)
+    aln_file = tmp / f'{start}-{end}.tmp'
     if not fast:
         if rows < 4:
             return (gap_ratio, resolution, entropy, pi, tree_value,
@@ -263,7 +288,7 @@ def get_resolution(alignment, start, end, fast=False):
         # just return 0 if there is error
         if iqtree.returncode != 0:
             log.info('Too much gap in the region {}-{} bp.'.format(start, end))
-            clean()
+            utils.clean_tmp(aln_file)
         else:
             tree = Phylo.read(aln_file + '.treefile', 'newick')
             # skip the first empty node
@@ -279,10 +304,14 @@ def get_resolution(alignment, start, end, fast=False):
             # miss stdev, to be continued
             avg_terminal_branch_len = sum_terminal_branch_len / len(terminals)
             tree_value = len(internals) / len(terminals)
-            clean()
+            utils.clean_tmp(aln_file)
     sys.setrecursionlimit(old_max_recursion)
     return (gap_ratio, resolution, entropy, pi, tree_value,
                 avg_terminal_branch_len)
+
+
+def gap_analyze(gap_alignment: np.array):
+    pass
 
 
 def evaluate(aln: Path, result: Path, arg) -> bool:
@@ -291,11 +320,14 @@ def evaluate(aln: Path, result: Path, arg) -> bool:
         log.info('Invalid fasta file {}.'.format(aln))
         return False
     if arg.ignore_gap:
-        alignment = remove_gap(alignment)
+        no_gap_alignment, gap_alignment = remove_gap(alignment)
+    else:
+        no_gap_alignment = alignment
+        gap_alignment = np.array([[]])
     rows, columns = alignment.shape
     log.info(f'Evaluate {aln}')
     (gap_ratio, observed_res, entropy, pi, tree_res,
-     branch_len) = get_resolution(alignment, 0, columns)
+     branch_len) = get_resolution(no_gap_alignment, 0, columns, arg.tmp)
     log.info(f'\tGap ratio:\t{gap_ratio:.8f}')
     log.info(f'\tObserved resolution:\t{observed_res:.8f}')
     log.info(f'\tNormalized Shannon Index:\t{entropy:.8f}')
@@ -305,8 +337,8 @@ def evaluate(aln: Path, result: Path, arg) -> bool:
     with open(result, 'a', encoding='utf-8') as out:
         out.write('{},{},{},{:.4%},{:.8f},{:.8f},{:.8f},{:.8f},{:.8f}'
                   '\n'.format(aln.stem, rows, columns, gap_ratio,
-                                observed_res, tree_res, entropy,
-                                branch_len, pi))
+                              observed_res, tree_res, entropy,
+                              branch_len, pi))
     return True
 
 

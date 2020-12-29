@@ -173,12 +173,6 @@ def parse_args():
     return parsed
 
 
-
-
-
-
-
-
 def count_base(alignment, rows, columns):
     """
     Given alignment numpy array, count cumulative frequency of base in each
@@ -222,8 +216,6 @@ def get_quality(data, rows):
     # use min to avoid KeyError
     quality_value = [min(max_q, int(i * factor)) - 1 for i in data]
     return quality_value
-
-
 
 
 def generate_consensus(base_cumulative_frequency, coverage_percent,
@@ -278,7 +270,6 @@ def generate_consensus(base_cumulative_frequency, coverage_percent,
                                quality=get_quality(quality_raw, rows))
     SeqIO.write(consensus, output, 'fastq')
     return consensus
-
 
 
 def count_and_draw(alignment, arg):
