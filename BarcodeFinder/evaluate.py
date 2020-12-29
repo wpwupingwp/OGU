@@ -158,7 +158,24 @@ def old_remove_gap(aln_fasta: Path, new_file: Path) -> Path:
     return new_file
 
 
-def aln_to_array(aln_fasta: Path) -> (np.array, np.array):
+def array_to_fasta(alignment: np.array, filename: Path) -> Path:
+    """
+    Convert np.array to fasta.
+    Use index number as sequence id.
+    Args:
+        alignment
+        filename
+    Returns:
+        filename
+    """
+    with open(filename, 'wb') as aln:
+        for index, row in enumerate(alignment):
+            aln.write(b'>'+str(index).encode('utf-8')+b'\n')
+            aln.write(b''.join(row)+b'\n')
+    return filename
+
+
+def fasta_to_array(aln_fasta: Path) -> (np.array, np.array):
     """
     Given fasta format alignment filename, return a numpy array for sequence:
     Faster and use smaller mem
@@ -242,6 +259,62 @@ def nucleotide_diversity(alignment: np.array) -> float:
     return min(0, pi)
 
 
+def phylogenetic_diversity(alignment: np.array, tmp: Path) -> (float, float,
+                                                               float, float):
+    """
+    Calculate the phylogenetic diversity.
+    Use HKY model for saving time.
+    Args:
+        alignment: np.array
+        tmp: tmp folder
+    Returns:
+        pd: phylogenetic diversity
+        pd_terminal: only calculate terminal
+        pd_stem: only calculate stem branch
+        tree_res: tree resolution
+    """
+    pd = 0.0
+    pd_terminal = 0.0
+    pd_stem = 0.0
+    tree_res = 0.0
+    rows, columns = alignment.shape()
+    if rows < 4:
+        log.debug('Too few sequences.')
+        return pd, pd_stem, pd_terminal, tree_res
+    old_max_recursion = sys.getrecursionlimit()
+    sys.setrecursionlimit(max(rows+10, old_max_recursion))
+    aln_file = tmp / f'{columns}.tmp'
+    array_to_fasta(alignment, aln_file)
+    _, iqtree = utils.get_iqtree()
+    if not _:
+        log.critical('Cannot find iqtree.')
+        return pd, pd_terminal, pd_stem, tree_res
+    with open(devnull, 'w', encoding='utf-8') as out:
+        run_ = run(f'{iqtree} -s {aln_file} -m HKY -fast -czb -redo',
+                     stdout=out, stderr=out, shell=True)
+    # just return 0 if there is error
+    if run_.returncode != 0:
+        log.debug('Too much gap in the alignment.')
+    else:
+        tree = Phylo.read(str(aln_file)+'.treefile', 'newick')
+        # skip the first empty node
+        try:
+            pd = tree.total_branch_length()
+            internals = tree.get_nonterminals()[1:]
+            terminals = tree.get_terminals()
+            pd_terminal = sum([i.branch_length for i in terminals])
+            pd_stem = sum([i.branch_length for i in internals])
+            # miss stdev, to be continued
+            avg_terminal_branch_len = pd_terminal / rows
+            # may be zero
+            tree_res = len(internals) / max(1, len(terminals))
+        except Exception:
+            log.info('Bad phylogenetic tree.')
+    utils.clean_tmp(aln_file)
+    sys.setrecursionlimit(old_max_recursion)
+    return pd, pd_terminal, pd_stem, tree_res
+
+
 def get_resolution(alignment: np.array, start: int, end: int,
                    tmp: Path, quick=False):
     """
@@ -252,8 +325,6 @@ def get_resolution(alignment: np.array, start: int, end: int,
     """
     subalign = alignment[:, start:end]
     rows, columns = subalign.shape
-    old_max_recursion = sys.getrecursionlimit()
-    sys.setrecursionlimit(max(rows+10, old_max_recursion))
     total = rows * columns
     gap_ratio = 0
     resolution = 0
@@ -273,39 +344,6 @@ def get_resolution(alignment: np.array, start: int, end: int,
     pi = nucleotide_diversity(subalign)
     # Nucleotide diversity (pi)
     # tree value
-    aln_file = tmp / f'{start}-{end}.tmp'
-    if not fast:
-        if rows < 4:
-            return (gap_ratio, resolution, entropy, pi, tree_value,
-                    avg_terminal_branch_len)
-        with open(aln_file, 'wb') as aln:
-            for index, row in enumerate(alignment[:, start:end]):
-                aln.write(b'>' + str(index).encode('utf-8') + b'\n' + b''.join(
-                    row) + b'\n')
-        with open(devnull, 'w', encoding='utf-8') as f:
-            iqtree = run('iqtree -s {} -m JC -fast -czb'.format(aln_file),
-                         stdout=f, stderr=f, shell=True)
-        # just return 0 if there is error
-        if iqtree.returncode != 0:
-            log.info('Too much gap in the region {}-{} bp.'.format(start, end))
-            utils.clean_tmp(aln_file)
-        else:
-            tree = Phylo.read(aln_file + '.treefile', 'newick')
-            # skip the first empty node
-            try:
-                internals = tree.get_nonterminals()[1:]
-                terminals = tree.get_terminals()
-                sum_terminal_branch_len = sum([i.branch_length for i in terminals])
-            except RecursionError:
-                log.info('Bad phylogentic tree.')
-                internals = 0
-                terminals = 1
-                sum_terminal_branch_len = 0
-            # miss stdev, to be continued
-            avg_terminal_branch_len = sum_terminal_branch_len / len(terminals)
-            tree_value = len(internals) / len(terminals)
-            utils.clean_tmp(aln_file)
-    sys.setrecursionlimit(old_max_recursion)
     return (gap_ratio, resolution, entropy, pi, tree_value,
                 avg_terminal_branch_len)
 
@@ -314,8 +352,10 @@ def gap_analyze(gap_alignment: np.array):
     pass
 
 
+
+
 def evaluate(aln: Path, result: Path, arg) -> bool:
-    name, alignment = aln_to_array(aln)
+    name, alignment = fasta_to_array(aln)
     if name is None:
         log.info('Invalid fasta file {}.'.format(aln))
         return False
