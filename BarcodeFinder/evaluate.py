@@ -37,7 +37,7 @@ def parse_args(arg_list=None):
     options.add_argument('-ig', '-ignore_gap', dest='ignore_gap',
                          action='store_true',
                          help='ignore gaps in alignments')
-    options.add_argument('-iab', '-ignore_ambiguous_base',
+    options.add_argument('-iab', '-ignore_ambiguous',
                          dest='ignore_ambiguous_base',
                          action='store_true',
                          help='ignore ambiguous bases like "M" or "N"')
@@ -78,7 +78,6 @@ def align(files: list, folder: Path) -> (list, list):
     Returns:
         aligned(list): aligned fasta
         unaligned(list): unaligned files
-
     """
     log.info('Align sequences.')
     aligned = list()
@@ -113,49 +112,6 @@ def align(files: list, folder: Path) -> (list, list):
     log.info(f'Aligned {len(aligned)}')
     log.info(f'Unaligned {len(unaligned)}')
     return aligned, unaligned
-
-
-def remove_gap(alignment: np.array) -> (np.array, np.array):
-    """
-    Split alignment into with_gap and without_gap.
-    Args:
-        alignment: raw array
-    Returns:
-        no_gap_columns: without gap
-        gap_columns: columns having gaps
-    """
-    gap = b'-'
-    # axis 0 for column
-    have_gap = np.any(alignment==gap, axis=0)
-    gap_columns = alignment[:, have_gap]
-    no_gap_columns = alignment[:, ~have_gap]
-    n_columns = alignment.shape[1]
-    n_gap_columns = gap_columns.shape[1]
-    log.info(f'{n_columns} columns, {n_gap_columns} have gaps.')
-    if n_gap_columns/n_columns > 0.5:
-        log.warning('Too much columns with gaps.')
-    return no_gap_columns, gap_columns
-
-
-def old_remove_gap(aln_fasta: Path, new_file: Path) -> Path:
-    """
-    old function, for BLAST
-    Args:
-        aln_fasta: fasta with gap
-        new_file: fasta without gap
-    Returns:
-        new_file: fasta without gap
-    """
-    no_gap = StringIO()
-    with open(aln_fasta, 'r', encoding='utf-8') as raw:
-        for line in raw:
-            no_gap.write(line.replace('-', ''))
-    # try to avoid makeblastdb error
-    no_gap.seek(0)
-    from Bio import SeqIO
-    SeqIO.convert(no_gap, 'fasta', new_file, 'fasta')
-    no_gap.close()
-    return new_file
 
 
 def array_to_fasta(alignment: np.array, filename: Path) -> Path:
@@ -220,8 +176,61 @@ def fasta_to_array(aln_fasta: Path) -> (np.array, np.array):
     return name_array, sequence_array
 
 
-def gc_ratio(alignment: np.array, ignore_ambiguous_base=True) -> (
+def remove_gap(alignment: np.array) -> (np.array, np.array):
+    """
+    Split alignment into with_gap and without_gap.
+    Args:
+        alignment: raw array
+    Returns:
+        no_gap_columns: without gap
+        gap_columns: columns having gaps
+    """
+    gap = b'-'
+    # axis 0 for column
+    have_gap = np.any(alignment==gap, axis=0)
+    gap_columns = alignment[:, have_gap]
+    no_gap_columns = alignment[:, ~have_gap]
+    n_columns = alignment.shape[1]
+    n_gap_columns = gap_columns.shape[1]
+    log.info(f'{n_columns} columns, {n_gap_columns} have gaps.')
+    if n_gap_columns/n_columns > 0.5:
+        log.warning('Too much columns with gaps.')
+    return no_gap_columns, gap_columns
+
+
+def old_remove_gap(aln_fasta: Path, new_file: Path) -> Path:
+    # to be removed
+    """
+    old function, for BLAST
+    Args:
+        aln_fasta: fasta with gap
+        new_file: fasta without gap
+    Returns:
+        new_file: fasta without gap
+    """
+    no_gap = StringIO()
+    with open(aln_fasta, 'r', encoding='utf-8') as raw:
+        for line in raw:
+            no_gap.write(line.replace('-', ''))
+    # try to avoid makeblastdb error
+    no_gap.seek(0)
+    from Bio import SeqIO
+    SeqIO.convert(no_gap, 'fasta', new_file, 'fasta')
+    no_gap.close()
+    return new_file
+
+
+def gc_ratio(alignment: np.array, ignore_ambiguous=True) -> (
         float, np.array):
+    """
+    Get GC ratio of total alignment and each sequence.
+    Args:
+        alignment: np.array
+        ignore_ambiguous: count ambiguous bases or not
+    Returns:
+        total_gc: gc value
+        gc_array: np.array of gc value for each row(sequence)
+    """
     def get_gc_ratio(row: np.array, ignore: bool):
         # if True, do not count ambiguous bases as GC, but count them in total
         # BDVH = 1/3 GC
@@ -239,11 +248,15 @@ def gc_ratio(alignment: np.array, ignore_ambiguous_base=True) -> (
         return gc / (rows*columns-count[b'-'])
 
     rows, columns = alignment.shape
-    total_gc = get_gc_ratio(alignment, ignore_ambiguous_base)
+    total_gc = get_gc_ratio(alignment, ignore_ambiguous)
     gc_array = np.fromiter(
-        [get_gc_ratio(row, ignore_ambiguous_base) for row in alignment],
+        [get_gc_ratio(row, ignore_ambiguous) for row in alignment],
         dtype=np.float)
     return total_gc, gc_array
+
+
+def codon_usage(alignment):
+    pass
 
 
 def normalized_entropy(count: np.array, rows: int) -> float:
@@ -342,38 +355,41 @@ def phylogenetic_diversity(alignment: np.array, tmp: Path) -> (float, float,
     return pd, pd_terminal, pd_stem, tree_res
 
 
-def get_resolution(alignment: np.array, start: int, end: int,
-                   tmp: Path, quick=False) -> tuple:
+def get_resolution(alignment: np.array, tmp: Path,
+                   ignore_ambiguous=True) -> tuple:
     """
     Given alignment (2d numpy array), location of fragment(start and end, int,
     start from zero, exclude end),
     return gap ratio, resolution, entropy, Pi, tree value and average terminal
     branch length.
     """
-    subalign = alignment[:, start:end]
-    rows, columns = subalign.shape
-    total = rows * columns
-    gap_ratio = 0
-    resolution = 0
     entropy = 0
+    gap_ratio = 0
+    gc = 0
+    gc_array = np.array()
+    pd = 0
+    pd_stem =0
+    pd_terminal = 0
     pi = 0
-    tree_value = 0
-    avg_terminal_branch_len = 0
+    observed_res = 0
+    total_gc = 0
+    tree_res = 0
+    rows, columns = alignment.shape
+    total = rows * columns
     # index error
     if columns == 0:
-        return (gap_ratio, resolution, entropy, pi, tree_value,
-                avg_terminal_branch_len)
-    gap_ratio = len(subalign[subalign == b'-']) / total
-    item, count = np.unique(subalign, return_counts=True, axis=0)
+        return (gap_ratio, observed_res, entropy, pi, pd, pd_stem, pd_terminal,
+                tree_res, total_gc, gc_array)
+    gap_ratio = len(alignment[alignment == b'-']) / total
+    item, count = np.unique(alignment, return_counts=True, axis=0)
     resolution = len(count) / rows
     # normalized entropy
     entropy = normalized_entropy(count, rows)
-    pi = nucleotide_diversity(subalign)
-    # Nucleotide diversity (pi)
-    # tree value
-    pd, pd_stem, pd_terminal, tree_res = phylogenetic_diversity(subalign, tmp)
-    return (gap_ratio, resolution, entropy, pi, pd, pd_stem, pd_terminal,
-            tree_res)
+    pi = nucleotide_diversity(alignment)
+    pd, pd_stem, pd_terminal, tree_res = phylogenetic_diversity(alignment, tmp)
+    total_gc, gc_array = gc_ratio(alignment, ignore_ambiguous)
+    return (gap_ratio, observed_res, entropy, pi, pd, pd_stem, pd_terminal,
+            tree_res, total_gc, gc_array)
 
 
 def gap_analyze(gap_alignment: np.array):
@@ -392,19 +408,20 @@ def evaluate(aln: Path, result: Path, arg) -> bool:
         gap_alignment = np.array([[]])
     rows, columns = alignment.shape
     log.info(f'Evaluate {aln}')
-    (gap_ratio, observed_res, entropy, pi, tree_res,
-     branch_len) = get_resolution(no_gap_alignment, 0, columns, arg.tmp)
+    (gap_ratio, observed_res, entropy, pi, pd, pd_stem, pd_terminal, tree_res,
+     total_gc, gc_array) = get_resolution(no_gap_alignment, arg.tmp,
+                                          arg.ignore_ambiguous)
     log.info(f'\tGap ratio:\t{gap_ratio:.8f}')
     log.info(f'\tObserved resolution:\t{observed_res:.8f}')
     log.info(f'\tNormalized Shannon Index:\t{entropy:.8f}')
     log.info(f'\tPi:\t{pi:.8f}')
     log.info(f'\tTree resolution:\t{tree_res:.8f}')
-    log.info(f'\tAverage terminal branch length:\t{branch_len:.8f}')
+    log.info(f'\tPhylogenetic diversity:\t{pd:.8f}')
     with open(result, 'a', encoding='utf-8') as out:
-        out.write('{},{},{},{:.4%},{:.8f},{:.8f},{:.8f},{:.8f},{:.8f}'
-                  '\n'.format(aln.stem, rows, columns, gap_ratio,
-                              observed_res, tree_res, entropy,
-                              branch_len, pi))
+        out.write(f'{aln.stem},{rows},{columns},{gap_ratio:.4%},'
+                  f'{observed_res:.4%}{entropy:.8f},{pi:.8f},'
+                  f'{pd:.8f},{pd_stem:.8f},{pd_terminal:.8f},'
+                  f'{tree_res:.4%},{total_gc:.4%}\n')
     return True
 
 
@@ -427,8 +444,10 @@ def evaluate_main(arg_str):
     aligned.extend(arg.aln)
     evaluation_result = arg.out / 'Evaluation.csv'
     with open(evaluation_result, 'w', encoding='utf-8') as out_csv:
-       out_csv.write('Loci,Samples,Length,GapRatio,ObservedResolution,'
-                     'TreeResolution,ShannonIndex,AvgTerminalBranchLen,'
-                     'Pi\n')
+       out_csv.write('Loci,Samples,Length,GapRatio,'
+                     'ObservedRes,ShannonIndex,Pi,'
+                     'PD,PD-stem,PD-terminal,'
+                     'TreeRes,GC,'
+                     '\n')
     for aln in aligned:
         evaluate(aln, evaluation_result, arg)
