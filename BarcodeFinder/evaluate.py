@@ -344,8 +344,7 @@ def phylogenetic_diversity(alignment: np.array, tmp: Path) -> (float, float,
             terminals = tree.get_terminals()
             pd_terminal = sum([i.branch_length for i in terminals])
             pd_stem = sum([i.branch_length for i in internals])
-            # miss stdev, to be continued
-            avg_terminal_branch_len = pd_terminal / rows
+            # avg_terminal_branch_len = pd_terminal / rows
             # may be zero
             tree_res = len(internals) / max(1, len(terminals))
         except Exception:
@@ -365,8 +364,7 @@ def get_resolution(alignment: np.array, tmp: Path,
     """
     entropy = 0
     gap_ratio = 0
-    gc = 0
-    gc_array = np.array()
+    gc_array = np.array([0])
     pd = 0
     pd_stem =0
     pd_terminal = 0
@@ -382,7 +380,7 @@ def get_resolution(alignment: np.array, tmp: Path,
                 tree_res, total_gc, gc_array)
     gap_ratio = len(alignment[alignment == b'-']) / total
     item, count = np.unique(alignment, return_counts=True, axis=0)
-    resolution = len(count) / rows
+    observed_res = len(count) / rows
     # normalized entropy
     entropy = normalized_entropy(count, rows)
     pi = nucleotide_diversity(alignment)
@@ -444,10 +442,17 @@ def evaluate_main(arg_str):
     aligned.extend(arg.aln)
     evaluation_result = arg.out / 'Evaluation.csv'
     with open(evaluation_result, 'w', encoding='utf-8') as out_csv:
-       out_csv.write('Loci,Samples,Length,GapRatio,'
-                     'ObservedRes,ShannonIndex,Pi,'
-                     'PD,PD-stem,PD-terminal,'
-                     'TreeRes,GC,'
-                     '\n')
+        out_csv.write('Loci,Samples,Length,GapRatio,'
+                      'ObservedRes,ShannonIndex,Pi,'
+                      'PD,PD-stem,PD-terminal,'
+                      'TreeRes,GC,'
+                      '\n')
     for aln in aligned:
         evaluate(aln, evaluation_result, arg)
+        # draw()
+        if arg.quick:
+            continue
+        else:
+            # sliding window
+            pass
+    return
