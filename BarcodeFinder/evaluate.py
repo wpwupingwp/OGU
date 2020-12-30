@@ -235,7 +235,7 @@ def gc_ratio(alignment: np.array, ignore_ambiguous_base=True) -> (
                 gc += count[ambiguous_base] / 3
             for ambiguous_base in b'MSYKRS':
                 gc += count[ambiguous_base] / 2
-        return gc / (rows*columns-counts[b'-'])
+        return gc / (rows*columns-count[b'-'])
 
     rows, columns = alignment.shape()
     total_gc = get_gc_ratio(alignment, ignore_ambiguous_base)
