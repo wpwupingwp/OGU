@@ -129,8 +129,8 @@ def remove_gap(alignment: np.array) -> (np.array, np.array):
     have_gap = np.any(alignment==gap, axis=0)
     gap_columns = alignment[:, have_gap]
     no_gap_columns = alignment[:, ~have_gap]
-    n_columns = alignment.shape()[1]
-    n_gap_columns = gap_columns.shape()[1]
+    n_columns = alignment.shape[1]
+    n_gap_columns = gap_columns.shape[1]
     log.info(f'{n_columns} columns, {n_gap_columns} have gaps.')
     if n_gap_columns/n_columns > 0.5:
         log.warning('Too much columns with gaps.')
@@ -222,7 +222,7 @@ def fasta_to_array(aln_fasta: Path) -> (np.array, np.array):
 
 def gc_ratio(alignment: np.array, ignore_ambiguous_base=True) -> (
         float, np.array):
-    def get_gc_ratio(row: np.array, ignore: True):
+    def get_gc_ratio(row: np.array, ignore: bool):
         # if True, do not count ambiguous bases as GC, but count them in total
         # BDVH = 1/3 GC
         # MSYKRS = 1/2 GC
@@ -230,7 +230,7 @@ def gc_ratio(alignment: np.array, ignore_ambiguous_base=True) -> (
         count = np.unique(row, return_counts=True)
         for base in b'GC':
             gc += count[base]
-        if not ignore_ambiguous_base:
+        if not ignore:
             gc += count[b'N'] / 4
             for ambiguous_base in b'BDVH':
                 gc += count[ambiguous_base] / 3
@@ -238,10 +238,11 @@ def gc_ratio(alignment: np.array, ignore_ambiguous_base=True) -> (
                 gc += count[ambiguous_base] / 2
         return gc / (rows*columns-count[b'-'])
 
-    rows, columns = alignment.shape()
+    rows, columns = alignment.shape
     total_gc = get_gc_ratio(alignment, ignore_ambiguous_base)
-    gc_array = np.fromiter([
-        get_gc_ratio(row, ignore_ambiguous_base) for row in alignment])
+    gc_array = np.fromiter(
+        [get_gc_ratio(row, ignore_ambiguous_base) for row in alignment],
+        dtype=np.float)
     return total_gc, gc_array
 
 
@@ -303,7 +304,7 @@ def phylogenetic_diversity(alignment: np.array, tmp: Path) -> (float, float,
     pd_terminal = 0.0
     pd_stem = 0.0
     tree_res = 0.0
-    rows, columns = alignment.shape()
+    rows, columns = alignment.shape
     if rows < 4:
         log.debug('Too few sequences.')
         return pd, pd_stem, pd_terminal, tree_res
