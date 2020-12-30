@@ -4,10 +4,10 @@ import argparse
 import logging
 import sys
 import numpy as np
-from pathlib import Path
+
 from io import StringIO
-from glob import glob
-from os import remove, devnull, cpu_count
+from os import devnull, cpu_count
+from pathlib import Path
 from subprocess import run
 
 from Bio import Phylo
@@ -178,7 +178,8 @@ def array_to_fasta(alignment: np.array, filename: Path) -> Path:
 def fasta_to_array(aln_fasta: Path) -> (np.array, np.array):
     """
     Given fasta format alignment filename, return a numpy array for sequence:
-    Faster and use smaller mem
+    Faster and use smaller mem.
+    Ensure all bases are capital.
     Args:
         aln_fasta(Path): aligned fasta file
     Returns:
@@ -217,6 +218,30 @@ def fasta_to_array(aln_fasta: Path) -> (np.array, np.array):
     if name_array is None:
         log.error('Bad fasta file {}.'.format(aln_fasta))
     return name_array, sequence_array
+
+
+def gc_ratio(alignment: np.array, ignore_ambiguous_base=True) -> (
+        float, np.array):
+    def get_gc_ratio(row: np.array, ignore: True):
+        # if True, do not count ambiguous bases as GC, but count them in total
+        # BDVH = 1/3 GC
+        # MSYKRS = 1/2 GC
+        gc = 0
+        count = np.unique(row, return_counts=True)
+        for base in b'GC':
+            gc += count[base]
+        if not ignore_ambiguous_base:
+            for ambiguous_base in b'BDVH':
+                gc += count[ambiguous_base] / 3
+            for ambiguous_base in b'MSYKRS':
+                gc += count[ambiguous_base] / 2
+        return gc / (rows*columns-counts[b'-'])
+
+    rows, columns = alignment.shape()
+    total_gc = get_gc_ratio(alignment, ignore_ambiguous_base)
+    gc_array = np.fromiter([
+        get_gc_ratio(row, ignore_ambiguous_base) for row in alignment])
+    return total_gc, gc_array
 
 
 def normalized_entropy(count: np.array, rows: int) -> float:
@@ -291,7 +316,7 @@ def phylogenetic_diversity(alignment: np.array, tmp: Path) -> (float, float,
         return pd, pd_terminal, pd_stem, tree_res
     with open(devnull, 'w', encoding='utf-8') as out:
         run_ = run(f'{iqtree} -s {aln_file} -m HKY -fast -czb -redo',
-                     stdout=out, stderr=out, shell=True)
+                   stdout=out, stderr=out, shell=True)
     # just return 0 if there is error
     if run_.returncode != 0:
         log.debug('Too much gap in the alignment.')
@@ -316,7 +341,7 @@ def phylogenetic_diversity(alignment: np.array, tmp: Path) -> (float, float,
 
 
 def get_resolution(alignment: np.array, start: int, end: int,
-                   tmp: Path, quick=False):
+                   tmp: Path, quick=False) -> tuple:
     """
     Given alignment (2d numpy array), location of fragment(start and end, int,
     start from zero, exclude end),
@@ -344,14 +369,13 @@ def get_resolution(alignment: np.array, start: int, end: int,
     pi = nucleotide_diversity(subalign)
     # Nucleotide diversity (pi)
     # tree value
-    return (gap_ratio, resolution, entropy, pi, tree_value,
-                avg_terminal_branch_len)
+    pd, pd_stem, pd_terminal, tree_res = phylogenetic_diversity(subalign, tmp)
+    return (gap_ratio, resolution, entropy, pi, pd, pd_stem, pd_terminal,
+            tree_res)
 
 
 def gap_analyze(gap_alignment: np.array):
     pass
-
-
 
 
 def evaluate(aln: Path, result: Path, arg) -> bool:
