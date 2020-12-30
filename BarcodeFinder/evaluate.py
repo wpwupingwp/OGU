@@ -231,6 +231,7 @@ def gc_ratio(alignment: np.array, ignore_ambiguous_base=True) -> (
         for base in b'GC':
             gc += count[base]
         if not ignore_ambiguous_base:
+            gc += count[b'N'] / 4
             for ambiguous_base in b'BDVH':
                 gc += count[ambiguous_base] / 3
             for ambiguous_base in b'MSYKRS':
