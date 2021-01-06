@@ -510,3 +510,11 @@ def parse_blast_tab(filename):
             else:
                 query.append(BlastResult(line))
     pass
+
+
+def codon_usage(alignment):
+    pass
+
+
+def gap_analyze(gap_alignment: np.array):
+    pass

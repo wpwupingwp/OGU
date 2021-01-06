@@ -255,10 +255,6 @@ def gc_ratio(alignment: np.array, ignore_ambiguous=True) -> (
     return total_gc, gc_array
 
 
-def codon_usage(alignment):
-    pass
-
-
 def normalized_entropy(count: np.array, rows: int) -> float:
     """
     Calculate normalized entropy.
@@ -390,15 +386,20 @@ def get_resolution(alignment: np.array, tmp: Path,
             tree_res, total_gc, gc_array)
 
 
-def gap_analyze(gap_alignment: np.array):
-    pass
 
-
-def evaluate(aln: Path, result: Path, arg) -> bool:
+def evaluate(aln: Path, arg) -> tuple:
+    """
+    Wrapper
+    Args:
+        aln: alignment file
+        arg: args
+    Returns:
+        tuple of results
+    """
     name, alignment = fasta_to_array(aln)
     if name is None:
         log.info('Invalid fasta file {}.'.format(aln))
-        return False
+        return (0, ) * 12
     if arg.ignore_gap:
         no_gap_alignment, gap_alignment = remove_gap(alignment)
     else:
@@ -415,12 +416,8 @@ def evaluate(aln: Path, result: Path, arg) -> bool:
     log.info(f'\tPi:\t{pi:.8f}')
     log.info(f'\tTree resolution:\t{tree_res:.8f}')
     log.info(f'\tPhylogenetic diversity:\t{pd:.8f}')
-    with open(result, 'a', encoding='utf-8') as out:
-        out.write(f'{aln.stem},{rows},{columns},{gap_ratio:.4%},'
-                  f'{observed_res:.4%}{entropy:.8f},{pi:.8f},'
-                  f'{pd:.8f},{pd_stem:.8f},{pd_terminal:.8f},'
-                  f'{tree_res:.4%},{total_gc:.4%}\n')
-    return True
+    return (aln.stem, rows, columns, gap_ratio, observed_res, entropy, pi,
+            pd, pd_stem, pd_terminal, tree_res, total_gc)
 
 
 def evaluate_main(arg_str):
@@ -448,8 +445,15 @@ def evaluate_main(arg_str):
                       'TreeRes,GC,'
                       '\n')
     for aln in aligned:
-        evaluate(aln, evaluation_result, arg)
-        # draw()
+        (aln.stem, rows, columns, gap_ratio, observed_res, entropy,
+         pi, pd, pd_stem, pd_terminal, tree_res, total_gc) = evaluate(
+            aln, arg)
+        with open(evaluation_result, 'a', encoding='utf-8') as out:
+            out.write(f'{aln.stem},{rows},{columns},{gap_ratio:.4%},'
+                      f'{observed_res:.4%}{entropy:.8f},{pi:.8f},'
+                      f'{pd:.8f},{pd_stem:.8f},{pd_terminal:.8f},'
+                      f'{tree_res:.4%},{total_gc:.4%}\n')
+    # draw()
         if arg.quick:
             continue
         else:
