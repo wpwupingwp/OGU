@@ -401,10 +401,11 @@ def get_resolution(alignment: np.array, tmp: Path,
     return variance, gc_array
 
 
-def output_sliding(sliding: list, name: str, out: Path, size: int, step: int):
+def output_sliding(sliding: list, name: str, out: Path,
+                   size: int, step: int) -> (Path, Path):
     if len(sliding) == 0:
         log.warning('Empty sliding-window result.')
-        return
+        return Path(), Path()
     out_csv = out / (name+'.csv')
     head = 'Start,End,' + ','.join(Variance._fields) + '\n'
     handle = open(out_csv, 'w', encoding='utf-8')
@@ -458,6 +459,86 @@ def output_sliding(sliding: list, name: str, out: Path, size: int, step: int):
     return out_csv, out_pdf
 
 
+def old_count_and_draw(alignment, arg):
+    # deprecated!
+    """
+    Given alignment(numpy array), calculate Shannon Index based on
+    www.itl.nist.gov/div898/software/dataplot/refman2/auxillar/shannon.htm
+    Return lists of observed resolution, shannon index, Pi, tree resolution,
+    average terminal branch length and index.
+    Draw sliding-window figure.
+    All calculation excludes primer sequence.
+    """
+    # output = join_path(arg.out, basename(arg.out_file).split('.')[0])
+    # rows, columns = alignment.shape
+    # min_primer = arg.min_primer
+    # max_product = arg.max_product
+    # step = arg.step
+    # if rows < 4:
+    #     log.warning('Less than 3 sequence. Tree inference will be skipped.')
+    # # gap_list, r_list, h_list, pi_list, t_list : count, normalized entropy,
+    # # Pi and tree value
+    # gap_ratio_list = []
+    # entropy_list = []
+    # avg_branch_len_list = []
+    # pi_list = []
+    # observed_res_list = []
+    # tree_res_list = []
+    # index = []
+    # max_plus = max_product - min_primer * 2
+    # max_range = columns - max_product
+    # handle = open(output + '.variance.tsv', 'w', encoding='utf-8')
+    # # iqtree blmin is 1e-6
+    # fmt = '{},{:.2%},{:.6f},{:.6f},{:.6f},{:.6f},{:.6f}\n'
+    # handle.write('Index,GapRatio,Resolution,Entropy,Pi,'
+    #              'TreeValue,AvgTerminalBranchLen\n')
+    # for i in range(0, max_range, step):
+    #     # exclude primer sequence
+    #     values = alignment.get_resolution(
+    #         alignment, i, i + max_plus, arg.fast)
+    #     handle.write(fmt.format(i, *values))
+    #     gap_ratio, resolution, entropy, pi, tree_value, avg_branch_len = values
+    #     gap_ratio_list.append(gap_ratio)
+    #     observed_res_list.append(resolution)
+    #     entropy_list.append(entropy)
+    #     pi_list.append(pi)
+    #     tree_res_list.append(tree_value)
+    #     avg_branch_len_list.append(avg_branch_len)
+    #     index.append(i)
+
+    # plt.style.use('seaborn-colorblind')
+    # # how to find optimized size?
+    # fig, ax1 = plt.subplots(figsize=(15 + len(index) // 5000, 10))
+    # plt.title('Variance of {} (sample={}, window={} bp, step={} bp)\n'.format(
+    #     basename(arg.out_file).split('.')[0], rows, max_product, step))
+    # plt.xlabel('Base')
+    # ax1.yaxis.set_ticks(np.linspace(0, 1, num=11))
+    # ax1.set_ylabel('Resolution & Shannon Equitability Index')
+    # ax1.plot(index, entropy_list, label='Shannon Equitability Index',
+    #          alpha=0.8)
+    # ax1.plot(index, observed_res_list, label='Observed Resolution', alpha=0.8)
+    # ax1.plot(index, gap_ratio_list, label='Gap Ratio', alpha=0.8)
+    # # different ytick
+    # ax2 = ax1.twinx()
+    # ax2.set_ylabel(r'$\pi$', rotation=-90, labelpad=20)
+    # # plt.xticks(np.linspace(0, max_range, 21))
+    # if not arg.fast:
+    #     ax1.plot(index, tree_res_list, label='Tree Resolution', alpha=0.8)
+    #     ax2.plot(index, avg_branch_len_list, linestyle='--',
+    #              label='Average Terminal Branch Length', alpha=0.8)
+    #     ax2.set_ylabel(r'$\pi$ and Average Branch Length', rotation=-90,
+    #                    labelpad=20)
+    # ax1.legend(loc='lower left')
+    # ax2.plot(index, pi_list, 'k--', label=r'$\pi$', alpha=0.8)
+    # ax2.legend(loc='upper right')
+    # plt.savefig(output + '.pdf')
+    # plt.savefig(output + '.png')
+    # plt.close()
+    # handle.close()
+    # return observed_res_list, index
+    return
+
+
 def evaluate(aln: Path, arg) -> tuple:
     """
     Wrapper
@@ -502,8 +583,9 @@ def evaluate_main(arg_str):
     Evaluate variance of alignments.
     Args:
         arg_str:
-
     Returns:
+        aln: aligned files
+        out_csv: evaluation of each locus
     """
     if arg_str is None:
         arg = parse_args()
@@ -530,5 +612,5 @@ def evaluate_main(arg_str):
             out.write(aln.stem+','+str(summary)+'\n')
         if not arg.quick:
             output_sliding(sliding, aln.stem, arg._evaluate, arg.step, arg.size)
-        # draw()
-    return
+    log.info('Finished.')
+    return arg.aln, out_csv

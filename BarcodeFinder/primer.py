@@ -2,11 +2,16 @@
 
 import logging
 import re
+from collections import defaultdict
 from itertools import product as cartesian_product
 from os import remove, cpu_count, devnull
 from glob import glob
+from pathlib import Path
 from subprocess import run
 
+import numpy as np
+from Bio.Seq import Seq
+from Bio.SeqRecord import SeqRecord
 from Bio.SeqFeature import SeqFeature, FeatureLocation
 from Bio.Data.IUPACData import ambiguous_dna_values as ambiguous_data
 from Bio.Blast.Applications import NcbiblastnCommandline as Blast
@@ -15,6 +20,7 @@ from primer3 import (calcTm, calcHairpinTm, calcHomodimerTm,
                      calcHeterodimerTm)
 
 from BarcodeFinder import utils
+from BarcodeFinder import evaluate
 
 # define logger
 FMT = '%(asctime)s %(levelname)-8s %(message)s'
@@ -26,6 +32,7 @@ try:
     coloredlogs.install(level=logging.INFO, fmt=FMT, datefmt=DATEFMT)
 except ImportError:
     pass
+
 
 class Pair:
     # save memory
@@ -107,6 +114,70 @@ class Pair:
         return self
 
 
+class PrimerWithInfo(SeqRecord):
+    # inherit from Bio.SeqRecord.SeqRecord
+    def __init__(self, seq='', quality=None, start=0, coverage=0,
+                 avg_bitscore=0, mid_loc=None, avg_mismatch=0, detail=0,
+                 is_reverse_complement=False):
+        # store str
+        super().__init__(Seq(seq.upper()))
+        self.sequence = str(self.seq)
+
+        # primer3.setGlobals seems have no effect on calcTm, use
+        # calc_ambiguous_seq
+        self.quality = self.letter_annotations['solexa_quality'] = quality
+        self.start = self.annotations['start'] = start
+        self.end = self.annotations['end'] = start + self.__len__() - 1
+        self.coverage = self.annotations['coverage'] = coverage
+        self.avg_bitscore = self.annotations['avg_bitscore'] = avg_bitscore
+        self.mid_loc = self.annotations['mid_loc'] = mid_loc
+        self.avg_mismatch = self.annotations['avg_mismatch'] = avg_mismatch
+        self.detail = self.annotations['detail'] = detail
+        self.is_reverse_complement = self.annotations['is_reverse_complement'
+        ] = False
+        self.description = self.annotations['description'] = ''
+        self.avg_mid_loc = 0
+        self.hairpin_tm = 0
+        self.homodimer_tm = 0
+        self.tm = 0
+        self.update_id()
+
+    def __getitem__(self, i):
+        # part of attribution do not change, others were reset
+        if isinstance(i, int):
+            i = slice(i, i + 1)
+        if isinstance(i, slice):
+            answer = PrimerWithInfo(seq=str(self.seq[i]),
+                                    quality=self.quality[i])
+            answer.annotations = dict(self.annotations.items())
+            return answer
+        else:
+            log.exception('Bad index.')
+            raise
+
+    def reverse_complement(self):
+        table = str.maketrans('ACGTMRWSYKVHDBXN', 'TGCAKYWSRMBDHVXN')
+        new_seq = str.translate(self.sequence, table)[::-1]
+        new_quality = self.quality[::-1]
+        # try to simplify??
+        return PrimerWithInfo(seq=new_seq, quality=new_quality,
+                              start=self.start, coverage=self.coverage,
+                              avg_bitscore=self.avg_bitscore,
+                              mid_loc=self.mid_loc,
+                              is_reverse_complement=True,
+                              detail=self.detail)
+
+    def update_id(self):
+        self.end = self.annotations['end'] = self.start + self.__len__() - 1
+        if self.mid_loc is not None and len(self.mid_loc) != 0:
+            self.avg_mid_loc = int(utils.safe_average(list(
+                self.mid_loc.values())))
+        self.id = ('AvgMidLocation({:.0f})-Tm({:.2f})-Coverage({:.2%})-'
+                   'AvgBitScore({:.2f})-Start({})-End({})'.format(
+            self.avg_mid_loc, self.tm, self.coverage,
+            self.avg_bitscore, self.start, self.end))
+
+
 def calc_ambiguous_seq(func, seq, seq2=None):
     """
     Expand sequences with ambiguous bases to several clean sequences and apply
@@ -144,6 +215,107 @@ def calc_ambiguous_seq(func, seq, seq2=None):
     # primer3 will return negative values sometime
     values_positive = [max(0, i) for i in values]
     return utils.safe_average(values_positive)
+
+
+def count_base(alignment: np.array ):
+    """
+    Given alignment numpy array, count cumulative frequency of base in each
+    column (consider ambiguous base and "N", "-" and "?", otherwise omit).
+    Return [[float, float, float, float, float, float, float]] for
+    [A, T, C, G, N, GAP, OTHER].
+    """
+    frequency = []
+    rows, columns = alignment.shape
+    for index in range(columns):
+        base, counts = np.unique(alignment[:, [index]], return_counts=True)
+        count_dict = {b'A': 0, b'C': 0, b'G': 0, b'T': 0, b'M': 0, b'R': 0,
+                      b'W': 0, b'S': 0, b'Y': 0, b'K': 0, b'V': 0, b'H': 0,
+                      b'D': 0, b'B': 0, b'X': 0, b'N': 0, b'-': 0, b'?': 0}
+        count_dict.update(dict(zip(base, counts)))
+        a = (count_dict[b'A'] +
+             (count_dict[b'D'] + count_dict[b'H'] + count_dict[b'V']) / 3 +
+             (count_dict[b'M'] + count_dict[b'R'] + count_dict[b'W']) / 2)
+        t = (count_dict[b'T'] +
+             (count_dict[b'B'] + count_dict[b'H'] + count_dict[b'D']) / 3 +
+             (count_dict[b'K'] + count_dict[b'W'] + count_dict[b'Y']) / 2)
+        c = (count_dict[b'C'] +
+             (count_dict[b'B'] + count_dict[b'H'] + count_dict[b'V']) / 3 +
+             (count_dict[b'M'] + count_dict[b'S'] + count_dict[b'Y']) / 2)
+        g = (count_dict[b'G'] +
+             (count_dict[b'B'] + count_dict[b'D'] + count_dict[b'V']) / 3 +
+             (count_dict[b'K'] + count_dict[b'R'] + count_dict[b'S']) / 2)
+        gap = count_dict[b'-']
+        n = count_dict[b'N'] + count_dict[b'X'] + count_dict[b'?']
+        other = rows - a - t - c - g - gap - n
+        frequency.append([a, t, c, g, n, gap, other])
+    return frequency
+
+
+def get_quality(data, rows):
+    """
+    Calculate quality score.
+    """
+    # use fastq-illumina format
+    max_q = 62
+    factor = max_q / rows
+    # use min to avoid KeyError
+    quality_value = [min(max_q, int(i * factor)) - 1 for i in data]
+    return quality_value
+
+
+def get_consensus(base_cumulative_frequency, coverage_percent: float,
+                  rows: int, output: Path):
+    """
+    Given count info of bases, return consensus(PrimerWithInfo).
+    """
+    def get_ambiguous_dict():
+        data = dict(zip(ambiguous_data.values(), ambiguous_data.keys()))
+        # 2:{'AC': 'M',}
+        data_with_len = defaultdict(lambda: dict())
+        for i in data:
+            data_with_len[len(i)][i] = data[i]
+        return data_with_len
+
+    ambiguous_dict = get_ambiguous_dict()
+    most = []
+    coverage = rows * coverage_percent
+
+    limit = coverage / len('ATCG')
+    for location, column in enumerate(base_cumulative_frequency):
+        finish = False
+        # "*" for others
+        value = dict(zip(list('ATCGN-*'), column))
+
+        base = 'N'
+        if value['N'] >= limit:
+            count = value['N']
+            most.append([location, base, count])
+            continue
+        sum_gap = value['-'] + value['*']
+        if sum_gap >= limit:
+            base = '-'
+            count = sum_gap
+            most.append([location, base, count])
+            continue
+        # 1 2 3 4
+        for length in ambiguous_dict:
+            # A T CG CT ACG CTG ATCG
+            for key in ambiguous_dict[length]:
+                count = 0
+                for letter in list(key):
+                    if finish:
+                        break
+                    count += value[letter]
+                    if count >= coverage:
+                        base = ambiguous_dict[length][key]
+                        finish = True
+                        most.append([location, base, count])
+    quality_raw = [i[2] for i in most]
+    consensus = PrimerWithInfo(start=1, seq=''.join([i[1] for i in most]),
+                               quality=get_quality(quality_raw, rows))
+    SeqIO.write(consensus, output, 'fastq')
+    return consensus
+
 
 def get_good_region(index, seq_count, arg):
     """
@@ -234,6 +406,7 @@ def find_primer(consensus, arg):
                     primer.update_id()
                     primers.append(primer)
     return primers, consensus
+
 
 def validate(primer_candidate, db_file, n_seqs, arg):
     """
@@ -371,3 +544,105 @@ def pick_pair(primers, alignment, arg):
     good_pairs.sort(key=lambda x: x.score, reverse=True)
     log.info('Successfully found validated primers.')
     return good_pairs[:arg.top_n]
+
+
+def primer_design(aln: Path, arg):
+    name, alignment = evaluate.fasta_to_array(aln)
+    rows, columns = alignment.shape
+    base_cumulative_frequency = count_base(alignment)
+    log.info(f'Generate consensus of {aln}.')
+    consensus = get_consensus(base_cumulative_frequency, arg.coverage, rows,
+                              arg._primer/(aln.stem+'.consensus.fastq'))
+    log.info('Start finding primers.')
+    log.info('Mark region for finding primer.')
+    good_region = get_good_region(index, observed_res_list, arg)
+    log.info('Finding candidate primers.')
+    consensus = find_continuous(consensus, good_region, arg.min_primer)
+    primer_candidate, consensus = find_primer(consensus, arg)
+    if len(primer_candidate) == 0:
+        log.warning('Cannot find primer candidates. '
+                    'Please consider to loose options.')
+        return True
+    log.info('Found {} candidate primers.'.format(len(primer_candidate)))
+    log.info('Validate with BLAST. May be slow.')
+    primer_verified = validate(primer_candidate, db_file, rows, arg)
+    if len(primer_verified) == 0:
+        log.warning('All candidates failed on validation. '
+                    'Please consider to loose options.')
+        return True
+    log.info('Picking primer pairs.')
+    pairs = pick_pair(primer_verified, alignment, arg)
+    if len(pairs) == 0:
+        log.warning('Cannot find suitable primer pairs. '
+                    'Please consider to loose options.')
+        return True
+    log.info('Output the result.')
+    locus = basename(arg.out_file).split('.')[0]
+    csv_title = ('Locus,Score,Samples,AvgProductLength,StdEV,'
+                 'MinProductLength,MaxProductLength,'
+                 'Coverage,Resolution,TreeValue,AvgTerminalBranchLen,Entropy,'
+                 'LeftSeq,LeftTm,LeftAvgBitscore,LeftAvgMismatch,'
+                 'RightSeq,RightTm,RightAvgBitscore,RightAvgMismatch,'
+                 'DeltaTm,AlnStart,AlnEnd,AvgSeqStart,AvgSeqEnd\n')
+    style = ('{},{:.2f},{},{:.0f},{:.0f},{},{},'
+             '{:.2%},{:.2%},{:.6f},{:.6f},{:.6f},'
+             '{},{:.2f},{:.2f},{:.2f},'
+             '{},{:.2f},{:.2f},{:.2f},'
+             '{:.2f},{},{},{},{}\n')
+    out1 = open(join_path(arg.out, locus) + '.primer.fastq', 'w',
+                encoding='utf-8')
+    out2 = open(join_path(arg.out, locus) + '.primer.csv', 'w',
+                encoding='utf-8')
+    # write primers to one file
+    out3_file = join_path(arg.out, 'Primers.csv')
+    if not exists(out3_file):
+        with open(out3_file, 'w', encoding='utf-8') as out3_title:
+            out3_title.write(csv_title)
+    out3 = open(out3_file, 'a', encoding='utf-8')
+    out2.write(csv_title)
+    for pair in pairs:
+        line = style.format(
+            locus, pair.score, rows, utils.safe_average(
+                list(pair.length.values())),
+            np.std(list(pair.length.values())), min(pair.length.values()),
+            max(pair.length.values()),
+            pair.coverage, pair.resolution, pair.tree_value,
+            pair.avg_terminal_len, pair.entropy,
+            pair.left.seq, pair.left.tm, pair.left.avg_bitscore,
+            pair.left.avg_mismatch,
+            pair.right.seq, pair.right.tm, pair.right.avg_bitscore,
+            pair.right.avg_mismatch,
+            pair.delta_tm, pair.left.start, pair.right.end, pair.start,
+            pair.end)
+        out2.write(line)
+        out3.write(line)
+        SeqIO.write(pair.left, out1, 'fastq')
+        SeqIO.write(pair.right, out1, 'fastq')
+    out1.close()
+    out2.close()
+    out3.close()
+    log.info('Primers info were written into {}.csv.'.format(arg.out_file))
+    return
+
+
+def primer_main(arg_str):
+    """
+    Evaluate variance of alignments.
+    Args:
+        arg_str:
+
+    Returns:
+    """
+    if arg_str is None:
+        arg = parse_args()
+    else:
+        arg = parse_args(arg_str.split(' '))
+    if arg is None:
+        log.info('Quit.')
+        return None
+    primer_result = arg.out / 'Evaluation.csv'
+    # csv_head = 'Loci,' + ','.join(Variance._fields) + '\n'
+    for aln in arg.aln:
+        primer_design(aln, arg)
+    log.info('Finished.')
+    return

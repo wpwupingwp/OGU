@@ -85,6 +85,8 @@ def init_out(arg):
         arg._align.mkdir()
         arg._evaluate = arg.out /'Evaluate'
         arg._evaluate.mkdir()
+        arg._primer = arg.out / 'Primer'
+        arg._primer.mkdir()
         arg._tmp = arg.out / 'Temp'
         arg._tmp.mkdir()
     except Exception:

@@ -25,6 +25,7 @@ from Bio.SeqRecord import SeqRecord
 
 from BarcodeFinder import utils
 from BarcodeFinder import gb2fasta
+from BarcodeFinder import evaluate
 from BarcodeFinder import primer
 
 from matplotlib import use as mpl_use
@@ -50,73 +51,6 @@ try:
     coloredlogs.install(level=logging.INFO, fmt=FMT, datefmt=DATEFMT)
 except ImportError:
     pass
-
-
-class PrimerWithInfo(SeqRecord):
-    # inherit from Bio.SeqRecord.SeqRecord
-    def __init__(self, seq='', quality=None, start=0, coverage=0,
-                 avg_bitscore=0, mid_loc=None, avg_mismatch=0, detail=0,
-                 is_reverse_complement=False):
-        # store str
-        super().__init__(Seq(seq.upper()))
-        self.sequence = str(self.seq)
-
-        # primer3.setGlobals seems have no effect on calcTm, use
-        # calc_ambiguous_seq
-        self.quality = self.letter_annotations['solexa_quality'] = quality
-        self.start = self.annotations['start'] = start
-        self.end = self.annotations['end'] = start + self.__len__() - 1
-        self.coverage = self.annotations['coverage'] = coverage
-        self.avg_bitscore = self.annotations['avg_bitscore'] = avg_bitscore
-        self.mid_loc = self.annotations['mid_loc'] = mid_loc
-        self.avg_mismatch = self.annotations['avg_mismatch'] = avg_mismatch
-        self.detail = self.annotations['detail'] = detail
-        self.is_reverse_complement = self.annotations['is_reverse_complement'
-                                                      ] = False
-        self.description = self.annotations['description'] = ''
-        self.avg_mid_loc = 0
-        self.hairpin_tm = 0
-        self.homodimer_tm = 0
-        self.tm = 0
-        self.update_id()
-
-    def __getitem__(self, i):
-        # part of attribution do not change, others were reset
-        if isinstance(i, int):
-            i = slice(i, i + 1)
-        if isinstance(i, slice):
-            answer = PrimerWithInfo(seq=str(self.seq[i]),
-                                    quality=self.quality[i])
-            answer.annotations = dict(self.annotations.items())
-            return answer
-        else:
-            log.exception('Bad index.')
-            raise
-
-    def reverse_complement(self):
-        table = str.maketrans('ACGTMRWSYKVHDBXN', 'TGCAKYWSRMBDHVXN')
-        new_seq = str.translate(self.sequence, table)[::-1]
-        new_quality = self.quality[::-1]
-        # try to simplify??
-        return PrimerWithInfo(seq=new_seq, quality=new_quality,
-                              start=self.start, coverage=self.coverage,
-                              avg_bitscore=self.avg_bitscore,
-                              mid_loc=self.mid_loc,
-                              is_reverse_complement=True,
-                              detail=self.detail)
-
-    def update_id(self):
-        self.end = self.annotations['end'] = self.start + self.__len__() - 1
-        if self.mid_loc is not None and len(self.mid_loc) != 0:
-            self.avg_mid_loc = int(utils.safe_average(list(
-                self.mid_loc.values())))
-        self.id = ('AvgMidLocation({:.0f})-Tm({:.2f})-Coverage({:.2%})-'
-                   'AvgBitScore({:.2f})-Start({})-End({})'.format(
-                    self.avg_mid_loc, self.tm, self.coverage,
-                    self.avg_bitscore, self.start, self.end))
-
-
-
 
 
 def parse_args():
@@ -171,183 +105,6 @@ def parse_args():
     parsed.out_file = ''
     # load option.json may cause chaos, remove
     return parsed
-
-
-def count_base(alignment, rows, columns):
-    """
-    Given alignment numpy array, count cumulative frequency of base in each
-    column (consider ambiguous base and "N", "-" and "?", otherwise omit).
-    Return [[float, float, float, float, float, float, float]] for
-    [A, T, C, G, N, GAP, OTHER].
-    """
-    frequency = []
-    for index in range(columns):
-        base, counts = np.unique(alignment[:, [index]], return_counts=True)
-        count_dict = {b'A': 0, b'C': 0, b'G': 0, b'T': 0, b'M': 0, b'R': 0,
-                      b'W': 0, b'S': 0, b'Y': 0, b'K': 0, b'V': 0, b'H': 0,
-                      b'D': 0, b'B': 0, b'X': 0, b'N': 0, b'-': 0, b'?': 0}
-        count_dict.update(dict(zip(base, counts)))
-        a = (count_dict[b'A'] +
-             (count_dict[b'D'] + count_dict[b'H'] + count_dict[b'V']) / 3 +
-             (count_dict[b'M'] + count_dict[b'R'] + count_dict[b'W']) / 2)
-        t = (count_dict[b'T'] +
-             (count_dict[b'B'] + count_dict[b'H'] + count_dict[b'D']) / 3 +
-             (count_dict[b'K'] + count_dict[b'W'] + count_dict[b'Y']) / 2)
-        c = (count_dict[b'C'] +
-             (count_dict[b'B'] + count_dict[b'H'] + count_dict[b'V']) / 3 +
-             (count_dict[b'M'] + count_dict[b'S'] + count_dict[b'Y']) / 2)
-        g = (count_dict[b'G'] +
-             (count_dict[b'B'] + count_dict[b'D'] + count_dict[b'V']) / 3 +
-             (count_dict[b'K'] + count_dict[b'R'] + count_dict[b'S']) / 2)
-        gap = count_dict[b'-']
-        n = count_dict[b'N'] + count_dict[b'X'] + count_dict[b'?']
-        other = rows - a - t - c - g - gap - n
-        frequency.append([a, t, c, g, n, gap, other])
-    return frequency
-
-
-def get_quality(data, rows):
-    """
-    Calculate quality score.
-    """
-    # use fastq-illumina format
-    max_q = 62
-    factor = max_q / rows
-    # use min to avoid KeyError
-    quality_value = [min(max_q, int(i * factor)) - 1 for i in data]
-    return quality_value
-
-
-def generate_consensus(base_cumulative_frequency, coverage_percent,
-                       rows, output):
-    """
-    Given count info of bases, return consensus(PrimerWithInfo).
-    """
-    def get_ambiguous_dict():
-        data = dict(zip(ambiguous_data.values(), ambiguous_data.keys()))
-        # 2:{'AC': 'M',}
-        data_with_len = defaultdict(lambda: dict())
-        for i in data:
-            data_with_len[len(i)][i] = data[i]
-        return data_with_len
-
-    ambiguous_dict = get_ambiguous_dict()
-    most = []
-    coverage = rows * coverage_percent
-
-    limit = coverage / len('ATCG')
-    for location, column in enumerate(base_cumulative_frequency):
-        finish = False
-        # "*" for others
-        value = dict(zip(list('ATCGN-*'), column))
-
-        base = 'N'
-        if value['N'] >= limit:
-            count = value['N']
-            most.append([location, base, count])
-            continue
-        sum_gap = value['-'] + value['*']
-        if sum_gap >= limit:
-            base = '-'
-            count = sum_gap
-            most.append([location, base, count])
-            continue
-        # 1 2 3 4
-        for length in ambiguous_dict:
-            # A T CG CT ACG CTG ATCG
-            for key in ambiguous_dict[length]:
-                count = 0
-                for letter in list(key):
-                    if finish:
-                        break
-                    count += value[letter]
-                    if count >= coverage:
-                        base = ambiguous_dict[length][key]
-                        finish = True
-                        most.append([location, base, count])
-    quality_raw = [i[2] for i in most]
-    consensus = PrimerWithInfo(start=1, seq=''.join([i[1] for i in most]),
-                               quality=get_quality(quality_raw, rows))
-    SeqIO.write(consensus, output, 'fastq')
-    return consensus
-
-
-def count_and_draw(alignment, arg):
-    """
-    Given alignment(numpy array), calculate Shannon Index based on
-    www.itl.nist.gov/div898/software/dataplot/refman2/auxillar/shannon.htm
-    Return lists of observed resolution, shannon index, Pi, tree resolution,
-    average terminal branch length and index.
-    Draw sliding-window figure.
-    All calculation excludes primer sequence.
-    """
-    output = join_path(arg.out, basename(arg.out_file).split('.')[0])
-    rows, columns = alignment.shape
-    min_primer = arg.min_primer
-    max_product = arg.max_product
-    step = arg.step
-    if rows < 4:
-        log.warning('Less than 3 sequence. Tree inference will be skipped.')
-    # gap_list, r_list, h_list, pi_list, t_list : count, normalized entropy,
-    # Pi and tree value
-    gap_ratio_list = []
-    entropy_list = []
-    avg_branch_len_list = []
-    pi_list = []
-    observed_res_list = []
-    tree_res_list = []
-    index = []
-    max_plus = max_product - min_primer * 2
-    max_range = columns - max_product
-    handle = open(output + '.variance.tsv', 'w', encoding='utf-8')
-    # iqtree blmin is 1e-6
-    fmt = '{},{:.2%},{:.6f},{:.6f},{:.6f},{:.6f},{:.6f}\n'
-    handle.write('Index,GapRatio,Resolution,Entropy,Pi,'
-                 'TreeValue,AvgTerminalBranchLen\n')
-    for i in range(0, max_range, step):
-        # exclude primer sequence
-        values = alignment.get_resolution(
-            alignment, i, i + max_plus, arg.fast)
-        handle.write(fmt.format(i, *values))
-        gap_ratio, resolution, entropy, pi, tree_value, avg_branch_len = values
-        gap_ratio_list.append(gap_ratio)
-        observed_res_list.append(resolution)
-        entropy_list.append(entropy)
-        pi_list.append(pi)
-        tree_res_list.append(tree_value)
-        avg_branch_len_list.append(avg_branch_len)
-        index.append(i)
-
-    plt.style.use('seaborn-colorblind')
-    # how to find optimized size?
-    fig, ax1 = plt.subplots(figsize=(15 + len(index) // 5000, 10))
-    plt.title('Variance of {} (sample={}, window={} bp, step={} bp)\n'.format(
-        basename(arg.out_file).split('.')[0], rows, max_product, step))
-    plt.xlabel('Base')
-    ax1.yaxis.set_ticks(np.linspace(0, 1, num=11))
-    ax1.set_ylabel('Resolution & Shannon Equitability Index')
-    ax1.plot(index, entropy_list, label='Shannon Equitability Index',
-             alpha=0.8)
-    ax1.plot(index, observed_res_list, label='Observed Resolution', alpha=0.8)
-    ax1.plot(index, gap_ratio_list, label='Gap Ratio', alpha=0.8)
-    # different ytick
-    ax2 = ax1.twinx()
-    ax2.set_ylabel(r'$\pi$', rotation=-90, labelpad=20)
-    # plt.xticks(np.linspace(0, max_range, 21))
-    if not arg.fast:
-        ax1.plot(index, tree_res_list, label='Tree Resolution', alpha=0.8)
-        ax2.plot(index, avg_branch_len_list, linestyle='--',
-                 label='Average Terminal Branch Length', alpha=0.8)
-        ax2.set_ylabel(r'$\pi$ and Average Branch Length', rotation=-90,
-                       labelpad=20)
-    ax1.legend(loc='lower left')
-    ax2.plot(index, pi_list, 'k--', label=r'$\pi$', alpha=0.8)
-    ax2.legend(loc='upper right')
-    plt.savefig(output + '.pdf')
-    plt.savefig(output + '.png')
-    plt.close()
-    handle.close()
-    return observed_res_list, index
 
 
 def analyze(fasta, arg):
@@ -525,9 +282,11 @@ def main():
         gb2fasta.gb2fasta_main()
         return
     elif arg.action == 'evaluate':
-        pass
+        evaluate.evaluate_main()
+        return
     elif arg.action == 'primer':
-        pass
+        primer.primer_main()
+        return
 
     # collect and preprocess
     if not any([wrote_by_gene, wrote_by_name, arg.aln]):
