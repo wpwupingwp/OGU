@@ -12,6 +12,10 @@ from pathlib import Path
 from subprocess import run
 
 from Bio import Phylo
+from matplotlib import use as mpl_use
+mpl_use('Agg')
+from matplotlib import pyplot as plt
+from matplotlib import rcParams
 
 from BarcodeFinder import utils
 
@@ -352,7 +356,7 @@ def phylogenetic_diversity(alignment: np.array, tmp: Path) -> (float, float,
 
 
 class Variance(namedtuple('Variance',
-                          ['Samples', 'Length', 'Gap_ratio',
+                          ['Samples', 'Length', 'Gap_Ratio',
                            'Observed_Res', 'Entropy', 'Pi', 'PD',
                            'PD_stem', 'PD_terminal', 'Tree_Res', 'Total_GC'],
                           defaults=[0 for i in range(9)])):
@@ -395,6 +399,63 @@ def get_resolution(alignment: np.array, tmp: Path,
     variance = Variance(rows, columns, gap_ratio, observed_res, entropy, pi,
                         pd, pd_stem, pd_terminal, tree_res, total_gc)
     return variance, gc_array
+
+
+def output_sliding(sliding: list, name: str, out: Path, size: int, step: int):
+    if len(sliding) == 0:
+        log.warning('Empty sliding-window result.')
+        return
+    out_csv = out / (name+'.csv')
+    head = 'Start,End,' + ','.join(Variance._fields) + '\n'
+    handle = open(out_csv, 'w', encoding='utf-8')
+    handle.write(head)
+    index = []
+    # for human reading
+    start = 1
+    for variance in sliding:
+        line = f'{start},{start+size},{variance}\n'
+        index.append(start)
+        handle.write(line)
+        start += step
+    handle.close()
+    # draw
+    out_pdf = out / (name+'.pdf')
+    index = []
+    plt.style.use('seaborn-colorblind')
+    plt.title(f'Sliding window results of {name} (sample={sliding[0].Samples}, '
+              f'size={size} bp, step={step} bp)')
+    plt.xlabel('Bases')
+    # how to find optimized size?
+    fig, ax1 = plt.subplots(figsize=(15 + len(sliding) // 5000, 10))
+    ax1.yaxis.set_ticks(np.linspace(0, 1, num=11))
+    ax1.set_ylabel('Gap Ratio, GC Ratio, Resolution & Shannon Index')
+    ax1.plot(index, [i.Gap_Ratio for i in sliding], label='Gap Ratio',
+             alpha=0.8)
+    ax1.plot(index, [i.Observe_Res for i in sliding],
+             label='Observed Resolution', alpha=0.8)
+    ax1.plot(index, [i.Entropy for i in sliding],
+             label='Shannon Equitability Index', alpha=0.8)
+    ax1.plot(index, [i.Tree_Res for i in sliding], label='Tree Resolution',
+             alpha=0.8)
+    ax1.plot(index, [i.Total_GC for i in sliding], label='GC Ratio',
+             alpha=0.8)
+    ax1.legend(loc='lower left')
+    # different ytick
+    ax2 = ax1.twinx()
+    # ax2..yaxis.set_ticks(np.linspace(0, max_range, 21))
+    ax2.set_ylabel(r'$\pi$ & Phylogenetic Diversity', rotation=-90, labelpad=20)
+    ax2.plot(index, [i.PD for i in sliding], linestyle='--', label='PD',
+             alpha=0.8)
+    ax2.plot(index, [i.PD_stem for i in sliding], linestyle='--',
+             label='PD_stem', alpha=0.8)
+    ax2.plot(index, [i.PD_terminal for i in sliding], linestyle='--',
+             label='PD_terminal', alpha=0.8)
+    # k--
+    ax2.plot(index, [i.Pi for i in sliding], '--', label=r'$\pi$', alpha=0.8)
+    ax2.legend(loc='upper right')
+    plt.savefig(out_pdf)
+    plt.close()
+    return out_csv, out_pdf
 
 
 def evaluate(aln: Path, arg) -> tuple:
@@ -467,5 +528,7 @@ def evaluate_main(arg_str):
         log.info(f'\tTree resolution:\t{summary.tree_res:.8f}')
         with open(evaluation_result, 'a', encoding='utf-8') as out:
             out.write(aln.stem+','+str(summary)+'\n')
-    # draw()
+        if not arg.quick:
+            output_sliding(sliding, aln.stem, arg._evaluate, arg.step, arg.size)
+        # draw()
     return
