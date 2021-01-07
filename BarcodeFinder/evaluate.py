@@ -5,6 +5,7 @@ import logging
 import sys
 import numpy as np
 
+from collections import namedtuple
 from io import StringIO
 from os import devnull, cpu_count
 from pathlib import Path
@@ -350,6 +351,25 @@ def phylogenetic_diversity(alignment: np.array, tmp: Path) -> (float, float,
     return pd, pd_terminal, pd_stem, tree_res
 
 
+class Variance(namedtuple('Variance',
+                          ['Samples', 'Length', 'Gap_ratio',
+                           'Observed_Res', 'Entropy', 'Pi', 'PD',
+                           'PD_stem', 'PD_terminal', 'Tree_Res', 'Total_GC'],
+                          defaults=[0 for i in range(9)])):
+    """
+    For get_resolution()
+    samples: rows
+    length: columns
+    """
+    __slots__ = ()
+
+    def __str__(self):
+        return ('{sample},{length},{gap_ratio:.4%},'
+                '{observed_res:.4%},{entropy:.8f},{pi:.8f},'
+                '{pd:.8f},{pd_stem:.8f},{pd_terminal:.8f},{tree_res:.4%},'
+                '{total_gc:.4%}'.format(**self._asdict()))
+
+
 def get_resolution(alignment: np.array, tmp: Path,
                    ignore_ambiguous=True) -> tuple:
     """
@@ -358,22 +378,12 @@ def get_resolution(alignment: np.array, tmp: Path,
     return gap ratio, resolution, entropy, Pi, tree value and average terminal
     branch length.
     """
-    entropy = 0
-    gap_ratio = 0
     gc_array = np.array([0])
-    pd = 0
-    pd_stem =0
-    pd_terminal = 0
-    pi = 0
-    observed_res = 0
-    total_gc = 0
-    tree_res = 0
     rows, columns = alignment.shape
     total = rows * columns
     # index error
     if columns == 0:
-        return (gap_ratio, observed_res, entropy, pi, pd, pd_stem, pd_terminal,
-                tree_res, total_gc, gc_array)
+        return Variance(), gc_array
     gap_ratio = len(alignment[alignment == b'-']) / total
     item, count = np.unique(alignment, return_counts=True, axis=0)
     observed_res = len(count) / rows
@@ -382,9 +392,9 @@ def get_resolution(alignment: np.array, tmp: Path,
     pi = nucleotide_diversity(alignment)
     pd, pd_stem, pd_terminal, tree_res = phylogenetic_diversity(alignment, tmp)
     total_gc, gc_array = gc_ratio(alignment, ignore_ambiguous)
-    return (gap_ratio, observed_res, entropy, pi, pd, pd_stem, pd_terminal,
-            tree_res, total_gc, gc_array)
-
+    variance = Variance(rows, columns, gap_ratio, observed_res, entropy, pi,
+                        pd, pd_stem, pd_terminal, tree_res, total_gc)
+    return variance, gc_array
 
 
 def evaluate(aln: Path, arg) -> tuple:
@@ -394,8 +404,11 @@ def evaluate(aln: Path, arg) -> tuple:
         aln: alignment file
         arg: args
     Returns:
-        tuple of results
+        summary: namedtuple
+        gc_array: for draw
+        sliding: list of Variance
     """
+    sliding = []
     name, alignment = fasta_to_array(aln)
     if name is None:
         log.info('Invalid fasta file {}.'.format(aln))
@@ -407,17 +420,20 @@ def evaluate(aln: Path, arg) -> tuple:
         gap_alignment = np.array([[]])
     rows, columns = alignment.shape
     log.info(f'Evaluate {aln}')
-    (gap_ratio, observed_res, entropy, pi, pd, pd_stem, pd_terminal, tree_res,
-     total_gc, gc_array) = get_resolution(no_gap_alignment, arg.tmp,
-                                          arg.ignore_ambiguous)
-    log.info(f'\tGap ratio:\t{gap_ratio:.8f}')
-    log.info(f'\tObserved resolution:\t{observed_res:.8f}')
-    log.info(f'\tNormalized Shannon Index:\t{entropy:.8f}')
-    log.info(f'\tPi:\t{pi:.8f}')
-    log.info(f'\tTree resolution:\t{tree_res:.8f}')
-    log.info(f'\tPhylogenetic diversity:\t{pd:.8f}')
-    return (aln.stem, rows, columns, gap_ratio, observed_res, entropy, pi,
-            pd, pd_stem, pd_terminal, tree_res, total_gc)
+    summary, gc_array = get_resolution(no_gap_alignment, arg.tmp,
+                                       arg.ignore_ambiguous)
+    summary = get_resolution(no_gap_alignment, arg.tmp, arg.ignore_ambiguous)
+    if arg.quick:
+        pass
+    else:
+        # sliding window
+        for i in range(0, columns, arg.step):
+            # view, not copy
+            subalign = alignment[:, i:i+arg.size]
+            variance, sub_gc_array = get_resolution(subalign, arg.tmp,
+                                                    arg.ignore_ambiguous)
+            sliding.append(variance)
+    return summary, gc_array, sliding
 
 
 def evaluate_main(arg_str):
@@ -438,25 +454,18 @@ def evaluate_main(arg_str):
     aligned, unaligned = align(arg.fasta, arg._align)
     aligned.extend(arg.aln)
     evaluation_result = arg.out / 'Evaluation.csv'
+    csv_head = 'Loci,' + ','.join(Variance._fields) + '\n'
     with open(evaluation_result, 'w', encoding='utf-8') as out_csv:
-        out_csv.write('Loci,Samples,Length,GapRatio,'
-                      'ObservedRes,ShannonIndex,Pi,'
-                      'PD,PD-stem,PD-terminal,'
-                      'TreeRes,GC,'
-                      '\n')
+        out_csv.write(csv_head)
     for aln in aligned:
-        (aln.stem, rows, columns, gap_ratio, observed_res, entropy,
-         pi, pd, pd_stem, pd_terminal, tree_res, total_gc) = evaluate(
-            aln, arg)
+        summary, gc_array, sliding = evaluate(aln, arg)
+        log.info(f'\tGap ratio:\t{summary.gap_ratio:.8f}')
+        log.info(f'\tObserved resolution:\t{summary.observed_res:.8f}')
+        log.info(f'\tNormalized Shannon Index:\t{summary.entropy:.8f}')
+        log.info(f'\tPi:\t{summary.pi:.8f}')
+        log.info(f'\tPhylogenetic diversity:\t{summary.pd:.8f}')
+        log.info(f'\tTree resolution:\t{summary.tree_res:.8f}')
         with open(evaluation_result, 'a', encoding='utf-8') as out:
-            out.write(f'{aln.stem},{rows},{columns},{gap_ratio:.4%},'
-                      f'{observed_res:.4%}{entropy:.8f},{pi:.8f},'
-                      f'{pd:.8f},{pd_stem:.8f},{pd_terminal:.8f},'
-                      f'{tree_res:.4%},{total_gc:.4%}\n')
+            out.write(aln.stem+','+str(summary)+'\n')
     # draw()
-        if arg.quick:
-            continue
-        else:
-            # sliding window
-            pass
     return

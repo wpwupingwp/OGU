@@ -516,5 +516,13 @@ def codon_usage(alignment):
     pass
 
 
-def gap_analyze(gap_alignment: np.array):
+def gap_analyze(gap_alignment):
+    """
+
+    Args:
+        gap_alignment: np.array
+
+    Returns:
+
+    """
     pass
