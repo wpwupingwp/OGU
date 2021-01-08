@@ -37,9 +37,23 @@ except ImportError:
 class Pair:
     # save memory
     __slots__ = ['left', 'right', 'delta_tm', 'coverage', 'start', 'end',
-                 'resolution', 'tree_value', 'avg_terminal_len', 'entropy',
+                 'observed_res', 'tree_res', 'pd_terminal', 'entropy',
                  'have_heterodimer', 'heterodimer_tm', 'pi', 'score',
                  'length', 'gap_ratio']
+
+
+    _title = ('Score,AvgProductLength,StdEV,'
+              'MinProductLength,MaxProductLength,'
+              'Coverage,Observed_Res,Tree_Res,PD_terminal,Entropy,'
+              'LeftSeq,LeftTm,LeftAvgBitscore,LeftAvgMismatch,'
+              'RightSeq,RightTm,RightAvgBitscore,RightAvgMismatch,'
+              'DeltaTm,AlnStart,AlnEnd,AvgSeqStart,AvgSeqEnd')
+    _style = ('{:.2f},{:.0f},{:.0f},'
+              '{},{},'
+              '{:.2%},{:.2%},{:.6f},{:.6f},{:.6f},'
+              '{},{:.2f},{:.2f},{:.2f},'
+              '{},{:.2f},{:.2f},{:.2f},'
+              '{:.2f},{},{},{},{}')
 
     def __init__(self, left, right, alignment):
         rows, columns = alignment.shape
@@ -61,9 +75,9 @@ class Pair:
         self.end = self.right.avg_mid_loc
         self.have_heterodimer = False
         self.heterodimer_tm = 0.0
-        self.resolution = 0.0
-        self.tree_value = 0.0
-        self.avg_terminal_len = 0.0
+        self.observed_res = 0.0
+        self.tree_res = 0.0
+        self.pd_terminal = 0.0
         self.entropy = 0.0
         self.pi = 0.0
         self.gap_ratio = 0.0
@@ -72,22 +86,36 @@ class Pair:
     def __repr__(self):
         return (
             'Pair(score={:.2f}, product={:.0f}, start={}, end={}, left={}, '
-            'right={}, observerd_resolution={:.2%}, coverage={:.2%},'
+            'right={}, observerd_res={:.2%}, coverage={:.2%},'
             'delta_tm={:.2f}, have_heterodimer={})'.format(
                 self.score, utils.safe_average(
                     list(self.length.values())), self.start,
-                self.end, self.left.seq, self.right.seq, self.resolution,
+                self.end, self.left.seq, self.right.seq, self.observed_res,
                 self.coverage, self.delta_tm, self.have_heterodimer))
 
+    def __str__(self):
+        return Pair._style.format(
+            self.score, utils.safe_average(list(self.length.values())),
+            np.std(list(self.length.values())), min(self.length.values()),
+            max(self.length.values()),
+            self.coverage, self.observed_res, self.tree_res,
+            self.pd_terminal, self.entropy,
+            self.left.seq, self.left.tm, self.left.avg_bitscore,
+            self.left.avg_mismatch,
+            self.right.seq, self.right.tm, self.right.avg_bitscore,
+            self.right.avg_mismatch,
+            self.delta_tm, self.left.start, self.right.end, self.start,
+            self.end)
+
     def get_score(self):
-        # calculate score of given primer pairs. Suggestion only
+            # calculate score of given primer pairs. Suggestion only
         # use score to filter primer pairs
         return (utils.safe_average(list(self.length.values())) * 0.5
                 + self.coverage * 200
                 + len(self.left) * 10
                 + len(self.right) * 10
-                + self.resolution * 100
-                + self.tree_value * 100 + self.entropy * 5
+                + self.observed_res * 100
+                + self.tree_res * 100 + self.entropy * 5
                 - int(self.have_heterodimer) * 10
                 - self.delta_tm * 5 - self.left.avg_mismatch * 10
                 - self.right.avg_mismatch * 10)
@@ -98,8 +126,8 @@ class Pair:
         if not self.right.is_reverse_complement:
             self.right = self.right.reverse_complement()
         # include end base, use alignment loc for slice
-        (self.gap_ratio, self.resolution, self.entropy, self.pi,
-         self.tree_value, self.avg_terminal_len ) = alignment.get_resolution(
+        (self.gap_ratio, self.observed_res, self.entropy, self.pi,
+         self.tree_res, self.pd_terminal ) = alignment.get_resolution(
             alignment, self.left.start, self.right.end + 1)
         self.heterodimer_tm = calc_ambiguous_seq(
             calcHeterodimerTm, self.left.seq, self.right.seq)
@@ -616,43 +644,18 @@ def primer_design(aln: Path, arg):
                     'Please consider to loose options.')
         return True
     log.info('Output the result.')
-    locus = aln.stem
-    csv_title = ('Locus,Score,Samples,AvgProductLength,StdEV,'
-                 'MinProductLength,MaxProductLength,'
-                 'Coverage,Resolution,TreeValue,AvgTerminalBranchLen,Entropy,'
-                 'LeftSeq,LeftTm,LeftAvgBitscore,LeftAvgMismatch,'
-                 'RightSeq,RightTm,RightAvgBitscore,RightAvgMismatch,'
-                 'DeltaTm,AlnStart,AlnEnd,AvgSeqStart,AvgSeqEnd\n')
-    style = ('{},{:.2f},{},{:.0f},{:.0f},{},{},'
-             '{:.2%},{:.2%},{:.6f},{:.6f},{:.6f},'
-             '{},{:.2f},{:.2f},{:.2f},'
-             '{},{:.2f},{:.2f},{:.2f},'
-             '{:.2f},{},{},{},{}\n')
-    out1 = open(join_path(arg.out, locus) + '.primer.fastq', 'w',
-                encoding='utf-8')
-    out2 = open(join_path(arg.out, locus) + '.primer.csv', 'w',
-                encoding='utf-8')
+    csv_title = 'Locus,Samples,' + Pair._title + '\n'
+    out1 = open(arg._primer/(locus_name+'.primer.fastq'), 'w', encoding='utf-8')
+    out2 = open(arg._primer/(locus_name+'.primer.csv'), 'w', encoding='utf-8')
+    out3 = arg.out / 'Primers.csv'
     # write primers to one file
-    out3_file = join_path(arg.out, 'Primers.csv')
-    if not exists(out3_file):
-        with open(out3_file, 'w', encoding='utf-8') as out3_title:
+    if not out3.exists():
+        with open(out3, 'w', encoding='utf-8') as out3_title:
             out3_title.write(csv_title)
-    out3 = open(out3_file, 'a', encoding='utf-8')
+    out3 = open(out3, 'a', encoding='utf-8')
     out2.write(csv_title)
     for pair in pairs:
-        line = style.format(
-            locus, pair.score, rows, utils.safe_average(
-                list(pair.length.values())),
-            np.std(list(pair.length.values())), min(pair.length.values()),
-            max(pair.length.values()),
-            pair.coverage, pair.resolution, pair.tree_value,
-            pair.avg_terminal_len, pair.entropy,
-            pair.left.seq, pair.left.tm, pair.left.avg_bitscore,
-            pair.left.avg_mismatch,
-            pair.right.seq, pair.right.tm, pair.right.avg_bitscore,
-            pair.right.avg_mismatch,
-            pair.delta_tm, pair.left.start, pair.right.end, pair.start,
-            pair.end)
+        line = f'{locus_name},{rows},{str(pair)}\n'
         out2.write(line)
         out3.write(line)
         SeqIO.write(pair.left, out1, 'fastq')
@@ -660,9 +663,8 @@ def primer_design(aln: Path, arg):
     out1.close()
     out2.close()
     out3.close()
-    log.info('Primers info were written into {}.csv.'.format(arg.out_file))
-return True
-    pass
+    log.info(f'Primers info were written into {out2}')
+    return True
 
 
 def primer_main(arg_str):
