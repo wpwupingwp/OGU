@@ -546,92 +546,14 @@ def pick_pair(primers, alignment, arg):
     return good_pairs[:arg.top_n]
 
 
-def primer_design(aln: Path, arg):
-    name, alignment = evaluate.fasta_to_array(aln)
-    rows, columns = alignment.shape
-    base_cumulative_frequency = count_base(alignment)
-    log.info(f'Generate consensus of {aln}.')
-    consensus = get_consensus(base_cumulative_frequency, arg.coverage, rows,
-                              arg._primer/(aln.stem+'.consensus.fastq'))
-    log.info('Start finding primers.')
-    log.info('Mark region for finding primer.')
-    good_region = get_good_region(index, observed_res_list, arg)
-    log.info('Finding candidate primers.')
-    consensus = find_continuous(consensus, good_region, arg.min_primer)
-    primer_candidate, consensus = find_primer(consensus, arg)
-    if len(primer_candidate) == 0:
-        log.warning('Cannot find primer candidates. '
-                    'Please consider to loose options.')
-        return True
-    log.info('Found {} candidate primers.'.format(len(primer_candidate)))
-    log.info('Validate with BLAST. May be slow.')
-    primer_verified = validate(primer_candidate, db_file, rows, arg)
-    if len(primer_verified) == 0:
-        log.warning('All candidates failed on validation. '
-                    'Please consider to loose options.')
-        return True
-    log.info('Picking primer pairs.')
-    pairs = pick_pair(primer_verified, alignment, arg)
-    if len(pairs) == 0:
-        log.warning('Cannot find suitable primer pairs. '
-                    'Please consider to loose options.')
-        return True
-    log.info('Output the result.')
-    locus = basename(arg.out_file).split('.')[0]
-    csv_title = ('Locus,Score,Samples,AvgProductLength,StdEV,'
-                 'MinProductLength,MaxProductLength,'
-                 'Coverage,Resolution,TreeValue,AvgTerminalBranchLen,Entropy,'
-                 'LeftSeq,LeftTm,LeftAvgBitscore,LeftAvgMismatch,'
-                 'RightSeq,RightTm,RightAvgBitscore,RightAvgMismatch,'
-                 'DeltaTm,AlnStart,AlnEnd,AvgSeqStart,AvgSeqEnd\n')
-    style = ('{},{:.2f},{},{:.0f},{:.0f},{},{},'
-             '{:.2%},{:.2%},{:.6f},{:.6f},{:.6f},'
-             '{},{:.2f},{:.2f},{:.2f},'
-             '{},{:.2f},{:.2f},{:.2f},'
-             '{:.2f},{},{},{},{}\n')
-    out1 = open(join_path(arg.out, locus) + '.primer.fastq', 'w',
-                encoding='utf-8')
-    out2 = open(join_path(arg.out, locus) + '.primer.csv', 'w',
-                encoding='utf-8')
-    # write primers to one file
-    out3_file = join_path(arg.out, 'Primers.csv')
-    if not exists(out3_file):
-        with open(out3_file, 'w', encoding='utf-8') as out3_title:
-            out3_title.write(csv_title)
-    out3 = open(out3_file, 'a', encoding='utf-8')
-    out2.write(csv_title)
-    for pair in pairs:
-        line = style.format(
-            locus, pair.score, rows, utils.safe_average(
-                list(pair.length.values())),
-            np.std(list(pair.length.values())), min(pair.length.values()),
-            max(pair.length.values()),
-            pair.coverage, pair.resolution, pair.tree_value,
-            pair.avg_terminal_len, pair.entropy,
-            pair.left.seq, pair.left.tm, pair.left.avg_bitscore,
-            pair.left.avg_mismatch,
-            pair.right.seq, pair.right.tm, pair.right.avg_bitscore,
-            pair.right.avg_mismatch,
-            pair.delta_tm, pair.left.start, pair.right.end, pair.start,
-            pair.end)
-        out2.write(line)
-        out3.write(line)
-        SeqIO.write(pair.left, out1, 'fastq')
-        SeqIO.write(pair.right, out1, 'fastq')
-    out1.close()
-    out2.close()
-    out3.close()
-    log.info('Primers info were written into {}.csv.'.format(arg.out_file))
-    return
-
-
 def primer_main(arg_str):
     """
     Evaluate variance of alignments.
     Args:
         arg_str:
-
     Returns:
+        aln: aligned files
+        out_csv: evaluation of each locus
     """
     if arg_str is None:
         arg = parse_args()
@@ -640,9 +562,7 @@ def primer_main(arg_str):
     if arg is None:
         log.info('Quit.')
         return None
-    primer_result = arg.out / 'Evaluation.csv'
-    # csv_head = 'Loci,' + ','.join(Variance._fields) + '\n'
-    for aln in arg.aln:
-        primer_design(aln, arg)
+    arg = init_arg(arg)
+
     log.info('Finished.')
-    return
+    return arg.aln, out_csv
