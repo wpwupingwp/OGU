@@ -2,43 +2,16 @@
 
 import argparse
 import logging
-import json
-import re
-from collections import defaultdict
-from glob import glob
-from io import StringIO
-from os import (cpu_count, devnull, environ, mkdir, pathsep, remove, rename,
-                sep)
-from os.path import abspath, basename, exists, splitext
+from os.path import basename, exists
 from os.path import join as join_path
-from random import choice
-from subprocess import run
-from time import sleep
 
 import numpy as np
-from primer3 import calcTm, calcHairpinTm, calcHomodimerTm, calcHeterodimerTm
-from Bio import Entrez, Phylo, SeqIO
-from Bio.Blast.Applications import NcbiblastnCommandline as Blast
-from Bio.Data.IUPACData import ambiguous_dna_values as ambiguous_data
-from Bio.Seq import Seq
-from Bio.SeqRecord import SeqRecord
+from Bio import SeqIO
 
 from BarcodeFinder import utils
 from BarcodeFinder import gb2fasta
 from BarcodeFinder import evaluate
 from BarcodeFinder import primer
-
-from matplotlib import use as mpl_use
-if environ.get('DISPLAY', '') == '':
-    mpl_use('Agg')
-from matplotlib import pyplot as plt
-from matplotlib import rcParams
-
-rcParams['axes.labelsize'] = 16
-rcParams['axes.linewidth'] = 1.5
-rcParams['axes.titlesize'] = 25
-rcParams['font.size'] = 16
-rcParams['lines.linewidth'] = 1.5
 
 
 # define logger
@@ -232,30 +205,6 @@ def analyze(fasta, arg):
     return True
 
 
-def analyze_wrapper(files, arg):
-    """
-    Wrapper for the primer design.
-    """
-    log.info('Analyze alignments.')
-    result = []
-    for aln in files:
-        log.info('Analyze {}.'.format(aln))
-        arg.out_file = splitext(clean_path(aln, arg))[0]
-        result.append(analyze(aln, arg))
-        log.info('')
-    log.info('Analysis finished.')
-    return any(result)
-
-
-def quit(msg):
-    """
-    Quit for critical situation.
-    """
-    log.critical(msg)
-    log.info('Quit.')
-    raise SystemExit(-1)
-
-
 def init_arg(arg):
     if arg.out is not None:
         arg.out = utils.init_out(arg)
@@ -288,51 +237,6 @@ def main():
         primer.primer_main()
         return
 
-    # collect and preprocess
-    if not any([wrote_by_gene, wrote_by_name, arg.aln]):
-        log.critical('Data is empty, please check your input!')
-        log.info('Quit.')
-        raise SystemExit(-1)
-    # check dependent
-    log.info('Checking dependent software.')
-    original_path = utils.check_tools()
-    if original_path is None:
-        quit('Cannot find and install depedent software.')
-    # evaluate
-    # only consider arg.no_divide and arg.fasta
-    if arg.no_divide or arg.fasta:
-        aligned = align(wrote_by_name, arg)
-    else:
-        aligned = align(wrote_by_gene, arg)
-    # assume that alignments user provided is clean and do not nead uniq
-    if arg.aln is not None:
-        user_aln = list(glob(arg.aln))
-        aligned.extend(user_aln)
-    if len(aligned) == 0:
-        log.critical('Cannot find valid alignment.')
-        log.info('Quit')
-        raise SystemExit(-1)
-    result = analyze_wrapper(aligned, arg)
-    log.info('Finished. You can find output in {}.'.format(arg.out))
-    if result:
-        log.info('Summary info were written into {} and {}.'.format(join_path(
-            arg.out, 'Loci.csv'), join_path(arg.out, 'Primers.csv')))
-    else:
-        log.critical('None of input is valid.')
-        log.info('Quit.')
-        raise SystemExit(-1)
-    json_file = join_path(arg.out, 'Options.json')
-    with open(json_file, 'w', encoding='utf-8') as out:
-        json.dump(vars(arg), out, indent=4, sort_keys=True)
-    log.info('Options were dumped into {}.'.format(json_file))
-    log.info('Reset PATH to original value.')
-    environ['PATH'] = original_path
-    log.info('Clean temporary files.')
-    try:
-        remove(arg.db_file)
-    except FileNotFoundError:
-        pass
-    log.info('Bye.')
     return
 
 
