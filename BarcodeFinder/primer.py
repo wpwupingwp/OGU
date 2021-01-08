@@ -217,7 +217,7 @@ def calc_ambiguous_seq(func, seq, seq2=None):
     return utils.safe_average(values_positive)
 
 
-def count_base(alignment: np.array ):
+def count_base(alignment: np.array):
     """
     Given alignment numpy array, count cumulative frequency of base in each
     column (consider ambiguous base and "N", "-" and "?", otherwise omit).
@@ -408,28 +408,28 @@ def find_primer(consensus, arg):
     return primers, consensus
 
 
-def validate(primer_candidate, db_file, n_seqs, arg):
+def validate(primer_candidate, locus_name, n_seqs, arg):
     """
     Do BLAST. Parse BLAST result. Return list of PrimerWithInfo which passed
     the validation.
     """
     EVALUE = 1e-2
-    query_file = arg.out_file + '.candidate.fasta'
-    query_file_fastq = arg.out_file + '.candidate.fastq'
+    query_file = arg._primer / (locus_name+'.candidate.fasta')
+    query_file_fastq = arg._primer / (locus_name+'.candidate.fastq')
     # SeqIO.write fasta file directly is prohibited. have to write fastq at
     # first.
     with open(query_file_fastq, 'w', encoding='utf-8') as _:
         SeqIO.write(primer_candidate, _, 'fastq')
     SeqIO.convert(query_file_fastq, 'fastq', query_file, 'fasta')
     # build blast db
+    db_file = arg._tmp / (locus_name+'db_file.fasta')
     with open(devnull, 'w', encoding='utf-8') as f:
-        _ = run('makeblastdb -in {} -dbtype nucl'.format(db_file),
-                shell=True, stdout=f)
+        _ = run(f'makeblastdb -in {db_file} -dbtype nucl', shell=True, stdout=f)
         if _.returncode != 0:
             log.critical('Failed to run makeblastdb. Skip BLAST.')
             return []
     # BLAST
-    blast_result_file = 'blast.result.tsv'
+    blast_result_file = arg._tmp / (locus_name+'blast.result.tsv')
     fmt = 'qseqid sseqid qseq nident mismatch score qstart qend sstart send'
     cmd = Blast(num_threads=max(1, cpu_count() - 1),
                 query=query_file,
@@ -484,10 +484,10 @@ def validate(primer_candidate, db_file, n_seqs, arg):
             primer.update_id()
             primer_verified.append(primer)
     primer_verified.sort(key=lambda x: x.start)
-    # clean makeblastdb files
-    for i in glob(db_file + '*'):
-        remove(i)
-    remove(blast_result_file)
+    # clean
+    for i in db_file.glob('*'):
+        i.unlink()
+    blast_result_file.unlink()
     log.info('Parse finished.')
     return primer_verified
 
@@ -546,6 +546,125 @@ def pick_pair(primers, alignment, arg):
     return good_pairs[:arg.top_n]
 
 
+def get_observed_res(alignment: np.array, arg):
+    """
+    For primer design.
+    Observed resolution used as lower bound.
+    Args:
+        alignment:
+        arg:
+    Returns:
+        index: list
+        observed_res_list: list
+    """
+    index = []
+    observed_res_list = []
+    rows, columns = alignment.shape
+    for i in range(0, columns, arg.step):
+        subalign = alignment[:, i+arg.size]
+        sub_rows, sub_columns = subalign.shape
+        item, count = np.unique(subalign, return_counts=True, axis=0)
+        observed_res = len(count) / sub_rows
+        index.append(i)
+        observed_res_list.append(observed_res)
+    return index, observed_res_list
+
+
+def primer_design(aln: Path, arg):
+    locus_name = aln.stem
+    name, alignment, = evaluate.fasta_to_array(aln)
+    if name is None:
+        log.info(f'Invalid alignment file {aln}.')
+        return False
+    rows, columns = alignment.shape
+    # generate consensus
+    base_cumulative_frequency = count_base(alignment)
+    log.info(f'Generate consensus of {aln}.')
+    consensus = get_consensus(base_cumulative_frequency, arg.coverage, rows,
+                              arg.out/(locus_name+'.consensus.fastq'))
+    log.info('Evaluate whole alignment of {aln}.')
+    # a_ : alignment
+    item, count = np.unique(alignment, return_counts=True, axis=0)
+    observed_res = len(count) / rows
+    if observed_res < arg.resolution:
+        log.error('Observed resolution is too low.')
+        return False
+    log.info('Start the sliding-window scan.')
+    observed_res_list, index = get_observed_res(alignment, arg)
+    log.info('Evaluation finished.')
+    log.info('Start finding primers.')
+    log.info('Mark region for finding primer.')
+    good_region = get_good_region(index, observed_res_list, arg)
+    log.info('Finding candidate primers.')
+    consensus = find_continuous(consensus, good_region, arg.min_primer)
+    primer_candidate, consensus = find_primer(consensus, arg)
+    if len(primer_candidate) == 0:
+        log.warning('Cannot find primer candidates. '
+                    'Please consider to loose options.')
+        return True
+    log.info(f'Found {len(primer_candidate)} candidate primers.')
+    log.info('Validate with BLAST. May be slow.')
+    primer_verified = validate(primer_candidate, locus_name, rows, arg)
+    if len(primer_verified) == 0:
+        log.warning('All candidates failed on validation. '
+                    'Please consider to loose options.')
+        return True
+    log.info('Picking primer pairs.')
+    pairs = pick_pair(primer_verified, alignment, arg)
+    if len(pairs) == 0:
+        log.warning('Cannot find suitable primer pairs. '
+                    'Please consider to loose options.')
+        return True
+    log.info('Output the result.')
+    locus = aln.stem
+    csv_title = ('Locus,Score,Samples,AvgProductLength,StdEV,'
+                 'MinProductLength,MaxProductLength,'
+                 'Coverage,Resolution,TreeValue,AvgTerminalBranchLen,Entropy,'
+                 'LeftSeq,LeftTm,LeftAvgBitscore,LeftAvgMismatch,'
+                 'RightSeq,RightTm,RightAvgBitscore,RightAvgMismatch,'
+                 'DeltaTm,AlnStart,AlnEnd,AvgSeqStart,AvgSeqEnd\n')
+    style = ('{},{:.2f},{},{:.0f},{:.0f},{},{},'
+             '{:.2%},{:.2%},{:.6f},{:.6f},{:.6f},'
+             '{},{:.2f},{:.2f},{:.2f},'
+             '{},{:.2f},{:.2f},{:.2f},'
+             '{:.2f},{},{},{},{}\n')
+    out1 = open(join_path(arg.out, locus) + '.primer.fastq', 'w',
+                encoding='utf-8')
+    out2 = open(join_path(arg.out, locus) + '.primer.csv', 'w',
+                encoding='utf-8')
+    # write primers to one file
+    out3_file = join_path(arg.out, 'Primers.csv')
+    if not exists(out3_file):
+        with open(out3_file, 'w', encoding='utf-8') as out3_title:
+            out3_title.write(csv_title)
+    out3 = open(out3_file, 'a', encoding='utf-8')
+    out2.write(csv_title)
+    for pair in pairs:
+        line = style.format(
+            locus, pair.score, rows, utils.safe_average(
+                list(pair.length.values())),
+            np.std(list(pair.length.values())), min(pair.length.values()),
+            max(pair.length.values()),
+            pair.coverage, pair.resolution, pair.tree_value,
+            pair.avg_terminal_len, pair.entropy,
+            pair.left.seq, pair.left.tm, pair.left.avg_bitscore,
+            pair.left.avg_mismatch,
+            pair.right.seq, pair.right.tm, pair.right.avg_bitscore,
+            pair.right.avg_mismatch,
+            pair.delta_tm, pair.left.start, pair.right.end, pair.start,
+            pair.end)
+        out2.write(line)
+        out3.write(line)
+        SeqIO.write(pair.left, out1, 'fastq')
+        SeqIO.write(pair.right, out1, 'fastq')
+    out1.close()
+    out2.close()
+    out3.close()
+    log.info('Primers info were written into {}.csv.'.format(arg.out_file))
+return True
+    pass
+
+
 def primer_main(arg_str):
     """
     Evaluate variance of alignments.
@@ -559,10 +678,12 @@ def primer_main(arg_str):
         arg = parse_args()
     else:
         arg = parse_args(arg_str.split(' '))
+    arg = init_arg(arg)
     if arg is None:
         log.info('Quit.')
         return None
-    arg = init_arg(arg)
+    for aln in arg.aln:
+        primer_design(aln, arg)
 
     log.info('Finished.')
     return arg.aln, out_csv
