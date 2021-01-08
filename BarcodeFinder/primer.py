@@ -126,9 +126,10 @@ class Pair:
         if not self.right.is_reverse_complement:
             self.right = self.right.reverse_complement()
         # include end base, use alignment loc for slice
+        subalign = alignment[:, self.left.start:self.right.end+1]
+        variance, _ = evaluate.get_resolution(subalign, arg._tmp)
         (self.gap_ratio, self.observed_res, self.entropy, self.pi,
-         self.tree_res, self.pd_terminal ) = alignment.get_resolution(
-            alignment, self.left.start, self.right.end + 1)
+         _, _, self.pd_terminal) = variance[2:9]
         self.heterodimer_tm = calc_ambiguous_seq(
             calcHeterodimerTm, self.left.seq, self.right.seq)
         if max(self.heterodimer_tm, self.left.tm,
