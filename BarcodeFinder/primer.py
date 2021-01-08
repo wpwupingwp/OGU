@@ -1,11 +1,11 @@
 #!/usr/bin/python3
 
+import argparse
 import logging
 import re
 from collections import defaultdict
 from itertools import product as cartesian_product
-from os import remove, cpu_count, devnull
-from glob import glob
+from os import cpu_count, devnull
 from pathlib import Path
 from subprocess import run
 
@@ -127,7 +127,8 @@ class Pair:
             self.right = self.right.reverse_complement()
         # include end base, use alignment loc for slice
         subalign = alignment[:, self.left.start:self.right.end+1]
-        variance, _ = evaluate.get_resolution(subalign, arg._tmp)
+        tmp = Path()
+        variance, _ = evaluate.get_resolution(subalign, tmp)
         (self.gap_ratio, self.observed_res, self.entropy, self.pi,
          _, _, self.pd_terminal) = variance[2:9]
         self.heterodimer_tm = calc_ambiguous_seq(
@@ -205,6 +206,45 @@ class PrimerWithInfo(SeqRecord):
                    'AvgBitScore({:.2f})-Start({})-End({})'.format(
             self.avg_mid_loc, self.tm, self.coverage,
             self.avg_bitscore, self.start, self.end))
+
+
+def parse_args(arg_list=None):
+    arg = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description=primer_main.__doc__)
+    arg.add_argument('-aln', nargs='*', help='alignment files')
+    arg.add_argument('-a', dest='ambiguous_base_n', default=4, type=int,
+                        help='number of ambiguous bases')
+    arg.add_argument('-c', dest='coverage', default=0.6, type=float,
+                        help='minium coverage of base and primer')
+    arg.add_argument('-m', dest='mismatch', default=4, type=int,
+                        help='maximum mismatch bases in primer')
+    arg.add_argument('-pmin', dest='min_primer', default=20, type=int,
+                        help='minimum primer length')
+    arg.add_argument('-pmax', dest='max_primer', default=25, type=int,
+                        help='maximum primer length')
+    arg.add_argument('-r', dest='resolution', type=float, default=0.5,
+                        help='minium resolution')
+    arg.add_argument('-t', dest='top_n', type=int, default=1,
+                        help='keep n primers for each high varient region')
+    arg.add_argument('-tmin', dest='min_product', default=350, type=int,
+                        help='minimum product length(include primer)')
+    arg.add_argument('-tmax', dest='max_product', default=600, type=int,
+                        help='maximum product length(include primer)')
+    if arg_list is None:
+        return arg.parse_args()
+    else:
+        return arg.parse_args(arg_list)
+
+
+def init_arg(arg):
+    if arg.aln is None:
+        log.error('Empty input.')
+        return None
+    if arg.aln is not None:
+        arg.aln = [Path(i).absolute() for i in arg.aln]
+    arg.out = utils.init_out(arg)
+    return arg
 
 
 def calc_ambiguous_seq(func, seq, seq2=None):
@@ -514,8 +554,7 @@ def validate(primer_candidate, locus_name, n_seqs, arg):
             primer_verified.append(primer)
     primer_verified.sort(key=lambda x: x.start)
     # clean
-    for i in db_file.glob('*'):
-        i.unlink()
+    utils.clean_tmp(db_file)
     blast_result_file.unlink()
     log.info('Parse finished.')
     return primer_verified
@@ -599,7 +638,7 @@ def get_observed_res(alignment: np.array, arg):
     return index, observed_res_list
 
 
-def primer_design(aln: Path, arg):
+def primer_design(aln: Path, result: Path, arg):
     locus_name = aln.stem
     name, alignment, = evaluate.fasta_to_array(aln)
     if name is None:
@@ -645,15 +684,11 @@ def primer_design(aln: Path, arg):
                     'Please consider to loose options.')
         return True
     log.info('Output the result.')
-    csv_title = 'Locus,Samples,' + Pair._title + '\n'
     out1 = open(arg._primer/(locus_name+'.primer.fastq'), 'w', encoding='utf-8')
     out2 = open(arg._primer/(locus_name+'.primer.csv'), 'w', encoding='utf-8')
-    out3 = arg.out / 'Primers.csv'
     # write primers to one file
-    if not out3.exists():
-        with open(out3, 'w', encoding='utf-8') as out3_title:
-            out3_title.write(csv_title)
-    out3 = open(out3, 'a', encoding='utf-8')
+    out3 = open(result, 'a', encoding='utf-8')
+    csv_title = 'Locus,Samples,' + Pair._title + '\n'
     out2.write(csv_title)
     for pair in pairs:
         line = f'{locus_name},{rows},{str(pair)}\n'
@@ -682,11 +717,16 @@ def primer_main(arg_str):
     else:
         arg = parse_args(arg_str.split(' '))
     arg = init_arg(arg)
+    primer_result = arg.out / 'Primers.csv'
+    csv_title = 'Locus,Samples,' + Pair._title + '\n'
+    with open(primer_result, 'w', encoding='utf-8') as out:
+        out.write(csv_title)
     if arg is None:
         log.info('Quit.')
         return None
     for aln in arg.aln:
-        primer_design(aln, arg)
+        primer_design(aln, primer_result, arg)
 
     log.info('Finished.')
-    return arg.aln, out_csv
+    log.info(f'Result could be found in {primer_result}')
+    return arg.aln, primer_result
