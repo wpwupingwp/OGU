@@ -8,14 +8,9 @@ from collections import Iterable
 from functools import lru_cache
 from threading import Thread
 from pathlib import Path
-from platform import system
 from os import devnull as DEVNULL
-from os.path import abspath, exists, pathsep, sep
-from os.path import join as join_path
-from os import (cpu_count, devnull, environ, pathsep, rename)
-from urllib.error import HTTPError
 from urllib.request import urlopen
-from shutil import unpack_archive, ReadError
+from shutil import unpack_archive
 from subprocess import run
 
 from Bio.Seq import Seq
