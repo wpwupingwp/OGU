@@ -86,9 +86,9 @@ def parse_args(arg_str=None):
                        help='minimum length')
     query.add_argument('-max_len', default=10000, type=int,
                        help='maximum length')
-    query.add_argument('-date_start', type='str',
+    query.add_argument('-date_start', type=str,
                        help='release date beginning, (eg. 1970/1/1)')
-    query.add_argument('-date_end', type='str',
+    query.add_argument('-date_end', type=str,
                        help='release date end, (eg. 2020/12/31)')
     query.add_argument('-molecular', choices=('DNA', 'RNA'),
                        help='molecular type')
