@@ -2,11 +2,6 @@
 
 import argparse
 import logging
-from os.path import basename, exists
-from os.path import join as join_path
-
-import numpy as np
-from Bio import SeqIO
 
 from BarcodeFinder import utils
 from BarcodeFinder import gb2fasta
@@ -34,8 +29,9 @@ def parse_args():
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description=bf_main.__doc__)
     arg.add_argument('action',
-                     choices=('all', 'gb2fasta', 'evaluate', 'primer'),
-                     help=('all: do all analysis\t'
+                     choices=('init', 'all', 'gb2fasta', 'evaluate', 'primer'),
+                     help=('init: check and install third-party software\t'
+                           'all: do all analysis\t'
                            'gb2fasta: collect and organize\t'
                            'evaluate: align and evaluate\t'
                            'primer: design universal primer'))
@@ -134,13 +130,15 @@ def parse_args():
         log.info('The "-fast" mode was opened. '
                  'Skip sliding-window scan with tree.')
     # temporary filename, omit one parameters in many functions
-    parsed.db_file = join_path(parsed.out, 'interleaved.fasta')
-    parsed.out_file = ''
+    # parsed.db_file = join_path(parsed.out, 'interleaved.fasta')
+    # parsed.out_file = ''
     # load option.json may cause chaos, remove
     return parsed
 
 
 def init_arg(arg):
+    if arg.action == 'init':
+        utils.get_all_third_party()
     if arg.out is not None:
         arg.out = utils.init_out(arg)
     if not any([arg.gb, arg.fasta, arg.aln]):
