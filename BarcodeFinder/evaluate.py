@@ -16,6 +16,11 @@ from matplotlib import use as mpl_use
 mpl_use('Agg')
 from matplotlib import pyplot as plt
 from matplotlib import rcParams
+rcParams['axes.labelsize'] = 16
+rcParams['axes.linewidth'] = 1.5
+rcParams['axes.titlesize'] = 25
+rcParams['font.size'] = 16
+rcParams['lines.linewidth'] = 1.5
 
 from BarcodeFinder import utils
 
@@ -466,9 +471,6 @@ def output_sliding(sliding: list, name: str, out: Path,
     plt.savefig(out_pdf)
     plt.close()
     return out_csv, out_pdf
-
-
-
 
 
 def evaluate(aln: Path, arg) -> tuple:
