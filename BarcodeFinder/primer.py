@@ -218,7 +218,7 @@ def parse_args(arg_str=None):
     arg.add_argument('-a', dest='ambiguous_base_n', default=4, type=int,
                         help='number of ambiguous bases')
     arg.add_argument('-c', dest='coverage', default=0.6, type=float,
-                        help='minium coverage of base and primer')
+                        help='minimal coverage of base and primer')
     arg.add_argument('-m', dest='mismatch', default=4, type=int,
                         help='maximum mismatch bases in primer')
     arg.add_argument('-pmin', dest='min_primer', default=20, type=int,
@@ -226,9 +226,9 @@ def parse_args(arg_str=None):
     arg.add_argument('-pmax', dest='max_primer', default=25, type=int,
                         help='maximum primer length')
     arg.add_argument('-r', dest='resolution', type=float, default=0.5,
-                        help='minium resolution')
+                        help='minimal resolution')
     arg.add_argument('-t', dest='top_n', type=int, default=1,
-                        help='keep n primers for each high varient region')
+                        help='keep n primers for each high variant region')
     arg.add_argument('-tmin', dest='min_product', default=350, type=int,
                         help='minimum product length(include primer)')
     arg.add_argument('-tmax', dest='max_product', default=600, type=int,
