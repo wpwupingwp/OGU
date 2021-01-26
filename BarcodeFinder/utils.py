@@ -4,6 +4,7 @@ import re
 import logging
 import platform
 
+from collections import Iterable
 from functools import lru_cache
 from threading import Thread
 from pathlib import Path
@@ -50,6 +51,45 @@ class BlastResult:
         return fmt.format(self.query_id, self.hit_id, self.bitscore_raw,
                           self.query_start, self.query_end, self.hit_start,
                           self.hit_end)
+
+
+def arg_to_str(arg) ->str:
+    s = ''
+    arg_dict = vars(arg)
+    for key, value in arg_dict.items():
+        if isinstance(value, Iterable):
+            value = ' '.join(value)
+        s += f' -{key} {value}'
+    return s
+
+
+def move(source: Path, dest, copy=False):
+    """
+    Move source to dest and return dest.
+    If set "copy", copy source to dest instead of move.
+    Because Path.rename could not move file across different filesystem or
+    drive, have to use copy and delete to implement "move".
+    Warning:
+        This function does not check whether dest exists or not.
+    Args:
+        source(Path): old path
+        dest(Path or str): new path
+        copy(bool): copy or move
+    Return:
+        dest(Path): new path
+    """
+    source = Path(source).absolute()
+    dest = Path(dest).absolute()
+    # avoid useless copy
+    # Path.samefile may raise FileNotFoundError
+    if source == dest:
+        log.debug(f'{source} and {dest} are same.')
+    else:
+        # read_bytes/write_bytes includes open, read/write and close steps
+        dest.write_bytes(source.read_bytes())
+        if not copy:
+            source.unlink()
+    return dest
 
 
 def init_out(arg):

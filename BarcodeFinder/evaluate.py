@@ -31,11 +31,12 @@ except ImportError:
     pass
 
 
-def parse_args(arg_list=None):
+def parse_args(arg_str=None):
     arg = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description=evaluate_main.__doc__)
     arg.add_argument('-fasta', nargs='*', help='unaligned fasta files')
+    arg.add_argument('-fasta_folder', default=None, help='folder of fasta files')
     arg.add_argument('-aln', nargs='*', help='aligned files')
     arg.add_argument('-out', help='output folder')
     options = arg.add_argument_group('Options')
@@ -53,18 +54,26 @@ def parse_args(arg_list=None):
                                 help='window size')
     sliding_window.add_argument('-step', type=int, default=50,
                                 help='step length')
-    if arg_list is None:
+    if arg_str is None:
         return arg.parse_args()
     else:
-        return arg.parse_args(arg_list)
+        return arg.parse_known_args(arg_str.split(' '))
 
 
 def init_arg(arg):
-    if arg.fasta is None and arg.aln is None:
+    # ignore arg.fasta if using arg.fasta_folder
+    if arg.fasta is None and arg.aln is None and arg.fasta_folder is None:
         log.error('Empty input.')
         return None
+    if all([arg.fasta, arg.fasta_folder]):
+        log.critical('Cannot use "-fasta" and "-fasta_folder" at same time!')
+        log.critical('Ignore "-fasta" option.')
+        arg.fasta = None
     if arg.fasta is not None:
         arg.fasta = [Path(i).absolute() for i in arg.fasta]
+    if arg.fasta_folder is not None:
+        # overwrite
+        arg.fasta = [i.absolute() for i in Path(arg.fasta_folder).glob('*')]
     if arg.aln is not None:
         arg.aln = [Path(i).absolute() for i in arg.aln]
     arg.out = utils.init_out(arg)
@@ -501,7 +510,7 @@ def evaluate(aln: Path, arg) -> tuple:
     return summary, gc_array, sliding
 
 
-def evaluate_main(arg_str):
+def evaluate_main(arg_str=None):
     """
     Evaluate variance of alignments.
     Args:
@@ -510,10 +519,7 @@ def evaluate_main(arg_str):
         aln: aligned files
         out_csv: evaluation of each locus
     """
-    if arg_str is None:
-        arg = parse_args()
-    else:
-        arg = parse_args(arg_str.split(' '))
+    arg = parse_args(arg_str)
     arg = init_arg(arg)
     if arg is None:
         log.info('Quit.')
@@ -537,4 +543,5 @@ def evaluate_main(arg_str):
         if not arg.quick:
             output_sliding(sliding, aln.stem, arg._evaluate, arg.step, arg.size)
     log.info('Finished.')
-    return arg.aln, out_csv
+    log.info(f'Evaluation results could be found in {evaluation_result}')
+    return arg, arg.aln

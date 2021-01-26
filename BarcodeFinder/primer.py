@@ -208,11 +208,13 @@ class PrimerWithInfo(SeqRecord):
             self.avg_bitscore, self.start, self.end))
 
 
-def parse_args(arg_list=None):
+def parse_args(arg_str=None):
     arg = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description=primer_main.__doc__)
     arg.add_argument('-aln', nargs='*', help='alignment files')
+    arg.add_argument('-aln_folder', default=None,
+                     help='folder of aligned files')
     arg.add_argument('-a', dest='ambiguous_base_n', default=4, type=int,
                         help='number of ambiguous bases')
     arg.add_argument('-c', dest='coverage', default=0.6, type=float,
@@ -231,18 +233,25 @@ def parse_args(arg_list=None):
                         help='minimum product length(include primer)')
     arg.add_argument('-tmax', dest='max_product', default=600, type=int,
                         help='maximum product length(include primer)')
-    if arg_list is None:
+    if arg_str is None:
         return arg.parse_args()
     else:
-        return arg.parse_args(arg_list)
+        return arg.parse_args(arg_str.split(' '))
 
 
 def init_arg(arg):
-    if arg.aln is None:
+    if arg.aln is None and arg.aln_folder is None:
         log.error('Empty input.')
         return None
+    if all([arg.aln, arg.aln_folder]):
+        log.critical('Cannot use "-aln" and "-aln_folder" at same time!')
+        log.critical('Ignore "-aln" option.')
+        arg.aln = None
     if arg.aln is not None:
         arg.aln = [Path(i).absolute() for i in arg.aln]
+    if arg.fasta_folder is not None:
+        # overwrite
+        arg.aln = [i.absolute() for i in Path(arg.aln_folder).glob('*')]
     arg.out = utils.init_out(arg)
     return arg
 
@@ -703,7 +712,7 @@ def primer_design(aln: Path, result: Path, arg):
     return True
 
 
-def primer_main(arg_str):
+def primer_main(arg_str=None):
     """
     Evaluate variance of alignments.
     Args:
@@ -712,10 +721,7 @@ def primer_main(arg_str):
         aln: aligned files
         out_csv: evaluation of each locus
     """
-    if arg_str is None:
-        arg = parse_args()
-    else:
-        arg = parse_args(arg_str.split(' '))
+    arg = parse_args(arg_str)
     arg = init_arg(arg)
     primer_result = arg.out / 'Primers.csv'
     csv_title = 'Locus,Samples,' + Pair._title + '\n'
@@ -729,4 +735,4 @@ def primer_main(arg_str):
 
     log.info('Finished.')
     log.info(f'Result could be found in {primer_result}')
-    return arg.aln, primer_result
+    return arg, arg.aln

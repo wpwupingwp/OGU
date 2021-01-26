@@ -45,7 +45,7 @@ with open(resource_filename('BarcodeFinder', 'data/animal_orders.csv'),
     ANIMAL_ORDERS = set(_.read().split(','))
 
 
-def parse_args(arg_list=None):
+def parse_args(arg_str=None):
     arg = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     arg.add_argument('-gb', nargs='*', help='input filename')
@@ -102,10 +102,10 @@ def parse_args(arg_list=None):
     query.add_argument('-seq_n', default=None, type=int,
                        help='maximum number of records to download')
     query.add_argument('-taxon', help='Taxonomy name')
-    if arg_list is None:
+    if arg_str is None:
         return arg.parse_args()
     else:
-        return arg.parse_args(arg_list)
+        return arg.parse_args(arg_str.split(' '))
 
 
 def get_query_string(arg):
@@ -696,6 +696,7 @@ def write_seq(record, seq_info, whole_seq, arg):
 def unique(files: list, arg) -> list:
     """
     Remove redundant sequences of same species.
+    Files were saved in arg._unique
     """
     unique_files = []
     total = 0
@@ -741,10 +742,7 @@ def gb2fasta_main(arg_str=None):
     Return:
         unique_files(list): output files
     """
-    if arg_str is None:
-        arg = parse_args()
-    else:
-        arg = parse_args(arg_str.split(' '))
+    arg = parse_args(arg_str)
     arg = init_arg(arg)
     if arg is None:
         log.error('Quit.')
@@ -776,8 +774,10 @@ def gb2fasta_main(arg_str=None):
                 expanded_files = [i for i in expanded_files
                                  if i.name != 'Unknown.fasta']
                 unique_files = unique(expanded_files, arg)
+    for i in unique_files:
+        utils.move(i, arg._unique/(i.name), copy=True)
     log.info('gb2fasta finished.')
-    return arg, unique_files
+    return arg, arg._unique
 
 
 if __name__ == '__main__':

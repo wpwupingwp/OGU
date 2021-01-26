@@ -101,7 +101,13 @@ def main():
     log.addHandler(log_file_handler)
 
     if arg.action == 'all':
-        pass
+        option = utils.arg_to_str(arg)
+        arg, unique_folder = gb2fasta.gb2fasta_main(option)
+        option += f' -fasta_folder {unique_folder}'
+        arg, aln_folder = evaluate.evaluate_main(option)
+        option += f' -aln_folder {aln_folder}'
+        primer.primer_main(option)
+        return
     elif arg.action == 'gb2fasta':
         gb2fasta.gb2fasta_main()
         return
@@ -111,8 +117,6 @@ def main():
     elif arg.action == 'primer':
         primer.primer_main()
         return
-
-    return
 
 
 if __name__ == '__main__':
