@@ -32,7 +32,7 @@ def parse_args():
     """
     arg = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description=main.__doc__)
+        description=bf_main.__doc__)
     arg.add_argument('action',
                      choices=('all', 'gb2fasta', 'evaluate', 'primer'),
                      help=('all: do all analysis\t'
@@ -114,7 +114,7 @@ def parse_args():
     primer.add_argument('-a', dest='ambiguous_base_n', default=4, type=int,
                         help='number of ambiguous bases')
     primer.add_argument('-c', dest='coverage', default=0.6, type=float,
-                        help='minmal coverage of base and primer')
+                        help='minimal coverage of base and primer')
     primer.add_argument('-m', dest='mismatch', default=4, type=int,
                         help='maximum mismatch bases in primer')
     primer.add_argument('-pmin', dest='min_primer', default=18, type=int,
@@ -122,7 +122,7 @@ def parse_args():
     primer.add_argument('-pmax', dest='max_primer', default=28, type=int,
                         help='maximum primer length')
     primer.add_argument('-r', dest='resolution', type=float, default=0.5,
-                        help='minmal resolution')
+                        help='minimal resolution')
     primer.add_argument('-t', dest='top_n', type=int, default=1,
                         help='keep n primers for each high variant region')
     primer.add_argument('-tmin', dest='min_product', default=350, type=int,
@@ -148,7 +148,7 @@ def init_arg(arg):
     return arg
 
 
-def main():
+def bf_main():
     """
     main function
     """
@@ -180,4 +180,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    bf_main()

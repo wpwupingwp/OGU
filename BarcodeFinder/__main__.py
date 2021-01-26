@@ -1,5 +1,5 @@
 #!/usr/bin/python3
 
-from BarcodeFinder import bf
+from BarcodeFinder.bf import bf_main
 
-bf.main()
+bf_main()
