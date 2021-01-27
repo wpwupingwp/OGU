@@ -51,7 +51,9 @@ def arg_to_str(arg) ->str:
     s = ''
     arg_dict = vars(arg)
     for key, value in arg_dict.items():
-        if isinstance(value, Iterable):
+        if isinstance(value, str):
+            pass
+        elif isinstance(value, Iterable):
             value = ' '.join(value)
         s += f' -{key} {value}'
     return s
