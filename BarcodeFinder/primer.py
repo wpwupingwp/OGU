@@ -215,6 +215,7 @@ def parse_args(arg_str=None):
     arg.add_argument('-aln', nargs='*', help='alignment files')
     arg.add_argument('-aln_folder', default=None,
                      help='folder of aligned files')
+    arg.add_argument('-out', help='output directory')
     arg.add_argument('-a', dest='ambiguous_base_n', default=4, type=int,
                         help='number of ambiguous bases')
     arg.add_argument('-c', dest='coverage', default=0.6, type=float,
@@ -723,6 +724,7 @@ def primer_main(arg_str=None):
         aln: aligned files
         out_csv: evaluation of each locus
     """
+    log.info('Running primer module...')
     arg = parse_args(arg_str)
     arg = init_arg(arg)
     if arg is None:
@@ -738,8 +740,8 @@ def primer_main(arg_str=None):
     for aln in arg.aln:
         primer_design(aln, primer_result, arg)
 
-    log.info('Finished.')
-    log.info(f'Result could be found in {primer_result}')
+    log.info(f'Primer result could be found in {primer_result}')
+    log.info('Primer module Finished.')
     return arg, arg.aln
 
 

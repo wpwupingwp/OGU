@@ -49,6 +49,7 @@ def parse_args(arg_str=None):
     arg = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     arg.add_argument('-gb', nargs='*', help='input filename')
+    arg.add_argument('-out', help='output directory')
     # trnK-matK
     arg.add_argument('-allow_mosaic_spacer', action='store_true',
                        help='allow mosaic spacer')
@@ -751,6 +752,7 @@ def gb2fasta_main(arg_str=None):
     Return:
         unique_files(list): output files
     """
+    log.info('Running gb2fasta module...')
     arg = parse_args(arg_str)
     arg = init_arg(arg)
     if arg is None:
@@ -785,7 +787,7 @@ def gb2fasta_main(arg_str=None):
                 unique_files = unique(expanded_files, arg)
     for i in unique_files:
         utils.move(i, arg._unique/(i.name), copy=True)
-    log.info('gb2fasta finished.')
+    log.info('GB2fasta module finished.')
     return arg, arg._unique
 
 

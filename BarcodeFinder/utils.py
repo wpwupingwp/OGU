@@ -48,6 +48,9 @@ class BlastResult:
 
 
 def arg_to_str(arg) ->str:
+    """
+    Assume all bool option using action='store_true'
+    """
     s = ''
     arg_dict = vars(arg)
     for key, value in arg_dict.items():
@@ -58,7 +61,6 @@ def arg_to_str(arg) ->str:
         elif value is None:
             continue
         elif isinstance(value, bool):
-            # assume all bool option using action='store_true'
             continue
         s += f' -{key} {value}'
     return s
@@ -102,6 +104,7 @@ def init_out(arg):
         arg(NameSpace): arguments
     """
     if not hasattr(arg, 'out') or arg.out is None:
+        print(vars(arg))
         log.warning('Output folder was not set.')
         log.info('\tUse "Result" instead.')
         arg.out = Path().cwd().absolute() / 'Result'
@@ -109,7 +112,6 @@ def init_out(arg):
         arg.out = Path(arg.out).absolute()
     if arg.out.exists():
         log.error(f'Output folder {arg.out} exists.')
-        arg.out = None
         return arg
     try:
         arg.out.mkdir()

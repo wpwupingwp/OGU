@@ -523,6 +523,7 @@ def evaluate_main(arg_str=None):
         aln: aligned files
         out_csv: evaluation of each locus
     """
+    log.info('Running evaluate module...')
     arg = parse_args(arg_str)
     arg = init_arg(arg)
     if arg is None:
@@ -546,8 +547,8 @@ def evaluate_main(arg_str=None):
             out.write(aln.stem+','+str(summary)+'\n')
         if not arg.quick:
             output_sliding(sliding, aln.stem, arg._evaluate, arg.step, arg.size)
-    log.info('Finished.')
     log.info(f'Evaluation results could be found in {evaluation_result}')
+    log.info('Evaluate module finished.')
     return arg, arg.aln
 
 
