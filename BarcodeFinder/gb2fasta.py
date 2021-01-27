@@ -107,7 +107,7 @@ def parse_args(arg_str=None):
     if arg_str is None:
         return arg.parse_args()
     else:
-        return arg.parse_known_args(arg_str.split(' '))
+        return arg.parse_known_args(arg_str.split(' '))[0]
 
 
 def get_query_string(arg):
@@ -172,7 +172,7 @@ def get_query_string(arg):
 
 
 def init_arg(arg):
-    # join nars
+    # join nargs
     if arg.query is not None:
         arg.query = ' '.join(arg.query)
         log.warning('Query string is not empty, ignore other options.')

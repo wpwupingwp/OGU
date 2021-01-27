@@ -62,7 +62,7 @@ def parse_args(arg_str=None):
     if arg_str is None:
         return arg.parse_args()
     else:
-        return arg.parse_known_args(arg_str.split(' '))
+        return arg.parse_known_args(arg_str.split(' '))[0]
 
 
 def init_arg(arg):
