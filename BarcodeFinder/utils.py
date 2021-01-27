@@ -95,7 +95,7 @@ def move(source: Path, dest, copy=False):
     return dest
 
 
-def init_out(arg):
+def init_out(arg, from_main=False):
     """
     Initilize output folder.
     Args:
@@ -111,7 +111,7 @@ def init_out(arg):
     else:
         arg.out = Path(arg.out).absolute()
     if arg.out.exists():
-        if __name__ == '__main__':
+        if from_main:
             log.error(f'Output folder {arg.out} exists.')
             arg.out = arg.out.parent / (arg.out.name+'_')
             log.info(f'Use {arg.out} instead.')

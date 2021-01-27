@@ -125,7 +125,7 @@ def parse_args():
 
 def init_arg(arg):
     utils.get_all_third_party()
-    arg = utils.init_out(arg)
+    arg = utils.init_out(arg, from_main=True)
     if arg.out is None:
         return None
     query = gb2fasta.get_query_string(arg)

@@ -508,8 +508,9 @@ def evaluate(aln: Path, arg) -> tuple:
     rows, columns = alignment.shape
     log.info(f'Evaluate {aln}')
     summary, gc_array = get_resolution(no_gap_alignment, arg._tmp,
-                                       arg.ignore_ambiguous)
-    summary = get_resolution(no_gap_alignment, arg._tmp, arg.ignore_ambiguous)
+                                       arg.ignore_ambiguous_base)
+    summary = get_resolution(no_gap_alignment, arg._tmp,
+                             arg.ignore_ambiguous_base)
     if arg.quick:
         pass
     else:
@@ -518,7 +519,7 @@ def evaluate(aln: Path, arg) -> tuple:
             # view, not copy
             subalign = alignment[:, i:i+arg.size]
             variance, sub_gc_array = get_resolution(subalign, arg._tmp,
-                                                    arg.ignore_ambiguous)
+                                                    arg.ignore_ambiguous_base)
             sliding.append(variance)
     return summary, gc_array, sliding
 
