@@ -91,7 +91,7 @@ def init_arg(arg):
     arg.out = utils.init_out(arg)
     if arg.out is None:
         return None
-    if arg.fast:
+    if arg.quick:
         log.info('The "-quick" mode was opened. '
                  'Skip sliding-window analysis')
     return arg
