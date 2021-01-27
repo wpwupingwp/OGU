@@ -361,9 +361,8 @@ def get_blast(third_party=None) -> (bool, str):
         log.critical('Please check your Internet connection.')
         return ok, ''
     try:
-        # file is 86-222mb, 222mb/3600s=60kb/s, consider it's ok for users all
-        # over the world
-        down = urlopen(urls[platform.system()], timeout=3600)
+        # file is 86-222mb
+        down = urlopen(urls[platform.system()], timeout=10)
     except Exception:
         log.critical('Cannot download BLAST.')
         log.critical('Please manually download it from'
@@ -427,7 +426,7 @@ def get_iqtree(third_party=None) -> (bool, str):
         return ok, ''
     try:
         # file is ~10mb
-        down = urlopen(f'{url}{filename}', timeout=1000)
+        down = urlopen(f'{url}{filename}', timeout=10)
     except Exception:
         log.critical('Cannot download iqtree.')
         log.critical('Please manually download it from '
@@ -490,9 +489,9 @@ def get_mafft(third_party=None) -> (bool, str):
     try:
         # file is ~10mb
         if system != 'Darwin':
-            down = urlopen(url+fileinfo[system][0], timeout=1000)
+            down = urlopen(url+fileinfo[system][0], timeout=10)
         else:
-            down = urlopen(url+fileinfo[system][0]+'?signed', timeout=1000)
+            down = urlopen(url+fileinfo[system][0]+'?signed', timeout=10)
     except Exception:
         log.critical('Cannot download mafft.')
         log.critical(f'Please manually download it from {url}')
