@@ -202,6 +202,8 @@ def init_arg(arg):
                 return None
     else:
         arg.gb = list()
+    if arg.no_divide:
+        log.warning('Only download data because of "-no_divide"')
     return arg
 
 
@@ -772,6 +774,9 @@ def gb2fasta_main(arg_str=None):
         gb_file = download(arg)
         if gb_file is not None:
             arg.gb.append(gb_file)
+    if arg.no_divide:
+        log.info('Download finished.')
+        return arg, arg._gb
     for i in arg.gb:
         divide(i, arg)
     if arg.unique == 'no':

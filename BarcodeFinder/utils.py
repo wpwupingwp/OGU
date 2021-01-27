@@ -121,7 +121,7 @@ def init_out(arg):
     arg._fasta = arg.out / 'Fasta'
     arg._divide = arg.out / 'Divide'
     arg._expand = arg.out / 'Expanded_fasta'
-    arg._uniq = arg.out / 'Uniq'
+    arg._unique = arg.out / 'Unique'
     arg._align = arg.out / 'Alignment'
     arg._evaluate = arg.out /'Evaluate'
     arg._primer = arg.out / 'Primer'
@@ -132,7 +132,7 @@ def init_out(arg):
         arg._fasta.mkdir()
         arg._divide.mkdir()
         arg._expand.mkdir()
-        arg._uniq.mkdir()
+        arg._unique.mkdir()
         arg._align.mkdir()
         arg._evaluate.mkdir()
         arg._primer.mkdir()
