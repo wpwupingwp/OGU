@@ -66,7 +66,7 @@
 #66. use requests instead of biopython to solve timeout
 #67. add note for fake class/kingdom
 #68. rewrite uniq
-69. fix no_divide
+#69. fix no_divide
 70. NC_ repeat with other accession
 #71. plastid or chloroplast
 #72. expand 0 if stop 1
@@ -78,7 +78,7 @@
 78. strand
 #79. consider to use primer3 rather than primer3-py
 #80. A_B or B_A
-81. use pathlib
+#81. use pathlib
 #82. readme for gb.plus, spacer options
 #83. expand create new feature instead of change old
 #84. repeat option apply on gene
@@ -92,7 +92,7 @@
 92. all DNASP method
 93. option for gap, another kind of base/ignore/penalty
 94. simple or full lineage
-95. few dependency
+#95. few dependency
 96. remove short seq
 97. recognize weird seq
 98. simple readme
@@ -100,43 +100,44 @@
 100. genaf for spacer
 101. gooey is too big, use tkinter?
 #102. lineage exception sperated from source code (use pkg_resource?)
-103. remove temp log
-104. filter length
+#103. remove temp log
+#104. filter length
 105. filter sequences with too much gap
 106. conda
 107. clean comment
 #108. type.name.fasta
-109. remove tmp files
+#109. remove tmp files
 110. intron_intronIndex
 111. user-defined id format string
 112, rename trn, gene name list
-113. shannon index may be negative
-114. digit 4
+#113. shannon index may be negative
+#114. digit 4
 115. gap in head and tail
 116. better uniq
-117. x axis of figure
+#117. x axis of figure
 118. analyse distribution of data on Genbank
 #119. write name.type.fasta?
-120. remove by-name
+#120. remove by-name
 121. AH009860 have clear annotation of every part in ITS, but MN528716 only use "contains ITS, 5.8s, etc"
 122. HC476670 have CDS but not gene
 123. check genbank file to remove empty record is too slow, how to directly exclude them when querying in Genbank
-124. option for long/short sequence id
-125. integrate rename
-126. regular expression for rename gene is not good
+#124. option for long/short sequence id
+#125. integrate rename
+#126. regular expression for rename gene is not good
 127. Z00028 has bad annotation of introns
 128. check genbank file is too slow
 129. cannot extract X68919,X68889,X68921
-130. ITS too much is Unknown
-131. spacer misc_feature, intergenic_spacer_region/intergenic_spacer
-132. split to 3 modules
+#130. ITS too much is Unknown
+#131. spacer misc_feature, intergenic_spacer_region/intergenic_spacer
+#132. split to 3 modules
 133. trnH-psbA or psbA-trnH
-134. copy user's input to output folder to make working folder clean
+#134. copy user's input to output folder to make working folder clean
 135. filename may be duplicate in Windows
 136. abnormal length in divide_gene
 137. continue to download if break
-138. skip tree in Pair if arg.fast
-139. remove clean_path
-140. remove Temp.log
+#138. skip tree in Pair if arg.fast
+#139. remove clean_path
+#140. remove Temp.log
 141. clean empty fasta record
 142. trnfM, trnM, trnF
+143. test init in linux and mac
