@@ -117,25 +117,25 @@ def init_out(arg):
             log.info(f'Use {arg.out} instead.')
         else:
             pass
+    arg._gb = arg.out / 'GenBank'
+    arg._fasta = arg.out / 'Fasta'
+    arg._divide = arg.out / 'Divide'
+    arg._expand = arg.out / 'Expanded_fasta'
+    arg._uniq = arg.out / 'Uniq'
+    arg._align = arg.out / 'Alignment'
+    arg._evaluate = arg.out /'Evaluate'
+    arg._primer = arg.out / 'Primer'
+    arg._tmp = arg.out / 'Temp'
     try:
         arg.out.mkdir()
-        arg._gb = arg.out / 'GenBank'
         arg._gb.mkdir()
-        arg._fasta = arg.out / 'Fasta'
         arg._fasta.mkdir()
-        arg._divide = arg.out / 'Divide'
         arg._divide.mkdir()
-        arg._expand = arg.out / 'Expanded_fasta'
         arg._expand.mkdir()
-        arg._uniq = arg.out / 'Uniq'
         arg._uniq.mkdir()
-        arg._align = arg.out / 'Alignment'
         arg._align.mkdir()
-        arg._evaluate = arg.out /'Evaluate'
         arg._evaluate.mkdir()
-        arg._primer = arg.out / 'Primer'
         arg._primer.mkdir()
-        arg._tmp = arg.out / 'Temp'
         arg._tmp.mkdir()
     except Exception:
         log.debug('Folder exists.')

@@ -150,7 +150,6 @@ def bf_main():
     log.addHandler(log_file_handler)
 
     option = utils.arg_to_str(arg)
-    print(option)
     arg, unique_folder = gb2fasta.gb2fasta_main(option)
     if arg is None:
         return

@@ -180,6 +180,7 @@ def init_arg(arg):
     else:
         arg.query = get_query_string(arg)
     arg = utils.init_out(arg)
+    print(vars(arg))
     if arg.out is None:
         return None
     if arg.gb is None and arg.query is None:
@@ -759,9 +760,10 @@ def gb2fasta_main(arg_str=None):
         log.error('Quit.')
         return None, None
     log.info(f'Input genbank files:\t{arg.gb}')
-    log.info(f'Query: {arg.query}')
-    gb_file = download(arg)
-    arg.gb.append(gb_file)
+    if arg.query is not None:
+        log.info(f'Query: {arg.query}')
+        gb_file = download(arg)
+        arg.gb.append(gb_file)
     for i in arg.gb:
         divide(i, arg)
     if arg.unique == 'no':
