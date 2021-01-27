@@ -57,6 +57,9 @@ def arg_to_str(arg) ->str:
             value = ' '.join(value)
         elif value is None:
             continue
+        elif isinstance(value, bool):
+            # assume all bool option using action='store_true'
+            continue
         s += f' -{key} {value}'
     return s
 

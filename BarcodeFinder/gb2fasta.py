@@ -115,15 +115,15 @@ def get_query_string(arg):
     Based on given options, generate query string from Genbank.
     """
     if arg.allow_repeat:
-        log.warning("Repeat genes or spacers will be kept as user's wish.")
+        log.info("Repeat genes or spacers will be kept as user's wish.")
     if arg.allow_invert_repeat:
-        log.warning("Invert-repeat spacers will be kept.")
+        log.info("Invert-repeat spacers will be kept.")
     if arg.allow_mosaic_spacer:
-        log.warning('The "spacers" of overlapped genes will be kept.')
+        log.info('The "spacers" of overlapped genes will be kept.')
     if arg.expand != 0:
-        log.warning(f'Extend sequences to their upstream/'
-                    f'downstream with {arg.expand} bp')
-    if arg.group is not None:
+        log.info(f'Extend sequences to their upstream/'
+                 f'downstream with {arg.expand} bp')
+    if arg.group is not None and arg.group != 'all':
         log.warning('The filters "group" was reported to return abnormal '
                     'records by Genbank. Please consider to use "-taxon" '
                     'instead.')
