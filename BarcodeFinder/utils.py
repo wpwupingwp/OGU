@@ -3,15 +3,14 @@
 import re
 import logging
 import platform
+import subprocess
 
 from collections import Iterable
 from functools import lru_cache
 from threading import Thread
 from pathlib import Path
-from os import devnull as DEVNULL
 from urllib.request import urlopen
 from shutil import unpack_archive
-from subprocess import run
 
 from Bio.Seq import Seq
 
@@ -286,8 +285,9 @@ def test_cmd(program, option='-version') -> bool:
     Return:
         success(bool): success or not
     """
-    test = run(f'{program} {option}', shell=True, stdout=DEVNULL,
-               stderr=DEVNULL)
+    test = subprocess.run(f'{program} {option}', shell=True,
+                          stdout=subprocess.DEVNULL,
+                          stderr=subprocess.DEVNULL)
     success = True if test.returncode == 0 else False
     return success
 
