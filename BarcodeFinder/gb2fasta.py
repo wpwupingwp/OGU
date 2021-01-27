@@ -770,7 +770,8 @@ def gb2fasta_main(arg_str=None):
     if arg.query is not None:
         log.info(f'Query: {arg.query}')
         gb_file = download(arg)
-        arg.gb.append(gb_file)
+        if gb_file is not None:
+            arg.gb.append(gb_file)
     for i in arg.gb:
         divide(i, arg)
     if arg.unique == 'no':

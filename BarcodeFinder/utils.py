@@ -542,7 +542,7 @@ def get_all_third_party():
     iqtree.join()
     mafft.join()
     blast.join()
-    log.info('Finished.')
+    log.info('Got BLAST, IQTREE, and MAFFT.')
     return
 
 
