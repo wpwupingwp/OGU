@@ -88,7 +88,9 @@ def init_arg(arg):
         for i in arg.aln:
             if not i.exists() or not i.is_file():
                 log.error(f'{i} does not exist or is not a valid file.')
-    arg.out = utils.init_out(arg)
+    else:
+        arg.aln = []
+    arg = utils.init_out(arg)
     if arg.out is None:
         return None
     if arg.quick:
@@ -505,9 +507,9 @@ def evaluate(aln: Path, arg) -> tuple:
         gap_alignment = np.array([[]])
     rows, columns = alignment.shape
     log.info(f'Evaluate {aln}')
-    summary, gc_array = get_resolution(no_gap_alignment, arg.tmp,
+    summary, gc_array = get_resolution(no_gap_alignment, arg._tmp,
                                        arg.ignore_ambiguous)
-    summary = get_resolution(no_gap_alignment, arg.tmp, arg.ignore_ambiguous)
+    summary = get_resolution(no_gap_alignment, arg._tmp, arg.ignore_ambiguous)
     if arg.quick:
         pass
     else:
@@ -515,7 +517,7 @@ def evaluate(aln: Path, arg) -> tuple:
         for i in range(0, columns, arg.step):
             # view, not copy
             subalign = alignment[:, i:i+arg.size]
-            variance, sub_gc_array = get_resolution(subalign, arg.tmp,
+            variance, sub_gc_array = get_resolution(subalign, arg._tmp,
                                                     arg.ignore_ambiguous)
             sliding.append(variance)
     return summary, gc_array, sliding
