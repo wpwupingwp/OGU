@@ -111,8 +111,12 @@ def init_out(arg):
     else:
         arg.out = Path(arg.out).absolute()
     if arg.out.exists():
-        log.error(f'Output folder {arg.out} exists.')
-        return arg
+        if __name__ == '__main__':
+            log.error(f'Output folder {arg.out} exists.')
+            arg.out = arg.out.parent / (arg.out.name+'_')
+            log.info(f'Use {arg.out} instead.')
+        else:
+            pass
     try:
         arg.out.mkdir()
         arg._gb = arg.out / 'GenBank'
@@ -134,7 +138,7 @@ def init_out(arg):
         arg._tmp = arg.out / 'Temp'
         arg._tmp.mkdir()
     except Exception:
-        log.warning('Folder exists.')
+        log.debug('Folder exists.')
     return arg
 
 
