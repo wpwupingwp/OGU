@@ -63,8 +63,10 @@ def parse_args():
     gb2fasta_.add_argument('-gene', type=str, help='gene name')
     # in case of same taxonomy name in different group
     gb2fasta_.add_argument('-group',
-                           choices=('animals', 'plants', 'fungi', 'protists',
-                                    'bacteria', 'archaea', 'viruses'),
+                           choices=('all', 'animals', 'plants', 'fungi',
+                                    'protists', 'bacteria', 'archaea',
+                                    'viruses'),
+                           default='all',
                            help='Species kind')
     gb2fasta_.add_argument('-min_len', default=100, type=int,
                            help='minimum length')
@@ -77,9 +79,9 @@ def parse_args():
     gb2fasta_.add_argument('-molecular', choices=('DNA', 'RNA'),
                            help='molecular type')
     gb2fasta_.add_argument('-og', '-organelle', dest='organelle',
-                           choices=('mt', 'mitochondrion', 'cp',
+                           choices=('both', 'no', 'mt', 'mitochondrion', 'cp',
                                     'chloroplast', 'pl', 'plastid'),
-                           help='organelle type')
+                           default='no', help='organelle type')
     gb2fasta_.add_argument('-query', nargs='*', help='query text')
     gb2fasta_.add_argument('-refseq', action='store_true',
                            help='Only search in RefSeq database')

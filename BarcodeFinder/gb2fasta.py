@@ -79,9 +79,10 @@ def parse_args(arg_str=None):
     query.add_argument('-gene', type=str, help='gene name')
     # in case of same taxonomy name in different group
     query.add_argument('-group',
-                       choices=('animals', 'plants', 'fungi', 'protists',
+                       choices=('all', 'animals', 'plants', 'fungi', 'protists',
                                 'bacteria', 'archaea', 'viruses'),
-                       help='Species kind')
+                       default='all',
+                       help='Kind of species')
     query.add_argument('-min_len', default=100, type=int,
                        help='minimum length')
     query.add_argument('-max_len', default=10000, type=int,
@@ -93,9 +94,9 @@ def parse_args(arg_str=None):
     query.add_argument('-molecular', choices=('DNA', 'RNA'),
                        help='molecular type')
     query.add_argument('-og', '-organelle', dest='organelle',
-                       choices=('mt', 'mitochondrion', 'cp',
+                       choices=('both', 'no', 'mt', 'mitochondrion', 'cp',
                                 'chloroplast', 'pl', 'plastid'),
-                       help='organelle type')
+                       default='no', help='organelle type')
     query.add_argument('-query', nargs='*', help='query text')
     query.add_argument('-refseq', action='store_true',
                        help='Only search in RefSeq database')
@@ -129,7 +130,8 @@ def get_query_string(arg):
         log.warning('BarcodeFinder will try to rename genes by regular '
                     'expression.')
     condition = []
-    if arg.group is not None:
+    # if group is "all", ignore
+    if arg.group != 'all':
         condition.append(f'{arg.group}[filter]')
     if arg.gene is not None:
         if ' ' in arg.gene:
@@ -142,11 +144,15 @@ def get_query_string(arg):
         condition.append(d[arg.molecular])
     if arg.taxon is not None:
         condition.append('{arg.taxon}[organism]')
-    if arg.organelle is not None:
-        if arg.organelle in ('mt', 'mitochondrion'):
-            condition.append('{mitochondrion}[filter]')
-        else:
-            condition.append('(plastid[filter] OR chloroplast[filter])')
+    if arg.organelle == 'both':
+        condition.append('(mitochondrion[filter] OR plastid[filter] '
+                         'OR chloroplast[filter])')
+    elif arg.organelle == 'no':
+        pass
+    elif arg.organelle in ('mt', 'mitochondrion'):
+        condition.append('mitochondrion[filter]')
+    else:
+        condition.append('(plastid[filter] OR chloroplast[filter])')
     if arg.refseq:
         condition.append('refseq[filter]')
     if (len(condition) > 0) and (arg.min_len is not None and arg.max_len is
