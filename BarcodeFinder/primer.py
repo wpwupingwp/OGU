@@ -250,9 +250,12 @@ def init_arg(arg):
         arg.aln = None
     if arg.aln is not None:
         arg.aln = [Path(i).absolute() for i in arg.aln]
-    if arg.fasta_folder is not None:
+    if arg.aln_folder is not None:
         # overwrite
         arg.aln = [i.absolute() for i in Path(arg.aln_folder).glob('*')]
+    for i in arg.aln:
+        if not i.exists() or not i.is_file():
+            log.error(f'{i} does not exist or is not a valid file.')
     arg = utils.init_out(arg)
     if arg.out is None:
         return None

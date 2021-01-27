@@ -180,7 +180,6 @@ def init_arg(arg):
     else:
         arg.query = get_query_string(arg)
     arg = utils.init_out(arg)
-    print(vars(arg))
     if arg.out is None:
         return None
     if arg.gb is None and arg.query is None:
@@ -193,6 +192,10 @@ def init_arg(arg):
     if arg.gb is not None:
         # don't move given gb files?
         arg.gb = [Path(i).absolute() for i in arg.gb]
+        for i in arg.gb:
+            if not i.exists() or not i.is_file():
+                log.error(f'{i} does not exist or is not a valid file.')
+                return None
     else:
         arg.gb = list()
     return arg
