@@ -118,9 +118,9 @@ def get_query_string(arg):
         log.warning("Invert-repeat spacers will be kept.")
     if arg.allow_mosaic_spacer:
         log.warning('The "spacers" of overlapped genes will be kept.')
-    if arg.expand is not None:
+    if arg.expand != 0:
         log.warning(f'Extend sequences to their upstream/'
-                    'downstream with {arg.expand} bp')
+                    f'downstream with {arg.expand} bp')
     if arg.group is not None:
         log.warning('The filters "group" was reported to return abnormal '
                     'records by Genbank. Please consider to use "-taxon" '
