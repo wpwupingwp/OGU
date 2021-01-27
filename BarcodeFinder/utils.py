@@ -335,13 +335,13 @@ def get_blast(third_party=None) -> (bool, str):
         if not third_party_ok:
             return third_party_ok, ''
     blast = 'blastn'
-    home_blast = third_party / 'ncbi-blast-2.10.0+' / 'bin' / blast
+    home_blast = third_party / 'ncbi-blast-2.11.0+' / 'bin' / blast
     # in Windows, ".exe" can be omitted
     # win_home_blast = home_blast.with_name('blastn.exe')
     ok = False
     # older than 2.8.1 is buggy
-    url = ('ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.10.0/'
-           'ncbi-blast-2.10.0+')
+    url = ('ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.11.0/'
+           'ncbi-blast-2.11.0+')
     urls = {'Linux': url+'-x64-linux.tar.gz',
             'Darwin': url+'-x64-macosx.tar.gz',
             'Windows': url+'-x64-win64.tar.gz'}
@@ -369,7 +369,7 @@ def get_blast(third_party=None) -> (bool, str):
         log.critical('Please manually download it from'
                      'ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/')
         return ok, ''
-    down_file = third_party / 'BLAST_2.10.0.tar.gz'
+    down_file = third_party / 'BLAST_2.11.0.tar.gz'
     with open(down_file, 'wb') as out:
         out.write(down.read())
     try:
@@ -437,7 +437,8 @@ def get_iqtree(third_party=None) -> (bool, str):
     with open(down_file, 'wb') as out:
         out.write(down.read())
     try:
-        unpack_archive(down_file, fileinfo[system][1])
+        #unpack_archive(down_file, third_party/fileinfo[system][1])
+        unpack_archive(down_file, third_party)
     except Exception:
         log.critical('The file is damaged.')
         log.critical('Please check your connection.')
@@ -500,7 +501,8 @@ def get_mafft(third_party=None) -> (bool, str):
     with open(down_file, 'wb') as out:
         out.write(down.read())
     try:
-        unpack_archive(down_file, fileinfo[system][1])
+        #unpack_archive(down_file, third_party/fileinfo[system][1])
+        unpack_archive(down_file, third_party)
     except Exception:
         log.critical('The file is damaged.')
         log.critical('Please check your connection.')
@@ -519,8 +521,7 @@ def get_all_third_party():
     if not third_party_ok:
         return -1
     iqtree = Thread(target=get_iqtree, args=(third_party,), daemon=True)
-    mafft = Thread(target=get_mafft, args=(third_party,),
-                        daemon=True)
+    mafft = Thread(target=get_mafft, args=(third_party,), daemon=True)
     blast = Thread(target=get_blast, args=(third_party,), daemon=True)
     iqtree.start()
     mafft.start()
