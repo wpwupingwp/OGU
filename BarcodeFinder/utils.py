@@ -55,6 +55,8 @@ def arg_to_str(arg) ->str:
             pass
         elif isinstance(value, Iterable):
             value = ' '.join(value)
+        elif value is None:
+            continue
         s += f' -{key} {value}'
     return s
 

@@ -755,7 +755,7 @@ def gb2fasta_main(arg_str=None):
     arg = init_arg(arg)
     if arg is None:
         log.error('Quit.')
-        return None
+        return None, None
     log.info(f'Input genbank files:\t{arg.gb}')
     log.info(f'Query: {arg.query}')
     gb_file = download(arg)

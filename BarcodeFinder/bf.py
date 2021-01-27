@@ -152,8 +152,12 @@ def bf_main():
     option = utils.arg_to_str(arg)
     print(option)
     arg, unique_folder = gb2fasta.gb2fasta_main(option)
+    if arg is None:
+        return
     option += f' -fasta_folder {unique_folder}'
     arg, aln_folder = evaluate.evaluate_main(option)
+    if arg is None:
+        return
     option += f' -aln_folder {aln_folder}'
     primer.primer_main(option)
     return
