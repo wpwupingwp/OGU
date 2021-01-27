@@ -76,8 +76,8 @@ def parse_args():
                            help='release date beginning, (eg. 1970/1/1)')
     gb2fasta_.add_argument('-date_end', type=str,
                            help='release date end, (eg. 2020/12/31)')
-    gb2fasta_.add_argument('-molecular', choices=('DNA', 'RNA'),
-                           help='molecular type')
+    gb2fasta_.add_argument('-molecular', choices=('all', 'DNA', 'RNA'),
+                           default='all', help='molecular type')
     gb2fasta_.add_argument('-og', '-organelle', dest='organelle',
                            choices=('both', 'no', 'mt', 'mitochondrion', 'cp',
                                     'chloroplast', 'pl', 'plastid'),
@@ -85,7 +85,7 @@ def parse_args():
     gb2fasta_.add_argument('-query', nargs='*', help='query text')
     gb2fasta_.add_argument('-refseq', action='store_true',
                            help='Only search in RefSeq database')
-    gb2fasta_.add_argument('-seq_n', default=None, type=int,
+    gb2fasta_.add_argument('-seq_n', default=0, type=int,
                            help='maximum number of records to download')
     gb2fasta_.add_argument('-taxon', help='Taxonomy name')
     evaluate = arg.add_argument_group('Evaluate')

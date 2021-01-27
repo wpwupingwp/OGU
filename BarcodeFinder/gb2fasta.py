@@ -91,8 +91,8 @@ def parse_args(arg_str=None):
                        help='release date beginning, (eg. 1970/1/1)')
     query.add_argument('-date_end', type=str,
                        help='release date end, (eg. 2020/12/31)')
-    query.add_argument('-molecular', choices=('DNA', 'RNA'),
-                       help='molecular type')
+    query.add_argument('-molecular', choices=('all', 'DNA', 'RNA'),
+                       default='all', help='molecular type')
     query.add_argument('-og', '-organelle', dest='organelle',
                        choices=('both', 'no', 'mt', 'mitochondrion', 'cp',
                                 'chloroplast', 'pl', 'plastid'),
@@ -100,8 +100,9 @@ def parse_args(arg_str=None):
     query.add_argument('-query', nargs='*', help='query text')
     query.add_argument('-refseq', action='store_true',
                        help='Only search in RefSeq database')
-    query.add_argument('-seq_n', default=None, type=int,
-                       help='maximum number of records to download')
+    query.add_argument('-seq_n', default=0, type=int,
+                       help='maximum number of records to download, '
+                            '0 for unlimited')
     query.add_argument('-taxon', help='Taxonomy name')
     if arg_str is None:
         return arg.parse_args()
@@ -138,7 +139,7 @@ def get_query_string(arg):
             condition.append('"{arg.gene}"[gene]')
         else:
             condition.append('{arg.gene}[gene]')
-    if arg.molecular is not None:
+    if arg.molecular != 'all':
         d = {'DNA': 'biomol_genomic[PROP]',
              'RNA': 'biomol_mrna[PROP]'}
         condition.append(d[arg.molecular])
@@ -223,7 +224,7 @@ def download(arg):
         log.warning(f'Got {count} records. May cost long time to download.')
     else:
         log.info(f'\tGot {count} records.')
-    if arg.seq_n is not None:
+    if arg.seq_n != 0:
         if count > arg.seq_n:
             count = arg.seq_n
             log.info(f'\tDownload {arg.seq_n} records because of "-seq_n".')
