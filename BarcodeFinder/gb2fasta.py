@@ -137,15 +137,18 @@ def get_query_string(arg):
         condition.append(f'{arg.group}[filter]')
     if arg.gene is not None:
         if ' ' in arg.gene:
-            condition.append('"{arg.gene}"[gene]')
+            condition.append(f'"{arg.gene}"[gene]')
         else:
-            condition.append('{arg.gene}[gene]')
+            condition.append(f'{arg.gene}[gene]')
     if arg.molecular != 'all':
         d = {'DNA': 'biomol_genomic[PROP]',
              'RNA': 'biomol_mrna[PROP]'}
         condition.append(d[arg.molecular])
     if arg.taxon is not None:
-        condition.append('{arg.taxon}[organism]')
+        if ' ' in arg.taxon:
+            condition.append(f'"{arg.taxon}"[organism]')
+        else:
+            condition.append(f'{arg.taxon}[organism]')
     if arg.organelle == 'both':
         condition.append('(mitochondrion[filter] OR plastid[filter] '
                          'OR chloroplast[filter])')
