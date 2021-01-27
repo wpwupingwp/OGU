@@ -28,13 +28,6 @@ def parse_args():
     arg = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description=bf_main.__doc__)
-    arg.add_argument('action',
-                     choices=('init', 'all', 'gb2fasta', 'evaluate', 'primer'),
-                     help=('init: check and install third-party software\t'
-                           'all: do all analysis\t'
-                           'gb2fasta: collect and organize\t'
-                           'evaluate: align and evaluate\t'
-                           'primer: design universal primer'))
     general = arg.add_argument_group('General')
     general.add_argument('-aln', help='aligned fasta files to analyze')
     general.add_argument('-fasta', help='unaligned fasta format data to add')
@@ -148,7 +141,7 @@ def init_arg(arg):
 
 def bf_main():
     """
-    main function
+    Call gb2fasta, evaluate and primer functions.
     """
     log.info('Welcome to BarcodeFinder.')
     arg = parse_args()
@@ -158,23 +151,13 @@ def bf_main():
     log_file_handler.setLevel(logging.INFO)
     log.addHandler(log_file_handler)
 
-    if arg.action == 'all':
-        option = utils.arg_to_str(arg)
-        arg, unique_folder = gb2fasta.gb2fasta_main(option)
-        option += f' -fasta_folder {unique_folder}'
-        arg, aln_folder = evaluate.evaluate_main(option)
-        option += f' -aln_folder {aln_folder}'
-        primer.primer_main(option)
-        return
-    elif arg.action == 'gb2fasta':
-        gb2fasta.gb2fasta_main()
-        return
-    elif arg.action == 'evaluate':
-        evaluate.evaluate_main()
-        return
-    elif arg.action == 'primer':
-        primer.primer_main()
-        return
+    option = utils.arg_to_str(arg)
+    arg, unique_folder = gb2fasta.gb2fasta_main(option)
+    option += f' -fasta_folder {unique_folder}'
+    arg, aln_folder = evaluate.evaluate_main(option)
+    option += f' -aln_folder {aln_folder}'
+    primer.primer_main(option)
+    return
 
 
 if __name__ == '__main__':

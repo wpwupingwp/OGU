@@ -547,3 +547,7 @@ def evaluate_main(arg_str=None):
     log.info('Finished.')
     log.info(f'Evaluation results could be found in {evaluation_result}')
     return arg, arg.aln
+
+
+if __name__ == '__main__':
+    evaluate_main()

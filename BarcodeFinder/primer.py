@@ -723,6 +723,9 @@ def primer_main(arg_str=None):
     """
     arg = parse_args(arg_str)
     arg = init_arg(arg)
+    if arg is None:
+        log.error('Quit.')
+        return None
     primer_result = arg.out / 'Primers.csv'
     csv_title = 'Locus,Samples,' + Pair._title + '\n'
     with open(primer_result, 'w', encoding='utf-8') as out:
@@ -736,3 +739,7 @@ def primer_main(arg_str=None):
     log.info('Finished.')
     log.info(f'Result could be found in {primer_result}')
     return arg, arg.aln
+
+
+if __name__ == '__main__':
+    primer_main()
