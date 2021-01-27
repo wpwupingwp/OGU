@@ -252,7 +252,9 @@ def init_arg(arg):
     if arg.fasta_folder is not None:
         # overwrite
         arg.aln = [i.absolute() for i in Path(arg.aln_folder).glob('*')]
-    arg.out = utils.init_out(arg)
+    arg = utils.init_out(arg)
+    if arg.out is None:
+        return None
     return arg
 
 

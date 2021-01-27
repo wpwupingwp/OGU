@@ -118,24 +118,17 @@ def parse_args():
                         help='minimum product length(include primer)')
     primer.add_argument('-tmax', dest='max_product', default=600, type=int,
                         help='maximum product length(include primer)')
-    parsed = arg.parse_args()
-    if parsed.fast:
-        log.info('The "-fast" mode was opened. '
-                 'Skip sliding-window scan with tree.')
-    # temporary filename, omit one parameters in many functions
-    # parsed.db_file = join_path(parsed.out, 'interleaved.fasta')
-    # parsed.out_file = ''
-    # load option.json may cause chaos, remove
-    return parsed
+    return arg.parse_args()
 
 
 def init_arg(arg):
-    if arg.action == 'init':
-        utils.get_all_third_party()
-    if arg.out is not None:
-        arg.out = utils.init_out(arg)
+    utils.get_all_third_party()
+    arg = utils.init_out(arg)
+    if arg.out is None:
+        return None
     if not any([arg.gb, arg.fasta, arg.aln]):
-        pass
+        log.error('Empty input.')
+        return None
     return arg
 
 
@@ -145,7 +138,10 @@ def bf_main():
     """
     log.info('Welcome to BarcodeFinder.')
     arg = parse_args()
-    init_ok, arg = init_arg(arg)
+    arg = init_arg(arg)
+    if arg is None:
+        log.error('Quit.')
+        return
     log_file = arg.out / 'Log.txt'
     log_file_handler = logging.FileHandler(log_file, mode='a')
     log_file_handler.setLevel(logging.INFO)

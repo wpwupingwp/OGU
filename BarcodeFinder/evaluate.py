@@ -82,6 +82,8 @@ def init_arg(arg):
     if arg.aln is not None:
         arg.aln = [Path(i).absolute() for i in arg.aln]
     arg.out = utils.init_out(arg)
+    if arg.out is None:
+        return None
     if arg.fast:
         log.info('The "-quick" mode was opened. '
                  'Skip sliding-window analysis')

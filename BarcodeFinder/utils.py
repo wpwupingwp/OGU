@@ -102,7 +102,8 @@ def init_out(arg):
         arg.out = Path(arg.out).absolute()
     if arg.out.exists():
         log.error(f'Output folder {arg.out} exists.')
-        return None
+        arg.out = None
+        return arg
     try:
         arg.out.mkdir()
         arg._gb = arg.out / 'GenBank'
