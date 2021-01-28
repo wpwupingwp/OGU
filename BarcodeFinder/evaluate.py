@@ -394,10 +394,10 @@ class Variance(namedtuple('Variance',
     __slots__ = ()
 
     def __str__(self):
-        return ('{sample},{length},{gap_ratio:.4%},'
-                '{observed_res:.4%},{entropy:.8f},{pi:.8f},'
-                '{pd:.8f},{pd_stem:.8f},{pd_terminal:.8f},{tree_res:.4%},'
-                '{total_gc:.4%}'.format(**self._asdict()))
+        return ('{Samples},{Length},{Gap_Ratio:.4%},'
+                '{Observed_Res:.4%},{Entropy:.8f},{Pi:.8f},'
+                '{PD:.8f},{PD_stem:.8f},{PD_terminal:.8f},{Tree_Res:.4%},'
+                '{Total_GC:.4%}'.format(**self._asdict()))
 
 
 def get_resolution(alignment: np.array, tmp: Path,
@@ -510,8 +510,6 @@ def evaluate(aln: Path, arg) -> tuple:
     log.info(f'Evaluate {aln}')
     summary, gc_array = get_resolution(no_gap_alignment, arg._tmp,
                                        arg.ignore_ambiguous_base)
-    summary = get_resolution(no_gap_alignment, arg._tmp,
-                             arg.ignore_ambiguous_base)
     if arg.quick:
         pass
     else:
@@ -548,12 +546,12 @@ def evaluate_main(arg_str=None):
         out_csv.write(csv_head)
     for aln in aligned:
         summary, gc_array, sliding = evaluate(aln, arg)
-        log.info(f'\tGap ratio:\t{summary.gap_ratio:.8f}')
-        log.info(f'\tObserved resolution:\t{summary.observed_res:.8f}')
-        log.info(f'\tNormalized Shannon Index:\t{summary.entropy:.8f}')
-        log.info(f'\tPi:\t{summary.pi:.8f}')
-        log.info(f'\tPhylogenetic diversity:\t{summary.pd:.8f}')
-        log.info(f'\tTree resolution:\t{summary.tree_res:.8f}')
+        log.info(f'\tGap ratio:\t{summary.Gap_Ratio:.8f}')
+        log.info(f'\tObserved resolution:\t{summary.Observed_Res:.8f}')
+        log.info(f'\tNormalized Shannon Index:\t{summary.Entropy:.8f}')
+        log.info(f'\tPi:\t{summary.Pi:.8f}')
+        log.info(f'\tPhylogenetic diversity:\t{summary.PD:.8f}')
+        log.info(f'\tTree resolution:\t{summary.Tree_Res:.8f}')
         with open(evaluation_result, 'a', encoding='utf-8') as out:
             out.write(aln.stem+','+str(summary)+'\n')
         if not arg.quick:
