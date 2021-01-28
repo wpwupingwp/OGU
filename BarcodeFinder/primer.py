@@ -243,7 +243,6 @@ def parse_args(arg_str=None):
 
 
 def init_arg(arg):
-    print(vars(arg))
     if arg.aln is None and arg.aln_folder is None:
         log.error('Empty input.')
         return None
@@ -646,7 +645,7 @@ def get_observed_res(alignment: np.array, arg):
     observed_res_list = []
     rows, columns = alignment.shape
     for i in range(0, columns, arg.step):
-        subalign = alignment[:, i+arg.size]
+        subalign = alignment[:, i:i+arg.size]
         sub_rows, sub_columns = subalign.shape
         item, count = np.unique(subalign, return_counts=True, axis=0)
         observed_res = len(count) / sub_rows
