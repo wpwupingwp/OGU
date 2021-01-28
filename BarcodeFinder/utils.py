@@ -104,7 +104,6 @@ def init_out(arg, from_main=False):
         arg(NameSpace): arguments
     """
     if not hasattr(arg, 'out') or arg.out is None:
-        print(vars(arg))
         log.warning('Output folder was not set.')
         log.info('\tUse "Result" instead.')
         arg.out = Path().cwd().absolute() / 'Result'

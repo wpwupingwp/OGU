@@ -266,14 +266,15 @@ def gc_ratio(alignment: np.array, ignore_ambiguous=True) -> (
         # BDVH = 1/3 GC
         # MSYKRS = 1/2 GC
         gc = 0
-        count = np.unique(row, return_counts=True)
-        for base in b'GC':
+        count_ = np.unique(row, return_counts=True)
+        count = dict(zip(count_[0], count_[1]))
+        for base in (b'G', b'C'):
             gc += count[base]
         if not ignore:
             gc += count[b'N'] / 4
-            for ambiguous_base in b'BDVH':
+            for ambiguous_base in (b'B', b'D', b'V', b'H'):
                 gc += count[ambiguous_base] / 3
-            for ambiguous_base in b'MSYKRS':
+            for ambiguous_base in (b'M', b'S', b'Y', b'K', b'R', b'S'):
                 gc += count[ambiguous_base] / 2
         return gc / (rows*columns-count[b'-'])
 
