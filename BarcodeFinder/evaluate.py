@@ -269,14 +269,14 @@ def gc_ratio(alignment: np.array, ignore_ambiguous=True) -> (
         count_ = np.unique(row, return_counts=True)
         count = dict(zip(count_[0], count_[1]))
         for base in (b'G', b'C'):
-            gc += count[base]
+            gc += count.get(base, 0)
         if not ignore:
-            gc += count[b'N'] / 4
+            gc += count.get(b'N', 0) / 4
             for ambiguous_base in (b'B', b'D', b'V', b'H'):
-                gc += count[ambiguous_base] / 3
+                gc += count.get(ambiguous_base, 0) / 3
             for ambiguous_base in (b'M', b'S', b'Y', b'K', b'R', b'S'):
-                gc += count[ambiguous_base] / 2
-        return gc / (rows*columns-count[b'-'])
+                gc += count.get(ambiguous_base, 0) / 2
+        return gc / (rows*columns-count.get(b'-', 0))
 
     rows, columns = alignment.shape
     total_gc = get_gc_ratio(alignment, ignore_ambiguous)
