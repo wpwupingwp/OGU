@@ -674,7 +674,7 @@ def primer_design(aln: Path, result: Path, arg):
         log.error('Observed resolution is too low.')
         return False
     log.info('Start the sliding-window scan.')
-    observed_res_list, index = get_observed_res(alignment, arg)
+    index, observed_res_list = get_observed_res(alignment, arg)
     log.info('Evaluation finished.')
     log.info('Start finding primers.')
     log.info('Mark region for finding primer.')
