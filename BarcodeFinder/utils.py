@@ -117,6 +117,7 @@ def init_out(arg, from_main=False):
             if arg.out.exists():
                 log.error(f'{arg.out} exists, too!')
                 arg.out = None
+                return arg
         else:
             pass
     arg._gb = arg.out / 'GenBank'

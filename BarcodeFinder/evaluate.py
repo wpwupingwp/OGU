@@ -79,7 +79,7 @@ def init_arg(arg):
     if arg.fasta_folder is not None:
         # overwrite
         arg.fasta = [i.absolute() for i in Path(arg.fasta_folder).glob('*')]
-    if len(arg.fasta) != 0:
+    if arg.fasta:
         for i in arg.fasta:
             if not i.exists() or not i.is_file():
                 log.error(f'{i} does not exist or is not a valid file.')
@@ -112,6 +112,8 @@ def align(files: list, folder: Path) -> (list, list):
     log.info('Align sequences.')
     aligned = list()
     unaligned = list()
+    if not files:
+        return aligned, unaligned
     _, mafft = utils.get_mafft()
     if not _:
         log.error('Cannot run mafft.')
