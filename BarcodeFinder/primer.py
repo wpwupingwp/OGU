@@ -216,24 +216,26 @@ def parse_args(arg_str=None):
     arg.add_argument('-aln_folder', default=None,
                      help='folder of aligned files')
     arg.add_argument('-out', help='output directory')
-    arg.add_argument('-a', dest='ambiguous_base_n', default=4, type=int,
+    arg.add_argument('-ambiguous', dest='ambiguous_base_n', default=4, type=int,
                         help='number of ambiguous bases')
-    arg.add_argument('-c', dest='coverage', default=0.6, type=float,
+    arg.add_argument('-coverage', dest='coverage', default=0.6, type=float,
                         help='minimal coverage of base and primer')
-    arg.add_argument('-m', dest='mismatch', default=4, type=int,
+    arg.add_argument('-mismatch', dest='mismatch', default=4, type=int,
                         help='maximum mismatch bases in primer')
     arg.add_argument('-pmin', dest='min_primer', default=20, type=int,
                         help='minimum primer length')
     arg.add_argument('-pmax', dest='max_primer', default=25, type=int,
                         help='maximum primer length')
-    arg.add_argument('-r', dest='resolution', type=float, default=0.5,
+    arg.add_argument('-res', dest='resolution', type=float, default=0.5,
                         help='minimal resolution')
-    arg.add_argument('-t', dest='top_n', type=int, default=1,
+    arg.add_argument('-topn', dest='top_n', type=int, default=1,
                         help='keep n primers for each high variant region')
     arg.add_argument('-tmin', dest='min_product', default=350, type=int,
                         help='minimum product length(include primer)')
     arg.add_argument('-tmax', dest='max_product', default=600, type=int,
                         help='maximum product length(include primer)')
+    arg.add_argument('-size', type=int, default=500, help='window size')
+    arg.add_argument('-step', type=int, default=50, help='step length')
     if arg_str is None:
         return arg.parse_args()
     else:
@@ -241,13 +243,13 @@ def parse_args(arg_str=None):
 
 
 def init_arg(arg):
+    print(vars(arg))
     if arg.aln is None and arg.aln_folder is None:
         log.error('Empty input.')
         return None
     if all([arg.aln, arg.aln_folder]):
-        log.critical('Cannot use "-aln" and "-aln_folder" at same time!')
-        log.critical('Ignore "-aln" option.')
-        arg.aln = None
+        log.info('Do not recommend to use "-aln" and "-aln_folder" '
+                 'at same time!')
     if arg.aln is not None:
         arg.aln = [Path(i).absolute() for i in arg.aln]
     if arg.aln_folder is not None:
@@ -729,7 +731,6 @@ def primer_main(arg_str=None):
     """
     log.info('Running primer module...')
     arg = parse_args(arg_str)
-    print(vars(arg))
     arg = init_arg(arg)
     if arg is None:
         log.error('Quit.')

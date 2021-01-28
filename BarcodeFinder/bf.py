@@ -102,19 +102,19 @@ def parse_args():
     evaluate.add_argument('-step', default=50, type=int,
                           help='step length for sliding-window scan')
     primer = arg.add_argument_group('Primer')
-    primer.add_argument('-a', dest='ambiguous_base_n', default=4, type=int,
-                        help='number of ambiguous bases')
-    primer.add_argument('-c', dest='coverage', default=0.6, type=float,
+    primer.add_argument('-ambiguous', dest='ambiguous_base_n', default=4,
+                        type=int, help='number of ambiguous bases')
+    primer.add_argument('-coverage', dest='coverage', default=0.6, type=float,
                         help='minimal coverage of base and primer')
-    primer.add_argument('-m', dest='mismatch', default=4, type=int,
+    primer.add_argument('-mismatch', dest='mismatch', default=4, type=int,
                         help='maximum mismatch bases in primer')
     primer.add_argument('-pmin', dest='min_primer', default=18, type=int,
                         help='minimum primer length')
     primer.add_argument('-pmax', dest='max_primer', default=28, type=int,
                         help='maximum primer length')
-    primer.add_argument('-r', dest='resolution', type=float, default=0.5,
+    primer.add_argument('-res', dest='resolution', type=float, default=0.5,
                         help='minimal resolution')
-    primer.add_argument('-t', dest='top_n', type=int, default=1,
+    primer.add_argument('-topn', dest='top_n', type=int, default=1,
                         help='keep n primers for each high variant region')
     primer.add_argument('-tmin', dest='min_product', default=350, type=int,
                         help='minimum product length(include primer)')
@@ -152,13 +152,15 @@ def bf_main():
 
     option = utils.arg_to_str(arg)
     arg, unique_folder = gb2fasta.gb2fasta_main(option)
-    if arg is None:
-        return
-    option += f' -fasta_folder {unique_folder}'
+    if unique_folder is not None:
+        option += f' -fasta_folder {unique_folder}'
+    else:
+        pass
     arg, aln_folder = evaluate.evaluate_main(option)
-    if arg is None:
-        return
-    option += f' -aln_folder {aln_folder}'
+    if aln_folder is not None:
+        option += f' -aln_folder {aln_folder}'
+    else:
+        pass
     primer.primer_main(option)
     return
 

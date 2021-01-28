@@ -71,9 +71,8 @@ def init_arg(arg):
         log.error('Empty input.')
         return None
     if all([arg.fasta, arg.fasta_folder]):
-        log.critical('Cannot use "-fasta" and "-fasta_folder" at same time!')
-        log.critical('Ignore "-fasta" option.')
-        arg.fasta = None
+        log.info('Do not recommend to  use "-fasta" and "-fasta_folder" '
+                 'at same time!')
     if arg.fasta is not None:
         arg.fasta = [Path(i).absolute() for i in arg.fasta]
     if arg.fasta_folder is not None:
@@ -538,7 +537,7 @@ def evaluate_main(arg_str=None):
     arg = init_arg(arg)
     if arg is None:
         log.info('Quit.')
-        return None
+        return None, None
     aligned, unaligned = align(arg.fasta, arg._align)
     aligned.extend(arg.aln)
     evaluation_result = arg.out / 'Evaluation.csv'
@@ -561,7 +560,7 @@ def evaluate_main(arg_str=None):
             output_sliding(sliding, aln.stem, arg._evaluate, arg.step, arg.size)
     log.info(f'Evaluation results could be found in {evaluation_result}')
     log.info('Evaluate module finished.')
-    return arg, arg.aln
+    return arg, arg._align
 
 
 if __name__ == '__main__':
