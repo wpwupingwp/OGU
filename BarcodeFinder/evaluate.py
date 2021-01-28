@@ -191,7 +191,7 @@ def fasta_to_array(aln_fasta: Path) -> (np.array, np.array):
     # check sequence length
     length_check = [len(i[1]) for i in data]
     if len(set(length_check)) != 1:
-        log.error('{} does not have uniform width!'.format(aln_fasta))
+        log.error(f'Invalid alignment file {aln_fasta}')
         return None, None
     # Convert List to numpy array.
     # order 'F' is a bit faster than 'C'

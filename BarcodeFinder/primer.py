@@ -3,11 +3,11 @@
 import argparse
 import logging
 import re
+import subprocess
 from collections import defaultdict
 from itertools import product as cartesian_product
 from os import cpu_count, devnull
 from pathlib import Path
-from subprocess import run
 
 import numpy as np
 from Bio.Seq import Seq
@@ -499,6 +499,11 @@ def validate(primer_candidate, locus_name, n_seqs, arg):
     the validation.
     """
     EVALUE = 1e-2
+    _, blast = utils.get_blast()
+    if not _:
+        log.critical('Cannot find BLAST.')
+        return []
+    makeblastdb = blast.parent / 'makeblastdb'
     query_file = arg._primer / (locus_name+'.candidate.fasta')
     query_file_fastq = arg._primer / (locus_name+'.candidate.fastq')
     # SeqIO.write fasta file directly is prohibited. have to write fastq at
@@ -508,24 +513,20 @@ def validate(primer_candidate, locus_name, n_seqs, arg):
     SeqIO.convert(query_file_fastq, 'fastq', query_file, 'fasta')
     # build blast db
     db_file = arg._tmp / (locus_name+'db_file.fasta')
-    with open(devnull, 'w', encoding='utf-8') as f:
-        _ = run(f'makeblastdb -in {db_file} -dbtype nucl', shell=True, stdout=f)
-        if _.returncode != 0:
-            log.critical('Failed to run makeblastdb. Skip BLAST.')
-            return []
+    _ = subprocess.run(f'{makeblastdb} -in {db_file} -dbtype nucl', shell=True,
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    if _.returncode != 0:
+        log.critical('Failed to run makeblastdb. Skip BLAST.')
+        return []
     # BLAST
     blast_result_file = arg._tmp / (locus_name+'blast.result.tsv')
     fmt = 'qseqid sseqid qseq nident mismatch score qstart qend sstart send'
-    cmd = Blast(num_threads=max(1, cpu_count() - 1),
-                query=query_file,
-                db=db_file,
-                task='blastn-short',
-                evalue=EVALUE,
-                max_hsps=1,
-                outfmt='"7 {}"'.format(fmt),
-                out=blast_result_file)
+    cmd = (f'{blast} -task blastn-short -num_threads {max(1, cpu_count()-1)} '
+           f'-query {query_file} -db {db_file} -evalue {EVALUE} -max_hsps 1 '
+           f'-outfmt "{fmt}" -out {blast_result_file}')
     # hide output
-    cmd()
+    _ = subprocess.run(cmd, shell=True, stdout=subprocess.DEVNULL,
+                       stderr=subprocess.DEVNULL)
     log.info('BLAST finished.')
     log.info('Parsing BLAST result.')
     blast_result = dict()
