@@ -114,6 +114,9 @@ def init_out(arg, from_main=False):
             log.error(f'Output folder {arg.out} exists.')
             arg.out = arg.out.parent / (arg.out.name+'_')
             log.info(f'Use {arg.out} instead.')
+            if arg.out.exists():
+                log.error(f'{arg.out} exists, too!')
+                arg.out = None
         else:
             pass
     arg._gb = arg.out / 'GenBank'
