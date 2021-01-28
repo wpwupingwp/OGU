@@ -447,7 +447,6 @@ def output_sliding(sliding: list, name: str, out: Path,
     handle.close()
     # draw
     out_pdf = out / (name+'.pdf')
-    index = []
     plt.style.use('seaborn-colorblind')
     plt.title(f'Sliding window results of {name} (sample={sliding[0].Samples}, '
               f'size={size} bp, step={step} bp)')
@@ -458,7 +457,7 @@ def output_sliding(sliding: list, name: str, out: Path,
     ax1.set_ylabel('Gap Ratio, GC Ratio, Resolution & Shannon Index')
     ax1.plot(index, [i.Gap_Ratio for i in sliding], label='Gap Ratio',
              alpha=0.8)
-    ax1.plot(index, [i.Observe_Res for i in sliding],
+    ax1.plot(index, [i.Observed_Res for i in sliding],
              label='Observed Resolution', alpha=0.8)
     ax1.plot(index, [i.Entropy for i in sliding],
              label='Shannon Equitability Index', alpha=0.8)
@@ -499,8 +498,8 @@ def evaluate(aln: Path, arg) -> tuple:
     sliding = []
     name, alignment = fasta_to_array(aln)
     if name is None:
-        log.info('Invalid fasta file {}.'.format(aln))
-        return (0, ) * 12
+        log.warning('Invalid fasta file {}.'.format(aln))
+        return None, None, None
     if arg.ignore_gap:
         no_gap_alignment, gap_alignment = remove_gap(alignment)
     else:
@@ -546,6 +545,8 @@ def evaluate_main(arg_str=None):
         out_csv.write(csv_head)
     for aln in aligned:
         summary, gc_array, sliding = evaluate(aln, arg)
+        if summary is None:
+            continue
         log.info(f'\tGap ratio:\t{summary.Gap_Ratio:.8f}')
         log.info(f'\tObserved resolution:\t{summary.Observed_Res:.8f}')
         log.info(f'\tNormalized Shannon Index:\t{summary.Entropy:.8f}')
