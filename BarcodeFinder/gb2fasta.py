@@ -111,26 +111,29 @@ def parse_args(arg_str=None):
         return arg.parse_known_args(arg_str.split(' '))[0]
 
 
-def get_query_string(arg):
+def get_query_string(arg, silence=False):
     """
     Based on given options, generate query string from Genbank.
     """
-    if arg.allow_repeat:
-        log.info("Repeat genes or spacers will be kept as user's wish.")
-    if arg.allow_invert_repeat:
-        log.info("Invert-repeat spacers will be kept.")
-    if arg.allow_mosaic_spacer:
-        log.info('The "spacers" of overlapped genes will be kept.')
-    if arg.expand != 0:
-        log.info(f'Extend sequences to their upstream/'
-                 f'downstream with {arg.expand} bp')
-    if arg.group is not None and arg.group != 'all':
-        log.warning('The filters "group" was reported to return abnormal '
-                    'records by Genbank. Please consider to use "-taxon" '
-                    'instead.')
-    if arg.rename:
-        log.warning('BarcodeFinder will try to rename genes by regular '
-                    'expression.')
+    if not silence:
+        if arg.allow_repeat:
+            log.info("Repeat genes or spacers will be kept as user's wish.")
+        if arg.allow_invert_repeat:
+            log.info("Invert-repeat spacers will be kept.")
+        if arg.allow_mosaic_spacer:
+            log.info('The "spacers" of overlapped genes will be kept.')
+        if arg.expand != 0:
+            log.info(f'Extend sequences to their upstream/'
+                     f'downstream with {arg.expand} bp')
+        if arg.group is not None and arg.group != 'all':
+            log.warning('The filters "group" was reported to return abnormal '
+                        'records by Genbank. Please consider to use "-taxon" '
+                        'instead.')
+        if arg.rename:
+            log.warning('BarcodeFinder will try to rename genes by regular '
+                        'expression.')
+    else:
+        pass
     condition = []
     # if group is "all", ignore
     if arg.group != 'all':
@@ -739,7 +742,7 @@ def unique(files: list, arg) -> list:
         if arg.unique == 'first':
             # keep only the first record
             keep = {info[i][0][0] for i in info}
-        elif arg.uniq == 'longest':
+        elif arg.unique == 'longest':
             for i in info:
                 info[i] = sorted(info[i], key=lambda x: x[1], reverse=True)
             keep = {info[i][0][0] for i in info}

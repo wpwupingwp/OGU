@@ -128,7 +128,7 @@ def init_arg(arg):
     arg = utils.init_out(arg, from_main=True)
     if arg.out is None:
         return None
-    query = gb2fasta.get_query_string(arg)
+    query = gb2fasta.get_query_string(arg, silence=True)
     if not any([arg.gb, arg.fasta, arg.aln, arg.query, query]):
         log.error('Empty input.')
         return None
