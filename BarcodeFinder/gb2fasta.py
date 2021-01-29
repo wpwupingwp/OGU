@@ -777,6 +777,7 @@ def gb2fasta_main(arg_str=None):
             arg.gb.append(gb_file)
     if arg.no_divide:
         log.info('Download finished. Skip dividing.')
+        log.info('GB2fasta module finished.')
         return arg, None
     for i in arg.gb:
         divide(i, arg)
