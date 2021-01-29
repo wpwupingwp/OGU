@@ -162,9 +162,12 @@ def get_query_string(arg, silence=False):
         condition.append('(plastid[filter] OR chloroplast[filter])')
     if arg.refseq:
         condition.append('refseq[filter]')
-    if (len(condition) > 0) and (arg.min_len is not None and arg.max_len is
-                                 not None):
-        condition.append(f'("{arg.min_len}"[SLEN] : "{arg.max_len}"[SLEN])')
+    if (len(condition) > 0):
+        if arg.refseq:
+            log.warning('Conflict options: "-max_len" and "-refseq", '
+                        'ignore length limit.')
+        else:
+            condition.append(f'("{arg.min_len}"[SLEN] : "{arg.max_len}"[SLEN])')
     if arg.exclude is not None:
         condition.append('NOT ({})'.format(arg.exclude))
     if arg.date_start is not None and arg.date_end is not None:
