@@ -66,8 +66,7 @@ def parse_args(arg_str=None):
     # handle rps12
     arg.add_argument('-max_seq_len', default=20000, type=int,
                      help='maximum length of feature sequence')
-    arg.add_argument('-no_divide', action='store_true',
-                     help='only download')
+    arg.add_argument('-no_divide', action='store_true', help='only download')
     # for plastid genes
     arg.add_argument('-rename', action='store_true', help='try to rename gene')
     arg.add_argument('-unique', choices=('longest', 'first', 'no'),
@@ -775,8 +774,9 @@ def gb2fasta_main(arg_str=None):
         gb_file = download(arg)
         if gb_file is not None:
             arg.gb.append(gb_file)
+    print(vars(arg))
     if arg.no_divide:
-        log.info('Download finished.')
+        log.info('Download finished. Skip dividing.')
         return arg, arg._gb
     for i in arg.gb:
         divide(i, arg)

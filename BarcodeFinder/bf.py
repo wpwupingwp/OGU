@@ -162,6 +162,7 @@ def bf_main():
     else:
         pass
     primer.primer_main(option)
+    log.info('Exit.')
     return
 
 

@@ -48,9 +48,6 @@ class BlastResult:
 
 
 def arg_to_str(arg) ->str:
-    """
-    Assume all bool option using action='store_true'
-    """
     s = ''
     arg_dict = vars(arg)
     for key, value in arg_dict.items():
@@ -61,7 +58,11 @@ def arg_to_str(arg) ->str:
         elif value is None:
             continue
         elif isinstance(value, bool):
-            continue
+            if value:
+                value = ''
+            else:
+                # Assume all bool option using action='store_true'
+                continue
         s += f' -{key} {value}'
     return s
 
