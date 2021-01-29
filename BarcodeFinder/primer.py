@@ -244,7 +244,7 @@ def parse_args(arg_str=None):
 
 def init_arg(arg):
     if arg.aln is None and arg.aln_folder is None:
-        log.error('Empty input.')
+        log.warning('Empty input.')
         return None
     if all([arg.aln, arg.aln_folder]):
         log.info('Do not recommend to use "-aln" and "-aln_folder" '
@@ -738,7 +738,7 @@ def primer_main(arg_str=None):
     arg = parse_args(arg_str)
     arg = init_arg(arg)
     if arg is None:
-        log.error('Quit.')
+        log.info('Quit primer module.')
         return None
     primer_result = arg.out / 'Primers.csv'
     csv_title = 'Locus,Samples,' + Pair._title + '\n'

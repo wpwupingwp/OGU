@@ -68,7 +68,7 @@ def parse_args(arg_str=None):
 def init_arg(arg):
     # ignore arg.fasta if using arg.fasta_folder
     if arg.fasta is None and arg.aln is None and arg.fasta_folder is None:
-        log.error('Empty input.')
+        log.warning('Empty input.')
         return None
     if all([arg.fasta, arg.fasta_folder]):
         log.info('Do not recommend to  use "-fasta" and "-fasta_folder" '
@@ -536,7 +536,7 @@ def evaluate_main(arg_str=None):
     arg = parse_args(arg_str)
     arg = init_arg(arg)
     if arg is None:
-        log.info('Quit.')
+        log.info('Quit evaluate module.')
         return None, None
     aligned, unaligned = align(arg.fasta, arg._align)
     aligned.extend(arg.aln)

@@ -188,7 +188,7 @@ def init_arg(arg):
     if arg.out is None:
         return None
     if arg.gb is None and arg.query is None:
-        log.error('Empty input.')
+        log.warning('Empty input.')
         return None
     if arg.refseq and arg.gene is None:
         log.info('Reset the limitation of sequence length for RefSeq.')
@@ -767,6 +767,7 @@ def gb2fasta_main(arg_str=None):
     arg = parse_args(arg_str)
     arg = init_arg(arg)
     if arg is None:
+        log.info('Quit gb2fasta module.')
         return None, None
     log.info(f'Input genbank files:\t{arg.gb}')
     if arg.query is not None:
@@ -774,10 +775,9 @@ def gb2fasta_main(arg_str=None):
         gb_file = download(arg)
         if gb_file is not None:
             arg.gb.append(gb_file)
-    print(vars(arg))
     if arg.no_divide:
         log.info('Download finished. Skip dividing.')
-        return arg, arg._gb
+        return arg, None
     for i in arg.gb:
         divide(i, arg)
     if arg.unique == 'no':
