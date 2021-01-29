@@ -493,7 +493,7 @@ def find_primer(consensus, arg):
     return primers, consensus
 
 
-def validate(primer_candidate, locus_name, n_seqs, arg):
+def validate(primer_candidate: list, aln: Path, n_seqs: int, arg):
     """
     Do BLAST. Parse BLAST result. Return list of PrimerWithInfo which passed
     the validation.
@@ -503,7 +503,8 @@ def validate(primer_candidate, locus_name, n_seqs, arg):
     if not _:
         log.critical('Cannot find BLAST.')
         return []
-    makeblastdb = blast.parent / 'makeblastdb'
+    locus_name = aln.stem
+    makeblastdb = Path(blast).parent / 'makeblastdb'
     query_file = arg._primer / (locus_name+'.candidate.fasta')
     query_file_fastq = arg._primer / (locus_name+'.candidate.fastq')
     # SeqIO.write fasta file directly is prohibited. have to write fastq at
@@ -512,8 +513,9 @@ def validate(primer_candidate, locus_name, n_seqs, arg):
         SeqIO.write(primer_candidate, _, 'fastq')
     SeqIO.convert(query_file_fastq, 'fastq', query_file, 'fasta')
     # build blast db
-    db_file = arg._tmp / (locus_name+'db_file.fasta')
-    _ = subprocess.run(f'{makeblastdb} -in {db_file} -dbtype nucl', shell=True,
+    db_file = utils.move(aln, arg._tmp/(locus_name+'-db_file.fasta'), copy=True)
+    _ = subprocess.run(f'{makeblastdb} -in {db_file} -dbtype nucl '
+                       f'-out {db_file}', shell=True,
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     if _.returncode != 0:
         log.critical('Failed to run makeblastdb. Skip BLAST.')
@@ -689,7 +691,7 @@ def primer_design(aln: Path, result: Path, arg):
         return True
     log.info(f'Found {len(primer_candidate)} candidate primers.')
     log.info('Validate with BLAST. May be slow.')
-    primer_verified = validate(primer_candidate, locus_name, rows, arg)
+    primer_verified = validate(primer_candidate, aln, rows, arg)
     if len(primer_verified) == 0:
         log.warning('All candidates failed on validation. '
                     'Please consider to loose options.')

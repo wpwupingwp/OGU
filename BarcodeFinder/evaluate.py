@@ -499,7 +499,7 @@ def evaluate(aln: Path, arg) -> tuple:
     sliding = []
     name, alignment = fasta_to_array(aln)
     if name is None:
-        log.warning('Invalid fasta file {}.'.format(aln))
+        log.info('Invalid fasta file {}.'.format(aln))
         return None, None, None
     if arg.ignore_gap:
         no_gap_alignment, gap_alignment = remove_gap(alignment)
