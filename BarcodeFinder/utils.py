@@ -146,8 +146,12 @@ def init_out(arg, from_main=False):
 
 
 def clean_tmp(filename: Path):
-    for i in filename.glob('*'):
-        i.unlink()
+    if filename.is_dir():
+        for i in filename.glob('*'):
+            i.unlink()
+    elif filename.is_file():
+        for i in filename.parent.glob(f'{filename.name}*'):
+            i.unlink()
     return
 
 

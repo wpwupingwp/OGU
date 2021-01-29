@@ -521,14 +521,17 @@ def validate(primer_candidate: list, aln: Path, n_seqs: int, arg):
         log.critical('Failed to run makeblastdb. Skip BLAST.')
         return []
     # BLAST
-    blast_result_file = arg._tmp / (locus_name+'blast.result.tsv')
-    fmt = 'qseqid sseqid qseq nident mismatch score qstart qend sstart send'
+    blast_result_file = arg._tmp / (locus_name+'-blast.result.tsv')
+    fmt = '7 qseqid sseqid qseq nident mismatch score qstart qend sstart send'
     cmd = (f'{blast} -task blastn-short -num_threads {max(1, cpu_count()-1)} '
            f'-query {query_file} -db {db_file} -evalue {EVALUE} -max_hsps 1 '
            f'-outfmt "{fmt}" -out {blast_result_file}')
     # hide output
     _ = subprocess.run(cmd, shell=True, stdout=subprocess.DEVNULL,
                        stderr=subprocess.DEVNULL)
+    if _.returncode != 0:
+        log.critical('Failed to run BLAST.')
+        return []
     log.info('BLAST finished.')
     log.info('Parsing BLAST result.')
     blast_result = dict()
@@ -668,8 +671,8 @@ def primer_design(aln: Path, result: Path, arg):
     base_cumulative_frequency = count_base(alignment)
     log.info(f'Generate consensus of {aln}.')
     consensus = get_consensus(base_cumulative_frequency, arg.coverage, rows,
-                              arg.out/(locus_name+'.consensus.fastq'))
-    log.info('Evaluate whole alignment of {aln}.')
+                              arg._align/(locus_name+'-consensus.fastq'))
+    log.info(f'Evaluate whole alignment of {aln}.')
     # a_ : alignment
     item, count = np.unique(alignment, return_counts=True, axis=0)
     observed_res = len(count) / rows
