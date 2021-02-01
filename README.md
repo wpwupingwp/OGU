@@ -1,176 +1,118 @@
+[![Build Status](https://travis-ci.org/wpwupingwp/novowrap.svg?branch=master)](https://travis-ci.org/wpwupingwp/novowrap)
+[![PyPI version](https://badge.fury.io/py/novowrap.svg)](https://badge.fury.io/py/novowrap)
+
+# Quick start
+Download [the package](https://github.com/wpwupingwp/barcodefinder/releases),
+unzip, and run.
+
+__OR__
+
+Open terminal, run
+   ```shell
+   # Install, using pip (recommended)
+   pip install BarcodeFinder --user
+
+   # Initiliaze with Internet
+   # Windows
+   python -m BarcodeFinder init
+   # Linux and MacOS
+   python3 -m BarcodeFinder init
+
+   # Run
+   # Windows
+   python -m BarcodeFinder
+   # Linux and MacOS
+   python3 -m BarcodeFinder
+   ```
 # Table of Contents
-   * [Background](#background)
-   * [Introduction](#introduction)
-      * [Function](#function)
-      * [Application](#application)
+   * [Quick start](#quickstart)
+   * [Feature](#feature)
    * [Prerequisite](#prerequisite)
+      * [Hardware](#hardware)
       * [Software](#software)
-      * [Python module](#python-module)
-      * [Internet](#internet)
    * [Installation](#installation)
+      * [Portable](#portable)
+      * [Install with pip](#Installwithpip)
+      * [Install with conda](#Installwithconda)
+      * [Initialization](#Initialization)
    * [Usage](#usage)
       * [Quick examples](#quick-examples)
-      * [Input](#input)
       * [Sequence ID](#sequence-id)
-      * [Output](#output)
+      * [Command line](#commandline)
+   * [Input](#input)
+   * [Output](#output)
    * [Options](#options)
-      * [Help](#help)
-      * [General](#general)
-      * [Genbank](#genbank)
-      * [Pre-process](#preprocess)
-      * [Evaluate](#evaluate)
-      * [Primer Design](#primer-design)
+      * [gb2fasta](#gb2fasta)
+      * [evaluate](#evaluate)
+      * [primer](#primer)
    * [Performance](#performance)
-# Background
-DNA barcoding is a molecular phylogenetic method that uses a standard DNA
-sequence to identify species. By comparing sequences of specific regions to an
-existing reference database, samples can be identified with respect to
-species, genus, family or higher taxonomy rank.
+   * [Citation](#citation)
+   * [License](#license)
+   * [Q&A](q&a)
 
-Compared to morphological identification, DNA barcoding has these advantages:
+# Features
+:heavy_check_mark: Automatically collect, organize and clean sequence data from NCBI Genbank
+or local: collect data with abundant options; extract CDS,
+intergenic spacer, or any other annotations from original sequencep; remove
+redundant sequences according to species information; remove invalid or
+abnormal sequences/fragments; generate clean dataset with uniform sequence id. 
 
-* DNA sequences can offer many more characters for identification;
-* requires small sample (mg level);
-* samples can be of any form as long as they contain DNA; and
-* can identify mixed samples.
+:heavy_check_mark: Evaluate variance of sequences by calculating nucleotide
+diversity, observed resolution, Shannon index, tree resolution, phylogenetic
+diversity (original and edited version), gap ratio, and others. Support
+sliding-window scanning.
 
-However, it also has limitations:
+:heavy_check_mark: Design universal primer for the alignment. Support
+ambiguous bases in primers.
 
-* requires a high-quality reference database
-* existing DNA barcodes show poor performance at the species level; and
-* different DNA barcodes may conflict with each other in specific taxonomic
-  groups.
-
-To date, DNA barcoding has been used widely in:
-
-* identifying species for research, food safety, customs inspections, criminal
-  detection, forensic analyses, quality control of medicine, and so
-  forth;
-* identifying mixed samples (soil, water, air, intestinal contents, and so on)
-  for research purposes, environmental surveys, medical analyses, and so
-  forth;
-* species classification, for determining relationships of species, delimiting
-  cryptic species and validating morphological identification; and
-* species descriptions can be supplied as supplementary information for
-  specimen vouchers.
-
-# Introduction
-## Function
-BarcodeFinder can discover novel DNA barcodes with universal
-primers automatically. It does three things:
-* Collects data
-
-    It can retrieve data automatically from the NCBI Genbank, using
-    restrictions that the user provides, such as gene name, taxonomy, sequence
-    name and organelle.  Also, it can integrate sequences or alignments that
-    users provide.
-* Pre-processes data
-
-    BarcodeFinder utilises annotation information in data to divide sequences
-    into fragments (gene, spacer, miscellaneous features) because the data
-    collected from Genbank may not be "uniform". For instance, it is possible
-    to find a gene's upstream and downstream sequences in one record, but only
-    the gene sequence in another record. The situation is worse for intergenic
-    spacers due to various annotation styles which may cause trouble in the
-    analysis to follow.
-
-    Given that one gene or spacer for each species may be sequenced several
-    times, by default, BarcodeFinder removes redundant sequences, leaving only
-    one record for each species. This behaviour can be changed as desired.
-    Then, _MAFFT_ is called for alignment. Each sequence's direction is
-    adjusted, and all sequences are reordered.
-* Analyse
-
-    Firstly, BarcodeFinder evaluates the variance of each alignment by
-    calculating Pi, the Shannon Index, the observed resolution, the tree
-    resolution and the average terminal branch length. If the result is lower
-    than the given threshold, i.e., it does not have sufficient resolution,
-    then this alignment will be skipped.
-
-    Next, a sliding-window scan will be performed for those alignments that
-    pass the test. The high-variance region (variance "hotspot") is picked,
-    and its upstream/downstream regions are used to find primers.
-
-    The consensus sequences of those conserved regions for finding primers are
-    generated, and with the help of _Primer3_, candidate primers are selected.
-    After BLAST validation, suitable primers are combined to form several
-    primer pairs. Given the limit of the PCR product's length, only pairs with
-    desired length are left. Note that gaps are removed to calculated real
-    length instead of the alignment length. The resolution of the
-    sub-alignment is then recalculated to remove false-positive primer pairs.
-
-    Finally, primer pairs are reordered by score to make it easy for the user
-    to find the "best" primer pairs.
-## Application
-BarcodeFinder could be used to:
-* Collect data from Genbank. Full-support of Genbank's query syntax and
-  optimization of download process make it easy for usage.
-* Convert gb file to fasta. The software make good use of annotation in gb
-  file to generate well-organized fasta files. Particularly, the extraction of
-  complete taxonomy ranks can be extremely useful for *phylogenetic
-  researchers*.
-* Clean data. Various strategies are offered to remove redundant sequences.
-  Several filters are also provided to pick out abnormal sequences.
-* Evaluate sequence polymorphism. Supports kinds of methods to calculate
-  variance of whole alignment and to mark high-variance region. Compatible
-  with ambiguous base and gap. Utilizes phylogenetic method to provide robust
-  result.
-* Design universal primer. Abundant options, smart algorithm and strict
-  validation result in reliable primers.
-* Discover novel DNA barcode for specific taxa. Automatic and high-efficient
-  process could significantly reduce researchers work to find new barcodes.
 # Prerequisite
 ## Hardware
-BarcodeFinder requires few computational resources. A normal PC/laptop is good
-enough. For a huge analysis that covers a large taxonomic group, a better
-computer may save time.
+BarcodeFinder requires very few computational resources. A normal PC/laptop is 
+enough. For downloading large amount of data, make sure the Internet
+connection is stable and fast enough.
+
 ## Software
-* Python3 (3.5 or above)
-* BLAST+
-* IQ-TREE
-* MAFFT
-## Python module
-* Biopython
-* coloredlogs
-* matplotlib
-* numpy
-* primer3-py
-## Internet
-The data retrieval function requires an Internet connection. Please ensure a
-stable network and reasonable Internet traffic charge for downloading
-large-sized data sets.
+For the portable version, nothing need to be installed manually.
+
+For installing from pip, [Python](https://www.python.org/downloads/) is
+required. Notice that the python version should be **3.6** or higher.
+
+:white_check_mark: All third-party dependencies will be automatically
+installed with Internet, including `biopython`, `matplotlib`, `coloredlogs`,
+`numpy`, `primer3-py`, (python packages), and
+[MAFFT](https://mafft.cbrc.jp/alignment/software/),
+[IQTREE](http://www.iqtree.org/),
+[BLAST](https://blast.ncbi.nlm.nih.gov/Blast.cgi?CMD=Web&PAGE_TYPE=BlastDocs&DOC_TYPE=Download).
+
 # Installation
-We assume that users have already installed [Python3](https://www.python.org/downloads/) (3.5 or above).
-**For Windows user, please use Python 3.6 or 3.7 if failed to install dependent packages.**
+We assume that users have already installed
+[Python3](https://www.python.org/downloads/) (3.7 or above).
 
-Firstly, install BarcodeFinder.
+## Portable
+Download from the [link](https://github.com/wpwupingwp/barcodefinder/releases),
+unpack and run with Internet for the first time.
+## Install with pip
+1. Install [Python](https://www.python.org/downloads/). 3.7 or newer is
+   required.
+     
+2. Open command line, run
+```shell
+pip install BarcodeFinder --user
+```
+## Initialization
+During the first running, `barcodefinder` will check and initialize the
+running environment.  Missing dependencies will be automatically installed.
 
-The easiest way to do so is to use pip. Make sure pip is not out of date (18.0 or
-newer), then
+This step requires Internet connection.
+```shell
+# Windows
+python -m BarcodeFinder init
+# Linux and MacOS
+python3 -m BarcodeFinder init
 ```
-# As administator
-pip3 install BarcodeFinder
-# Normal user
-pip3 install BarcodeFinder --user
-```
-For some versions of Python (e.g. Python 3.7 or above), pip may ask the user
-to provide a compiler. If a user does not have a compiler (especially Windows
-users), we recommend [this](https://www.lfd.uci.edu/~gohlke/pythonlibs/)
-website. Users can download the compiled wheel file and use pip to install it:
-```
-# As administator
-pip3 install wheel_file_name
-# Normal user
-pip3 install wheel_file_name --user
-```
-Secondly, users need to install the dependent software. BarcodeFinder has an
-assistant function to install dependent software automatically if it cannot
-find the software, i.e., users can skip this step if they wish. However, it is
-*highly recommended* that the official installation procedure be followed for
-ease of management and a clean working directory.
 
-To avoid this, **please try to use Python 3.6.**
-
+If BarcodeFinder **FAILED** to install third-party software, please follow these
+steps:
 For Linux users with root privileges, just use the package manager:
 ```
 # Ubuntu and Debian
@@ -989,3 +931,27 @@ For Windows users, MAFFT [may be very slow due to anti-virus
 software](https://mafft.cbrc.jp/alignment/software/windows_without_cygwin.html).
 Please consider following [this instruction](https://mafft.cbrc.jp/alignment/software/ubuntu_on_windows.html) to install
 Ubuntu on Windows to obtain better results.
+
+# Citation
+As yet unpublished.
+
+# License
+The software itself is licensed under
+[AGPL-3.0](https://github.com/wpwupingwp/novowrap/blob/master/LICENSE) (**not include third-party
+software**).
+
+# Q&A
+Please submit your questions in the
+[Issue](https://github.com/wpwupingwp/barcodefinder/issues) page :smiley:
+* Q: I got error message that the program failed to install
+  MAFFT/BLAST/IQTREE.
+
+  A: Uncommonly, users in specific area have connection issue for those
+  websites. Users have to manually download packages and install (see
+  [Software](#software) for the download links).
+
+  For Windows users, please download and unpack files into
+  `%HOMEDRIVE%%HOMEPATH%/.barcodefinder`.
+
+  For Linux  and MacOS users, please download and unpack files into
+  `~/.barcodefinder`.

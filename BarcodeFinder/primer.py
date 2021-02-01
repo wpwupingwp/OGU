@@ -212,6 +212,8 @@ def parse_args(arg_str=None):
     arg = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description=primer_main.__doc__)
+    arg.add_argument('-skip_primer', action='store_true',
+                     help='skip primer designing')
     arg.add_argument('-aln', nargs='*', help='alignment files')
     arg.add_argument('-aln_folder', default=None,
                      help='folder of aligned files')
@@ -739,6 +741,9 @@ def primer_main(arg_str=None):
     arg = init_arg(arg)
     if arg is None:
         log.info('Quit primer module.')
+        return None
+    if arg.skip_primer:
+        log.info('Skip primer module.')
         return None
     primer_result = arg.out / 'Primers.csv'
     csv_title = 'Locus,Samples,' + Pair._title + '\n'

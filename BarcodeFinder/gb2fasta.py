@@ -162,7 +162,7 @@ def get_query_string(arg, silence=False):
         condition.append('(plastid[filter] OR chloroplast[filter])')
     if arg.refseq:
         condition.append('refseq[filter]')
-    if (len(condition) > 0):
+    if len(condition) > 0:
         if arg.refseq:
             log.warning('Conflict options: "-max_len" and "-refseq", '
                         'ignore length limit.')

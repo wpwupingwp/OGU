@@ -102,6 +102,8 @@ def parse_args():
     evaluate.add_argument('-step', default=50, type=int,
                           help='step length for sliding-window scan')
     primer = arg.add_argument_group('Primer')
+    primer.add_argument('-skip_primer', action='store_true',
+                        help='skip primer designing')
     primer.add_argument('-ambiguous', dest='ambiguous_base_n', default=4,
                         type=int, help='number of ambiguous bases')
     primer.add_argument('-coverage', dest='coverage', default=0.6, type=float,
