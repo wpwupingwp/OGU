@@ -164,7 +164,7 @@ instructions:
         Download the installer according to OS. Unzip and add the path of
         subfolder *bin* to _PATH_.
 # Usage
-BarcodeFinder is a command line program. Once a user opens the command line
+BarcodeFinder is a command-line program. Once a user opens the command line
 (Windows) or terminal (Linux and MacOS), just type the command:
 ```
 # Windows
@@ -173,46 +173,46 @@ python -m BarcodeFinder [input] -[options] -out [out_folder]
 python3 -m BarcodeFinder [input] -[options] -out [out_folder]
 ```
 ## Quick examples
-1. Download all _rbcL_ sequences of plants(viridiplantae) and do pre-process.
+1. Download all _rbcL_ sequences of species in Poaceae family and do
+   pre-process.  
 ```
 # Windows
-python -m BarcodeFinder -gene rbcL -taxon Viridiplantae -stop 1 -out rbcL_all_plant
+python -m BarcodeFinder.gb2fasta -gene rbcL -taxon Poaceae -out rbcL_Poaceae
 # Linux and macOS
-python3 -m BarcodeFinder -gene rbcL -taxon Viridiplantae -stop 1 -out rbcL_all_plant
+python3 -m BarcodeFinder.gb2fasta -gene rbcL -taxon Poaceae -out rbcL_Poaceae
 ```
-2. Download all ITS sequences of _Rosa_. Do pre-process and keep redundant
+2. Download all ITS sequences of _Rosa_ genus. Do pre-process and keep redundant
    sequences:
 ```
 # Windows
-python -m BarcodeFinder -query internal transcribed spacer -taxon Rosa -stop 1 -out Rosa_its -uniq no
+python -m BarcodeFinder.gb2fasta -query internal transcribed spacer -taxon Rosa -out Rosa_its -uniq no
 # Linux and macOS
-python3 -m BarcodeFinder -query internal transcribed spacer -taxon Rosa -stop 1 -out Rosa_its -uniq no
+python3 -m BarcodeFinder.gb2fasta -query internal transcribed spacer -taxon Rosa -out Rosa_its -uniq no
 ```
-3. Download all Poaceae chloroplast genome sequences in the RefSeq database,
-   plus one's own data. Then do pre-process and evaluation of variance (skip
-   primer
-   design):
+3. Download all Lamiaceae chloroplast genome sequences in the RefSeq database.
+   Then do pre-process and evaluation of variance (skip primer designing):
 ```
 # Windows
-python -m BarcodeFinder -og cp -refseq -taxon Poaceae -out Poaceae_cpg -fasta my_data.fasta -stop 2
+python -m BarcodeFinder -og cp -refseq -taxon Lamiaceae -out Lamiaceae_cp -skip_primer
 # Linux and macOS
-python3 -m BarcodeFinder -og cp -refseq -taxon Poaceae -out Poaceae_cpg -fasta my_data.fasta stop 2
+python3 -m BarcodeFinder -og cp -refseq -taxon Lamiaceae -out Lamiaceae_cp -skip_primer
 ```
 4. Download sequences of _Zea mays_, set length between 100 bp and 3000 bp,
-   plus one's aligned data, and then run a full analysis:
+   and then perform evaluation and primer designing. Note that the space in
+   the species name is replaced with underscore "\_".
 ```
 # Windows
-python -m BarcodeFinder -taxon "Zea mays" -min_len 100 -max_len 3000 -out Zea_mays -aln my_data.aln
+python -m BarcodeFinder -taxon Zea_mays -min_len 100 -max_len 3000 -out Zea_mays
 # Linux and macOS
-python3 -m BarcodeFinder -taxon "Zea mays" -min_len 100 -max_len 3000 -out Zea_mays -aln my_data.aln
+python3 -m BarcodeFinder -taxon Zea_mays -min_len 100 -max_len 3000 -out Zea_mays
 ```
-5. Download all _Oryza_ chloroplast genomes (not only in RefSeq database),
-   keep the longest sequence for each species and run a full analysis:
+5. Download all _Oryza_ mitochondria genomes, keep the longest sequence for
+   each species and run a full analysis: 
 ```
 # Windows
-python -m BarcodeFinder -taxon Oryza -og cp -min_len 50000 -max_len 500000 -uniq longest -out Oryza_cp
+python -m BarcodeFinder -taxon Oryza -og mt -min_len 50000 -max_len 200000 -uniq longest -out Oryza_cp
 # Linux and macOS
-python3 -m BarcodeFinder -taxon Oryza -og cp -min_len 50000 -max_len 500000 -uniq longest -out Oryza_cp
+python3 -m BarcodeFinder -taxon Oryza -og mt -min_len 50000 -max_len 200000 -uniq longest -out Oryza_cp
 ```
 ## Input
 BarcodeFinder accepts:
@@ -222,10 +222,6 @@ BarcodeFinder accepts:
 3. alignments (fasta format); and
 4. Genbank format files.
 
-Note that ambiguous bases are allowed in sequence. If users want to use "\*"
-or "?" to represent a series of files, they should make sure to use quotation
-marks. For example, "\*.fasta" (include quotation marks) means all fasta files
-in the folder.
 ## Sequence ID
 BarcodeFinder uses a uniform sequence ID for all fasta files that it generates.
 ```
