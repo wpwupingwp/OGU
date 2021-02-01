@@ -51,7 +51,7 @@ Open terminal, run
    * [Q&A](q&a)
 
 # Features
-:heavy_check_mark: Automatically collect, organize and clean sequence data from NCBI Genbank
+:heavy_check_mark: Automatically collect, organize and clean sequence data from NCBI GenBank
 or local: collect data with abundant options; extract CDS,
 intergenic spacer, or any other annotations from original sequencep; remove
 redundant sequences according to species information; remove invalid or
@@ -206,39 +206,31 @@ python -m BarcodeFinder -taxon Zea_mays -min_len 100 -max_len 3000 -out Zea_mays
 # Linux and macOS
 python3 -m BarcodeFinder -taxon Zea_mays -min_len 100 -max_len 3000 -out Zea_mays
 ```
-5. Download all _Oryza_ mitochondria genomes, keep the longest sequence for
-   each species and run a full analysis: 
+5. Download all _Oryza_ mitochondria genomes in RefSeq database, keep the
+   longest sequence for each species and run a full analysis: 
 ```
 # Windows
-python -m BarcodeFinder -taxon Oryza -og mt -min_len 50000 -max_len 200000 -uniq longest -out Oryza_cp
+python -m BarcodeFinder -taxon Oryza -og mt -min_len 50000 -max_len 200000 -uniq longest -out Oryza_cp -refseq yes
 # Linux and macOS
-python3 -m BarcodeFinder -taxon Oryza -og mt -min_len 50000 -max_len 200000 -uniq longest -out Oryza_cp
+python3 -m BarcodeFinder -taxon Oryza -og mt -min_len 50000 -max_len 200000 -uniq longest -out Oryza_cp -refseq yes
 ```
-## Input
-BarcodeFinder accepts:
-1. Genbank queries. Users can use "-query" or combine with other filters;
-2. unaligned fasta files. Each file is considered one locus when evaluating
-   the variance;
-3. alignments (fasta format); and
-4. Genbank format files.
-
 ## Sequence ID
-BarcodeFinder uses a uniform sequence ID for all fasta files that it generates.
+BarcodeFinder uses a uniform sequence id format for input fasta files and all output sequences.
 ```
-SeqName|Kingdom|Phylum|Class|Order|Family|Genus|Species|Accession|SpecimenID|Type
+Locus|Kingdom|Phylum|Class|Order|Family|Genus|Species|Accession|SpecimenID|Isolate
 # example
-rbcL|Poales|Poaceae|Oryza|longistaminata|MF998442|TAN:GB60B-2014|
+rbcL|Viridiplantae|Streptophyta|Magnoliopsida|Poales|Poaceae|Oryza|longistaminata|MF998442|TAN:GB60B-2014|
 ```
 The order of the fields is fixed. The fields are separated by vertical bars
 ("|"). The space character (" ") was disallowed and was replaced by an
 underscore ("\_"). Due to missing data, some fields may be empty. 
-* SeqName
+* Locus
 
     SeqName refers to the name of a sequence. Usually it is the gene name. For
     intergenic spacer, an underscore ("\_") is used to connect two gene's
     names, e.g., "geneA_geneB".
 
-    If a valid sequence name cannot be found in the annotations of the Genbank
+    If a valid sequence name cannot be found in the annotations of the GenBank
     file, BarcodeFinder will use "Unknown" instead.
 
     For chloroplast genes, if "-rename" option is set, the program will try to
@@ -259,7 +251,7 @@ underscore ("\_"). Due to missing data, some fields may be empty.
     angiosperm) in the cases of plants, BarcodeFinder will guess the class of the
     species.
 
-    Given the taxonomy information in Genbank file:
+    Given the taxonomy information in GenBank file:
     ```
     Eukaryota; Viridiplantae; Streptophyta; Embryophyta; Tracheophyta;
             Spermatophyta; Magnoliophyta; basal Magnoliophyta; Amborellales;
@@ -284,27 +276,157 @@ underscore ("\_"). Due to missing data, some fields may be empty.
     scientific name of the species. It may contains the subspecies' name.
 * Accession
 
-    The Genbank Accession number for the sequence. It does not contain the
+    The GenBank Accession number for the sequence. It does not contain the
     record's version.
 * SpecimenID
 
-    The ID of the specimen of the sequence. Usually this value is empty.
+    Specimen ID of the sequence. May be empty.
 * Type
 
-    The type of the sequence. Could be "gene", "spacer", "intron" or else.
-## Output
+    Isolate ID of the sequence. May be empty
+
+## Command line
+:exclamation: In Linux and MacOS, Python2 is `python2` and Python3 is `python3`.  However,
+in Windows, Python3 is called `python`, too. Please notice the difference.
+
+ * Show help information of each module
+ ```shell
+ # Windows
+ python -m BarcodeFinder -h
+ python -m BarcodeFinder.gb2fasta -h
+ python -m BarcodeFinder.evaluate -h
+ python -m BarcodeFinder.primer -h
+ # Linux and MacOS
+ python3 -m BarcodeFinder.gb2fasta -h
+ python3 -m BarcodeFinder.evaluate -h
+ python3 -m BarcodeFinder.primer -h
+ ```
+ * Full process
+ ```shell
+ # Windows
+ python -m BarcodeFinder -gene [gene name] -taxon [taxon name] -og [organelle type] -out [output name]
+ # Linux and MacOS
+ python3 -m BarcodeFinder -gene [gene name] -taxon [taxon name] -og [organelle type] -out [output name]
+ ```
+ * Collect, convert, and clean GenBank data with gb2fasta module
+ ```shell
+ # Windows
+ python -m BarcodeFinder.gb2fasta -gene [gene name] -taxon [taxon name] -og [organelle type] -out [output name]
+ # Linux and MacOS
+ python3 -m BarcodeFinder.gb2fasta -gene [gene name] -taxon [taxon name] -og [organelle type] -out [output name]
+ ```
+ * Evaluate variance of given fasta files
+ ```shell
+ # Windows
+ python -m BarcodeFinder.evaluate -fasta [fasta files]
+ # Linux and MacOS
+ python3 -m BarcodeFinder.evaluate -fasta [input file]
+ ```
+ * Design universal primers of given alignments.
+ ```shell
+ # Windows
+ python -m BarcodeFinder.primer -aln [alignment files]
+ # Linux and MacOS
+ python3 -m BarcodeFinder.primer -aln [alignment files]
+ ```
+# Input
+BarcodeFinder accepts:
+1. GenBank queries. Users can use "-query" or combine with any other filters;
+2. GenBank-format files.
+3. Unaligned fasta files. Each file is considered one locus when evaluating
+   the variance;
+4. Alignments (fasta format).
+
+# Output
 All results will be put in the output folder. If the user does not set the
 output path via "-out", BarcodeFinder will create a folder labelled "Result".
-* _a_.gb
 
-    The raw Genbank file. The _a_ comes from the query's keyword.
-* _a_.plus
+In the output folder, several subfolders will be created.
 
-    The raw Genbank file plus extended annotations for spacers and introns.
-* _a_.fasta
+* GenBank
 
-    The converted fasta file of the ".gb" file.
-* _b_.primer.csv
+    Raw GenBank files.
+
+* Divide
+
+    Fasta files converted from the GenBank file. Each file represents a
+    fragment of the original sequence according to the annotation.
+
+    For instance, a record in a "rbcL.gb" file may also contains atpB gene's
+    sequences. The "rbcL.fasta" file does not contain any upstream/downstream
+    sequences and "atpB_rbcL.fasta" does not have even one base of the atpB or
+    rbcL gene, just the spacer (assuming that the annotation is precise).
+
+    User can skip this dividing step with the option "-no_divide".
+* Fasta
+
+    Raw fasta files users provided.
+* Unique
+
+    Fasta files after removing redundant sequences.
+* Expanded_fasta
+
+    To design primers, BarcodeFinder extend a sequence to its
+    upstream/downstream. Only used in the primer module.
+* Alignment
+
+    Aligned fasta files.
+* Evaluate
+
+    Including output files from the evaluation module.
+
+    * `.pdf`
+
+        The PDF format of the figure containing the sliding-window scan result of
+        the alignment.
+    * `.png`
+
+        The PNG format of the figure containing the sliding-window scan result of
+        the alignment.
+    * `.variance.tsv`
+
+        The CSV format of the sliding-window scan result. *"Index"* means the
+        location of the base in the alignment. Note that the value DOES NOT means
+        the variance of the base column; instead it refers to the variance of the
+        fragment started from this column.
+
+* Primer
+
+    Including output files from the primer module.
+
+    * _b_.primer.fastq
+
+        The fastq format file of a primer's sequence. It contains two sequences,
+        and the direction is 5' to 3'. The first is the forward primer, and the
+        second is the reverse primer. The quality of each base is equal to its
+        proportion of the column in the alignment. Note that the sequence may
+        contains amibiguous bases if it was not disabled.
+
+    * _b_.uniq.aln
+
+        The alignment of the fasta file.
+    * _b_.uniq.candidate.fasta
+
+        The candidate primers. This file may contains thousands of records. We do
+        not recommend paying attention to it.
+    * _b_.uniq.candidate.fastq
+
+        Again, the candidate primers. This time, the file has the quality
+        information that equals base's proportion in the column of the
+        alignment.
+    * _b_.uniq.consensus.fastq
+
+        The fastq format of the consensus sequence of the alignment. Note that
+        it contains alignment gap ("-"). Although this may be the most useful
+        file in the folder, it is NOT RECOMMENDED that it be used directly
+        because consensus-genrating algorithm are optimised for primer design. Hence, the consensus sequence may be different from the _"real"_ consensus.
+* Temp
+
+    Including temporary files. Could be safely deleted .
+
+In the output folder, several files were also generated.
+
+* Primers.csv
 
     The list of primer pairs in CSV (comma-separated values text) format. The
     _b_ is the name of the locus/fragment (usually a gene or spacer).
@@ -425,27 +547,6 @@ output path via "-out", BarcodeFinder will create a folder labelled "Result".
     satisfy the user's specific considerations, it is suggested that primer
     pairs be chosen manually if the first primer pair fails during the PCR
     experiment.
-* _b_.primer.fastq
-
-    The fastq format file of a primer's sequence. It contains two sequences,
-    and the direction is 5' to 3'. The first is the forward primer, and the
-    second is the reverse primer. The quality of each base is equal to its
-    proportion of the column in the alignment. Note that the sequence may
-    contains amibiguous bases if it was not disabled.
-* _b_.pdf
-
-    The PDF format of the figure containing the sliding-window scan result of
-    the alignment.
-* _b_.png
-
-    The PNG format of the figure containing the sliding-window scan result of
-    the alignment.
-* _b_.variance.tsv
-
-    The CSV format of the sliding-window scan result. *"Index"* means the
-    location of the base in the alignment. Note that the value DOES NOT means
-    the variance of the base column; instead it refers to the variance of the
-    fragment started from this column.
 
 * Log.txt
 
@@ -460,68 +561,10 @@ output path via "-out", BarcodeFinder will create a folder labelled "Result".
     ratio of the gap ("-") in the alignment. A higher value means that the
     sequences may have too many insertions/deletions or the alignment is not
     reliable.
-* by_name
-
-    The folder contains *"undivided"* sequences and intermediate results.
-    Actually they are "roughly divided" sequences. The original Genbank file
-    is firstly divided into different fasta files if the Genbank record
-    contains different contents. Usually, one Genbank record contains serveral
-    annotated regions (multiple genes, for example). If two records contains
-    the same series of annotations (same order), they are put into same fasta
-    file. Each file contains the intact sequence form the related Genbank
-    record.
 
 * by_gene
 
-    The folder contains divided sequences and intermediate results. After
-    the divided step occurred in by_name, BarcodeFinder then divides each
-    *cluster* of Genbank records into several fasta files so that each file
-    contains only one region (one locus, one gene, one spacer or one
-    misc_feature) of the annotation.
 
-    For instance, a record in a "rbcL.gb" file may also contains atpB gene's
-    sequences. The "rbcL.fasta" file does not contain any upstream/downstream
-    sequences (except for ".expand" files) and "atpB_rbcL.fasta" does not have
-    even one base of the atpB or rbcL gene, just the spacer (assuming that the
-    annotation is precise).
-
-    User can skip this dividing step by setting "-no_divide" to use the whole
-    sequence for analysis. Note that doing so DOES NOT skip the first dividing
-    step.
-
-    These two folders can usually be ignored. However, a user may
-    utilise one of these intermediate results (especially for those who only
-    use BarcodeFinder to collect data from Genbank):
-    * _b_.fasta
-        The raw fasta file converted directly from the Genbank file containing
-        only sequences of one locus/fragment.
-    * _b_.expand
-
-        To design primers, BarcodeFinder extend a sequence to its
-        upstream/downstream. Users can use "-expand 0" to skip the expansion.
-        The next step generates files that all have ".expand" in their
-        filenames.
-    * _b_.uniq
-
-        Non-redundant sequences.
-    * _b_.uniq.aln
-
-        The alignment of the fasta file.
-    * _b_.uniq.candidate.fasta
-
-        The candidate primers. This file may contains thousands of records. We do
-        not recommend paying attention to it.
-    * _b_.uniq.candidate.fastq
-
-        Again, the candidate primers. This time, the file has the quality
-        information that equals base's proportion in the column of the
-        alignment.
-    * _b_.uniq.consensus.fastq
-
-        The fastq format of the consensus sequence of the alignment. Note that
-        it contains alignment gap ("-"). Although this may be the most useful
-        file in the folder, it is NOT RECOMMENDED that it be used directly
-        because consensus-genrating algorithm are optimised for primer design. Hence, the consensus sequence may be different from the _"real"_ consensus.
 
 # Options
 ## Help
@@ -549,7 +592,7 @@ output path via "-out", BarcodeFinder will create a folder labelled "Result".
 
 * -gb filename
 
-    User-provided Genbank file or files.
+    User-provided GenBank file or files.
 
 * -stop value
 
@@ -574,7 +617,7 @@ output path via "-out", BarcodeFinder will create a folder labelled "Result".
     ("_") in the folder name to avoid mysterious errors caused by other
     Unicode characters.
 
-## Genbank
+## GenBank
 * -allow_mosaic_spacer
     
     If one gene is nested with another gene, normally they do not have spacers.
@@ -602,7 +645,7 @@ output path via "-out", BarcodeFinder will create a folder labelled "Result".
 * -email address
 
     BarcodeFinder uses Biopython to handle the communication between the user
-    and the NCBI Genbank database. The database requires that the to provide
+    and the NCBI GenBank database. The database requires that the to provide
     an email address in case of abnormal situations that require NCBI to
     contact the user. The default address was designed to be empty.
 
@@ -623,10 +666,10 @@ output path via "-out", BarcodeFinder will create a folder labelled "Result".
     will be exclude.
 
     For much more complex exclude options, please consider to use "Advance
-    search" in Genbank website.
+    search" in GenBank website.
 * -gene name
 
-    The gene's name which the user wants to query in Genbank. If the user
+    The gene's name which the user wants to query in GenBank. If the user
     wants to use logical expressions like "OR", "AND", "NOT", s/he should use
     "-query" instead. If there is space in the gene's name, make sure to use
     quotation marks.
@@ -634,7 +677,7 @@ output path via "-out", BarcodeFinder will create a folder labelled "Result".
     Note that "ITS" is not a gene name--it is "internal transcribed spacer".
 
     Sometimes "-gene" options may bring in unwanted sequences. For example, if
-    a user queries "rbcL[gene]" in Genbank, spacers containing rbcL or rbcL's
+    a user queries "rbcL[gene]" in GenBank, spacers containing rbcL or rbcL's
     upstream/downstream gene may be found, such as "atpB_rbcL spacer" or atpB.
 
 * -group value
@@ -653,18 +696,18 @@ output path via "-out", BarcodeFinder will create a folder labelled "Result".
     It is reported that the "group" filter may return abnormal records, for
     instance, return plants' records when the group is "animal" and the
     "organelle" is "chloroplast". Furthermore, it may match a great number of
-    records in Genbank. Hence, we strongly recommend using "-taxon" instead.
+    records in GenBank. Hence, we strongly recommend using "-taxon" instead.
 
     The default *value* is empty.
 
 * -min_len value
 
-    The minimum length of the records downloaded from Genbank. The default
+    The minimum length of the records downloaded from GenBank. The default
     *value* is 100 (bp). The *number* must be an integer.
 
 * -max_len value
 
-    The maximum length of the records downloaded from Genbank. The default
+    The maximum length of the records downloaded from GenBank. The default
     *value* is 10000 (bp). The *number* must be an integer.
 
 * -molecular type
@@ -699,7 +742,7 @@ output path via "-out", BarcodeFinder will create a folder labelled "Result".
 * -query string
 
     The query string provided by the user. It behaves in the same manner as
-    the query the user typed into the Search Box in NCBI Genbank's webpage.
+    the query the user typed into the Search Box in NCBI GenBank's webpage.
 
     Make sure to follow NCBI's grammar for queries. It can contain several
     words. Remember to add quotation marks if an item contains more than one
@@ -713,7 +756,7 @@ output path via "-out", BarcodeFinder will create a folder labelled "Result".
 
     Ask BarcodeFinder to only query sequences in the RefSeq database.
     [RefSeq](https://www.ncbi.nlm.nih.gov/refseq/about/) is considered to be
-    of higher quality than the other sequences in Genbank.
+    of higher quality than the other sequences in GenBank.
 
     If the user set this option, "-min_seq" and "-max_seq" will be removed to
     set no limit on the sequence length. If the user really wants to set a
@@ -758,7 +801,7 @@ output path via "-out", BarcodeFinder will create a folder labelled "Result".
 * -max_name_len value
 
     The maximum length of a feature name. Some annotation's feature name in
-    Genbank file is too long, and usually, they are not the target sequence
+    GenBank file is too long, and usually, they are not the target sequence
     the user wants. By setting this option, BarcodeFinder will truncate the
     annotation's feature name if it is too long. By default, the *value* is
     50.
@@ -771,14 +814,14 @@ output path via "-out", BarcodeFinder will create a folder labelled "Result".
 
     Note that this option is different with "-max_len". This option limits the
     length of one annotation's sequence. The "-max_len" limits the whole
-    sequence's length of one Genbank record.
+    sequence's length of one GenBank record.
 
     For an organelle genome's analysis, if the user sets the "-no_divide"
     option, this option will be ignored.
 * -no_divide
 
     If set, it will analyse the whole sequence instead of the divided
-    fragments. By default, BarcodeFinder divides one Genbank record into
+    fragments. By default, BarcodeFinder divides one GenBank record into
     several fragments according to its annotation.
 
     Note that this option is of Boolean type. It IS NOT followed with a *value*.
@@ -810,7 +853,7 @@ output path via "-out", BarcodeFinder will create a folder labelled "Result".
         locus if there is more than one sequence.
     * first
 
-        According to the records' order in the original Genbank file, only the
+        According to the records' order in the original GenBank file, only the
         first sequence of the same species' same locus will be kept. Others
         will be ignored directly. This is the default option due to
         performance considerations.
@@ -918,7 +961,7 @@ family or the whole class of the Poales) and multiple fragments (such as the
 chloroplast genomes), the time to complete may be one hour or more on a PC or
 laptop.
 
-BarcodeFinder requires less memory (usually less than 0.5 GB, although, for a
+BarcodeFinder requires few memory (usually less than 0.5 GB, although, for a
 large taxon BLAST may require more) and few CPUs (one core is enough). It can
 run very well on a normal PC. Multiple CPU cores may be helpful for the
 alignment and tree construction steps.
@@ -933,7 +976,7 @@ As yet unpublished.
 
 # License
 The software itself is licensed under
-[AGPL-3.0](https://github.com/wpwupingwp/novowrap/blob/master/LICENSE) (**not include third-party
+[AGPL-3.0](https://github.com/wpwupingwp/barcodefinder/blob/master/LICENSE) (**not include third-party
 software**).
 
 # Q&A
