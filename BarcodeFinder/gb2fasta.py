@@ -98,8 +98,8 @@ def parse_args(arg_str=None):
                                 'chloroplast', 'pl', 'plastid'),
                        default='no', help='organelle type')
     query.add_argument('-query', nargs='*', help='query text')
-    query.add_argument('-refseq', action='store_true',
-                       help='Only search in RefSeq database')
+    query.add_argument('-refseq', choices=('both', 'yes', 'no'),
+                       default='both', help='include RefSeq or not')
     query.add_argument('-seq_n', default=0, type=int,
                        help='maximum number of records to download, '
                             '0 for unlimited')
@@ -131,6 +131,9 @@ def get_query_string(arg, silence=False):
         if arg.rename:
             log.warning('BarcodeFinder will try to rename genes by regular '
                         'expression.')
+        if arg.refseq != 'both':
+            log.warning('Conflict options: "-max_len" and "-refseq", '
+                        'ignore length limit.')
     else:
         pass
     condition = []
@@ -160,12 +163,16 @@ def get_query_string(arg, silence=False):
         condition.append('mitochondrion[filter]')
     else:
         condition.append('(plastid[filter] OR chloroplast[filter])')
-    if arg.refseq:
+    print(arg.refseq)
+    if arg.refseq == 'both':
+        pass
+    elif arg.refseq == 'yes':
         condition.append('refseq[filter]')
+    else:
+        condition.append('NOT refseq[filter]')
     if len(condition) > 0:
         if arg.refseq:
-            log.warning('Conflict options: "-max_len" and "-refseq", '
-                        'ignore length limit.')
+            pass
         else:
             condition.append(f'("{arg.min_len}"[SLEN] : "{arg.max_len}"[SLEN])')
     if arg.exclude is not None:

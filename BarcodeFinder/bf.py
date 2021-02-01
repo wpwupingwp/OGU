@@ -79,12 +79,13 @@ def parse_args():
     gb2fasta_.add_argument('-molecular', choices=('all', 'DNA', 'RNA'),
                            default='all', help='molecular type')
     gb2fasta_.add_argument('-og', '-organelle', dest='organelle',
-                           choices=('both', 'no', 'mt', 'mitochondrion', 'cp',
-                                    'chloroplast', 'pl', 'plastid'),
-                           default='no', help='organelle type')
+                           choices=('ignore', 'both', 'no', 'mt',
+                                    'mitochondrion', 'cp', 'chloroplast',
+                                    'pl', 'plastid'),
+                           default='ignore', help='organelle type')
     gb2fasta_.add_argument('-query', nargs='*', help='query text')
-    gb2fasta_.add_argument('-refseq', action='store_true',
-                           help='Only search in RefSeq database')
+    gb2fasta_.add_argument('-refseq', choices=('both', 'yes', 'no'),
+                           default='no', help='include RefSeq or not')
     gb2fasta_.add_argument('-seq_n', default=0, type=int,
                            help='maximum number of records to download')
     gb2fasta_.add_argument('-taxon', help='Taxonomy name')
