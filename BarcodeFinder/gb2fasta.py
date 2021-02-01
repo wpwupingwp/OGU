@@ -94,9 +94,10 @@ def parse_args(arg_str=None):
     query.add_argument('-molecular', choices=('all', 'DNA', 'RNA'),
                        default='all', help='molecular type')
     query.add_argument('-og', '-organelle', dest='organelle',
-                       choices=('both', 'no', 'mt', 'mitochondrion', 'cp',
-                                'chloroplast', 'pl', 'plastid'),
-                       default='no', help='organelle type')
+                       choices=('ignore', 'both', 'no', 'mt',
+                                'mitochondrion', 'cp', 'chloroplast',
+                                'pl', 'plastid'),
+                       default='ignore', help='organelle type')
     query.add_argument('-query', nargs='*', help='query text')
     query.add_argument('-refseq', choices=('both', 'yes', 'no'),
                        default='both', help='include RefSeq or not')
@@ -154,16 +155,18 @@ def get_query_string(arg, silence=False):
             condition.append(f'"{arg.taxon}"[organism]')
         else:
             condition.append(f'{arg.taxon}[organism]')
-    if arg.organelle == 'both':
+    if arg.organelle == 'ignore':
+        pass
+    elif arg.organelle == 'both':
         condition.append('(mitochondrion[filter] OR plastid[filter] '
                          'OR chloroplast[filter])')
     elif arg.organelle == 'no':
-        pass
+        condition.append('NOT mitochondrion[filter] NOT plastid[filter] '
+                         'NOT chloroplast[filter])')
     elif arg.organelle in ('mt', 'mitochondrion'):
         condition.append('mitochondrion[filter]')
     else:
         condition.append('(plastid[filter] OR chloroplast[filter])')
-    print(arg.refseq)
     if arg.refseq == 'both':
         pass
     elif arg.refseq == 'yes':
