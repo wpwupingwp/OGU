@@ -158,7 +158,7 @@ def bf_main():
     arg, other_args2 = evaluate.evaluate_main()
     arg, other_args3 = primer.primer_main()
     if len(other_args3) != 0:
-        log.warning(f'Unrecognized options {" ".join(other_args3)}')
+        log.debug(f'Unrecognized options {" ".join(other_args3)}')
     log.info('Exit.')
     return
 

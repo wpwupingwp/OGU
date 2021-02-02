@@ -633,7 +633,7 @@ def pick_pair(primers, alignment, arg):
     good_pairs = []
     for i in less_pairs:
         i.add_info(alignment)
-        if i.resolution >= arg.resolution:
+        if i.observed_res >= arg.resolution:
             good_pairs.append(i)
     good_pairs.sort(key=lambda x: x.score, reverse=True)
     log.info('Successfully found validated primers.')
@@ -725,7 +725,7 @@ def primer_design(aln: Path, result: Path, arg):
     out1.close()
     out2.close()
     out3.close()
-    log.info(f'Primers info were written into {out2}')
+    # log.info(f'Primers info were written into {out2}')
     return True
 
 
@@ -750,7 +750,6 @@ def primer_main():
         log.info('Quit.')
         return None, None
     for aln in arg.aln:
-        print(aln)
         primer_design(aln, primer_result, arg)
 
     log.info(f'Primer result could be found in {primer_result}')

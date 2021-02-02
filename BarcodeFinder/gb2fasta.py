@@ -129,7 +129,7 @@ def get_query_string(arg, silence=False):
         if arg.rename:
             log.warning('BarcodeFinder will try to rename genes by regular '
                         'expression.')
-        if arg.refseq != 'both':
+        if arg.refseq == 'yes':
             log.warning('Conflict options: "-max_len" and "-refseq", '
                         'ignore length limit.')
     else:
@@ -171,7 +171,7 @@ def get_query_string(arg, silence=False):
     else:
         condition.append('NOT refseq[filter]')
     if len(condition) > 0:
-        if arg.refseq:
+        if arg.refseq == 'yes':
             pass
         else:
             condition.append(f'("{arg.min_len}"[SLEN] : "{arg.max_len}"[SLEN])')
