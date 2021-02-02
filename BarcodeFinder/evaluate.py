@@ -83,11 +83,13 @@ def init_arg(arg):
         for i in arg.fasta:
             if not i.exists() or not i.is_file():
                 log.error(f'{i} does not exist or is not a valid file.')
+                return None
     if arg.aln is not None:
         arg.aln = [Path(i).absolute() for i in arg.aln]
         for i in arg.aln:
             if not i.exists() or not i.is_file():
                 log.error(f'{i} does not exist or is not a valid file.')
+                return None
     else:
         arg.aln = []
     if not any([arg.fasta, arg.aln, arg.fasta_folder]):
@@ -116,7 +118,7 @@ def align(files: list, folder: Path) -> (list, list):
         return aligned, unaligned
     _, mafft = utils.get_mafft()
     if not _:
-        log.error('Cannot run mafft.')
+        log.error('Cannot run MAFFT.')
         return aligned, unaligned
     # get available CPU cores
     cores = max(1, cpu_count() - 1)
@@ -325,7 +327,7 @@ def nucleotide_diversity(alignment: np.array) -> float:
         sum_d_ij += d_ij
     pi = (2 / (n * (n - 1)) * sum_d_ij) / m
     # pi should > 0
-    return min(0, pi)
+    return max(0, pi)
 
 
 def phylogenetic_diversity(alignment: np.array, tmp: Path) -> (float, float,

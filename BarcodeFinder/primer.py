@@ -261,6 +261,7 @@ def init_arg(arg):
     for i in arg.aln:
         if not i.exists() or not i.is_file():
             log.error(f'{i} does not exist or is not a valid file.')
+            return None
     if not any([arg.aln, arg.aln_folder]):
         log.warning('Empty input.')
         return None
