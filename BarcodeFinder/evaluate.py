@@ -78,7 +78,8 @@ def init_arg(arg):
             arg.fasta.append(i.absolute())
     log.info('Add fasta from gb2fasta module if possible.')
     for i in Path(arg._unique).glob('*'):
-        arg.fasta.append(i.absolute())
+        if i.name != 'Unknown.fasta':
+            arg.fasta.append(i.absolute())
     if arg.fasta:
         for i in arg.fasta:
             if not i.exists() or not i.is_file():
