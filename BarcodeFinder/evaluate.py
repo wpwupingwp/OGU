@@ -556,7 +556,7 @@ def evaluate_main():
         with open(evaluation_result, 'a', encoding='utf-8') as out:
             out.write(aln.stem+','+str(summary)+'\n')
         if not arg.quick:
-            output_sliding(sliding, aln.stem, arg._evaluate, arg.step, arg.size)
+            output_sliding(sliding, aln.stem, arg._evaluate, arg.size, arg.step)
     log.info(f'Evaluation results could be found in {evaluation_result}')
     log.info('Evaluate module finished.')
     # for i in aligned:
