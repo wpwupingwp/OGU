@@ -736,17 +736,17 @@ def primer_main():
     arg = init_arg(arg)
     if arg is None:
         log.info('Quit primer module.')
-        return None
+        return None, None
     if arg.skip_primer:
         log.info('Skip primer module.')
-        return None
+        return None, None
     primer_result = arg.out / 'Primers.csv'
     csv_title = 'Locus,Samples,' + Pair._title + '\n'
     with open(primer_result, 'w', encoding='utf-8') as out:
         out.write(csv_title)
     if arg is None:
         log.info('Quit.')
-        return None
+        return None, None
     for aln in arg.aln:
         print(aln)
         primer_design(aln, primer_result, arg)
