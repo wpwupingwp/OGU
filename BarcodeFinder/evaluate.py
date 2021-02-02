@@ -60,10 +60,6 @@ def parse_args(arg_str=None):
     sliding_window.add_argument('-step', type=int, default=50,
                                 help='step length')
     return arg.parse_known_args()
-    if arg_str is None:
-        return arg.parse_args(), None
-    else:
-        return arg.parse_known_args(arg_str.split(' '))
 
 
 def init_arg(arg):
@@ -528,21 +524,16 @@ def evaluate(aln: Path, arg) -> tuple:
     return summary, gc_array, sliding
 
 
-def evaluate_main(arg_str=None):
+def evaluate_main():
     """
     Evaluate variance of alignments.
-    Args:
-        arg_str:
-    Returns:
-        aln: aligned files
-        out_csv: evaluation of each locus
     """
     log.info('Running evaluate module...')
-    arg, other_args2 = parse_args(arg_str)
+    arg, other_args2 = parse_args()
     arg = init_arg(arg)
     if arg is None:
         log.info('Quit evaluate module.')
-        return None, other_args2, None
+        return None, other_args2
     aligned, unaligned = align(arg.fasta, arg._align)
     aligned.extend(arg.aln)
     evaluation_result = arg.out / 'Evaluation.csv'
@@ -565,9 +556,9 @@ def evaluate_main(arg_str=None):
             output_sliding(sliding, aln.stem, arg._evaluate, arg.step, arg.size)
     log.info(f'Evaluation results could be found in {evaluation_result}')
     log.info('Evaluate module finished.')
-    for i in aligned:
-        utils.move(i, arg._align/(i.name), copy=True)
-    return arg, other_args2, arg._align
+    # for i in aligned:
+    #     utils.move(i, arg._align/(i.name), copy=True)
+    return arg, other_args2
 
 
 if __name__ == '__main__':

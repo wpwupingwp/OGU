@@ -765,14 +765,12 @@ def unique(files: list, arg) -> list:
     return unique_files
 
 
-def gb2fasta_main(arg_str=None):
+def gb2fasta_main():
     """
     Collect genbank files and convert them to fasta files.
-    Args:
-        arg_str(str): arguments string
     """
     log.info('Running gb2fasta module...')
-    arg, other_args = parse_args(arg_str)
+    arg, other_args = parse_args()
     arg = init_arg(arg)
     if arg is None:
         log.info('Quit gb2fasta module.')
@@ -810,8 +808,8 @@ def gb2fasta_main(arg_str=None):
                 expanded_files = [i for i in expanded_files
                                  if i.name != 'Unknown.fasta']
                 unique_files = unique(expanded_files, arg)
-    for i in unique_files:
-        utils.move(i, arg._unique/(i.name), copy=True)
+    # for i in unique_files:
+    #     utils.move(i, arg._unique/(i.name), copy=True)
     log.info('GB2fasta module finished.')
     return arg, other_args
 

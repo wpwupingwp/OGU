@@ -239,10 +239,6 @@ def parse_args(arg_str=None):
     arg.add_argument('-size', type=int, default=500, help='window size')
     arg.add_argument('-step', type=int, default=50, help='step length')
     return arg.parse_known_args()
-    if arg_str is None:
-        return arg.parse_args()
-    else:
-        return arg.parse_known_args(arg_str.split(' '))[0]
 
 
 def init_arg(arg):
@@ -731,17 +727,12 @@ def primer_design(aln: Path, result: Path, arg):
     return True
 
 
-def primer_main(arg_str=None):
+def primer_main():
     """
     Evaluate variance of alignments.
-    Args:
-        arg_str:
-    Returns:
-        aln: aligned files
-        out_csv: evaluation of each locus
     """
     log.info('Running primer module...')
-    arg, other_args = parse_args(arg_str)
+    arg, other_args = parse_args()
     arg = init_arg(arg)
     if arg is None:
         log.info('Quit primer module.')
@@ -762,7 +753,7 @@ def primer_main(arg_str=None):
 
     log.info(f'Primer result could be found in {primer_result}')
     log.info('Primer module Finished.')
-    return arg, arg.aln
+    return arg, other_args
 
 
 if __name__ == '__main__':
