@@ -42,6 +42,8 @@ def parse_args(arg_str=None):
     arg.add_argument('-fasta_folder', default=None, help='folder of fasta files')
     arg.add_argument('-aln', nargs='*', help='aligned files')
     arg.add_argument('-out', help='output folder')
+    arg.add_argument('-skip_primer', action='store_true',
+                     help='skip primer designing')
     options = arg.add_argument_group('Options')
     options.add_argument('-ig', '-ignore_gap', dest='ignore_gap',
                          action='store_true',

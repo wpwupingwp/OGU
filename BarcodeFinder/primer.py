@@ -738,6 +738,7 @@ def primer_main(arg_str=None):
     """
     log.info('Running primer module...')
     arg = parse_args(arg_str)
+    print(vars(arg))
     arg = init_arg(arg)
     if arg is None:
         log.info('Quit primer module.')
