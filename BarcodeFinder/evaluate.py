@@ -34,7 +34,7 @@ except ImportError:
     pass
 
 
-def parse_args(arg_str=None):
+def parse_args():
     arg = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description=evaluate_main.__doc__)

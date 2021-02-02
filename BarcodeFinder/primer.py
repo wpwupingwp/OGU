@@ -6,7 +6,7 @@ import re
 import subprocess
 from collections import defaultdict
 from itertools import product as cartesian_product
-from os import cpu_count, devnull
+from os import cpu_count
 from pathlib import Path
 
 import numpy as np
@@ -14,7 +14,6 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from Bio.SeqFeature import SeqFeature, FeatureLocation
 from Bio.Data.IUPACData import ambiguous_dna_values as ambiguous_data
-from Bio.Blast.Applications import NcbiblastnCommandline as Blast
 from Bio import SeqIO
 from primer3 import (calcTm, calcHairpinTm, calcHomodimerTm,
                      calcHeterodimerTm)
