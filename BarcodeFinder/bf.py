@@ -85,7 +85,7 @@ def parse_args():
                            default='ignore', help='organelle type')
     gb2fasta_.add_argument('-query', nargs='*', help='query text')
     gb2fasta_.add_argument('-refseq', choices=('both', 'yes', 'no'),
-                           default='no', help='include RefSeq or not')
+                           default='both', help='include RefSeq or not')
     gb2fasta_.add_argument('-seq_n', default=0, type=int,
                            help='maximum number of records to download')
     gb2fasta_.add_argument('-taxon', help='Taxonomy name')
