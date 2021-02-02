@@ -16,12 +16,10 @@ from matplotlib import use as mpl_use
 mpl_use('Agg')
 from matplotlib import pyplot as plt
 from matplotlib import rcParams
-rcParams['axes.labelsize'] = 16
-rcParams['axes.linewidth'] = 1.5
-rcParams['axes.titlesize'] = 25
-rcParams['font.size'] = 16
-rcParams['lines.linewidth'] = 1.5
-
+params = {'axes.labelsize': 12, 'axes.linewidth': 1.5, 'axes.titlesize': 15,
+          'font.size': 12, 'lines.linewidth': 1.5,
+          'legend.fontsize': 10, 'legend.handlelength': 2}
+rcParams.update(params)
 from BarcodeFinder import utils
 
 # define logger
