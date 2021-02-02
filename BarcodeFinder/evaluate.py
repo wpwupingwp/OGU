@@ -326,7 +326,7 @@ def nucleotide_diversity(alignment: np.array) -> float:
         d_ij = np.sum(alignment[i] != alignment[(i + 1):])
         sum_d_ij += d_ij
     pi = (2 / (n * (n - 1)) * sum_d_ij) / m
-    # pi should > 0
+    # pi should > 0, use max()
     return max(0, pi)
 
 
