@@ -60,9 +60,9 @@ def parse_args(arg_str=None):
     sliding_window.add_argument('-step', type=int, default=50,
                                 help='step length')
     if arg_str is None:
-        return arg.parse_args()
+        return arg.parse_args(), None
     else:
-        return arg.parse_known_args(arg_str.split(' '))[0]
+        return arg.parse_known_args(arg_str.split(' '))
 
 
 def init_arg(arg):
@@ -534,11 +534,11 @@ def evaluate_main(arg_str=None):
         out_csv: evaluation of each locus
     """
     log.info('Running evaluate module...')
-    arg = parse_args(arg_str)
+    arg, other_args2 = parse_args(arg_str)
     arg = init_arg(arg)
     if arg is None:
         log.info('Quit evaluate module.')
-        return None, None
+        return None, None, None
     aligned, unaligned = align(arg.fasta, arg._align)
     aligned.extend(arg.aln)
     evaluation_result = arg.out / 'Evaluation.csv'
@@ -561,7 +561,7 @@ def evaluate_main(arg_str=None):
             output_sliding(sliding, aln.stem, arg._evaluate, arg.step, arg.size)
     log.info(f'Evaluation results could be found in {evaluation_result}')
     log.info('Evaluate module finished.')
-    return arg, arg._align
+    return arg, other_args2, arg._align
 
 
 if __name__ == '__main__':

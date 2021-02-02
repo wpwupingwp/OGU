@@ -754,6 +754,7 @@ def primer_main(arg_str=None):
         log.info('Quit.')
         return None
     for aln in arg.aln:
+        print(aln)
         primer_design(aln, primer_result, arg)
 
     log.info(f'Primer result could be found in {primer_result}')

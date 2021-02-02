@@ -154,12 +154,18 @@ def bf_main():
     log.addHandler(log_file_handler)
 
     option = utils.arg_to_str(arg)
-    arg, unique_folder = gb2fasta.gb2fasta_main(option)
+    arg, other_args, unique_folder = gb2fasta.gb2fasta_main(option)
+    if other_args is not None:
+        other_options = ' ' + ' '.join(other_args)
+        option += other_options
     if unique_folder is not None:
         option += f' -fasta_folder {unique_folder}'
     else:
         pass
-    arg, aln_folder = evaluate.evaluate_main(option)
+    arg, other_args2, aln_folder = evaluate.evaluate_main(option)
+    if other_args is not None:
+        other_options = ' ' + ' '.join(other_args)
+        option += other_options
     if aln_folder is not None:
         option += f' -aln_folder {aln_folder}'
     else:
