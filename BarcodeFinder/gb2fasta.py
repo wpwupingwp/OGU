@@ -253,8 +253,8 @@ def download(arg):
     log.info('\tDownloading...')
     log.warning('\tMay be slow if connection is bad. Ctrl+C to quit.')
     name_words = []
-    for i in (arg.group, arg.taxon, arg.organelle, arg.gene):
-        if i is not None:
+    for i in (arg.taxon, arg.organelle, arg.gene):
+        if i is not None and i not in ('both', 'ignore', 'no'):
             name_words.append(i)
     if len(name_words) != 0:
         name = utils.safe_path('-'.join(name_words)) + '.gb'
