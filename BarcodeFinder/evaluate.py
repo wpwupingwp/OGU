@@ -16,7 +16,7 @@ from matplotlib import use as mpl_use
 mpl_use('Agg')
 from matplotlib import pyplot as plt
 from matplotlib import rcParams
-params = {'axes.labelsize': 12, 'axes.linewidth': 1.5, 'axes.titlesize': 15,
+params = {'axes.labelsize': 12, 'axes.linewidth': 1.5, 'axes.titlesize': 20,
           'font.size': 12, 'lines.linewidth': 1.5,
           'legend.fontsize': 10, 'legend.handlelength': 2}
 rcParams.update(params)
@@ -447,12 +447,13 @@ def output_sliding(sliding: list, name: str, out: Path,
     # draw
     out_pdf = out / (name+'.pdf')
     plt.style.use('seaborn-colorblind')
-    plt.title(f'Sliding window results of {name} (sample={sliding[0].Samples}, '
-              f'size={size} bp, step={step} bp)')
-    plt.xlabel('Bases')
     # how to find optimized size?
     fig, ax1 = plt.subplots(figsize=(15 + len(sliding) // 5000, 10))
     ax1.yaxis.set_ticks(np.linspace(0, 1, num=11))
+    ax1.set_title(f'Sliding window results of {name} '
+                  f'(sample={sliding[0].Samples}, '
+                  f'size={size} bp, step={step} bp)', pad=30)
+    ax1.set_xlabel('Bases')
     ax1.set_ylabel('Gap Ratio, GC Ratio, Resolution & Shannon Index')
     ax1.plot(index, [i.Gap_Ratio for i in sliding], label='Gap Ratio',
              alpha=0.8)
