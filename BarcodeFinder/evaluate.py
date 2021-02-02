@@ -59,6 +59,7 @@ def parse_args(arg_str=None):
                                 help='window size')
     sliding_window.add_argument('-step', type=int, default=50,
                                 help='step length')
+    return arg.parse_known_args()
     if arg_str is None:
         return arg.parse_args(), None
     else:
@@ -70,14 +71,20 @@ def init_arg(arg):
     if arg.fasta is None and arg.aln is None and arg.fasta_folder is None:
         log.warning('Empty input.')
         return None
+    arg = utils.init_out(arg)
+    if arg.out is None:
+        return None
     if all([arg.fasta, arg.fasta_folder]):
         log.info('Do not recommend to  use "-fasta" and "-fasta_folder" '
                  'at same time!')
     if arg.fasta is not None:
         arg.fasta = [Path(i).absolute() for i in arg.fasta]
     if arg.fasta_folder is not None:
-        # overwrite
-        arg.fasta = [i.absolute() for i in Path(arg.fasta_folder).glob('*')]
+        for i in Path(arg.fasta_folder).glob('*'):
+            arg.fasta.append(i.absolute())
+    log.info('Add fasta from gb2fasta module if possible.')
+    for i in Path(arg._unique).glob('*'):
+        arg.fasta.append(i.absolute())
     if arg.fasta:
         for i in arg.fasta:
             if not i.exists() or not i.is_file():
@@ -89,9 +96,6 @@ def init_arg(arg):
                 log.error(f'{i} does not exist or is not a valid file.')
     else:
         arg.aln = []
-    arg = utils.init_out(arg)
-    if arg.out is None:
-        return None
     if arg.quick:
         log.info('The "-quick" mode was opened. '
                  'Skip sliding-window analysis')
@@ -538,7 +542,7 @@ def evaluate_main(arg_str=None):
     arg = init_arg(arg)
     if arg is None:
         log.info('Quit evaluate module.')
-        return None, None, None
+        return None, other_args2, None
     aligned, unaligned = align(arg.fasta, arg._align)
     aligned.extend(arg.aln)
     evaluation_result = arg.out / 'Evaluation.csv'
@@ -561,6 +565,8 @@ def evaluate_main(arg_str=None):
             output_sliding(sliding, aln.stem, arg._evaluate, arg.step, arg.size)
     log.info(f'Evaluation results could be found in {evaluation_result}')
     log.info('Evaluate module finished.')
+    for i in aligned:
+        utils.move(i, arg._align/(i.name), copy=True)
     return arg, other_args2, arg._align
 
 

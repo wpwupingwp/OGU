@@ -105,10 +105,7 @@ def parse_args(arg_str=None):
                        help='maximum number of records to download, '
                             '0 for unlimited')
     query.add_argument('-taxon', help='Taxonomy name')
-    if arg_str is None:
-        return arg.parse_args(), None
-    else:
-        return arg.parse_known_args(arg_str.split(' '))
+    return arg.parse_known_args()
 
 
 def get_query_string(arg, silence=False):
@@ -779,7 +776,7 @@ def gb2fasta_main(arg_str=None):
     arg = init_arg(arg)
     if arg is None:
         log.info('Quit gb2fasta module.')
-        return None, None, None
+        return None, other_args
     log.info(f'Input genbank files:\t{arg.gb}')
     if arg.query is not None:
         log.info(f'Query: {arg.query}')
@@ -789,7 +786,7 @@ def gb2fasta_main(arg_str=None):
     if arg.no_divide:
         log.info('Download finished. Skip dividing.')
         log.info('GB2fasta module finished.')
-        return arg, other_args, None
+        return arg, other_args
     for i in arg.gb:
         divide(i, arg)
     if arg.unique == 'no':
@@ -816,7 +813,7 @@ def gb2fasta_main(arg_str=None):
     for i in unique_files:
         utils.move(i, arg._unique/(i.name), copy=True)
     log.info('GB2fasta module finished.')
-    return arg, other_args, arg._unique
+    return arg, other_args
 
 
 if __name__ == '__main__':

@@ -154,24 +154,22 @@ def bf_main():
     log.addHandler(log_file_handler)
 
     option = utils.arg_to_str(arg)
-    arg, other_args, unique_folder = gb2fasta.gb2fasta_main(option)
+    #arg, other_args, unique_folder = gb2fasta.gb2fasta_main(option)
+    arg, other_args, = gb2fasta.gb2fasta_main()
+    option2 = ''
     if other_args is not None:
         other_options = ' ' + ' '.join(other_args)
-        option += other_options
-    if unique_folder is not None:
-        option += f' -fasta_folder {unique_folder}'
-    else:
-        pass
-    arg, other_args2, aln_folder = evaluate.evaluate_main(option)
-    if other_args is not None:
-        other_options = ' ' + ' '.join(other_args)
-        option += other_options
-    if aln_folder is not None:
-        option += f' -aln_folder {aln_folder}'
-    else:
-        pass
-    primer.primer_main(option)
+        option2 += other_options
+    arg, other_args2 = evaluate.evaluate_main(option2)
+    option3 = ''
+    if other_args2 is not None:
+        other_options = ' ' + ' '.join(other_args2)
+        option3 += other_options
+    primer.primer_main(option3)
     log.info('Exit.')
+    print(option, 1)
+    print(option2, 2)
+    print(option3, 3)
     return
 
 

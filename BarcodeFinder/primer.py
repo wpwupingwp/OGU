@@ -238,6 +238,7 @@ def parse_args(arg_str=None):
                         help='maximum product length(include primer)')
     arg.add_argument('-size', type=int, default=500, help='window size')
     arg.add_argument('-step', type=int, default=50, help='step length')
+    return arg.parse_known_args()
     if arg_str is None:
         return arg.parse_args()
     else:
@@ -248,20 +249,23 @@ def init_arg(arg):
     if arg.aln is None and arg.aln_folder is None:
         log.warning('Empty input.')
         return None
+    arg = utils.init_out(arg)
+    if arg.out is None:
+        return None
     if all([arg.aln, arg.aln_folder]):
         log.info('Do not recommend to use "-aln" and "-aln_folder" '
                  'at same time!')
     if arg.aln is not None:
         arg.aln = [Path(i).absolute() for i in arg.aln]
     if arg.aln_folder is not None:
-        # overwrite
-        arg.aln = [i.absolute() for i in Path(arg.aln_folder).glob('*')]
+        for i in Path(arg.aln_folder).glob('*'):
+            arg.aln.append(i.absolute())
+    log.info('Add aligned files from evaluate module if possible.')
+    for i in Path(arg._align).glob('*'):
+        arg.aln.append(i.absolute())
     for i in arg.aln:
         if not i.exists() or not i.is_file():
             log.error(f'{i} does not exist or is not a valid file.')
-    arg = utils.init_out(arg)
-    if arg.out is None:
-        return None
     return arg
 
 
@@ -737,8 +741,7 @@ def primer_main(arg_str=None):
         out_csv: evaluation of each locus
     """
     log.info('Running primer module...')
-    arg = parse_args(arg_str)
-    print(vars(arg))
+    arg, other_args = parse_args(arg_str)
     arg = init_arg(arg)
     if arg is None:
         log.info('Quit primer module.')
