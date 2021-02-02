@@ -63,10 +63,6 @@ def parse_args(arg_str=None):
 
 
 def init_arg(arg):
-    # ignore arg.fasta if using arg.fasta_folder
-    if arg.fasta is None and arg.aln is None and arg.fasta_folder is None:
-        log.warning('Empty input.')
-        return None
     arg = utils.init_out(arg)
     if arg.out is None:
         return None
@@ -75,6 +71,8 @@ def init_arg(arg):
                  'at same time!')
     if arg.fasta is not None:
         arg.fasta = [Path(i).absolute() for i in arg.fasta]
+    else:
+        arg.fasta = []
     if arg.fasta_folder is not None:
         for i in Path(arg.fasta_folder).glob('*'):
             arg.fasta.append(i.absolute())
@@ -92,6 +90,9 @@ def init_arg(arg):
                 log.error(f'{i} does not exist or is not a valid file.')
     else:
         arg.aln = []
+    if not any([arg.fasta, arg.aln, arg.fasta_folder]):
+        log.warning('Empty input.')
+        return None
     if arg.quick:
         log.info('The "-quick" mode was opened. '
                  'Skip sliding-window analysis')
