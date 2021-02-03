@@ -219,7 +219,7 @@ def parse_args(arg_str=None):
     arg.add_argument('-out', help='output directory')
     arg.add_argument('-ambiguous', dest='ambiguous_base_n', default=4, type=int,
                         help='number of ambiguous bases')
-    arg.add_argument('-coverage', dest='coverage', default=0.6, type=float,
+    arg.add_argument('-coverage', dest='coverage', default=0.5, type=float,
                         help='minimal coverage of base and primer')
     arg.add_argument('-mismatch', dest='mismatch', default=4, type=int,
                         help='maximum mismatch bases in primer')
@@ -227,7 +227,7 @@ def parse_args(arg_str=None):
                         help='minimum primer length')
     arg.add_argument('-pmax', dest='max_primer', default=25, type=int,
                         help='maximum primer length')
-    arg.add_argument('-res', dest='resolution', type=float, default=0.5,
+    arg.add_argument('-res', dest='resolution', type=float, default=0.3,
                         help='minimal resolution')
     arg.add_argument('-topn', dest='top_n', type=int, default=1,
                         help='keep n primers for each high variant region')

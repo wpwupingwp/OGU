@@ -107,15 +107,15 @@ def parse_args():
     primer = arg.add_argument_group('Primer')
     primer.add_argument('-ambiguous', dest='ambiguous_base_n', default=4,
                         type=int, help='number of ambiguous bases')
-    primer.add_argument('-coverage', dest='coverage', default=0.6, type=float,
+    primer.add_argument('-coverage', dest='coverage', default=0.5, type=float,
                         help='minimal coverage of base and primer')
     primer.add_argument('-mismatch', dest='mismatch', default=4, type=int,
                         help='maximum mismatch bases in primer')
-    primer.add_argument('-pmin', dest='min_primer', default=18, type=int,
+    primer.add_argument('-pmin', dest='min_primer', default=20, type=int,
                         help='minimum primer length')
-    primer.add_argument('-pmax', dest='max_primer', default=28, type=int,
+    primer.add_argument('-pmax', dest='max_primer', default=25, type=int,
                         help='maximum primer length')
-    primer.add_argument('-res', dest='resolution', type=float, default=0.5,
+    primer.add_argument('-res', dest='resolution', type=float, default=0.3,
                         help='minimal resolution')
     primer.add_argument('-topn', dest='top_n', type=int, default=1,
                         help='keep n primers for each high variant region')
