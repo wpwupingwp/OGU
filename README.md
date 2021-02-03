@@ -224,66 +224,53 @@ rbcL|Viridiplantae|Streptophyta|Magnoliopsida|Poales|Poaceae|Oryza|longistaminat
 The order of the fields is fixed. The fields are separated by vertical bars
 ("|"). The space character (" ") was disallowed and was replaced by an
 underscore ("\_"). Due to missing data, some fields may be empty. 
-* Locus
 
-    SeqName refers to the name of a sequence. Usually it is the gene name. For
-    intergenic spacer, an underscore ("\_") is used to connect two gene's
-    names, e.g., "geneA_geneB".
+`Locus`: SeqName refers to the name of a sequence. Usually it is the gene
+name. For intergenic spacer, an underscore ("\_") is used to connect two
+gene's names, e.g., "geneA_geneB".
 
-    If a valid sequence name cannot be found in the annotations of the GenBank
-    file, BarcodeFinder will use "Unknown" instead.
+If a valid sequence name cannot be found in the annotations of the GenBank
+file, BarcodeFinder will use "Unknown" instead.
 
-    For chloroplast genes, if "-rename" option is set, the program will try to
-    use regular expressions to fix potential errors in gene names.
-* Kingdom
+For chloroplast genes, if "-rename" option is set, the program will try to use
+regular expressions to fix potential errors in gene names.
 
-    The kingdom (_Fungi, Viridiplantae, Metazoa_) of a species. For convenience,
-    a superkingdom (_Bacteria, Archaea, Eukaryota, Viruses, Viroids_) may be used
-    if the kingdom information for a sequence is missing.
-* Phylum
+`Kingdom`: The kingdom (_Fungi, Viridiplantae, Metazoa_) of a species. For
+convenience, a superkingdom (_Bacteria, Archaea, Eukaryota, Viruses, Viroids_)
+may be used if the kingdom information for a sequence is missing.
 
-    The phylum of the species.
-* Class
+`Phylum`: The phylum of the species.
+
+`Class`: The class of the species.
     
-    The class of the species.
-    
-    Because some species' classes are left emtpy (for instance, basal
-    angiosperm) in the cases of plants, BarcodeFinder will guess the class of the
-    species.
+Because some species' classes are left empty (for instance, basal angiosperm)
+in the cases of plants, BarcodeFinder will guess the class of the species.
 
-    Given the taxonomy information in GenBank file:
-    ```
-    Eukaryota; Viridiplantae; Streptophyta; Embryophyta; Tracheophyta;
-            Spermatophyta; Magnoliophyta; basal Magnoliophyta; Amborellales;
-            Amborellaceae; Amborella.
-    ```
-    BarcodeFinder will use "basal Magnoliophyta" as the class because this
-    expression is located before the order ("Amborellales").
+Given the taxonomy information in GenBank file:
+```
+Eukaryota; Viridiplantae; Streptophyta; Embryophyta; Tracheophyta;
+    Spermatophyta; Magnoliophyta; basal Magnoliophyta; Amborellales;
+    Amborellaceae; Amborella.
+```
+BarcodeFinder will use "basal Magnoliophyta" as the class because this
+expression is located before the order ("Amborellales").
 
-* Order
+`Order`: The order name of the species.
 
-    The order name of the species.
-* Family
+`Family`: The family name of the species.
 
-    The family name of the species.
-* Genus
+`Genus`: The genus name of the species, i.e., the first part of the scientific
+name.
 
-    The genus name of the species, i.e., the first part of the scientific
-    name.
-* Species
+`Species`: The specific epithet of the species, i.e., the second part of the
+scientific name of the species. It may contains the subspecies' name.
 
-    The specific epithet of the species, i.e., the second part of the
-    scientific name of the species. It may contains the subspecies' name.
-* Accession
+`Accession`: The GenBank Accession number for the sequence. It does not
+contain the record's version.
 
-    The GenBank Accession number for the sequence. It does not contain the
-    record's version.
-* SpecimenID
+`SpecimenID`: Specimen ID of the sequence. May be empty.
 
-    Specimen ID of the sequence. May be empty.
-* Type
-
-    Isolate ID of the sequence. May be empty
+`Isolate`: Isolate ID of the sequence. May be empty
 
 ## Command line
 :exclamation: In Linux and MacOS, Python2 is `python2` and Python3 is `python3`.  However,
@@ -371,177 +358,138 @@ In the output folder, several subfolders will be created.
 * Alignment
 
     Aligned fasta files.
+
+    `.aln`: The aligned fasta files.
+
+    `.-consensus.fastq`: The fastq format of the consensus sequence of the
+    alignment. Note that it contains alignment gap ("-"). It is NOT
+    RECOMMENDED to be used directly because consensus-genrating algorithm are
+    optimised for primer design.
 * Evaluate
 
     Including output files from the evaluation module.
 
-    * `.pdf`
+    `.pdf`: The PDF format of the figure containing the sliding-window scan
+    result of the alignment.
 
-        The PDF format of the figure containing the sliding-window scan result of
-        the alignment.
-    * `.png`
-
-        The PNG format of the figure containing the sliding-window scan result of
-        the alignment.
-    * `.variance.tsv`
-
-        The CSV format of the sliding-window scan result. *"Index"* means the
-        location of the base in the alignment. Note that the value DOES NOT means
-        the variance of the base column; instead it refers to the variance of the
-        fragment started from this column.
+    `.csv`: The CSV format file of the sliding-window scan result. *"Index"*
+    means the location of the base in the alignment.
 
 * Primer
 
     Including output files from the primer module.
 
-    * _b_.primer.fastq
+    `.primer.fastq`: The fastq format file of a primer's sequence. It contains
+    two sequences, and the direction is 5' to 3'. The first is the forward
+    primer, and the second is the reverse primer. The quality of each base is
+    equal to its proportion of the column in the alignment. Note that the
+    sequence may contains amibiguous bases if it was not disabled.
 
-        The fastq format file of a primer's sequence. It contains two sequences,
-        and the direction is 5' to 3'. The first is the forward primer, and the
-        second is the reverse primer. The quality of each base is equal to its
-        proportion of the column in the alignment. Note that the sequence may
-        contains amibiguous bases if it was not disabled.
+    `.primers.csv`: The list of primer pairs in CSV (comma-separated values
+    text) format.
 
-    * _b_.uniq.aln
+    `.candidate.fasta`: The candidate primers. This file may contains
+    thousands of records. Do not recommend paying attention to it.
 
-        The alignment of the fasta file.
-    * _b_.uniq.candidate.fasta
+    `.candidate.fastq`: Again, the candidate primers. This time, each file has
+    the quality information that equals base's proportion in the column of the
+    alignment.
 
-        The candidate primers. This file may contains thousands of records. We do
-        not recommend paying attention to it.
-    * _b_.uniq.candidate.fastq
-
-        Again, the candidate primers. This time, the file has the quality
-        information that equals base's proportion in the column of the
-        alignment.
-    * _b_.uniq.consensus.fastq
-
-        The fastq format of the consensus sequence of the alignment. Note that
-        it contains alignment gap ("-"). Although this may be the most useful
-        file in the folder, it is NOT RECOMMENDED that it be used directly
-        because consensus-genrating algorithm are optimised for primer design. Hence, the consensus sequence may be different from the _"real"_ consensus.
 * Temp
 
     Including temporary files. Could be safely deleted .
+
 
 In the output folder, several files were also generated.
 
 * Primers.csv
 
-    The list of primer pairs in CSV (comma-separated values text) format. The
-    _b_ is the name of the locus/fragment (usually a gene or spacer).
+    The list of primer pairs in CSV (comma-separated values text) format.
 
     Its title:
     ```
-    Locus,Score,Samples,AvgProductLength,StdEV,MinProductLength,MaxProductLength,Coverage,Resolution,TreeValue,AvgTerminalBranchLen,Entropy,LeftSeq,LeftTm,LeftAvgBitscore,LeftAvgMismatch,RightSeq,RightTm,RightAvgBitscore,RightAvgMismatch,DeltaTm,AlnStart,AlnEnd,AvgSeqStart,AvgSeqEnd
+    Locus,Samples,Score,AvgProductLength,StdEV,MinProductLength,MaxProductLength,Coverage,Observed_Res,Tree_Res,PD_terminal,Entropy,LeftSeq,LeftTm,LeftAvgBitscore,LeftAvgMismatch,RightSeq,RightTm,RightAvgBitscore,RightAvgMismatch,DeltaTm,AlnStart,AlnEnd,AvgSeqStart,AvgSeqEnd
     ```
 
-    * Locus
+    `Locus`: The name of the locus/fragment.
 
-        The name of the locus/fragment.
-    * Score
+    `Samples`: The number of sequences used to find this pair of primers.
 
-        The score of this pair of primers. Usually the higher, the better.
-    * Samples
+    `Score`: The score of this pair of primers. Usually the higher, the better.
 
-        The number of sequences which were used to find this pair of primers.
+    `AvgProductLength`: The average length of the DNA fragment amplified by
+    this pair of primers.
 
-    * AvgProductLength
+    `StdEV`: The standard deviation of the AvgProductLength. A higher number
+    means the primer may amplify different lengths of DNA fragments.
 
-        The average length of the DNA fragment amplified by this pair of
-        primers.
-    * StdEV
+    `MinProductLength`: The minimum length of an amplified fragment.
 
-        The standard deviation of the AvgProductLength. A higher number means
-        the primer may amplify different lengths of DNA fragments.
-    * MinProductLength
+    `MaxProductLength`: The maximum length of an amplified fragment. Note that
+    all of these fields are calculated using given sequences.
 
-        The minimum length of an amplified fragment.
-    * MaxProductLength
+    `Coverage`: The coverage of this pair of primers over the sequences it
+    used.  Calculated with the BLAST result. High coverage means that the pair
+    is much more "universal".
 
-        The maximum length of an amplified fragment. Note that all of these
-        fields are calculated using given sequences.
-    * Coverage
+    `Observed_Res`: The *observed resolution* of the sub-alignment sliced by
+    the primer pair, which is equal to the number of unique sequences divided
+    by the number of total sequences. The value is between 0 and 1.
 
-        The coverage of this pair of primers over the sequences it used.
-        Calculated with the BLAST result. High coverage means that the pair is
-        much more "universal".
-    * Resolution
+    <img src="https://latex.codecogs.com/svg.latex?\dpi{300}&space;R_{o}=\frac{n_{uniq}}{n_{total}}" title="R_{o}=\frac{n_{uniq}}{n_{total}}" />
 
-        <img src="https://latex.codecogs.com/svg.latex?\dpi{300}&space;R_{o}=\frac{n_{uniq}}{n_{total}}" title="R_{o}=\frac{n_{uniq}}{n_{total}}" />
+    `Tree_Res`: The *tree resolution* of the sub-alignment, which is equal to
+    the number of internal nodes on a phylogenetic tree (constructed from the
+    alignment) divided by number of terminal nodes. The value is between 0 and
+    1.
 
-        The *observed resolution* of the sub-alignment sliced by the primer
-        pair, which is equal to the number of unique sequences divided by the
-        number of total sequences. The value is between 0 and 1.
-    * TreeValue
+    <img src="https://latex.codecogs.com/svg.latex?\dpi{300}&space;R_{T}=\frac{n_{internal}}{n_{terminal}}" title="R_{T}=\frac{n_{internal}}{n_{terminal}}" />
 
-        <img src="https://latex.codecogs.com/svg.latex?\dpi{300}&space;R_{T}=\frac{n_{internal}}{n_{terminal}}" title="R_{T}=\frac{n_{internal}}{n_{terminal}}" />
+    `PD_terminal`: The average of the terminal branch's length. It's an edited
+    version of the _Phylogenetic Diversity_ for DNA barcoding evaluation.
 
-        The *tree resolution* of the sub-alignment, which is equal to the
-        number of internal nodes on a phylogenetic tree (constructed from the
-        alignment) divided by number of terminal nodes. The value is between 0
-        and 1.
+    `Entropy`: The Shannon equitability index of the sub-alignment. The value
+    is between 0 and 1.
 
-    * AvgTerminalBranchLen
+    <img src="https://latex.codecogs.com/svg.latex?\dpi{300}&space;E_{H}&space;=&space;\frac{-&space;\sum_{i=1}^{k}{p_{i}&space;\log(p_{i})}}{\log(k)}" title="E_{H} = \frac{- \sum_{i=1}^{k}{p_{i} \log(p_{i})}}{\log(k)}" />
 
-        The average of the terminal branch's length.
-    * Entropy
+    `LeftSeq`: Sequence of the forward primer. The direction is 5' to 3'.
 
-        <img src="https://latex.codecogs.com/svg.latex?\dpi{300}&space;E_{H}&space;=&space;\frac{-&space;\sum_{i=1}^{k}{p_{i}&space;\log(p_{i})}}{\log(k)}" title="E_{H} = \frac{- \sum_{i=1}^{k}{p_{i} \log(p_{i})}}{\log(k)}" />
+    `LeftTm`: The melting temperature of the forward primer. The unit is
+    degress Celsius (°C).
 
-        The Shannon equitability index of the sub-alignment. The value is
-        between 0 and 1.
-    * LeftSeq
+    `LeftAvgBitscore`: The average raw bitscore of the forward primer, which
+    is calculated by BLAST.
 
-        Sequence of the forward primer. The direction is 5' to 3'.
-    * LeftTm
+    `LeftAvgMismatch`: The average number of mismatched bases of the forward
+    primer, as counted by BLAST.
 
-        The melting temperature of the forward primer. The unit is degress
-        Celsius (°C).
-    * LeftAvgBitscore
+    `RightSeq`: Sequence of reverse primer. The direction is 5' to 3'.
 
-        The average raw bitscore of the forward primer, which is calculated by
-        BLAST.
-    * LeftAvgMismatch
+    `RightTm`: The melting temperature of the reverse primer. The unit is
+    degrees Celsius (°C).
 
-        The average number of mismatched bases of the forward primer, as
-        counted by BLAST.
-    * RightSeq
+    `RightAvgBitscore`: The average raw bitscore of the reverse primer, which
+    is calculated by BLAST.
 
-        Sequence of reverse primer. The direction is 5' to 3'.
-    * RightTm
+    `RightAvgMismatch`: The average number of mismatched bases of the reverse
+    primer, as counted by BLAST.
 
-        The melting temperature of the reverse primer. The unit is degrees
-        Celsius (°C).
-    * RightAvgBitscore
+    `DeltaTm`: The difference in the melting temperatures of the forward and
+    reverse primers. A pair of primers with a high DeltaTm may result in
+    failure during the PCR experiment.
 
-        The average raw bitscore of the reverse primer, which is calculated by
-        BLAST.
-    * RightAvgMismatch
+    `AlnStart`: The location of the beginning of the forward primer (5',
+    leftmost of primer pairs) in the entire alignment.
 
-        The average number of mismatched bases of the reverse primer, as
-        counted by BLAST.
-    * DeltaTm
+    `AlnEnd`: The location of the end of the reverse primer (5', rightmost of
+    primer pairs) in the entire alignment.
 
-        The difference in the melting temperatures of the forward and reverse
-        primers. A pair of primers with a high DeltaTm may result in failure
-        during the PCR experiment.
-    * AlnStart
+    `AvgSeqStart`: The average beginning of the forward primer in the original
+    sequences.  *ONLY USED FOR DEBUG*.
 
-        The location of the beginning of the forward primer (5', leftmost of
-        primer pairs) in the entire alignment.
-    * AlnEnd
-
-        The location of the end of the reverse primer (5', rightmost of primer
-        pairs) in the entire alignment.
-    * AvgSeqStart
-
-        The average beginning of the forward primer in the original sequences.
-        *ONLY USED FOR DEBUG*.
-    * AvgSeqEnd
-
-        The average end of the forward primer in the original sequences.
-        *ONLY USED FOR DEBUG*.
+    `AvgSeqEnd`: The average end of the forward primer in the original
+    sequences.  *ONLY USED FOR DEBUG*.
 
     The primer pairs are sorted by *Score*. Since the score may not fully
     satisfy the user's specific considerations, it is suggested that primer
@@ -551,20 +499,15 @@ In the output folder, several files were also generated.
 * Log.txt
 
     The log file. Contains all the information printed on the screen.
-* Options.json
 
-    The JSON file stores all options that the user inputs.
-* Loci.csv
+* Evaluation.csv
 
     The summary of all loci/fragments, which only contains the variance
-    information for each fragment. The only new field, *GapRatio*, means the
-    ratio of the gap ("-") in the alignment. A higher value means that the
-    sequences may have too many insertions/deletions or the alignment is not
-    reliable.
-
-* by_gene
-
-
+    information for each fragment. One of the new field, *GapRatio*, means the
+    ratio of the gap ("-") in the alignment. *PD* means the original version
+    of the phylogenetic diversity and *PD_stem* means an alternative version
+    of it which only calculate the length of the stem branch in the
+    phylogenetic tree.
 
 # Options
 ## Help
