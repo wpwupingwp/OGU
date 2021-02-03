@@ -510,399 +510,288 @@ In the output folder, several files were also generated.
     phylogenetic tree.
 
 # Options
-## Help
-* -h
 
-    Prints help messages for the program. It is highly recommended to use this
-    option to see the list of options and their default values.
-## General
-* -aln filename
+Here are some general options for the program and submodule:
 
-    Alignment files that the user provides. The filename can consist of one
-    file or a series of files. One can use "?" and "\*" to represent one or
-    any characters. *Be sure to use quotation marks*. For example,
-    "a\*.alignment" means any file starting with the letter "a" and ending
-    with ".alignment".
+`-h`: Prints help messages of the program or one of the module. It is highly
+recommended to use this option to see the list of options and their default
+values.
 
-    It only supports the fasta format. Ambiguous bases and gaps ("-") are
-    supported.
+`-gb [filename]`: User-provided GenBank file or files.  Could be one or more
+files that separated by space.  
 
-* -fasta filename
+For instance,
+```
+# one file
+-gb sequence.gb
+# multiple files
+-gb matK.gb rbcL.gb Oryza.gb Homo_sapiens.gb
+```
 
-    User-provided unaligned fasta files. Also supports "\*" and "?". If the
-    user wants to use "-uniq" function, the sequences should be renamed. See
-    the format for the sequence ID above.
+`-fasta [filename]`: User-provided unaligned fasta files. Could be one or
+multiple.
 
-* -gb filename
+`-aln [filename]`: Alignment files that the user provides. Could be one ore
+multiple.
 
-    User-provided GenBank file or files.
+It only supports the fasta format. Ambiguous bases and gaps ("-") are supported.
 
-* -stop value
+`-out [folder name]`: The output folder's name. All results will be put into
+the output folder.  If the user does not set an output path via "-out",
+BarcodeFinder will create a folder named "Result".
 
-    To stop the running BarcodeFinder at a specific step. BarcodeFinder
-    provides an all-in-one solution to find novel DNA barcodes. However, some
-    users may only want to use one module. The *value* could be
-    * 1
-        Only collect data and do pre-processing (download, divide, remove
-        redundant, rename, expand); or
-    * 2
-        Do step 1, and then analyse the variance. Do not design primers.
+BarcodeFinder does not overwrite the existing folder with the same name.
 
-* -out value
+It is HIGHLY RECOMMENDED to use only letters, numbers and underscores ("\_") in
+the folder name to avoid mysterious errors caused by other Unicode characters.
 
-    The output folder's name. All results will be put into the output folder.
-    If the user does not set an output path via "-out", BarcodeFinder will
-    create a folder named "Result".
+Options below are for specific modules.
 
-    BarcodeFinder does not overwrite the existing folder with the same name.
+## gb2fasta
+### Query 
+Options used for querying NCBI GenBank.
 
-    It is HIGHLY RECOMMENDED to use only letters, numbers and underscores
-    ("_") in the folder name to avoid mysterious errors caused by other
-    Unicode characters.
+`-taxon [taxonomy name]`: The taxonomy name. It could be any taxonomic rank
+from kingdom (same as "-group") to species, as long as the user inputs correct
+name (the scientific name of species or taxonomic group in latin, NOT
+ENGLISH). It will restrict the query to the targeted taxonomy unit. Make sure
+to use quotation marks if *taxonomy* has more than one word or use underscore
+to replace space, for instance `"Zea mays"` or `Zea_mays`.  
 
-## GenBank
-* -allow_mosaic_spacer
+`-gene [gene name]`: The gene's name which the user wants to query in GenBank.
+If the user wants to use logical expressions like "OR", "AND", "NOT", s/he
+should use "-query" instead. If there is space in the gene's name, make sure
+to use quotation marks.
+
+Note that "ITS" is not a gene name--it is "internal transcribed spacer".
+
+Sometimes "-gene" options may bring in unwanted sequences. For example, if a
+user queries "rbcL[gene]" in GenBank, spacers containing rbcL or rbcL's
+upstream/downstream gene may be found, such as "atpB_rbcL spacer" or atpB.
+
+`-og [ignore|both|no|mt|mitochondrion|cp|chloroplast|pl|plastid]`: Query
+organelle sequences or not. The default value is `ignore`.
     
-    If one gene is nested with another gene, normally they do not have spacers.
+    - `ignore`: do not consider organelle type, same as GenBank website's
+      default setting.
 
-    However, some users want the fragments between two gene's beginnings and
-    ends. This option is for this specific purpose. For normal usage, *do not
-    recommend*.
-* -allow_repeat
+    - `both`: only query organelle sequences, including both plastid and
+      mitochondrion.
 
-    If genes repeated in downstream, this option will allow the repeat region
-    to be extracted, otherwise any repeated region will be omitted.
+    - `no`: exclude organelle sequences from the query.
+
+    - `cp` or `chloroplast` or `pl` or `plastid`: only query plastid sequences
+
+    - `mt` or `mitochondrion`: only query mitochondrion sequences.
+
+`-refseq [both|yes|no]`: query in RefSeq database or not. The default value is
+`both`.
+
+    - `both`: query all sequences in or not in RefSeq database, same as NCBI
+      website's default setting.
+
+    - `yes`: only query sequences in RefSeq database.
+
+    - `no`: exclude sequences in RefSeq database.
+
+[RefSeq](https://www.ncbi.nlm.nih.gov/refseq/about/) is considered to be of
+higher quality than the other sequences in GenBank. This option could be used
+for getting nuclear/organelle genomes from NCBI. In this situation (`-refseq
+    yes`), the length limit will be removed automatically.
+
+`-seq_n [number]`: Restrict numbers of sequences to be downloaded. The default
+value `0` means no restriction.
+
+`-min_len [length]`: The minimum length of the records downloaded from
+GenBank. The default value is `100` (bp). The number must be an integer.
+
+`-max_len [length]`: The maximum length of the records downloaded from
+GenBank. The default value is `10000` (bp). The number must be an integer.
+
+`-date_start [yyyy/mm/dd]`: The beginning of the release data range of the
+sequences, the format is yyyy/mm/dd.
+
+`-date_end [yyyy/mm/dd]`: The end of the release data range of the sequences,
+the format is yyyy/mm/dd. 
+
+`-molecular [all|DNA|RNA]`: The molecular type,
+which could be DNA or RNA. The
+default is `all`--no restriction.
+
+`-email [email address]`: BarcodeFinder uses Biopython to handle the
+communication between the user and the NCBI GenBank database. The database
+requires users to provide an email address in case of abnormal situations
+that NCBI need to contact the user. The default address was designed to be
+empty.
+
+_However_, for the convenience of the user, BarcodeFinder will use
+"guest@example.com" if the user does not provide an email address.
+
+`-query [expression]`: The query string provided by the user. It behaves in
+the same manner as the query the user typed into the Search Box in NCBI
+GenBank's webpage.
+
+Make sure to follow NCBI's grammar for queries. It can contain several words.
+Remember to add quotation marks if an item contains more than one words, for
+instance, `"Homo sapiens"[organism]`, or use underscore to replace space,
+`Homo_sapiens[organism]`.
+`-exclude [expression]`: Use this option to use negative option. For instance,
+"-exclude Zea [organism]" (do not include quotation marks) will add " NOT
+(Zea[organism])" to the query.
+
+This option can be useful for exclude specific taxon.
+```
+-taxon Zea -exclude "Zea mays"[organism]
+```
+This will query all records in genus *Zea* while records of *Zea mays* will be exclude.
+
+For much more complex exclude options, please consider to use "Advance search"
+in GenBank website.
+
+`-group [all|animals|plants|fungi|protists|bacteria|archaea|viruses]`: To restrict
+the query in given group.  The default value is `all`--no restriction.
+
+It is reported that the "group" filter may return abnormal records, for
+instance, return plants' records when the group is "animal" and the
+"organelle" is "chloroplast". Furthermore, it may match a great number of
+records in GenBank. Hence, we strongly recommend using "-taxon" instead.
+
+### Divide
+Options used for converting GenBank file to fasta files.
+
+`-no_divide`: If set, it will analyse the whole sequence instead of the
+divided fragments. By default, BarcodeFinder divides one GenBank record into
+several fragments according to its annotation.
+
+`-rename`: If set, the program will try to rename genes. For instance, "rbcl"
+will be renamed to "rbcL", and "tRNA UAC" will be renamed to "trnVuac", which
+consists of "trn", the amino acid's letter and transcribed codon. This may be
+helpful if the annotation has nonstandard uppercase/lowercase or naming format
+so it can merge the same sequences to one file for the same locus having
+variant names.
+
+If using Windows operating system, consider using this option to avoid
+contradictory filenames.
+
+`-unique [longest|first|no]`: The method used to remove redundant sequences.
+BarcodeFinder will remove redundant sequences to ensure only one sequence per
+species by default. A user can change its behaviour by setting different
+methods.
+
+    - `first`: According to the records' order in the original GenBank file,
+      only the first sequence of the same species' same locus will be kept.
+      Others will be ignored directly. This is the default option due to
+      performance considerations.
+
+    - `longest`: Keep the longest sequence for one species. The program will
+      compare the sequence's length from the same species' same locus.
+
+    - `no`: Skip this step. All sequences will be kept.
+`-allow_mosaic_spacer`: If one gene is nested with another gene, normally they
+do not have spacers. The default value is `False`.
+
+However, some users want the fragments between two gene's beginnings and ends.
+This option is for this specific purpose (e.g., matK-trnK_UUU). For normal
+usage, *do not recommend*.
+
+`-expand [number]`: The expand length for going upstream/downstream. If set,
+BarcodeFinder will expand the sequence to its upstream/downstream after the
+dividing step to find primer candidates. The default value is `0`.
+
+Note that this option is different with "-max_len". This option limits the
+length of one annotation's sequence. The "-max_len" limits the whole
+sequence's length of one GenBank record.
+`-allow_repeat`: If genes repeated in downstream, this option will allow the
+repeat region to be extracted, otherwise any repeated region will be omitted.
+The default value is `False`.
+
+`-allow_invert_repeat`: If two genes invert-repeated in downstream, this
+option will allow the spacer of them to be extracted, otherwise the spacer
+will be omitted. The default value is `False`.
+
+For instance, geneA-geneB located in one invert-repeat region (IR) of
+chloroplast genome. In another IR region, there are geneB-geneA. This option
+will extract sequences of two different direction as two unique spacers.
     
-    The default value is False.
-* -allow_invert_repeat
+`-max_name_len [number]`: The maximum length of a feature name. Some
+annotation's feature name in GenBank file is too long, and usually, they are
+not the target sequence the user wants. By setting this option, BarcodeFinder
+will truncate the annotation's feature name if it is too long. By default, the
+*value* is 50.
 
-    If two genes invert-repeated in downstream, this option will allow the
-    spacer of them to be extracted, otherwise the spacer will be omitted.
+`-max_seq_len [value]`: The maximum length of a sequence for one annotation.
+Some annotations' sequences are too long (for instance, one gene has two
+exons, and its intron is longer than 10 Kb). This option will skip those long
+sequences.  By default, the *value* is 20000 (bp).
 
-    For instance, geneA-geneB located in one invert-repeat region (IR) of
-    chloroplast genome. In another IR region, there are geneB-geneA. This
-    option will extract sequences of two different direction as two unique
-    spacers.
-    
-    The default value is False.
-* -email address
-
-    BarcodeFinder uses Biopython to handle the communication between the user
-    and the NCBI GenBank database. The database requires that the to provide
-    an email address in case of abnormal situations that require NCBI to
-    contact the user. The default address was designed to be empty.
-
-    _However, for the convenience of the user, BarcodeFinder will use
-    "guest@example.com" if the user does not provide an email address._
-
-* -exclude option
-
-    Use this option to use negative option. For instance, "-exclude Zea
-    [organism]" (do not include quotation marks) will add " NOT
-    (Zea[organism])" to the query.
-
-    This option can be useful for exclude specific taxon.
-    ```
-    -taxon Zea -exclude "Zea mays"[organism]
-    ```
-    This will query all records in genus *Zea* while records of *Zea mays*
-    will be exclude.
-
-    For much more complex exclude options, please consider to use "Advance
-    search" in GenBank website.
-* -gene name
-
-    The gene's name which the user wants to query in GenBank. If the user
-    wants to use logical expressions like "OR", "AND", "NOT", s/he should use
-    "-query" instead. If there is space in the gene's name, make sure to use
-    quotation marks.
-
-    Note that "ITS" is not a gene name--it is "internal transcribed spacer".
-
-    Sometimes "-gene" options may bring in unwanted sequences. For example, if
-    a user queries "rbcL[gene]" in GenBank, spacers containing rbcL or rbcL's
-    upstream/downstream gene may be found, such as "atpB_rbcL spacer" or atpB.
-
-* -group value
-
-    To restrict a group of species to their *superkingdom* or *kingdom*, the
-    value can be
-
-    * animals
-    * plants
-    * fungi
-    * protists
-    * bacteria
-    * archaea
-    * viruses
-
-    It is reported that the "group" filter may return abnormal records, for
-    instance, return plants' records when the group is "animal" and the
-    "organelle" is "chloroplast". Furthermore, it may match a great number of
-    records in GenBank. Hence, we strongly recommend using "-taxon" instead.
-
-    The default *value* is empty.
-
-* -min_len value
-
-    The minimum length of the records downloaded from GenBank. The default
-    *value* is 100 (bp). The *number* must be an integer.
-
-* -max_len value
-
-    The maximum length of the records downloaded from GenBank. The default
-    *value* is 10000 (bp). The *number* must be an integer.
-
-* -molecular type
-
-    The molecular type, which could be DNA or RNA. The default *type* is empty.
-
-* -og type (or -organelle type)
-
-    Adds "organelle[filter]" to a query to limit results to a given organelle
-    type only.
-
-    The *type* could be
-
-    * mitochondrion, or mt
-    * plastid, or pl
-    * chloroplast, or cp
-
-    Usually, users only want organelle genomes instead of fragments. One
-    solution for leaving out fragments is to set "-min_len" and "-max_len" to
-    use a length filter to obtain genomes. Another simple solution is to use
-    RefSeq only by adding the "-refseq" option.
-
-    For instance,
-    ```
-    # all chloroplast sequences of Poaceae (not only in RefSeq)
-    -taxon Poaceae -og chloroplast -min_len 50000 -max_len 300000
-    # all chloroplast sequences of Poaceae (only in RefSeq)
-    -taxon Poaceae -og chloroplast -refseq
-    ```
-
-    Make sure not to make any typo (e.g., chlorplast, or mitochondria).
-* -query string
-
-    The query string provided by the user. It behaves in the same manner as
-    the query the user typed into the Search Box in NCBI GenBank's webpage.
-
-    Make sure to follow NCBI's grammar for queries. It can contain several
-    words. Remember to add quotation marks if an item contains more than one
-    words, for instance, *"Homo sapiens"[organism].
-
-    Do not add quotation marks at the beginning and end of the query string.
-    For instance, *"cbs[gene] AND "Homo sapiens"[organism]" may return empty
-    results.
-
-* -refseq
-
-    Ask BarcodeFinder to only query sequences in the RefSeq database.
-    [RefSeq](https://www.ncbi.nlm.nih.gov/refseq/about/) is considered to be
-    of higher quality than the other sequences in GenBank.
-
-    If the user set this option, "-min_seq" and "-max_seq" will be removed to
-    set no limit on the sequence length. If the user really wants to set a
-    length limit when using "-refseq", s/he can put this filter into the query
-    string:
-    ```
-    # Get all Poaceae sequence in RefSeq, sequences should be 1000 to 10000 bp
-    -query refseq[filter] -taxon Poaceae -min_len 1000 -max_len 10000
-    ```
-
-    Usually, this option will be combined with "-og" to obtain organelle
-    genomes.
-
-    Note that this option is of Boolean type. It IS NOT followed with a *value*.
-
-* -seq_n value
-
-    Download part of records. The *value* should be integer.
-
-    The defaule *value* is None, i.e., download all records.
-* -taxon taxonomy
-
-    The taxonomy name. It could be any taxonomic rank from kingdom (same as
-    "-group") to species, as long as the user inputs correct name (the
-    scientific name of species or taxonomic group in latin, NOT ENGLISH). It
-    will restrict the query to the targeted taxonomy unit. Make sure to use
-    quotation marks if *taxonomy* has more than one word.
-
-## Pre-process
-* -expand value
-
-    The expand length for going upstream/downstream. If set, BarcodeFinder
-    will expand the sequence to its upstream/downstream after the dividing
-    step to find primer candidates. Set the *number* to 0 to skip.
-
-    The default value is 0 if users set "-stop" to 1 or 2, i.e., users do not
-    want to run the primer-design process.
-
-    If users run the whole process but forget to set "-expand", BarcodeFinder
-    will automatically set "-expand" to 200. However, users can force the
-    program to not to expand the sequence by setting it to 0.
-* -max_name_len value
-
-    The maximum length of a feature name. Some annotation's feature name in
-    GenBank file is too long, and usually, they are not the target sequence
-    the user wants. By setting this option, BarcodeFinder will truncate the
-    annotation's feature name if it is too long. By default, the *value* is
-    50.
-* -max_seq_len value
-
-    The maximum length of a sequence for one annotation. Some annotations'
-    sequences are too long (for instance, one gene has two exons, and its
-    intron is longer than 10 Kb). This option will skip those long sequences.
-    By default, the *value* is 20000 (bp).
-
-    Note that this option is different with "-max_len". This option limits the
-    length of one annotation's sequence. The "-max_len" limits the whole
-    sequence's length of one GenBank record.
-
-    For an organelle genome's analysis, if the user sets the "-no_divide"
-    option, this option will be ignored.
-* -no_divide
-
-    If set, it will analyse the whole sequence instead of the divided
-    fragments. By default, BarcodeFinder divides one GenBank record into
-    several fragments according to its annotation.
-
-    Note that this option is of Boolean type. It IS NOT followed with a *value*.
-* -rename
-
-    If set, the program will try to rename genes. For instance, "rbcl" will be
-    renamed to "rbcL", and "tRNA UAC" will be renamed to "trnVuac", which
-    consists of "trn", the amino acid's letter and transcribed codon. This may
-    be helpful if the annotation has nonstandard uppercase/lowercase or naming
-    format so it can merge the same sequences to one file for the same locus
-    having variant names.
-
-    If using Windows, consider using this option to avoid contradictory
-    filenames.
-
-    It is also of Boolean type. The default is not to rename.
-* -uniq method
-
-    The method used to remove redundant sequences. BarcodeFinder will remove
-    redundant sequences to ensure only one sequence per species by default. A
-    user can change its behaviour by setting different methods.
-    * longest
-
-        Keep the longest sequence for one species. The program will compare
-        the sequence's length from the same species' same locus.
-    * random
-
-        The program will randomly pick one sequence for one species' one
-        locus if there is more than one sequence.
-    * first
-
-        According to the records' order in the original GenBank file, only the
-        first sequence of the same species' same locus will be kept. Others
-        will be ignored directly. This is the default option due to
-        performance considerations.
-    * no
-
-        Skip this step. All sequences will be kept.
 ## Evaluate
-* -fast
+`-ig` or `-ignore_gap`: ignore gaps in the alignment.
 
-    If set, BarcodeFinder will skip the calculations for the "tree resolution"
-    and "average terminal branch length" to reduce running time.
+`-iab` or `-ignore_ambigous`: ignore ambiguous bases in the alignment.
 
-    Although the program has been optimized greatly, the phylogenetic tree's
-    inferences can be time consuming if there are too many species (for
-    instance, 10,000). If the user wants to analyse organelle genomes and the
-    species are too numerous, the user can set this option to reduce time. The
-    "tree resolution" and "average terminal branch length" will both become 0
-    in the resultsu file.
-* -step value
+`-quick`: skip sliding-window scan.
 
-    The step length for the sliding-window scan. The default *value* is 50. If
-    the input dataset is too large, an extreamely small *value* (such as 1 or
-    2) may require too much time, especially when the "-fast" option is not
-    used.
+`-size [number]`: the window size of the sliding window scan. The default
+value is `500`.
+
+`-step [number]`: the step size of the sliding window scan. The default value
+is `50`.
+
+`-skip_primer`: skip primer designing. The default value is `False`.
+
 ## Primer design
-* -a value
+`-coverage [value]`: The minimum coverage of the base and primer. The default
+*value* is 0.5 (50%). It is used to remove
+primer candidates if its coverage among all sequences is smaller than the
+threshold. The coverage of primers is
+calculated by BLAST.
 
-    The maximum number of ambiguous bases allowed in one primer. The default
-    *value* is 4.
-* -c value
+`-res [value]`: The minimum *observed resolution* of the fragments or primer
+pairs. The default *value* is 0.3 (30%). The value should be in 0.0 to 1.0.
 
-    The minimum coverage of the base and primer. The default *value* is 0.6
-    (60%).  It is used to remove primer candidates if its coverage among all
-    sequences is smaller than the threshold. The coverage of primers is
-    calculated by BLAST.
+BarcodeFinder uses the *observed resolution* instead of others because of the
+speed. Also, it is considered to be the lower bound of the real resolution
+that a fragment with a low *observed resolution* may not have a satisfactory
+tree resolution/phylogenetic diversity, either.
 
-    Also, it is used to generate a consensus sequence. For one column, if the
-    proportion of one type of base (A, T, C, G) is smaller than the threshold,
-    the program will try to use an ambiguous base that represents two type of
-    bases, and then three, then four ("N").
-* -m value
+`-pmin [length]`: The minimal length of the primer. The default *value* is 20.
 
-    The maximum number of mismatched bases in a primer. This options is used
-    to remove primer candidates if the BLAST results show that there is too
-    much mismatch. The default *value* is 4.
-* -pmin value
+`-pmax [length]`: The maximal length of the primer. The default *value* is 25.
 
-    The minimum length of the primer length. The default *value* is 18.
-* -pmax value
+`-topn [number]`: How many pairs of primers is kept for each input alignment.
+The default value is `1`, i.e., only keep the _best_ primer pair according to
+its `score`.  To keep more pairs, set "-t" to more than 1.
 
-    The maximum length of the primer length. The default *value* is 24.
-* -r value
+`-tmin [length]`: The minimum product length (include primer). The default
+value is `300` (bp). Note this limits the PCR product's length instead of the
+sub-alignment's length.
 
-    The minimum *observed resolution* of the fragments or primer pairs. The
-    default *value* is 0.5. It is used to skip conserved fragments (alignment
-    or sub-alignment defined by a pair of primers).
+`-tmax [length]`: The maximum product length (include primer). 
 
-    BarcodeFinder uses the *observed resolution* instead of others for several
-    reasons:
-    * speed
+The "-tmin" and "-tmax" are used to screen primer candidates. It uses BLAST
+results to set the location of primers on each template sequence and
+calculates the average lengths of the products. Because of the variance of
+species, the same locus may have differenct lengths in different species, plus
+with the stretching of the alignment that gaps were added during the aligning,
+please consider adding some *margins* for these two options.
 
-        The calculation of the *observed resolution* is very fast.
-    * accuracy
+For instance, if a user wants the amplified length to be smaller than 800 and
+greater than 500, s/he could consider setting "-tmin" to 550 and "-tmax" to
+750.
 
-        Due to the existence of possible alignment errors, the *observed
-        resolution* may be higher than the resolutions obtained via other
-        evaluation methods. Hence, it is used as a lower bound.  That is to
-        say, the program considers that a fragment with a low *observed
-        resolution* may not have a satisfactory tree resolution either.
+`-ambiguous [number]`: The maximum number of ambiguous bases allowed in one
+primer. The default value is `4`.
 
-    By setting it to 0, BarcodeFinder can skip this filtration step.
-    Meanwhile, the running time may be extremely long.
-* -t value
-
-    Only keeps *value* pairs of primers for each highly variant region. The
-    default *value* is 1, i.e., only keep the _best_ primer pair. To choose the
-    best pairs of primers, the *Score* each pair received is used. To keep
-    more pairs, set "-t" to more than 1.
-* -tmin value
-
-    The minimum product length (include primer). The default *value* is 300
-    (bp). Note this limits the PCR product's length instead of the
-    sub-alignment's length.
-* -tmax value
-
-    The maximum product length (include primer). The default *value* is 500
-    (bp). Note that it limits the length of the PCR product given by the
-    primer pair instead of the alignment.
-
-    The "-tmin" and "-tmax" are used to screen primer candidates. It uses
-    BLAST results to set the location of primers on each template sequence and
-    calculates the average lengths of the products. Because of the variance of
-    species, the same locus may have differenct lengths in different species,
-    plus with the stretching of the alignment that gaps were added during the
-    aligning, please consider adding some *margins* for these two options.
-
-    For instance, if a user wants the amplified length to be smaller than 800
-    and greater than 500, s/he could consider setting "-tmin" to 550 and
-    "-tmax" to 750.
+`-mismatch [number]`: The maximum number of mismatched bases in a primer. This
+options is used to remove primer candidates if the BLAST results show that
+there is too much mismatch. The default value is `4`.
 
 # Performance
 For a taxon that is not very large and includes few fragments, BarcodeFinder
 can finish the task in *minutes*. For a large taxon (such as the Asteraceae
-family or the whole class of the Poales) and multiple fragments (such as the
-chloroplast genomes), the time to complete may be one hour or more on a PC or
-laptop.
+family or the whole class of the Poales) containing multiple fragments (such
+as the chloroplast genomes), the time to complete may be one hour or more on a
+PC or laptop.
 
 BarcodeFinder requires few memory (usually less than 0.5 GB, although, for a
 large taxon BLAST may require more) and few CPUs (one core is enough). It can
