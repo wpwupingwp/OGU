@@ -1,5 +1,5 @@
-[![Build Status](https://travis-ci.org/wpwupingwp/novowrap.svg?branch=master)](https://travis-ci.org/wpwupingwp/novowrap)
-[![PyPI version](https://badge.fury.io/py/novowrap.svg)](https://badge.fury.io/py/novowrap)
+[![Build Status](https://travis-ci.org/wpwupingwp/barcodefinder.svg?branch=master)](https://travis-ci.com/wpwupingwp/barcodefinder)
+[![PyPI version](https://badge.fury.io/py/barcodefinder.svg)](https://badge.fury.io/py/barcodefinder)
 
 # Quick start
 Download [the package](https://github.com/wpwupingwp/barcodefinder/releases),
