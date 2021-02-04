@@ -51,8 +51,8 @@ Open terminal, run
    * [Q&A](q&a)
 
 # Features
-:heavy_check_mark: Automatically collect, organize and clean sequence data from NCBI GenBank
-or local: collect data with abundant options; extract CDS,
+:heavy_check_mark: Automatically collect, organize and clean sequence data
+from NCBI GenBank or local: collect data with abundant options; extract CDS,
 intergenic spacer, or any other annotations from original sequencep; remove
 redundant sequences according to species information; remove invalid or
 abnormal sequences/fragments; generate clean dataset with uniform sequence id. 
@@ -67,7 +67,7 @@ ambiguous bases in primers.
 
 # Prerequisite
 ## Hardware
-BarcodeFinder requires very few computational resources. A normal PC/laptop is 
+BarcodeFinder requires very few computational resources. A normal PC/laptop is
 enough. For downloading large amount of data, make sure the Internet
 connection is stable and fast enough.
 
@@ -75,7 +75,7 @@ connection is stable and fast enough.
 For the portable version, nothing need to be installed manually.
 
 For installing from pip, [Python](https://www.python.org/downloads/) is
-required. Notice that the python version should be **3.6** or higher.
+required. Notice that the python version should be higher than **3.6**.
 
 :white_check_mark: All third-party dependencies will be automatically
 installed with Internet, including `biopython`, `matplotlib`, `coloredlogs`,
@@ -111,8 +111,9 @@ python -m BarcodeFinder init
 python3 -m BarcodeFinder init
 ```
 
-If BarcodeFinder **FAILED** to install third-party software, please follow these
-steps:
+If BarcodeFinder **FAILED** to install third-party software, please follow
+these steps:
+
 For Linux users with root privileges, just use the package manager:
 ```
 # Ubuntu and Debian
@@ -126,7 +127,7 @@ sudo pacman -S mafft ncbi-blast+ iqtree
 # FreeBSD
 sudo pkg install mafft ncbi-blast+ iqtree
 ```
-For MacOS users with root privileges, install *brew* if it has not been
+For MacOS users with root privileges, install `brew` if it has not been
 installed previously:
 ```
 /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
@@ -148,21 +149,21 @@ instructions:
     * [Windows](https://mafft.cbrc.jp/alignment/software/windows.html)
 
         Choose "All-in-one version", download and unzip. Then follow the steps
-        in the BLAST+ installation manual to set the _PATH_.
+        in the BLAST+ installation manual to set the `PATH`.
     * [Linux](https://mafft.cbrc.jp/alignment/software/linux.html)
 
         Choose "Portable package", download and unzip. Then follow the
-        instructions of BLAST+ to set the _PATH_ for *MAFFT*.
+        instructions of BLAST+ to set the `PATH` for `MAFFT`.
     * [MacOS](https://mafft.cbrc.jp/alignment/software/macosx.html)
 
         Choose "All-in-one version", download and unzip. Then follow the steps
-        in the BLAST+ installation manual to set the _PATH_.
+        in the BLAST+ installation manual to set the `PATH`.
 3. IQ-TREE
 
     * [Download](http://www.iqtree.org/#download)
 
         Download the installer according to OS. Unzip and add the path of
-        subfolder *bin* to _PATH_.
+        subfolder `bin` to `PATH`.
 # Usage
 BarcodeFinder is a command-line program. Once a user opens the command line
 (Windows) or terminal (Linux and MacOS), just type the command:
@@ -173,7 +174,7 @@ python -m BarcodeFinder [input] -[options] -out [out_folder]
 python3 -m BarcodeFinder [input] -[options] -out [out_folder]
 ```
 ## Quick examples
-1. Download all _rbcL_ sequences of species in Poaceae family and do
+1. Download all `rbcL` sequences of species in Poaceae family and do
    pre-process.  
 ```
 # Windows
@@ -243,8 +244,8 @@ may be used if the kingdom information for a sequence is missing.
 
 `Class`: The class of the species.
     
-Because some species' classes are left empty (for instance, basal angiosperm)
-in the cases of plants, BarcodeFinder will guess the class of the species.
+Because some species' classes are empty (for instance, basal angiosperm), 
+BarcodeFinder will guess the class of the species.
 
 Given the taxonomy information in GenBank file:
 ```
@@ -253,7 +254,7 @@ Eukaryota; Viridiplantae; Streptophyta; Embryophyta; Tracheophyta;
     Amborellaceae; Amborella.
 ```
 BarcodeFinder will use "basal Magnoliophyta" as the class because this
-expression is located before the order ("Amborellales").
+expression locates before the order name ("Amborellales").
 
 `Order`: The order name of the species.
 
@@ -263,18 +264,19 @@ expression is located before the order ("Amborellales").
 name.
 
 `Species`: The specific epithet of the species, i.e., the second part of the
-scientific name of the species. It may contains the subspecies' name.
+scientific name of the species. It may contain the subspecies' name.
 
 `Accession`: The GenBank Accession number for the sequence. It does not
 contain the record's version.
 
 `SpecimenID`: Specimen ID of the sequence. May be empty.
 
-`Isolate`: Isolate ID of the sequence. May be empty
+`Isolate`: Isolate ID of the sequence. May be empty.
 
 ## Command line
-:exclamation: In Linux and MacOS, Python2 is `python2` and Python3 is `python3`.  However,
-in Windows, Python3 is called `python`, too. Please notice the difference.
+:exclamation: In Linux and MacOS, Python2 is `python2` and Python3 is
+`python3`.  However, in Windows, Python3 is called `python`, too. Please
+notice the difference.
 
  * Show help information of each module
  ```shell
@@ -320,7 +322,7 @@ in Windows, Python3 is called `python`, too. Please notice the difference.
 BarcodeFinder accepts:
 1. GenBank queries. Users can use "-query" or combine with any other filters;
 2. GenBank-format files.
-3. Unaligned fasta files. Each file is considered one locus when evaluating
+3. Unaligned fasta files. Each file is considered as one locus when evaluating
    the variance;
 4. Alignments (fasta format).
 
@@ -339,10 +341,10 @@ In the output folder, several subfolders will be created.
     Fasta files converted from the GenBank file. Each file represents a
     fragment of the original sequence according to the annotation.
 
-    For instance, a record in a "rbcL.gb" file may also contains atpB gene's
+    For instance, a record in a "rbcL.gb" file may also contain atpB gene's
     sequences. The "rbcL.fasta" file does not contain any upstream/downstream
     sequences and "atpB_rbcL.fasta" does not have even one base of the atpB or
-    rbcL gene, just the spacer (assuming that the annotation is precise).
+    rbcL gene, just the spacer (assuming the annotation is precise).
 
     User can skip this dividing step with the option "-no_divide".
 * Fasta
@@ -363,7 +365,7 @@ In the output folder, several subfolders will be created.
 
     `.-consensus.fastq`: The fastq format of the consensus sequence of the
     alignment. Note that it contains alignment gap ("-"). It is NOT
-    RECOMMENDED to be used directly because consensus-genrating algorithm are
+    RECOMMENDED to be used directly because the consensus-genrating algorithm is
     optimised for primer design.
 * Evaluate
 
@@ -372,7 +374,7 @@ In the output folder, several subfolders will be created.
     `.pdf`: The PDF format of the figure containing the sliding-window scan
     result of the alignment.
 
-    `.csv`: The CSV format file of the sliding-window scan result. *"Index"*
+    `.csv`: The CSV format file of the sliding-window scan result. `"Index"`
     means the location of the base in the alignment.
 
 * Primer
@@ -383,7 +385,7 @@ In the output folder, several subfolders will be created.
     two sequences, and the direction is 5' to 3'. The first is the forward
     primer, and the second is the reverse primer. The quality of each base is
     equal to its proportion of the column in the alignment. Note that the
-    sequence may contains amibiguous bases if it was not disabled.
+    sequence may contains ambiguous bases if it was not disabled.
 
     `.primers.csv`: The list of primer pairs in CSV (comma-separated values
     text) format.
@@ -392,15 +394,15 @@ In the output folder, several subfolders will be created.
     thousands of records. Do not recommend paying attention to it.
 
     `.candidate.fastq`: Again, the candidate primers. This time, each file has
-    the quality information that equals base's proportion in the column of the
-    alignment.
+    the quality information that equals to the proportion of the bases in the 
+    column of the alignment.
 
 * Temp
 
     Including temporary files. Could be safely deleted .
 
 
-In the output folder, several files were also generated.
+In the output folder, there are some other important output files:
 
 * Primers.csv
 
@@ -432,13 +434,13 @@ In the output folder, several files were also generated.
     used.  Calculated with the BLAST result. High coverage means that the pair
     is much more "universal".
 
-    `Observed_Res`: The *observed resolution* of the sub-alignment sliced by
+    `Observed_Res`: The `observed resolution` of the sub-alignment sliced by
     the primer pair, which is equal to the number of unique sequences divided
     by the number of total sequences. The value is between 0 and 1.
 
     <img src="https://latex.codecogs.com/svg.latex?\dpi{300}&space;R_{o}=\frac{n_{uniq}}{n_{total}}" title="R_{o}=\frac{n_{uniq}}{n_{total}}" />
 
-    `Tree_Res`: The *tree resolution* of the sub-alignment, which is equal to
+    `Tree_Res`: The `tree resolution` of the sub-alignment, which is equal to
     the number of internal nodes on a phylogenetic tree (constructed from the
     alignment) divided by number of terminal nodes. The value is between 0 and
     1.
@@ -446,9 +448,9 @@ In the output folder, several files were also generated.
     <img src="https://latex.codecogs.com/svg.latex?\dpi{300}&space;R_{T}=\frac{n_{internal}}{n_{terminal}}" title="R_{T}=\frac{n_{internal}}{n_{terminal}}" />
 
     `PD_terminal`: The average of the terminal branch's length. It's an edited
-    version of the _Phylogenetic Diversity_ for DNA barcoding evaluation.
+    version of the `Phylogenetic Diversity` for DNA barcoding evaluation.
 
-    `Entropy`: The Shannon equitability index of the sub-alignment. The value
+    `Entropy`: The `Shannon equitability` index of the sub-alignment. The value
     is between 0 and 1.
 
     <img src="https://latex.codecogs.com/svg.latex?\dpi{300}&space;E_{H}&space;=&space;\frac{-&space;\sum_{i=1}^{k}{p_{i}&space;\log(p_{i})}}{\log(k)}" title="E_{H} = \frac{- \sum_{i=1}^{k}{p_{i} \log(p_{i})}}{\log(k)}" />
@@ -456,7 +458,7 @@ In the output folder, several files were also generated.
     `LeftSeq`: Sequence of the forward primer. The direction is 5' to 3'.
 
     `LeftTm`: The melting temperature of the forward primer. The unit is
-    degress Celsius (°C).
+    degree Celsius (°C).
 
     `LeftAvgBitscore`: The average raw bitscore of the forward primer, which
     is calculated by BLAST.
@@ -491,7 +493,7 @@ In the output folder, several files were also generated.
     `AvgSeqEnd`: The average end of the forward primer in the original
     sequences.  *ONLY USED FOR DEBUG*.
 
-    The primer pairs are sorted by *Score*. Since the score may not fully
+    The primer pairs are sorted by `Score`. Since the score may not fully
     satisfy the user's specific considerations, it is suggested that primer
     pairs be chosen manually if the first primer pair fails during the PCR
     experiment.
@@ -503,9 +505,9 @@ In the output folder, several files were also generated.
 * Evaluation.csv
 
     The summary of all loci/fragments, which only contains the variance
-    information for each fragment. One of the new field, *GapRatio*, means the
-    ratio of the gap ("-") in the alignment. *PD* means the original version
-    of the phylogenetic diversity and *PD_stem* means an alternative version
+    information for each fragment. One of the new field, `GapRatio`, means the
+    ratio of the gap ("-") in the alignment. `PD` means the original version
+    of the phylogenetic diversity and `PD_stem` means an alternative version
     of it which only calculate the length of the stem branch in the
     phylogenetic tree.
 
@@ -513,9 +515,7 @@ In the output folder, several files were also generated.
 
 Here are some general options for the program and submodule:
 
-`-h`: Prints help messages of the program or one of the module. It is highly
-recommended to use this option to see the list of options and their default
-values.
+`-h`: Prints help messages of the program or one of the module. 
 
 `-gb [filename]`: User-provided GenBank file or files.  Could be one or more
 files that separated by space.  
@@ -555,7 +555,7 @@ Options used for querying NCBI GenBank.
 from kingdom (same as "-group") to species, as long as the user inputs correct
 name (the scientific name of species or taxonomic group in latin, NOT
 ENGLISH). It will restrict the query to the targeted taxonomy unit. Make sure
-to use quotation marks if *taxonomy* has more than one word or use underscore
+to use quotation marks if `taxonomy` has more than one word or use underscore
 to replace space, for instance `"Zea mays"` or `Zea_mays`.  
 
 `-gene [gene name]`: The gene's name which the user wants to query in GenBank.
@@ -566,8 +566,8 @@ to use quotation marks.
 Note that "ITS" is not a gene name--it is "internal transcribed spacer".
 
 Sometimes "-gene" options may bring in unwanted sequences. For example, if a
-user queries "rbcL[gene]" in GenBank, spacers containing rbcL or rbcL's
-upstream/downstream gene may be found, such as "atpB_rbcL spacer" or atpB.
+user queries "rbcL[gene]" in GenBank, spacer sequences may contain _rbcL_ or
+_rbcL_'s upstream/downstream gene, such as "atpB_rbcL spacer" or _atpB_.
 
 `-og [ignore|both|no|mt|mitochondrion|cp|chloroplast|pl|plastid]`: Query
 organelle sequences or not. The default value is `ignore`.
@@ -594,8 +594,8 @@ organelle sequences or not. The default value is `ignore`.
 
     - `no`: exclude sequences in RefSeq database.
 
-[RefSeq](https://www.ncbi.nlm.nih.gov/refseq/about/) is considered to be of
-higher quality than the other sequences in GenBank. This option could be used
+[RefSeq](https://www.ncbi.nlm.nih.gov/refseq/about/) is considered to have 
+higher sequence and annotation quality than GenBank. This option could be used
 for getting nuclear/organelle genomes from NCBI. In this situation (`-refseq
     yes`), the length limit will be removed automatically.
 
@@ -618,14 +618,11 @@ the format is yyyy/mm/dd.
 which could be DNA or RNA. The
 default is `all`--no restriction.
 
-`-email [email address]`: BarcodeFinder uses Biopython to handle the
-communication between the user and the NCBI GenBank database. The database
-requires users to provide an email address in case of abnormal situations
-that NCBI need to contact the user. The default address was designed to be
-empty.
-
-_However_, for the convenience of the user, BarcodeFinder will use
-"guest@example.com" if the user does not provide an email address.
+`-email [email address]`: NCBI GenBank database requires users to provide 
+an email address in case of abnormal situations that NCBI need to contact 
+the user. For convenience, BarcodeFinder will use
+"guest@example.com" if the user does not provide an email address. _However_,
+it is better to provide a real email address for potential contact.
 
 `-query [expression]`: The query string provided by the user. It behaves in
 the same manner as the query the user typed into the Search Box in NCBI
@@ -635,21 +632,24 @@ Make sure to follow NCBI's grammar for queries. It can contain several words.
 Remember to add quotation marks if an item contains more than one words, for
 instance, `"Homo sapiens"[organism]`, or use underscore to replace space,
 `Homo_sapiens[organism]`.
+
 `-exclude [expression]`: Use this option to use negative option. For instance,
 "-exclude Zea [organism]" (do not include quotation marks) will add " NOT
 (Zea[organism])" to the query.
 
-This option can be useful for exclude specific taxon.
+This option can be useful for excluding a specific taxon.
 ```
 -taxon Zea -exclude "Zea mays"[organism]
 ```
-This will query all records in genus *Zea* while records of *Zea mays* will be exclude.
+This will query all records in genus *Zea* while records of *Zea mays* will be
+excluded.
 
 For much more complex exclude options, please consider to use "Advance search"
 in GenBank website.
 
-`-group [all|animals|plants|fungi|protists|bacteria|archaea|viruses]`: To restrict
-the query in given group.  The default value is `all`--no restriction.
+`-group [all|animals|plants|fungi|protists|bacteria|archaea|viruses]`: To
+restrict the query in given group.  The default value is `all`--no
+restriction.
 
 It is reported that the "group" filter may return abnormal records, for
 instance, return plants' records when the group is "animal" and the
@@ -657,7 +657,7 @@ instance, return plants' records when the group is "animal" and the
 records in GenBank. Hence, we strongly recommend using "-taxon" instead.
 
 ### Divide
-Options used for converting GenBank file to fasta files.
+Options used for converting GenBank files to fasta files.
 
 `-no_divide`: If set, it will analyse the whole sequence instead of the
 divided fragments. By default, BarcodeFinder divides one GenBank record into
@@ -667,7 +667,7 @@ several fragments according to its annotation.
 will be renamed to "rbcL", and "tRNA UAC" will be renamed to "trnVuac", which
 consists of "trn", the amino acid's letter and transcribed codon. This may be
 helpful if the annotation has nonstandard uppercase/lowercase or naming format
-so it can merge the same sequences to one file for the same locus having
+that it can merge the same sequences to one file for the same locus having
 variant names.
 
 If using Windows operating system, consider using this option to avoid
@@ -687,14 +687,14 @@ methods.
       compare the sequence's length from the same species' same locus.
 
     - `no`: Skip this step. All sequences will be kept.
-`-allow_mosaic_spacer`: If one gene is nested with another gene, normally they
+`-allow_mosaic_spacer`: If one gene nested with another gene, normally they
 do not have spacers. The default value is `False`.
 
 However, some users want the fragments between two gene's beginnings and ends.
 This option is for this specific purpose (e.g., matK-trnK_UUU). For normal
 usage, *do not recommend*.
 
-`-expand [number]`: The expand length for going upstream/downstream. If set,
+`-expand [number]`: The expansion length in upstream/downstream. If set,
 BarcodeFinder will expand the sequence to its upstream/downstream after the
 dividing step to find primer candidates. The default value is `0`.
 
@@ -717,12 +717,12 @@ will extract sequences of two different direction as two unique spacers.
 annotation's feature name in GenBank file is too long, and usually, they are
 not the target sequence the user wants. By setting this option, BarcodeFinder
 will truncate the annotation's feature name if it is too long. By default, the
-*value* is 50.
+value is `50`.
 
 `-max_seq_len [value]`: The maximum length of a sequence for one annotation.
 Some annotations' sequences are too long (for instance, one gene has two
 exons, and its intron is longer than 10 Kb). This option will skip those long
-sequences.  By default, the *value* is 20000 (bp).
+sequences.  By default, the value is `20000` (bp).
 
 ## Evaluate
 `-ig` or `-ignore_gap`: ignore gaps in the alignment.
@@ -741,9 +741,8 @@ is `50`.
 
 ## Primer design
 `-coverage [value]`: The minimum coverage of the base and primer. The default
-*value* is 0.5 (50%). It is used to remove
-primer candidates if its coverage among all sequences is smaller than the
-threshold. The coverage of primers is
+value is `0.5` (50%). It is used to remove primer candidates if its coverage
+among all sequences is smaller than the threshold. The coverage of primers is
 calculated by BLAST.
 
 `-res [value]`: The minimum *observed resolution* of the fragments or primer
@@ -771,7 +770,7 @@ sub-alignment's length.
 The "-tmin" and "-tmax" are used to screen primer candidates. It uses BLAST
 results to set the location of primers on each template sequence and
 calculates the average lengths of the products. Because of the variance of
-species, the same locus may have differenct lengths in different species, plus
+species, the same locus may have different lengths in different species, plus
 with the stretching of the alignment that gaps were added during the aligning,
 please consider adding some *margins* for these two options.
 
@@ -793,7 +792,7 @@ family or the whole class of the Poales) containing multiple fragments (such
 as the chloroplast genomes), the time to complete may be one hour or more on a
 PC or laptop.
 
-BarcodeFinder requires few memory (usually less than 0.5 GB, although, for a
+BarcodeFinder requires few memories (usually less than 0.5 GB, although, for a
 large taxon BLAST may require more) and few CPUs (one core is enough). It can
 run very well on a normal PC. Multiple CPU cores may be helpful for the
 alignment and tree construction steps.
