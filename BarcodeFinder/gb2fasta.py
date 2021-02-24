@@ -724,6 +724,25 @@ def write_seq(record, seq_info, whole_seq, arg):
     return filenames
 
 
+def count_for_unique(fasta: Path):
+    info = defaultdict(lambda: list())
+    index = 0
+    count = 0
+    for record in SeqIO.parse(fasta, 'fasta'):
+        # gene|kingdom|phylum|class|order|family|genus|species|specimen|type
+        count += 1
+        if '|' in record.id:
+            name = ' '.join(record.id.split('|')[6:8])
+        else:
+            name = record.id
+        length = len(record)
+        # skip empty file
+        if length != 0:
+            info[name].append([index, length])
+        index += 1
+    return info, count
+
+
 def unique(files: list, arg) -> list:
     """
     Remove redundant sequences of same species.
@@ -736,21 +755,9 @@ def unique(files: list, arg) -> list:
     total = 0
     kept = 0
     for fasta in files:
-        info = defaultdict(lambda: list())
         keep = dict()
-        index = 0
-        for record in SeqIO.parse(fasta, 'fasta'):
-            # gene|kingdom|phylum|class|order|family|genus|species|specimen|type
-            total += 1
-            if '|' in record.id:
-                name = ' '.join(record.id.split('|')[6:8])
-            else:
-                name = record.id
-            length = len(record)
-            # skip empty file
-            if length != 0:
-                info[name].append([index, length])
-            index += 1
+        info, count = count_for_unique(fasta)
+        total += count
         if arg.unique == 'first':
             # keep only the first record
             keep = {info[i][0][0] for i in info}
@@ -758,6 +765,9 @@ def unique(files: list, arg) -> list:
             for i in info:
                 info[i] = sorted(info[i], key=lambda x: x[1], reverse=True)
             keep = {info[i][0][0] for i in info}
+        else:
+            # ignore "no"
+            pass
         kept += len(keep)
         new = arg._unique / fasta.name
         with open(new, 'w', encoding='utf-8') as out:
