@@ -739,6 +739,7 @@ def primer_main():
     if arg is None:
         log.info('Quit primer module.')
         return None, None
+    utils.add_file_log(arg)
     if arg.skip_primer:
         log.info('Skip primer module.')
         return None, None

@@ -538,6 +538,7 @@ def evaluate_main():
     if arg is None:
         log.info('Quit evaluate module.')
         return None, other_args2
+    utils.add_file_log(arg)
     aligned, unaligned = align(arg.fasta, arg._align)
     aligned.extend(arg.aln)
     evaluation_result = arg.out / 'Evaluation.csv'

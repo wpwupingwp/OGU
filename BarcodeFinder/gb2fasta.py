@@ -779,6 +779,7 @@ def gb2fasta_main():
     if arg is None:
         log.info('Quit gb2fasta module.')
         return None, other_args
+    utils.add_file_log(arg)
     log.info(f'Input genbank files:\t{arg.gb}')
     if arg.query is not None:
         log.info(f'Query: {arg.query}')

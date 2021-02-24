@@ -67,6 +67,23 @@ def arg_to_str(arg) ->str:
     return s
 
 
+def add_file_log(arg):
+    """
+    Add file handler if not exist.
+    Note that "log" is a global variable.
+    """
+    has_file_hdl = any([type(i)==logging.FileHanlder for i in log.handlers])
+    if has_file_hdl:
+        pass
+    else:
+        log_file = arg.out / 'Log.txt'
+        log_file_handler = logging.FileHandler(log_file, mode='a')
+        log_file_handler.setLevel(logging.INFO)
+        log.addHandler(log_file_handler)
+        log.debug('Add file handler.')
+    return
+
+
 def move(source: Path, dest, copy=False):
     """
     Move source to dest and return dest.
