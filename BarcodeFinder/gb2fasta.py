@@ -729,7 +729,10 @@ def unique(files: list, arg) -> list:
     Remove redundant sequences of same species.
     Files were saved in arg._unique
     """
+    log.info('Removing redundant records...')
     unique_files = []
+    # if arg.unique == 'no':
+    #     return unique_files
     total = 0
     kept = 0
     for fasta in files:
@@ -762,6 +765,7 @@ def unique(files: list, arg) -> list:
                 if idx in keep:
                     SeqIO.write(record, out, 'fasta')
         unique_files.append(new)
+    log.info(f'{kept} of {total} records are left.')
     return unique_files
 
 
