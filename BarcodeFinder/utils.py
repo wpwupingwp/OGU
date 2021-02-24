@@ -79,6 +79,8 @@ def add_file_log(arg):
         log_file = arg.out / 'Log.txt'
         log_file_handler = logging.FileHandler(log_file, mode='a')
         log_file_handler.setLevel(logging.INFO)
+        log_file_handler.setFormatter(
+            logging.Formatter( fmt=FMT, datefmt=DATEFMT))
         log.addHandler(log_file_handler)
         log.debug('Add file handler.')
     return

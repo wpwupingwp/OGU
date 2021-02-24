@@ -148,10 +148,7 @@ def bf_main():
     if arg is None:
         log.error('Quit.')
         return
-    log_file = arg.out / 'Log.txt'
-    log_file_handler = logging.FileHandler(log_file, mode='a')
-    log_file_handler.setLevel(logging.INFO)
-    log.addHandler(log_file_handler)
+    utils.add_file_log(arg)
 
     option = utils.arg_to_str(arg)
     arg, other_args, = gb2fasta.gb2fasta_main()
