@@ -512,10 +512,10 @@ def get_mafft(third_party=None) -> (bool, str):
                 'Windows': ('mafft-7.475-win64-signed.zip', 'mafft-win')}
     system = platform.system()
     home_mafft = third_party / fileinfo[system][1] / mafft
-    if test_cmd(mafft):
+    if test_cmd(mafft, '--version'):
         ok = True
         return ok, mafft
-    if test_cmd(home_mafft):
+    if test_cmd(home_mafft, '--version'):
         ok = True
         return ok, str(home_mafft)
     log.warning('Cannot find mafft, try to install.')
@@ -547,7 +547,7 @@ def get_mafft(third_party=None) -> (bool, str):
         log.critical('The file is damaged.')
         log.critical('Please check your connection.')
         return ok, ''
-    assert test_cmd(home_mafft, '-version')
+    assert test_cmd(home_mafft, '--version')
     ok = True
     return ok, str(home_mafft)
 
