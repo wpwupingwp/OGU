@@ -127,8 +127,11 @@ def parse_args():
 
 
 def init_arg(arg):
-    ok = utils.get_all_third_party()
-    if not ok:
+    ok1, _ = utils.get_third_party()
+    if not ok1:
+        return None
+    ok2 = utils.get_all_third_party()
+    if not ok2:
         return None
     arg = utils.init_out(arg, from_main=True)
     if arg.out is None:

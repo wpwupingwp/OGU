@@ -390,38 +390,41 @@ def get_blast(third_party=None, result=None) -> (bool, str):
             'Windows': url+'-x64-win64.tar.gz'}
     if test_cmd(blast):
         ok = True
-        return ok, blast
-    if test_cmd(home_blast):
+        home_blast = str(blast)
+    elif test_cmd(home_blast):
         ok = True
-        return ok, str(home_blast)
-    log.warning('Cannot find NCBI BLAST, try to install.')
-    log.info('According to Internet speed, may be slow.')
-    try:
-        # 50kb/10s=5kb/s, enough for test
-        _ = urlopen('https://www.ncbi.nlm.nih.gov', timeout=10)
-    except Exception:
-        log.critical('Cannot connect to NCBI.')
-        log.critical('Please check your Internet connection.')
-        return ok, ''
-    try:
-        # file is 86-222mb
-        down = urlopen(urls[platform.system()], timeout=10)
-    except Exception:
-        log.critical('Cannot download BLAST.')
-        log.critical('Please manually download it from'
-                     'ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/')
-        return ok, ''
-    down_file = third_party / 'BLAST_2.11.0.tar.gz'
-    with open(down_file, 'wb') as out:
-        out.write(down.read())
-    try:
-        unpack_archive(down_file, third_party)
-    except Exception:
-        log.critical('The file is damaged.')
-        log.critical('Please check your connection.')
-        return ok, ''
-    assert test_cmd(home_blast, '-version')
-    ok = True
+        home_blast = str(home_blast)
+    else:
+        while True:
+            log.warning('Cannot find NCBI BLAST, try to install.')
+            log.info('According to Internet speed, may be slow.')
+            try:
+                # 50kb/10s=5kb/s, enough for test
+                _ = urlopen('https://www.ncbi.nlm.nih.gov', timeout=10)
+            except Exception:
+                log.critical('Cannot connect to NCBI.')
+                log.critical('Please check your Internet connection.')
+                break
+            try:
+                # file is 86-222mb
+                down = urlopen(urls[platform.system()], timeout=10)
+            except Exception:
+                log.critical('Cannot download BLAST.')
+                log.critical('Please manually download it from'
+                             'ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/')
+                break
+            down_file = third_party / 'BLAST_2.11.0.tar.gz'
+            with open(down_file, 'wb') as out:
+                out.write(down.read())
+            try:
+                unpack_archive(down_file, third_party)
+            except Exception:
+                log.critical('The file is damaged.')
+                log.critical('Please check your connection.')
+                break
+            assert test_cmd(home_blast, '-version')
+            ok = True
+            break
     if result is not None:
         result.put(('BLAST', ok))
     return ok, str(home_blast)
@@ -444,7 +447,6 @@ def get_iqtree(third_party=None, result=None) -> (bool, str):
             return third_party_ok, ''
     iqtree = 'iqtree2'
     # in Windows, ".exe" can be omitted
-    # win_home_blast = home_blast.with_name('blastn.exe')
     ok = False
     url = 'https://github.com/Cibiv/IQ-TREE/releases/download/v2.0.6/'
     # platform: (filename, folder)
@@ -457,39 +459,41 @@ def get_iqtree(third_party=None, result=None) -> (bool, str):
     home_iqtree = third_party / fileinfo[system][1] / 'bin' / iqtree
     if test_cmd(iqtree):
         ok = True
-        return ok, iqtree
-    if test_cmd(home_iqtree):
+        home_iqtree = str(iqtree)
+    elif test_cmd(home_iqtree):
         ok = True
-        return ok, str(home_iqtree)
-    log.warning('Cannot find iqtree, try to install.')
-    log.info('According to Internet speed, may be slow.')
-    try:
-        # 50kb/10s=5kb/s, enough for test
-        _ = urlopen('https://github.com', timeout=10)
-    except Exception:
-        log.critical('Cannot connect to github.com')
-        log.critical('Please check your Internet connection.')
-        return ok, ''
-    try:
-        # file is ~10mb
-        down = urlopen(f'{url}{filename}', timeout=10)
-    except Exception:
-        log.critical('Cannot download iqtree.')
-        log.critical('Please manually download it from '
-                     'https://github.com/Cibiv/IQ-TREE/')
-        return ok, ''
-    down_file = third_party / fileinfo[system][0]
-    with open(down_file, 'wb') as out:
-        out.write(down.read())
-    try:
-        #unpack_archive(down_file, third_party/fileinfo[system][1])
-        unpack_archive(down_file, third_party)
-    except Exception:
-        log.critical('The file is damaged.')
-        log.critical('Please check your connection.')
-        return ok, ''
-    assert test_cmd(home_iqtree, '-version')
-    ok = True
+    else:
+        while True:
+            log.warning('Cannot find iqtree, try to install.')
+            log.info('According to Internet speed, may be slow.')
+            try:
+                # 50kb/10s=5kb/s, enough for test
+                _ = urlopen('https://github.com', timeout=10)
+            except Exception:
+                log.critical('Cannot connect to github.com')
+                log.critical('Please check your Internet connection.')
+                break
+            try:
+                # file is ~10mb
+                down = urlopen(f'{url}{filename}', timeout=10)
+            except Exception:
+                log.critical('Cannot download iqtree.')
+                log.critical('Please manually download it from '
+                             'https://github.com/Cibiv/IQ-TREE/')
+                break
+            down_file = third_party / fileinfo[system][0]
+            with open(down_file, 'wb') as out:
+                out.write(down.read())
+            try:
+                #unpack_archive(down_file, third_party/fileinfo[system][1])
+                unpack_archive(down_file, third_party)
+            except Exception:
+                log.critical('The file is damaged.')
+                log.critical('Please check your connection.')
+                break
+            assert test_cmd(home_iqtree, '-version')
+            ok = True
+            break
     if result is not None:
         result.put(('IQTREE', ok))
     return ok, str(home_iqtree)
@@ -525,41 +529,43 @@ def get_mafft(third_party=None, result=None) -> (bool, str):
     home_mafft = third_party / fileinfo[system][1] / mafft
     if test_cmd(mafft, '--version'):
         ok = True
-        return ok, mafft
-    if test_cmd(home_mafft, '--version'):
+        home_mafft = str(mafft)
+    elif test_cmd(home_mafft, '--version'):
         ok = True
-        return ok, str(home_mafft)
-    log.warning('Cannot find mafft, try to install.')
-    log.info('According to Internet speed, may be slow.')
-    try:
-        # 50kb/10s=5kb/s, enough for test
-        _ = urlopen('https://mafft.cbrc.jp', timeout=10)
-    except Exception:
-        log.critical('Cannot connect to mafft.cbrc.jp')
-        log.critical('Please check your Internet connection.')
-        return ok, ''
-    try:
-        # file is ~10mb
-        if system != 'Darwin':
-            down = urlopen(url+fileinfo[system][0], timeout=10)
-        else:
-            down = urlopen(url+fileinfo[system][0]+'?signed', timeout=10)
-    except Exception:
-        log.critical('Cannot download mafft.')
-        log.critical(f'Please manually download it from {url}')
-        return ok, ''
-    down_file = third_party / fileinfo[system][0]
-    with open(down_file, 'wb') as out:
-        out.write(down.read())
-    try:
-        #unpack_archive(down_file, third_party/fileinfo[system][1])
-        unpack_archive(down_file, third_party)
-    except Exception:
-        log.critical('The file is damaged.')
-        log.critical('Please check your connection.')
-        return ok, ''
-    assert test_cmd(home_mafft, '--version')
-    ok = True
+    else:
+        while True:
+            log.warning('Cannot find mafft, try to install.')
+            log.info('According to Internet speed, may be slow.')
+            try:
+                # 50kb/10s=5kb/s, enough for test
+                _ = urlopen('https://mafft.cbrc.jp', timeout=10)
+            except Exception:
+                log.critical('Cannot connect to mafft.cbrc.jp')
+                log.critical('Please check your Internet connection.')
+                break
+            try:
+                # file is ~10mb
+                if system != 'Darwin':
+                    down = urlopen(url+fileinfo[system][0], timeout=10)
+                else:
+                    down = urlopen(url+fileinfo[system][0]+'?signed', timeout=10)
+            except Exception:
+                log.critical('Cannot download mafft.')
+                log.critical(f'Please manually download it from {url}')
+                break
+            down_file = third_party / fileinfo[system][0]
+            with open(down_file, 'wb') as out:
+                out.write(down.read())
+            try:
+                #unpack_archive(down_file, third_party/fileinfo[system][1])
+                unpack_archive(down_file, third_party)
+            except Exception:
+                log.critical('The file is damaged.')
+                log.critical('Please check your connection.')
+                break
+            assert test_cmd(home_mafft, '--version')
+            ok = True
+            break
     if result is not None:
         result.put(('MAFFT', ok))
     return ok, str(home_mafft)
