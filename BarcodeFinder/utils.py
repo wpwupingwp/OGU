@@ -7,6 +7,7 @@ import subprocess
 
 from collections import Iterable
 from functools import lru_cache
+from queue import Queue
 from threading import Thread
 from pathlib import Path
 from urllib.request import urlopen
@@ -360,13 +361,14 @@ def get_third_party():
     return success, third_party
 
 
-def get_blast(third_party=None) -> (bool, str):
+def get_blast(third_party=None, result=None) -> (bool, str):
     """
     Get BLAST location.
     If BLAST was found, assume makeblastdb is found, too.
     If not found, download it.
     Args:
         third_party(Path or None): path for install
+        result(Queue): return values
     Return:
         ok(bool): success or not
         blast(str): blast path
@@ -420,15 +422,18 @@ def get_blast(third_party=None) -> (bool, str):
         return ok, ''
     assert test_cmd(home_blast, '-version')
     ok = True
+    if result is not None:
+        result.put(('BLAST', ok))
     return ok, str(home_blast)
 
 
-def get_iqtree(third_party=None) -> (bool, str):
+def get_iqtree(third_party=None, result=None) -> (bool, str):
     """
     Get iqtree location.
     If not found, download it.
     Args:
         third_party(Path or None): path for install
+        result(Queue): return values
     Return:
         ok(bool): success or not
         iqtree(str): blast path
@@ -485,15 +490,18 @@ def get_iqtree(third_party=None) -> (bool, str):
         return ok, ''
     assert test_cmd(home_iqtree, '-version')
     ok = True
+    if result is not None:
+        result.put(('IQTREE', ok))
     return ok, str(home_iqtree)
 
 
-def get_mafft(third_party=None) -> (bool, str):
+def get_mafft(third_party=None, result=None) -> (bool, str):
     """
     Get iqtree location.
     If not found, download it.
     Args:
         third_party(Path or None): path for install
+        result(Queue): return values
     Return:
         ok(bool): success or not
         iqtree(str): blast path
@@ -552,28 +560,40 @@ def get_mafft(third_party=None) -> (bool, str):
         return ok, ''
     assert test_cmd(home_mafft, '--version')
     ok = True
+    if result is not None:
+        result.put(('MAFFT', ok))
     return ok, str(home_mafft)
 
 
-def get_all_third_party():
+def get_all_third_party() -> bool:
     """
     Use three threads to speed up.
     """
     log.info('Try to locate or install all third-party software.')
     third_party_ok, third_party = get_third_party()
     if not third_party_ok:
-        return -1
-    iqtree = Thread(target=get_iqtree, args=(third_party,), daemon=True)
-    mafft = Thread(target=get_mafft, args=(third_party,), daemon=True)
-    blast = Thread(target=get_blast, args=(third_party,), daemon=True)
+        return False
+    result_queue = Queue()
+    iqtree = Thread(target=get_iqtree, args=(third_party, result_queue),
+                    daemon=True)
+    mafft = Thread(target=get_mafft, args=(third_party, result_queue),
+                   daemon=True)
+    blast = Thread(target=get_blast, args=(third_party, result_queue),
+                   daemon=True)
     iqtree.start()
     mafft.start()
     blast.start()
     iqtree.join()
     mafft.join()
     blast.join()
-    log.info('Got BLAST, IQTREE, and MAFFT.')
-    return
+    while not result_queue.empty():
+        name, ok = result_queue.get()
+        if ok:
+            log.info(f'Got {name}.')
+        else:
+            log.error(f'Failed to got {name}.')
+            return False
+    return True
 
 
 def parse_blast_tab(filename):
