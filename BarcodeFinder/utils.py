@@ -502,7 +502,11 @@ def get_mafft(third_party=None) -> (bool, str):
         third_party_ok, third_party = get_third_party()
         if not third_party_ok:
             return third_party_ok, ''
-    mafft = 'mafft.bat'
+    system = platform.system()
+    if system == 'Windows':
+        mafft = 'mafft.bat'
+    else:
+        mafft = 'mafft'
     # in Windows, ".exe" can be omitted
     # win_home_blast = home_blast.with_name('blastn.exe')
     ok = False
@@ -510,7 +514,6 @@ def get_mafft(third_party=None) -> (bool, str):
     fileinfo = {'Linux': ('mafft-7.475-linux.tgz', 'mafft-linux64'),
                 'Darwin': ('mafft-7.475-mac.zip', 'mafft-mac'),
                 'Windows': ('mafft-7.475-win64-signed.zip', 'mafft-win')}
-    system = platform.system()
     home_mafft = third_party / fileinfo[system][1] / mafft
     if test_cmd(mafft, '--version'):
         ok = True
