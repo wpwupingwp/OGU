@@ -633,7 +633,7 @@ def divide(gbfile, arg):
         else:
             name_str = '-'.join(feature_name)
         # directly use genome type as name
-        if arg.organelle is not None:
+        if arg.organelle not in ('ignore', 'no', 'both'):
             name_str = '{}_genome'.format(arg.organelle)
         record.id = '|'.join([name_str, taxon, accession, specimen])
         record.description = ''
