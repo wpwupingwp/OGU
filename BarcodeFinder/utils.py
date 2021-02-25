@@ -72,7 +72,7 @@ def add_file_log(arg):
     Add file handler if not exist.
     Note that "log" is a global variable.
     """
-    has_file_hdl = any([type(i)==logging.FileHanlder for i in log.handlers])
+    has_file_hdl = any([type(i)==logging.FileHandler for i in log.handlers])
     if has_file_hdl:
         pass
     else:
