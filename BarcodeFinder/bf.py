@@ -154,12 +154,14 @@ def bf_main():
         log.error('Quit.')
         return
     utils.add_file_log(arg)
-
     option = utils.arg_to_str(arg)
+    log.debug(f'Options: {option}')
     arg, other_args, = gb2fasta.gb2fasta_main()
+    log.debug(f'Options 2: {other_args}')
     arg, other_args2 = evaluate.evaluate_main()
+    log.debug(f'Options 2: {other_args2}')
     arg, other_args3 = primer.primer_main()
-    if len(other_args3) != 0:
+    if other_args3 is not None and len(other_args3) != 0:
         log.debug(f'Unrecognized options {" ".join(other_args3)}')
     log.info('Exit.')
     return
