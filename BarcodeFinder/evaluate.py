@@ -397,7 +397,7 @@ class Variance(namedtuple('Variance',
                            'PD', 'PD_stem', 'PD_stem_SD',
                            'PD_terminal', 'PD_terminal_SD',
                            'Tree_Res', 'Total_GC'],
-                          defaults=[0 for i in range(9)])):
+                          defaults=[0 for i in range(13)])):
     """
     For get_resolution()
     samples: rows
