@@ -11,7 +11,7 @@ from os import devnull, cpu_count
 from pathlib import Path
 from subprocess import run
 
-from Bio import Phylo
+from Bio import Phylo, SeqIO
 from matplotlib import use as mpl_use
 mpl_use('Agg')
 from matplotlib import pyplot as plt
@@ -249,7 +249,6 @@ def old_remove_gap(aln_fasta: Path, new_file: Path) -> Path:
             no_gap.write(line.replace('-', ''))
     # try to avoid makeblastdb error
     no_gap.seek(0)
-    from Bio import SeqIO
     SeqIO.convert(no_gap, 'fasta', new_file, 'fasta')
     no_gap.close()
     return new_file
@@ -341,18 +340,22 @@ def phylogenetic_diversity(alignment: np.array, tmp: Path) -> (float, float,
         tmp: tmp folder
     Returns:
         pd: phylogenetic diversity
-        pd_terminal: only calculate terminal
         pd_stem: only calculate stem branch
+        pd_stem_sd: standard deviation
+        pd_terminal: only calculate terminal
+        pd_terminal_sd: standard deviation
         tree_res: tree resolution
     """
     pd = 0.0
-    pd_terminal = 0.0
     pd_stem = 0.0
+    pd_stem_sd = 0.0
+    pd_terminal = 0.0
+    pd_terminal_sd = 0.0
     tree_res = 0.0
     rows, columns = alignment.shape
     if rows < 4:
         log.debug('Too few sequences.')
-        return pd, pd_stem, pd_terminal, tree_res
+        return pd, pd_stem, pd_stem_sd, pd_terminal, pd_terminal_sd, tree_res
     old_max_recursion = sys.getrecursionlimit()
     sys.setrecursionlimit(max(rows+10, old_max_recursion))
     aln_file = tmp / f'{columns}.tmp'
@@ -360,7 +363,7 @@ def phylogenetic_diversity(alignment: np.array, tmp: Path) -> (float, float,
     _, iqtree = utils.get_iqtree()
     if not _:
         log.critical('Cannot find iqtree.')
-        return pd, pd_terminal, pd_stem, tree_res
+        return pd, pd_stem, pd_stem_sd, pd_terminal, pd_terminal_sd, tree_res
     with open(devnull, 'w', encoding='utf-8') as out:
         run_ = run(f'{iqtree} -s {aln_file} -m HKY -fast -czb -redo',
                    stdout=out, stderr=out, shell=True)
@@ -374,8 +377,10 @@ def phylogenetic_diversity(alignment: np.array, tmp: Path) -> (float, float,
             pd = tree.total_branch_length()
             internals = tree.get_nonterminals()[1:]
             terminals = tree.get_terminals()
-            pd_terminal = sum([i.branch_length for i in terminals])
             pd_stem = sum([i.branch_length for i in internals])
+            pd_stem_sd = np.std([i.branch_length for i in internals])
+            pd_terminal = sum([i.branch_length for i in terminals])
+            pd_terminal_sd = np.std([i.branch_length for i in terminals])
             # avg_terminal_branch_len = pd_terminal / rows
             # may be zero
             tree_res = len(internals) / max(1, len(terminals))
@@ -383,13 +388,15 @@ def phylogenetic_diversity(alignment: np.array, tmp: Path) -> (float, float,
             log.info('Bad phylogenetic tree.')
     utils.clean_tmp(aln_file)
     sys.setrecursionlimit(old_max_recursion)
-    return pd, pd_terminal, pd_stem, tree_res
+    return pd, pd_stem, pd_stem_sd, pd_terminal, pd_terminal_sd, tree_res
 
 
 class Variance(namedtuple('Variance',
                           ['Samples', 'Length', 'Gap_Ratio',
-                           'Observed_Res', 'Entropy', 'Pi', 'PD',
-                           'PD_stem', 'PD_terminal', 'Tree_Res', 'Total_GC'],
+                           'Observed_Res', 'Entropy', 'Pi',
+                           'PD', 'PD_stem', 'PD_stem_SD',
+                           'PD_terminal', 'PD_terminal_SD',
+                           'Tree_Res', 'Total_GC'],
                           defaults=[0 for i in range(9)])):
     """
     For get_resolution()
@@ -401,8 +408,9 @@ class Variance(namedtuple('Variance',
     def __str__(self):
         return ('{Samples},{Length},{Gap_Ratio:.4%},'
                 '{Observed_Res:.4%},{Entropy:.8f},{Pi:.8f},'
-                '{PD:.8f},{PD_stem:.8f},{PD_terminal:.8f},{Tree_Res:.4%},'
-                '{Total_GC:.4%}'.format(**self._asdict()))
+                '{PD:.8f},{PD_stem:.8f},{PD_stem_SD:.8f},'
+                '{PD_terminal:.8f},{PD_terminal_SD:.8f},'
+                '{Tree_Res:.4%},{Total_GC:.4%}'.format(**self._asdict()))
 
 
 def get_resolution(alignment: np.array, tmp: Path,
@@ -425,10 +433,12 @@ def get_resolution(alignment: np.array, tmp: Path,
     # normalized entropy
     entropy = normalized_entropy(count, rows)
     pi = nucleotide_diversity(alignment)
-    pd, pd_stem, pd_terminal, tree_res = phylogenetic_diversity(alignment, tmp)
+    (pd, pd_stem, pd_stem_sd, pd_terminal, pd_terminal_sd,
+     tree_res) = phylogenetic_diversity(alignment, tmp)
     total_gc, gc_array = gc_ratio(alignment, ignore_ambiguous)
     variance = Variance(rows, columns, gap_ratio, observed_res, entropy, pi,
-                        pd, pd_stem, pd_terminal, tree_res, total_gc)
+                        pd, pd_stem, pd_stem_sd, pd_terminal, pd_terminal_sd,
+                        tree_res, total_gc)
     return variance, gc_array
 
 
