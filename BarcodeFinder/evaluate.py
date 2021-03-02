@@ -372,18 +372,18 @@ def phylogenetic_diversity(alignment: np.array, tmp: Path) -> (float, float,
         log.debug('Too much gap in the alignment.')
     else:
         tree = Phylo.read(str(aln_file)+'.treefile', 'newick')
-        # skip the first empty node
         try:
             pd = tree.total_branch_length()
+            # skip the first empty node
             internals = tree.get_nonterminals()[1:]
             terminals = tree.get_terminals()
-            pd_stem = sum([i.branch_length for i in internals])
-            pd_stem_sd = np.std([i.branch_length for i in internals])
-            pd_terminal = sum([i.branch_length for i in terminals])
-            pd_terminal_sd = np.std([i.branch_length for i in terminals])
-            # avg_terminal_branch_len = pd_terminal / rows
             # may be zero
-            tree_res = len(internals) / max(1, len(terminals))
+            n_terminals = max(1, len(terminals))
+            pd_stem = sum([i.branch_length for i in internals]) / n_terminals
+            pd_stem_sd = np.std([i.branch_length for i in internals]) / n_terminals
+            pd_terminal = sum([i.branch_length for i in terminals]) / n_terminals
+            pd_terminal_sd = np.std([i.branch_length for i in terminals]) / n_terminals
+            tree_res = len(internals) / n_terminals
         except Exception:
             log.info('Bad phylogenetic tree.')
     utils.clean_tmp(aln_file)
