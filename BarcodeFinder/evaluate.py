@@ -373,12 +373,12 @@ def phylogenetic_diversity(alignment: np.array, tmp: Path) -> (float, float,
     else:
         tree = Phylo.read(str(aln_file)+'.treefile', 'newick')
         try:
-            pd = tree.total_branch_length()
             # skip the first empty node
             internals = tree.get_nonterminals()[1:]
             terminals = tree.get_terminals()
             # may be zero
             n_terminals = max(1, len(terminals))
+            pd = tree.total_branch_length() / n_terminals
             pd_stem = sum([i.branch_length for i in internals]) / n_terminals
             pd_stem_sd = np.std([i.branch_length for i in internals]) / n_terminals
             pd_terminal = sum([i.branch_length for i in terminals]) / n_terminals
