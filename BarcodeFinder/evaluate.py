@@ -209,7 +209,7 @@ def fasta_to_array(aln_fasta: Path) -> (np.array, np.array):
     return name_array, sequence_array
 
 
-def remove_gap(alignment: np.array) -> (np.array, np.array):
+def remove_gap(alignment: np.array, silence=False) -> (np.array, np.array):
     """
     Split alignment into with_gap and without_gap.
     Args:
@@ -226,7 +226,7 @@ def remove_gap(alignment: np.array) -> (np.array, np.array):
     n_columns = alignment.shape[1]
     n_gap_columns = gap_columns.shape[1]
     log.info(f'{n_columns} columns, {n_gap_columns} have gaps.')
-    if n_gap_columns/n_columns > 0.5:
+    if n_gap_columns/n_columns > 0.5 and not silence:
         log.warning('Too much columns with gaps.')
     return no_gap_columns, gap_columns
 
@@ -365,7 +365,7 @@ def phylogenetic_diversity(alignment: np.array, tmp: Path) -> (float, float,
     with open(devnull, 'w', encoding='utf-8') as out:
         run_ = run(f'{iqtree} -s {aln_file} -m HKY -fast -czb -redo',
                    stdout=out, stderr=out, shell=True)
-    # just return 0 if there is error
+        # just return 0 if there is error
     if run_.returncode != 0:
         log.debug('Too much gap in the alignment.')
     else:
@@ -454,6 +454,9 @@ def output_sliding(sliding: list, name: str, out: Path,
     start = 1
     for variance in sliding:
         line = f'{start},{start+size},{variance}\n'
+        print(variance.Tree_Res, 'tree s')
+        print(variance.PD, 'pd')
+        print(line)
         index.append(start)
         handle.write(line)
         start += step
@@ -530,6 +533,8 @@ def evaluate(aln: Path, arg) -> tuple:
         for i in range(0, columns, arg.step):
             # view, not copy
             subalign = alignment[:, i:i+arg.size]
+            if arg.ignore_gap:
+                subalign, gap_subalign = remove_gap(alignment, silence=True)
             variance, sub_gc_array = get_resolution(subalign, arg._tmp,
                                                     arg.ignore_ambiguous_base)
             sliding.append(variance)
