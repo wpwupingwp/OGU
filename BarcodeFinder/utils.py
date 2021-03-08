@@ -116,7 +116,7 @@ def move(source: Path, dest, copy=False):
     return dest
 
 
-def init_out(arg, from_main=False):
+def init_out(arg):
     """
     Initilize output folder.
     Args:
@@ -131,14 +131,14 @@ def init_out(arg, from_main=False):
     else:
         arg.out = Path(arg.out).absolute()
     if arg.out.exists():
-        if from_main:
+        from BarcodeFinder import global_vars
+        if not global_vars.global_dict.get('out_inited', False):
             log.error(f'Output folder {arg.out} exists.')
             arg.out = arg.out.parent / (arg.out.name+'_')
             log.info(f'Use {arg.out} instead.')
             if arg.out.exists():
                 log.error(f'{arg.out} exists, too!')
-                arg.out = None
-                return arg
+                raise SystemExit(-1)
         else:
             pass
     arg._gb = arg.out / 'GenBank'
@@ -163,6 +163,7 @@ def init_out(arg, from_main=False):
         arg._tmp.mkdir()
     except Exception:
         log.debug('Folder exists.')
+    out_inited = True
     return arg
 
 

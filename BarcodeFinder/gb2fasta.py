@@ -195,8 +195,6 @@ def init_arg(arg):
     else:
         arg.query = get_query_string(arg)
     arg = utils.init_out(arg)
-    if arg.out is None:
-        return None
     if arg.gb is None and arg.query is None:
         log.warning('Empty input.')
         return None

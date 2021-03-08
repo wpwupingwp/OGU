@@ -242,8 +242,6 @@ def parse_args(arg_str=None):
 
 def init_arg(arg):
     arg = utils.init_out(arg)
-    if arg.out is None:
-        return None
     if all([arg.aln, arg.aln_folder]):
         log.info('Do not recommend to use "-aln" and "-aln_folder" '
                  'at same time!')

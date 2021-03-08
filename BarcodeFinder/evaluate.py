@@ -64,8 +64,6 @@ def parse_args():
 
 def init_arg(arg):
     arg = utils.init_out(arg)
-    if arg.out is None:
-        return None
     if all([arg.fasta, arg.fasta_folder]):
         log.info('Do not recommend to  use "-fasta" and "-fasta_folder" '
                  'at same time!')
@@ -470,7 +468,7 @@ def output_sliding(sliding: list, name: str, out: Path,
                   f'(sample={sliding[0].Samples}, '
                   f'size={size} bp, step={step} bp)', pad=30)
     ax1.set_xlabel('Bases')
-    ax1.set_ylabel('Gap Ratio, GC Ratio, Resolution & Shannon Index')
+    ax1.set_ylabel('Gap Ratio, GC Ratio, Resolution, Pi & Shannon Index')
     ax1.plot(index, [i.Gap_Ratio for i in sliding], label='Gap Ratio',
              alpha=0.8)
     ax1.plot(index, [i.Observed_Res for i in sliding],
@@ -481,6 +479,7 @@ def output_sliding(sliding: list, name: str, out: Path,
              alpha=0.8)
     ax1.plot(index, [i.Total_GC for i in sliding], label='GC Ratio',
              alpha=0.8)
+    ax1.plot(index, [i.Pi for i in sliding], label=r'$\pi$', alpha=0.8)
     ax1.legend(loc='lower left')
     # different ytick
     ax2 = ax1.twinx()
@@ -493,7 +492,6 @@ def output_sliding(sliding: list, name: str, out: Path,
     ax2.plot(index, [i.PD_terminal for i in sliding], linestyle='--',
              label='PD_terminal', alpha=0.8)
     # k--
-    ax2.plot(index, [i.Pi for i in sliding], '--', label=r'$\pi$', alpha=0.8)
     ax2.legend(loc='upper right')
     plt.savefig(out_pdf)
     plt.close()

@@ -133,7 +133,7 @@ def init_arg(arg):
     ok2 = utils.get_all_third_party()
     if not ok2:
         return None
-    arg = utils.init_out(arg, from_main=True)
+    arg = utils.init_out(arg)
     if arg.out is None:
         return None
     query = gb2fasta.get_query_string(arg, silence=True)
@@ -153,12 +153,17 @@ def bf_main():
     if arg is None:
         log.error('Quit.')
         return
+    else:
+        from BarcodeFinder import global_vars
+        global_vars.global_dict['out_inited'] = True
     utils.add_file_log(arg)
     option = utils.arg_to_str(arg)
     log.debug(f'Options: {option}')
     arg, other_args, = gb2fasta.gb2fasta_main()
     log.debug(f'Options 2: {other_args}')
     arg, other_args2 = evaluate.evaluate_main()
+    # if arg is None:
+    #    global_vars.global_dict['out_inited'] = False
     log.debug(f'Options 2: {other_args2}')
     arg, other_args3 = primer.primer_main()
     if other_args3 is not None and len(other_args3) != 0:
