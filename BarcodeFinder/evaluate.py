@@ -454,9 +454,6 @@ def output_sliding(sliding: list, name: str, out: Path,
     start = 1
     for variance in sliding:
         line = f'{start},{start+size},{variance}\n'
-        print(variance.Tree_Res, 'tree s')
-        print(variance.PD, 'pd')
-        print(line)
         index.append(start)
         handle.write(line)
         start += step
