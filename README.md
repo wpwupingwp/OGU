@@ -365,7 +365,7 @@ In the output folder, several subfolders will be created.
 
     `.-consensus.fastq`: The fastq format of the consensus sequence of the
     alignment. Note that it contains alignment gap ("-"). It is NOT
-    RECOMMENDED to be used directly because the consensus-genrating algorithm is
+    RECOMMENDED to be used directly because the consensus-generating algorithm is
     optimised for primer design.
 * Evaluate
 
@@ -701,6 +701,7 @@ dividing step to find primer candidates. The default value is `0`.
 Note that this option is different with "-max_len". This option limits the
 length of one annotation's sequence. The "-max_len" limits the whole
 sequence's length of one GenBank record.
+
 `-allow_repeat`: If genes repeated in downstream, this option will allow the
 repeat region to be extracted, otherwise any repeated region will be omitted.
 The default value is `False`.
