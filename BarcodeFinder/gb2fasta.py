@@ -83,9 +83,9 @@ def parse_args(arg_str=None):
                                 'bacteria', 'archaea', 'viruses'),
                        default='all',
                        help='Kind of species')
-    query.add_argument('-min_len', default=100, type=int,
+    query.add_argument('-min_len', default=1, type=int,
                        help='minimum length')
-    query.add_argument('-max_len', default=10000, type=int,
+    query.add_argument('-max_len', default=300000, type=int,
                        help='maximum length')
     query.add_argument('-date_start', type=str,
                        help='release date beginning, (eg. 1970/1/1)')

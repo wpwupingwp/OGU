@@ -68,9 +68,9 @@ def parse_args():
                                     'viruses'),
                            default='all',
                            help='Species kind')
-    gb2fasta_.add_argument('-min_len', default=100, type=int,
+    gb2fasta_.add_argument('-min_len', default=1, type=int,
                            help='minimum length')
-    gb2fasta_.add_argument('-max_len', default=10000, type=int,
+    gb2fasta_.add_argument('-max_len', default=300000, type=int,
                            help='maximum length')
     gb2fasta_.add_argument('-date_start', type=str,
                            help='release date beginning, (eg. 1970/1/1)')
