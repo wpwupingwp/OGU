@@ -12,6 +12,7 @@ from threading import Thread
 from pathlib import Path
 from urllib.request import urlopen
 from shutil import unpack_archive
+from sys import argv
 
 from Bio.Seq import Seq
 
@@ -79,11 +80,13 @@ def add_file_log(arg):
     else:
         log_file = arg.out / 'Log.txt'
         log_file_handler = logging.FileHandler(log_file, mode='a')
-        log_file_handler.setLevel(logging.INFO)
+        log_file_handler.setLevel(logging.DEBUG)
         log_file_handler.setFormatter(
             logging.Formatter( fmt=FMT, datefmt=DATEFMT))
         log.addHandler(log_file_handler)
         log.debug('Add file handler.')
+        log.debug('Arguments:')
+        log.debug(' '.join(argv))
     return
 
 
