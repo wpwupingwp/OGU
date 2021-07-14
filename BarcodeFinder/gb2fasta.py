@@ -406,6 +406,8 @@ def get_spacer(genes):
         invert_repeat = False
         repeat = False
         # gene name may contain "_", use "-" instead
+        # sorted_name = '-'.join(sorted([b_name, c_name]))
+        # to be continued
         name = '-'.join([b_name, c_name])
         # 1. A.start--A.end--B.start--B.end
         if before.location.end <= current.location.start:
