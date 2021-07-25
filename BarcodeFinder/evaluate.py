@@ -373,6 +373,7 @@ def phylogenetic_diversity(alignment: np.array, tmp: Path) -> (float, float,
         try:
             # skip the first empty node
             internals = tree.get_nonterminals()[1:]
+            non_zero_internals = [i for i in internals if i.branch_length!=0]
             terminals = tree.get_terminals()
             # may be zero
             n_terminals = max(1, len(terminals))
@@ -381,7 +382,7 @@ def phylogenetic_diversity(alignment: np.array, tmp: Path) -> (float, float,
             pd_stem_sd = np.std([i.branch_length for i in internals]) / n_terminals
             pd_terminal = sum([i.branch_length for i in terminals]) / n_terminals
             pd_terminal_sd = np.std([i.branch_length for i in terminals]) / n_terminals
-            tree_res = len(internals) / n_terminals
+            tree_res = len(non_zero_internals) / n_terminals
         except Exception:
             log.info('Bad phylogenetic tree.')
     utils.clean_tmp(aln_file)
