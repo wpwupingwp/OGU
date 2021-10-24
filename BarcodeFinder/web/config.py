@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 # database
-SQLALCHEMY_DATABASE_URI = 'sqlite:///web.db'
+SQLALCHEMY_DATABASE_URI = 'sqlite:///bf.db'
 SQLALCHEMY_TRACK_MODIFICATIONS = False
 # max filesize 10mb
 MAX_CONTENT_LENGTH = 10 * 1024 * 1024
