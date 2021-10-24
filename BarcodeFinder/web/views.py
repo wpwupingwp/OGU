@@ -1,10 +1,17 @@
 #!/usr/bin/python3
 
 import flask as f
+import flask_login as fl
 
-from web import app
+from web import app, lm
 from web.database import Post, db
 from web.form import *
+
+
+@lm.user_loader
+def load_user(user_id):
+    user = User.query.get(user_id)
+    return user
 
 
 @app.route('/uploads/<filename>')
@@ -27,7 +34,7 @@ def gb2fasta():
         db.session.commit()
         f.flash('Submit OK')
         return f.redirect('/')
-    return f.render_template('form.html', form=form)
+    return f.render_template('base.html', form=form)
 
 
 @app.route('/evaluate')
@@ -39,7 +46,7 @@ def evaluate():
         db.session.commit()
         f.flash('Submit OK')
         return f.redirect('/')
-    return f.render_template('form.html', form=form)
+    return f.render_template('base.html', form=form)
 
 
 @app.route('/primer')
@@ -51,11 +58,11 @@ def primer():
         db.session.commit()
         f.flash('Submit OK')
         return f.redirect('/')
-    return f.render_template('form.html', form=form)
+    return f.render_template('base.html', form=form)
 
 
 @app.route('/combine')
-def gb2fasta():
+def combine():
     form = RawCmd()
     if form.validate_on_submit():
         cmd = Command()
@@ -63,7 +70,7 @@ def gb2fasta():
         db.session.commit()
         f.flash('Submit OK')
         return f.redirect('/')
-    return f.render_template('form.html', form=form)
+    return f.render_template('base.html', form=form)
 
 
 @app.route('/job/<int:page>')

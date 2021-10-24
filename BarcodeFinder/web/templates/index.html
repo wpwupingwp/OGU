@@ -1,4 +1,5 @@
-{% extend block %}
+{% extends "base.html" %}
+{% block content %}
 <div class="pricing-header px-3 py-3 pt-md-5 pb-md-4 mx-auto text-center">
     <p class="lead">Quickly develop novel DNA barcodes for specific taxonomy.</p>
 </div>
@@ -16,7 +17,7 @@
                     <li>Extract intergenic spacer, gene, CDS, and other kinds of fragments</li>
                     <li>Unify sequence name by taxonomy information</li>
                 </ul>
-                <button type="button" class="btn btn-lg btn-block btn-outline-primary" target="/gb2fasta">Submit</button>
+                <a class="btn btn-lg btn-primary" href="/gb2fasta" role="button">View</a>
             </div>
         </div>
         <div class="card mb-4 box-shadow">
@@ -33,7 +34,7 @@
                     <li>Phylogenetic tree resolution</li>
                     <li>Sliding-window scan</li>
                 </ul>
-                <button type="button" class="btn btn-lg btn-block btn-primary" target="/evaluate">Submit</button>
+                <a class="btn btn-lg btn-primary" href="/evaluate" role="button">View</a>
             </div>
         </div>
         <div class="card mb-4 box-shadow">
@@ -47,7 +48,7 @@
                     <li>Evaluate amplified fragments' variance</li>
                     <li>In silico validation</li>
                 </ul>
-                <button type="button" class="btn btn-lg btn-block btn-primary" target="/primer">Submit</button>
+                <a class="btn btn-lg btn-primary" href="/primer" role="button">View</a>
             </div>
         </div>
         <div class="card mb-4 box-shadow">
@@ -59,7 +60,7 @@
                 <ul class="list-unstyled mt-3 mb-4">
                     <li>Using two or three modules all together</li>
                 </ul>
-                <button type="button" class="btn btn-lg btn-block btn-primary" target="/combine">Submit</button>
+                <a class="btn btn-lg btn-primary" href="/combine" role="button">View</a>
             </div>
         </div>
     </div>
