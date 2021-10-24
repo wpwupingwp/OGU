@@ -69,6 +69,15 @@
         {{ bootstrap.load_js() }}
     {% endblock %}
 
+    {% block form %}
+    {% if form %}
+    {% from 'bootstrap/form.html' import render_form, render_hidden_errors %}
+    {% for error in form.errors.items() %}
+    <div class="invalid-feedback">{{error}}</div>
+    {% endfor %}
+    {{render_form(form, extra_classes="container-sm")}}
+    {% endif %}
+    {% endblock %}
 </div>
 <hr/>
 <footer class="pt-4 my-md-5 pt-md-5 border-top">

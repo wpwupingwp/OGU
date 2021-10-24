@@ -55,6 +55,19 @@ class Command(db.Model):
     def __str__(self):
         return f'{self.command_id}: {self.title}'
 
+    @staticmethod
+    def from_form(form, user_id):
+        cmd = Command()
+        if isinstance(form, FlaskForm):
+            self.user_id = user_id
+            self.title = 'test'
+            self.module = 1
+            self.command = str(dict(form.data))
+            self.date = datetime.now()
+        else:
+            pass
+        return cmd
+
 
 class Post(db.Model):
     __tablename__ = 'post'

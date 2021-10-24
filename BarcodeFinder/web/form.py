@@ -16,7 +16,7 @@ class UserForm(FlaskForm):
     password2 = m.PasswordField('Password Again', validators=[
         v.input_required(), v.equal_to('password'), v.length(min=4)])
     address = m.StringField('Address', validators=[v.input_required()])
-    submit = m.SubmitField('Submit')
+    submit = m.SubmitField()
 
 
 class LoginForm(FlaskForm):
@@ -24,7 +24,7 @@ class LoginForm(FlaskForm):
         v.input_required(), v.email()])
     password = m.PasswordField('Password', validators=[
         v.input_required(), v.length(min=4)])
-    submit = m.SubmitField('Submit')
+    submit = m.SubmitField()
 
 
 class RawCmd(FlaskForm):
@@ -34,8 +34,27 @@ class RawCmd(FlaskForm):
     submit = m.SubmitField('Submit')
 
 
+class Gb2fastaForm(FlaskForm):
+    genbank_file = m.StringField('GenBank files')
+    output = m.StringField('Output path', validators=[v.input_requried()])
+    no_divide = m.BooleanField('No divide', default=True)
+    rename = m.BooleanField('Rename genes', default=False)
+    unique = m.BooleanField('Remove repeat sequences', default=False)
+    gene = m.StringField('Gene')
+    taxon = m.StringField('Taxonomy')
+    min_len = m.StringField('Minimum sequence length', default=1)
+    max_len = m.StringField('maximum sequence length', default=300000)
+    start_date = DateField('Start date')
+    end_date = DateField('End date')
+    organelle = m.SelectField('Organelle type', choices=(
+        'ignore', 'both', 'mitochondrion', 'plastid'))
+    refseq = m.SelectField('Use RefSeq database', choices=('both', 'only', 'no'))
+    number = m.StringField('Number of records to download', default=0)
+    submit = m.SubmitField()
+
+
 class PostForm(FlaskForm):
     username = m.StringField('Username', validators=[v.input_required('')])
     content = m.TextAreaField('Content', validators=[v.input_required('')])
     secret = m.BooleanField('Secret')
-    submit = m.SubmitField('Submit')
+    submit = m.SubmitField()

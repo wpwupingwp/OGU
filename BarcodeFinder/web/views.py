@@ -2,9 +2,9 @@
 
 import flask as f
 
-from class_demo import app
-from class_demo.database import Post, db
-from class_demo.form import PostForm
+from web import app
+from web.database import Post, db
+from web.form import *
 
 
 @app.route('/uploads/<filename>')
@@ -22,7 +22,7 @@ def index():
 def gb2fasta():
     form = Gb2fastaForm()
     if form.validate_on_submit():
-        cmd = Command()
+        cmd = Command(form, 1)
         db.session.add(cmd)
         db.session.commit()
         f.flash('Submit OK')
@@ -31,7 +31,7 @@ def gb2fasta():
 
 
 @app.route('/evaluate')
-def gb2fasta():
+def evaluate():
     form = EvaluateForm()
     if form.validate_on_submit():
         cmd = Command()
@@ -43,7 +43,7 @@ def gb2fasta():
 
 
 @app.route('/primer')
-def gb2fasta():
+def primer():
     form = PrimerForm()
     if form.validate_on_submit():
         cmd = Command()
@@ -56,7 +56,7 @@ def gb2fasta():
 
 @app.route('/combine')
 def gb2fasta():
-    form = CommandForm()
+    form = RawCmd()
     if form.validate_on_submit():
         cmd = Command()
         db.session.add(cmd)
@@ -77,7 +77,7 @@ def my_goods(user_id, page=1):
 
 @app.route('/post', methods=('POST', 'GET'))
 @app.route('/post/<int:page>', methods=('POST', 'GET'))
-def index(page=1):
+def post(page=1):
     postform = PostForm()
     pagination = Post.query.order_by(Post.date.desc()).paginate(page=page,
                                                                 per_page=5)
@@ -86,6 +86,6 @@ def index(page=1):
                     postform.secret.data)
         db.session.add(post)
         db.session.commit()
-        f.flash('留言成功')
-        return f.redirect('/')
-    return f.render_template('index.html', form=postform, pagination=pagination)
+        f.flash('Post OK.')
+        return f.redirect('/post')
+    return f.render_template('post.html', form=postform, pagination=pagination)
