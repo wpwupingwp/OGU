@@ -11,3 +11,4 @@ app.config.from_pyfile('config.py')
 from web import config
 from web import views
 from web.database import db
+

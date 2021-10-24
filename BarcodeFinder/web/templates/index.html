@@ -1,0 +1,68 @@
+{% extend block %}
+<div class="pricing-header px-3 py-3 pt-md-5 pb-md-4 mx-auto text-center">
+    <p class="lead">Quickly develop novel DNA barcodes for specific taxonomy.</p>
+</div>
+<div class="container">
+    <div class="card-deck mb-3 text-center">
+        <div class="card mb-4 box-shadow">
+            <div class="card-header">
+                <h4 class="my-0 font-weight-normal">GB2FASTA</h4>
+            </div>
+            <div class="card-body">
+                <h1 class="card-title pricing-card-title">Collect and processs Genbank data</h1>
+                <ul class="list-unstyled mt-3 mb-4">
+                    <li>Collect genbank-format sequences data from NCBI</li>
+                    <li>Verify genbank files according to annotations</li>
+                    <li>Extract intergenic spacer, gene, CDS, and other kinds of fragments</li>
+                    <li>Unify sequence name by taxonomy information</li>
+                </ul>
+                <button type="button" class="btn btn-lg btn-block btn-outline-primary" target="/gb2fasta">Submit</button>
+            </div>
+        </div>
+        <div class="card mb-4 box-shadow">
+            <div class="card-header">
+                <h4 class="my-0 font-weight-normal">Evaluate</h4>
+            </div>
+            <div class="card-body">
+                <h1 class="card-title pricing-card-title">Evaluate sequence variance</h1>
+                <ul class="list-unstyled mt-3 mb-4">
+                    <li>Nucleotide polymorphism</li>
+                    <li>Shannon index</li>
+                    <li>Observed resolution</li>
+                    <li>Phylogenetic diversity</li>
+                    <li>Phylogenetic tree resolution</li>
+                    <li>Sliding-window scan</li>
+                </ul>
+                <button type="button" class="btn btn-lg btn-block btn-primary" target="/evaluate">Submit</button>
+            </div>
+        </div>
+        <div class="card mb-4 box-shadow">
+            <div class="card-header">
+                <h4 class="my-0 font-weight-normal">Primer</h4>
+            </div>
+            <div class="card-body">
+                <h1 class="card-title pricing-card-title">Design universal primers</h1>
+                <ul class="list-unstyled mt-3 mb-4">
+                    <li>Fulfill coverage requirement</li>
+                    <li>Evaluate amplified fragments' variance</li>
+                    <li>In silico validation</li>
+                </ul>
+                <button type="button" class="btn btn-lg btn-block btn-primary" target="/primer">Submit</button>
+            </div>
+        </div>
+        <div class="card mb-4 box-shadow">
+            <div class="card-header">
+                <h4 class="my-0 font-weight-normal">Combine</h4>
+            </div>
+            <div class="card-body">
+                <h1 class="card-title pricing-card-title">Combine using modules</h1>
+                <ul class="list-unstyled mt-3 mb-4">
+                    <li>Using two or three modules all together</li>
+                </ul>
+                <button type="button" class="btn btn-lg btn-block btn-primary" target="/combine">Submit</button>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
