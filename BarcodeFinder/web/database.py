@@ -20,7 +20,7 @@ class User(db.Model, fl.UserMixin):
     password = db.Column(db.String(100))
     register_date = db.Column(db.DateTime)
     address = db.Column(db.String(100))
-    bider_id = db.relationship('Bid', backref='user')
+    jober_id = db.relationship('Command', backref='user')
 
     def __init__(self, username, password, address=''):
         self.username = username
@@ -45,13 +45,6 @@ class Command(db.Model):
     command = db.Column(db.Text, nullable=False)
     date = db.Column(db.DateTime)
 
-    def __init__(self, user_id, title, module, command):
-        self.user_id = user_id
-        self.title = title
-        self.module = module
-        self.command = command
-        self.date = datetime.now()
-
     def __str__(self):
         return f'{self.command_id}: {self.title}'
 
@@ -59,11 +52,11 @@ class Command(db.Model):
     def from_form(form, user_id):
         cmd = Command()
         if isinstance(form, FlaskForm):
-            self.user_id = user_id
-            self.title = 'test'
-            self.module = 1
-            self.command = str(dict(form.data))
-            self.date = datetime.now()
+            cmd.user_id = user_id
+            cmd.title = 'test'
+            cmd.module = 1
+            cmd.command = str(dict(form.data))
+            cmd.date = datetime.now()
         else:
             pass
         return cmd

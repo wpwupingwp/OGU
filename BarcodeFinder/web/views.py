@@ -4,7 +4,7 @@ import flask as f
 import flask_login as fl
 
 from web import app, lm
-from web.database import Post, db
+from web.database import Command, Post, db
 from web.form import *
 
 
@@ -25,11 +25,11 @@ def index():
     return f.render_template('index.html')
 
 
-@app.route('/gb2fasta')
+@app.route('/gb2fasta', methods=('POST', 'GET'))
 def gb2fasta():
     form = Gb2fastaForm()
     if form.validate_on_submit():
-        cmd = Command(form, 1)
+        cmd = Command.from_form(form, 1)
         db.session.add(cmd)
         db.session.commit()
         f.flash('Submit OK')
@@ -37,7 +37,7 @@ def gb2fasta():
     return f.render_template('base.html', form=form)
 
 
-@app.route('/evaluate')
+@app.route('/evaluate', methods=('POST', 'GET'))
 def evaluate():
     form = EvaluateForm()
     if form.validate_on_submit():
@@ -49,7 +49,7 @@ def evaluate():
     return f.render_template('base.html', form=form)
 
 
-@app.route('/primer')
+@app.route('/primer', methods=('POST', 'GET'))
 def primer():
     form = PrimerForm()
     if form.validate_on_submit():
@@ -61,7 +61,7 @@ def primer():
     return f.render_template('base.html', form=form)
 
 
-@app.route('/combine')
+@app.route('/combine', methods=('POST', 'GET'))
 def combine():
     form = RawCmd()
     if form.validate_on_submit():
@@ -74,10 +74,11 @@ def combine():
 
 
 @app.route('/job/<int:page>')
-def my_goods(user_id, page=1):
+@app.route('/job/')
+def my_goods(page=1):
     per_page = 5
     pagination = Command.query.with_entities(
-        Command.id, Command.title, Command.user_id, Command.date
+        Command.id, Command.title, Command.module, Command.user_id, Command.date
     ).order_by(Command.date.desc()).paginate(page=page, per_page=per_page)
     return f.render_template('job.html', pagination=pagination)
 
