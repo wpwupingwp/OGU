@@ -3,7 +3,7 @@
 from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
 
-from class_demo import app
+from web import app
 from flask_wtf import FlaskForm
 
 import flask_login as fl

@@ -28,15 +28,15 @@ class LoginForm(FlaskForm):
 
 
 class RawCmd(FlaskForm):
-    title = m.StringField('Job Title', validators=[v.input_requried()])
-    module = m.StringField('Module', validators=[v.input_requried()])
+    title = m.StringField('Job Title', validators=[v.input_required()])
+    module = m.StringField('Module', validators=[v.input_required()])
     command = m.TextAreaField('Command', validators=[v.input_required()])
     submit = m.SubmitField('Submit')
 
 
 class Gb2fastaForm(FlaskForm):
     genbank_file = m.StringField('GenBank files')
-    output = m.StringField('Output path', validators=[v.input_requried()])
+    output = m.StringField('Output path', validators=[v.input_required()])
     no_divide = m.BooleanField('No divide', default=True)
     rename = m.BooleanField('Rename genes', default=False)
     unique = m.BooleanField('Remove repeat sequences', default=False)

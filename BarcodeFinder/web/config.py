@@ -13,8 +13,9 @@ BOOTSTRAP_SERVE_LOCAL = True
 SQLALCHEMY_DATABASE_URI = 'sqlite:///mai.db'
 SQLALCHEMY_TRACK_MODIFICATIONS = False
 # upload
+from web import root
 UPLOAD_FOLDER = root / 'upload'
-UPLOADED_FILE = UPLOAD_FOLDER / 'seq'
+UPLOADED_FILE_DEST = UPLOAD_FOLDER / 'seq'
 for i in UPLOAD_FOLDER, UPLOADED_FILE_DEST:
     if not i.exists():
         i.mkdir()
