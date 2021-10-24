@@ -37,7 +37,7 @@ class User(db.Model, fl.UserMixin):
 
 class Command(db.Model):
     __tablename__ = 'command'
-    command_id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), default='Unknown', nullable=False)
     user_id = db.Column(db.ForeignKey('user.user_id'))
     # 1, 12, 123, 23, 2, 3
