@@ -145,3 +145,4 @@
 145. tRNA His (GUG)
 146. annotation across tail and head will be misextracted
 147. add web interface
+148. ImportError: cannot import name 'Iterable' from 'collections'

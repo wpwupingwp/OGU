@@ -53,7 +53,7 @@ def evaluate():
 def primer():
     form = PrimerForm()
     if form.validate_on_submit():
-        cmd = Command()
+        cmd = Command.from_form(form, 4)
         db.session.add(cmd)
         db.session.commit()
         f.flash('Submit OK')
