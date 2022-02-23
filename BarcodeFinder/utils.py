@@ -5,7 +5,10 @@ import logging
 import platform
 import subprocess
 
-from collections import Iterable
+try:
+    from collections import Iterable
+except ImportError:
+    from collections.abc import Iterable
 from functools import lru_cache
 from queue import Queue
 from threading import Thread
