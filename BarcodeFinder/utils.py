@@ -10,12 +10,12 @@ try:
 except ImportError:
     from collections.abc import Iterable
 from functools import lru_cache
-from queue import Queue
-from threading import Thread
 from pathlib import Path
-from urllib.request import urlopen
+from queue import Queue
 from shutil import unpack_archive
 from sys import argv
+from threading import Thread
+from urllib.request import urlopen
 
 from Bio.Seq import Seq
 
@@ -153,7 +153,7 @@ def init_out(arg):
     arg._expand = arg.out / 'Expanded_fasta'
     arg._unique = arg.out / 'Unique'
     arg._align = arg.out / 'Alignment'
-    arg._evaluate = arg.out /'Evaluate'
+    arg._evaluate = arg.out / 'Evaluate'
     arg._primer = arg.out / 'Primer'
     arg._tmp = arg.out / 'Temp'
     try:
@@ -630,10 +630,12 @@ def parse_blast_tab(filename):
 
 
 def codon_usage(alignment):
+    # todo
     pass
 
 
 def gap_analyze(gap_alignment):
+    # todo
     """
 
     Args:
