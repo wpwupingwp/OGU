@@ -52,7 +52,7 @@ class BlastResult:
                           self.hit_end)
 
 
-def arg_to_str(arg) ->str:
+def arg_to_str(arg) -> str:
     s = ''
     arg_dict = vars(arg)
     for key, value in arg_dict.items():
@@ -85,7 +85,7 @@ def add_file_log(arg):
         log_file_handler = logging.FileHandler(log_file, mode='a')
         log_file_handler.setLevel(logging.DEBUG)
         log_file_handler.setFormatter(
-            logging.Formatter( fmt=FMT, datefmt=DATEFMT))
+            logging.Formatter(fmt=FMT, datefmt=DATEFMT))
         log.addHandler(log_file_handler)
         log.debug('Add file handler.')
         log.debug('Arguments:')
@@ -230,7 +230,7 @@ def gene_rename(old_name: str, genbank_format=False) -> (str, str):
                 aa_letter = anticodon.reverse_complement().translate().upper()
             except Exception:
                 return old_name, 'bad_name'
-            #anticodon = anticodon.transcribe()
+            # anticodon = anticodon.transcribe()
         if genbank_format:
             new_name = f'{prefix}{aa_letter}-{anticodon.upper()}'
         else:
@@ -495,7 +495,7 @@ def get_iqtree(third_party=None, result=None) -> (bool, str):
             with open(down_file, 'wb') as out:
                 out.write(down.read())
             try:
-                #unpack_archive(down_file, third_party/fileinfo[system][1])
+                # unpack_archive(down_file, third_party/fileinfo[system][1])
                 unpack_archive(down_file, third_party)
             except Exception:
                 log.critical('The file is damaged.')
@@ -567,12 +567,13 @@ def get_mafft(third_party=None, result=None) -> (bool, str):
             with open(down_file, 'wb') as out:
                 out.write(down.read())
             try:
-                #unpack_archive(down_file, third_party/fileinfo[system][1])
+                # unpack_archive(down_file, third_party/fileinfo[system][1])
                 unpack_archive(down_file, third_party)
             except Exception:
                 log.critical('The file is damaged.')
                 log.critical('Please check your connection.')
                 break
+            # todo failed on mac
             assert test_cmd(home_mafft, '--version')
             ok = True
             break
