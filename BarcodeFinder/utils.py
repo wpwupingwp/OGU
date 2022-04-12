@@ -342,8 +342,10 @@ def test_cmd(program, option='-version') -> bool:
     Return:
         success(bool): success or not
     """
+    program = Path(program)
+    if program.exists():
+        program.chmod(0o755)
     cmd = f'{program} {option}'
-    print(cmd)
     test = subprocess.run(cmd, shell=True, stdout=subprocess.DEVNULL,
                           stderr=subprocess.DEVNULL)
     success = True if test.returncode == 0 else False
@@ -398,6 +400,7 @@ def get_software(software: str, url: str, filename: Path,
     down_file = filename
     with open(down_file, 'wb') as out:
         out.write(down.read())
+    log.info('{filename.name} got. Installing...')
     try:
         # unpack_archive(down_file, third_party/fileinfo[system][1])
         unpack_archive(down_file, third_party)
@@ -406,6 +409,7 @@ def get_software(software: str, url: str, filename: Path,
                      f'Please recheck your connection.')
         raise SystemExit(-1)
     assert test_cmd(home_bin, test_option)
+    log.info(f'{software} installed successfully.')
     return True
 
 

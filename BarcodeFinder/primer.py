@@ -507,6 +507,8 @@ def validate(primer_candidate: list, aln: Path, n_seqs: int, arg):
         return []
     locus_name = aln.stem
     makeblastdb = Path(blast).parent / 'makeblastdb'
+    # chmod +x
+    makeblastdb.chmod(0o755)
     query_file = arg._primer / (locus_name+'.candidate.fasta')
     query_file_fastq = arg._primer / (locus_name+'.candidate.fastq')
     # SeqIO.write fasta file directly is prohibited. have to write fastq at
