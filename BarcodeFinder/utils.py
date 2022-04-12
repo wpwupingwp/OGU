@@ -30,6 +30,10 @@ try:
 except ImportError:
     pass
 
+# hosting in free AWS S3 server
+aws_url = 'https://barcodefinder.s3.ap-east-1.amazonaws.com/'
+test_url = 'https://s3.ap-east-1.amazonaws.com'
+
 
 class BlastResult:
     # slightly faster than namedtuple
@@ -371,6 +375,37 @@ def get_third_party():
     return success, third_party
 
 
+def get_software(software: str, url: str, filename: Path,
+                 third_party: Path, home_bin: Path, test_option='-version'):
+    log.warning(f'Cannot find {software}, try to install.')
+    try:
+        # 50kb/10s=5kb/s, enough for test
+        _ = urlopen(test_url, timeout=10)
+    except Exception:
+        log.critical('Cannot connect to Server.'
+                     'Please check your Internet connection.')
+        return False
+    try:
+        # file is 10mb or larger
+        down = urlopen(f'{url}', timeout=10)
+    except Exception:
+        log.critical('Cannot download {software}.'
+                     'Please manually download it from {url}')
+        return False
+    down_file = filename
+    with open(down_file, 'wb') as out:
+        out.write(down.read())
+    try:
+        # unpack_archive(down_file, third_party/fileinfo[system][1])
+        unpack_archive(down_file, third_party)
+    except Exception:
+        log.critical(f'The {software} file is damaged. '
+                     f'Please recheck your connection.')
+        return False
+    assert test_cmd(home_bin, test_option)
+    return True
+
+
 def get_blast(third_party=None, result=None) -> (bool, str):
     """
     Get BLAST location.
@@ -393,11 +428,17 @@ def get_blast(third_party=None, result=None) -> (bool, str):
     # win_home_blast = home_blast.with_name('blastn.exe')
     ok = False
     # older than 2.8.1 is buggy
-    url = ('https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.13.0/'
-           'ncbi-blast-2.13.0+')
-    urls = {'Linux': url+'-x64-linux.tar.gz',
-            'Darwin': url+'-x64-macosx.tar.gz',
-            'Windows': url+'-x64-win64.tar.gz'}
+    original_url = ('https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.13.0/'
+                    'ncbi-blast-2.13.0+')
+    file_prefix = 'ncbi-blast-2.13.0+'
+    fileinfo = {'Linux': file_prefix+'-x64-linux.tar.gz',
+                'Darwin': file_prefix+'-x64-macosx.tar.gz',
+                'Windows': file_prefix+'-x64-win64.tar.gz'}
+    system = platform.system()
+    filename = fileinfo[system]
+    down_url = f'{aws_url}{filename}'
+    # three software use different name pattern
+    down_file = filename
     if test_cmd(blast):
         ok = True
         home_blast = str(blast)
@@ -405,37 +446,8 @@ def get_blast(third_party=None, result=None) -> (bool, str):
         ok = True
         home_blast = str(home_blast)
     else:
-        while True:
-            log.warning('Cannot find NCBI BLAST, try to install.')
-            log.info('According to Internet speed, may be slow.')
-            try:
-                # 50kb/10s=5kb/s, enough for test
-                _ = urlopen('https://www.ncbi.nlm.nih.gov', timeout=10)
-            except Exception:
-                log.critical('Cannot connect to NCBI.')
-                log.critical('Please check your Internet connection.')
-                break
-            try:
-                # file is 86-222mb
-                down = urlopen(urls[platform.system()], timeout=10)
-            except Exception:
-                log.critical('Cannot download BLAST.')
-                log.critical('Please manually download it from '
-                             'https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.13.0')
-                break
-            down_file = third_party / 'BLAST_2.11.0.tar.gz'
-            with open(down_file, 'wb') as out:
-                out.write(down.read())
-            try:
-                unpack_archive(down_file, third_party)
-            except Exception:
-                log.critical('The file is damaged.')
-                log.critical('Please check your connection.')
-                break
-            assert test_cmd(home_blast, '-version')
-            ok = True
-            break
-    if result is not None:
+        ok = get_software(blast, down_url, down_file, third_party, home_blast)
+    if result is not None and ok:
         result.put(('BLAST', ok))
     return ok, str(home_blast)
 
@@ -458,7 +470,7 @@ def get_iqtree(third_party=None, result=None) -> (bool, str):
     iqtree = 'iqtree2'
     # in Windows, ".exe" can be omitted
     ok = False
-    url = 'https://github.com/Cibiv/IQ-TREE/releases/download/v2.0.6/'
+    original_url = 'https://github.com/iqtree/iqtree2/releases/download/v2.2.0/'
     # platform: (filename, folder)
     fileinfo = {'Linux': ('iqtree-2.2.0-Linux.tar.gz', 'iqtree-2.2.0-Linux'),
                 'Darwin': ('iqtree-2.2.0-MacOSX.zip', 'iqtree-2.2.0-MacOSX'),
@@ -466,45 +478,18 @@ def get_iqtree(third_party=None, result=None) -> (bool, str):
                             'iqtree-2.2.0-Windows')}
     system = platform.system()
     filename = fileinfo[system][0]
+    down_url = f'{aws_url}{filename}'
     home_iqtree = third_party / fileinfo[system][1] / 'bin' / iqtree
+    down_file = third_party / fileinfo[system][0]
     if test_cmd(iqtree):
         ok = True
         home_iqtree = str(iqtree)
     elif test_cmd(home_iqtree):
         ok = True
     else:
-        while True:
-            log.warning('Cannot find iqtree, try to install.')
-            log.info('According to Internet speed, may be slow.')
-            try:
-                # 50kb/10s=5kb/s, enough for test
-                _ = urlopen('https://github.com', timeout=10)
-            except Exception:
-                log.critical('Cannot connect to github.com')
-                log.critical('Please check your Internet connection.')
-                break
-            try:
-                # file is ~10mb
-                down = urlopen(f'{url}{filename}', timeout=10)
-            except Exception:
-                log.critical('Cannot download iqtree.')
-                log.critical('Please manually download it from '
-                             'https://github.com/Cibiv/IQ-TREE/')
-                break
-            down_file = third_party / fileinfo[system][0]
-            with open(down_file, 'wb') as out:
-                out.write(down.read())
-            try:
-                # unpack_archive(down_file, third_party/fileinfo[system][1])
-                unpack_archive(down_file, third_party)
-            except Exception:
-                log.critical('The file is damaged.')
-                log.critical('Please check your connection.')
-                break
-            assert test_cmd(home_iqtree, '-version')
-            ok = True
-            break
-    if result is not None:
+        ok = get_software(iqtree, f'{aws_url}{filename}', down_file,
+                          third_party, home_iqtree)
+    if result is not None and ok:
         result.put(('IQTREE', ok))
     return ok, str(home_iqtree)
 
@@ -532,52 +517,26 @@ def get_mafft(third_party=None, result=None) -> (bool, str):
     # in Windows, ".exe" can be omitted
     # win_home_blast = home_blast.with_name('blastn.exe')
     ok = False
-    url = 'https://mafft.cbrc.jp/alignment/software/'
+    original_url = 'https://mafft.cbrc.jp/alignment/software/'
     fileinfo = {'Linux': ('mafft-7.490-linux.tgz', 'mafft-linux64'),
                 'Darwin': ('mafft-7.490-mac.zip', 'mafft-mac'),
                 'Windows': ('mafft-7.490-win64-signed.zip', 'mafft-win')}
     home_mafft = third_party / fileinfo[system][1] / mafft
-    if test_cmd(mafft, '--version'):
+    system = platform.system()
+    filename = fileinfo[system][0]
+    down_url = f'{aws_url}{filename}'
+    down_file = third_party / fileinfo[system][0]
+    # mafft use '--version' to test
+    test_option = '--version'
+    if test_cmd(mafft, test_option):
         ok = True
         home_mafft = str(mafft)
-    elif test_cmd(home_mafft, '--version'):
+    elif test_cmd(home_mafft, test_option):
         ok = True
     else:
-        while True:
-            log.warning('Cannot find mafft, try to install.')
-            log.info('According to Internet speed, may be slow.')
-            try:
-                # 50kb/10s=5kb/s, enough for test
-                _ = urlopen('https://mafft.cbrc.jp', timeout=10)
-            except Exception:
-                log.critical('Cannot connect to mafft.cbrc.jp')
-                log.critical('Please check your Internet connection.')
-                break
-            try:
-                # file is ~10mb
-                if system != 'Darwin':
-                    down = urlopen(url+fileinfo[system][0], timeout=10)
-                else:
-                    down = urlopen(url+fileinfo[system][0]+'?signed', timeout=10)
-            except Exception:
-                log.critical('Cannot download mafft.')
-                log.critical(f'Please manually download it from {url}')
-                break
-            down_file = third_party / fileinfo[system][0]
-            with open(down_file, 'wb') as out:
-                out.write(down.read())
-            try:
-                # unpack_archive(down_file, third_party/fileinfo[system][1])
-                unpack_archive(down_file, third_party)
-            except Exception:
-                log.critical('The file is damaged.')
-                log.critical('Please check your connection.')
-                break
-            # todo failed on mac
-            assert test_cmd(home_mafft, '--version')
-            ok = True
-            break
-    if result is not None:
+        ok = get_software(mafft, down_url, down_file, third_party, home_mafft,
+                          test_option=test_option)
+    if result is not None and ok:
         result.put(('MAFFT', ok))
     return ok, str(home_mafft)
 
@@ -590,7 +549,6 @@ def get_all_third_party() -> bool:
     third_party_ok, third_party = get_third_party()
     if not third_party_ok:
         return False
-    # todo integrated third_party software
     result_queue = Queue()
     iqtree = Thread(target=get_iqtree, args=(third_party, result_queue),
                     daemon=True)

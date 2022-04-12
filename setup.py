@@ -7,8 +7,7 @@ from pathlib import Path
 from zipfile import ZipFile
 
 
-def download_taxon() -> Path:
-    data_folder = Path('.') / 'BarcodeFinder' / 'data'
+def download_taxon(data_folder) -> Path:
     zip_file = data_folder / 'taxdmp.zip'
     if zip_file.exists():
         pass
@@ -24,7 +23,8 @@ def init_lineage():
     """
     Only called by setup.py
     """
-    zip_file = download_taxon()
+    data_folder = Path('.') / 'BarcodeFinder' / 'data'
+    zip_file = download_taxon(data_folder)
     with ZipFile(zip_file, 'r') as dumpfile:
         dumpfile.extract('names.dmp', path='.')
         dumpfile.extract('nodes.dmp', path='.')
