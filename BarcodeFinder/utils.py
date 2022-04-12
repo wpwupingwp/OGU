@@ -16,6 +16,7 @@ from shutil import unpack_archive
 from sys import argv
 from threading import Thread
 from urllib.request import urlopen
+from urllib.parse import quote
 
 from Bio.Seq import Seq
 
@@ -341,8 +342,9 @@ def test_cmd(program, option='-version') -> bool:
     Return:
         success(bool): success or not
     """
-    test = subprocess.run(f'{program} {option}', shell=True,
-                          stdout=subprocess.DEVNULL,
+    cmd = f'{program} {option}'
+    print(cmd)
+    test = subprocess.run(cmd, shell=True, stdout=subprocess.DEVNULL,
                           stderr=subprocess.DEVNULL)
     success = True if test.returncode == 0 else False
     return success
@@ -377,21 +379,22 @@ def get_third_party():
 
 def get_software(software: str, url: str, filename: Path,
                  third_party: Path, home_bin: Path, test_option='-version'):
-    log.warning(f'Cannot find {software}, try to install.')
+    log.warning(f'Cannot find {software}, try to install. May cost minutes')
     try:
         # 50kb/10s=5kb/s, enough for test
         _ = urlopen(test_url, timeout=10)
     except Exception:
         log.critical('Cannot connect to Server.'
                      'Please check your Internet connection.')
-        return False
+        raise SystemExit(-1)
     try:
         # file is 10mb or larger
+        log.info(f'Downloading {filename.name} from {url}')
         down = urlopen(f'{url}', timeout=10)
     except Exception:
-        log.critical('Cannot download {software}.'
-                     'Please manually download it from {url}')
-        return False
+        log.critical(f'Cannot download {software}. '
+                     f'Please manually download it from {url}')
+        raise SystemExit(-1)
     down_file = filename
     with open(down_file, 'wb') as out:
         out.write(down.read())
@@ -401,7 +404,7 @@ def get_software(software: str, url: str, filename: Path,
     except Exception:
         log.critical(f'The {software} file is damaged. '
                      f'Please recheck your connection.')
-        return False
+        raise SystemExit(-1)
     assert test_cmd(home_bin, test_option)
     return True
 
@@ -436,9 +439,9 @@ def get_blast(third_party=None, result=None) -> (bool, str):
                 'Windows': file_prefix+'-x64-win64.tar.gz'}
     system = platform.system()
     filename = fileinfo[system]
-    down_url = f'{aws_url}{filename}'
+    down_url = f'{aws_url}{quote(filename)}'
     # three software use different name pattern
-    down_file = filename
+    down_file = third_party / filename
     if test_cmd(blast):
         ok = True
         home_blast = str(blast)
@@ -478,7 +481,7 @@ def get_iqtree(third_party=None, result=None) -> (bool, str):
                             'iqtree-2.2.0-Windows')}
     system = platform.system()
     filename = fileinfo[system][0]
-    down_url = f'{aws_url}{filename}'
+    down_url = f'{aws_url}{quote(filename)}'
     home_iqtree = third_party / fileinfo[system][1] / 'bin' / iqtree
     down_file = third_party / fileinfo[system][0]
     if test_cmd(iqtree):
@@ -524,7 +527,7 @@ def get_mafft(third_party=None, result=None) -> (bool, str):
     home_mafft = third_party / fileinfo[system][1] / mafft
     system = platform.system()
     filename = fileinfo[system][0]
-    down_url = f'{aws_url}{filename}'
+    down_url = f'{aws_url}{quote(filename)}'
     down_file = third_party / fileinfo[system][0]
     # mafft use '--version' to test
     test_option = '--version'
