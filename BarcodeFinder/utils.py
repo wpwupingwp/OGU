@@ -346,6 +346,7 @@ def test_cmd(program, option='-version') -> bool:
     if program.exists():
         program.chmod(0o755)
     cmd = f'{program} {option}'
+    print(cmd)
     test = subprocess.run(cmd, shell=True, stdout=subprocess.DEVNULL,
                           stderr=subprocess.DEVNULL)
     success = True if test.returncode == 0 else False
@@ -399,8 +400,14 @@ def get_software(software: str, url: str, filename: Path,
         raise SystemExit(-1)
     down_file = filename
     with open(down_file, 'wb') as out:
-        out.write(down.read())
-    log.info('{filename.name} got. Installing...')
+        try:
+            _ = down.read()
+        except TimeoutError:
+            log.critical(f'Download {software} timeout.'
+                         f'Please manually download it from {url}')
+            raise SystemExit(-1)
+        out.write(_)
+    log.info(f'{filename.name} got. Installing...')
     try:
         # unpack_archive(down_file, third_party/fileinfo[system][1])
         unpack_archive(down_file, third_party)
@@ -408,6 +415,13 @@ def get_software(software: str, url: str, filename: Path,
         log.critical(f'The {software} file is damaged. '
                      f'Please recheck your connection.')
         raise SystemExit(-1)
+    if software == 'mafft.bat':
+        for i in ('bin', 'libexec'):
+            subfolder = home_bin.parent / 'mafftdir' / i
+            # windows use different path
+            if subfolder.exists():
+                for file in subfolder.iterdir():
+                    file.chmod(0o755)
     assert test_cmd(home_bin, test_option)
     log.info(f'{software} installed successfully.')
     return True
@@ -503,31 +517,28 @@ def get_iqtree(third_party=None, result=None) -> (bool, str):
 
 def get_mafft(third_party=None, result=None) -> (bool, str):
     """
-    Get iqtree location.
+    Get mafft location.
     If not found, download it.
     Args:
         third_party(Path or None): path for install
         result(Queue): return values
     Return:
         ok(bool): success or not
-        iqtree(str): blast path
+        mafft(str): mafft path
     """
     if third_party is None:
         third_party_ok, third_party = get_third_party()
         if not third_party_ok:
             return third_party_ok, ''
     system = platform.system()
-    if system == 'Windows':
-        mafft = 'mafft.bat'
-    else:
-        mafft = 'mafft'
+    mafft = 'mafft.bat'
     # in Windows, ".exe" can be omitted
     # win_home_blast = home_blast.with_name('blastn.exe')
     ok = False
     original_url = 'https://mafft.cbrc.jp/alignment/software/'
     # system: {filename, folder}
-    fileinfo = {'Linux': ('mafft-7.490-linux.tgz', 'mafft-linux64/mafftdir/bin'),
-                'Darwin': ('mafft-7.490-mac.zip', 'mafft-mac/mafftdir/bin'),
+    fileinfo = {'Linux': ('mafft-7.490-linux.tgz', 'mafft-linux64'),
+                'Darwin': ('mafft-7.490-mac.zip', 'mafft-mac'),
                 'Windows': ('mafft-7.490-win64-signed.zip', 'mafft-win')}
     home_mafft = third_party / fileinfo[system][1] / mafft
     system = platform.system()
@@ -544,11 +555,6 @@ def get_mafft(third_party=None, result=None) -> (bool, str):
     else:
         ok = get_software(mafft, down_url, down_file, third_party, home_mafft,
                           test_option=test_option)
-        libexec = home_mafft.parent.parent / 'libexec'
-        # windows use different path
-        if libexec.exists():
-            for file in libexec.iterdir():
-                file.chmod(0o755)
     if result is not None and ok:
         result.put(('MAFFT', ok))
     return ok, str(home_mafft)
