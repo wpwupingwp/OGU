@@ -88,7 +88,7 @@
 #88. exist intron may me repeat
 #89. primer3-py 0.5.7 for python3.6: macosx windows /python3.7:macosx
 #90. docker or exe
-91. GUI
+#91. GUI
 92. all DNASP method
 93. option for gap, another kind of base/ignore/penalty
 94. simple or full lineage
@@ -130,7 +130,7 @@
 #130. ITS too much is Unknown
 #131. spacer misc_feature, intergenic_spacer_region/intergenic_spacer
 #132. split to 3 modules
-133. trnH-psbA or psbA-trnH
+#133. trnH-psbA or psbA-trnH
 #134. copy user's input to output folder to make working folder clean
 135. filename may be duplicate in Windows
 136. abnormal length in divide_gene
@@ -144,5 +144,5 @@
 144. atpB-rbcL and rbcL-atpB
 145. tRNA His (GUG)
 146. annotation across tail and head will be misextracted
-147. add web interface
-148. ImportError: cannot import name 'Iterable' from 'collections'
+# 147. add web interface
+# 148. ImportError: cannot import name 'Iterable' from 'collections'

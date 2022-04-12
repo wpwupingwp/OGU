@@ -15,8 +15,8 @@ from queue import Queue
 from shutil import unpack_archive
 from sys import argv
 from threading import Thread
-from urllib.request import urlopen
 from urllib.parse import quote
+from urllib.request import urlopen
 
 from Bio.Seq import Seq
 
@@ -346,7 +346,6 @@ def test_cmd(program, option='-version') -> bool:
     if program.exists():
         program.chmod(0o755)
     cmd = f'{program} {option}'
-    print(cmd)
     test = subprocess.run(cmd, shell=True, stdout=subprocess.DEVNULL,
                           stderr=subprocess.DEVNULL)
     success = True if test.returncode == 0 else False
@@ -508,8 +507,8 @@ def get_iqtree(third_party=None, result=None) -> (bool, str):
     elif test_cmd(home_iqtree):
         ok = True
     else:
-        ok = get_software(iqtree, f'{aws_url}{filename}', down_file,
-                          third_party, home_iqtree)
+        ok = get_software(iqtree, down_url, down_file, third_party,
+                          home_iqtree)
     if result is not None and ok:
         result.put(('IQTREE', ok))
     return ok, str(home_iqtree)
