@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 
 import setuptools
-from BarcodeFinder.utils import get_all_third_party
 from urllib.request import urlopen
 from pathlib import Path
 from zipfile import ZipFile
@@ -78,7 +77,6 @@ def init_lineage():
 
 
 init_lineage()
-# get_all_third_party()
 
 with open('README.md', 'r') as _:
     long_description = _.read()

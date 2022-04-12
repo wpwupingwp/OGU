@@ -525,8 +525,9 @@ def get_mafft(third_party=None, result=None) -> (bool, str):
     # win_home_blast = home_blast.with_name('blastn.exe')
     ok = False
     original_url = 'https://mafft.cbrc.jp/alignment/software/'
+    # system: {filename, folder}
     fileinfo = {'Linux': ('mafft-7.490-linux.tgz', 'mafft-linux64'),
-                'Darwin': ('mafft-7.490-mac.zip', 'mafft-mac'),
+                'Darwin': ('mafft-7.490-mac.zip', 'mafft-mac/mafftdir/bin'),
                 'Windows': ('mafft-7.490-win64-signed.zip', 'mafft-win')}
     home_mafft = third_party / fileinfo[system][1] / mafft
     system = platform.system()
@@ -543,6 +544,9 @@ def get_mafft(third_party=None, result=None) -> (bool, str):
     else:
         ok = get_software(mafft, down_url, down_file, third_party, home_mafft,
                           test_option=test_option)
+        libexec = home_mafft.parent.parent / 'libexec'
+        for file in libexec.iterdir():
+            file.chmod(0o755)
     if result is not None and ok:
         result.put(('MAFFT', ok))
     return ok, str(home_mafft)
