@@ -273,7 +273,7 @@ def gene_rename(old_name: str, genbank_format=False) -> (str, str):
 
 def plastid_rename():
     """
-    Use name database.
+    # todo Use name database.
     """
     pass
 
@@ -388,13 +388,13 @@ def get_blast(third_party=None, result=None) -> (bool, str):
         if not third_party_ok:
             return third_party_ok, ''
     blast = 'blastn'
-    home_blast = third_party / 'ncbi-blast-2.11.0+' / 'bin' / blast
+    home_blast = third_party / 'ncbi-blast-2.13.0+' / 'bin' / blast
     # in Windows, ".exe" can be omitted
     # win_home_blast = home_blast.with_name('blastn.exe')
     ok = False
     # older than 2.8.1 is buggy
-    url = ('ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.11.0/'
-           'ncbi-blast-2.11.0+')
+    url = ('https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.13.0/'
+           'ncbi-blast-2.13.0+')
     urls = {'Linux': url+'-x64-linux.tar.gz',
             'Darwin': url+'-x64-macosx.tar.gz',
             'Windows': url+'-x64-win64.tar.gz'}
@@ -420,8 +420,8 @@ def get_blast(third_party=None, result=None) -> (bool, str):
                 down = urlopen(urls[platform.system()], timeout=10)
             except Exception:
                 log.critical('Cannot download BLAST.')
-                log.critical('Please manually download it from'
-                             'ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/')
+                log.critical('Please manually download it from '
+                             'https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.13.0')
                 break
             down_file = third_party / 'BLAST_2.11.0.tar.gz'
             with open(down_file, 'wb') as out:
@@ -460,10 +460,10 @@ def get_iqtree(third_party=None, result=None) -> (bool, str):
     ok = False
     url = 'https://github.com/Cibiv/IQ-TREE/releases/download/v2.0.6/'
     # platform: (filename, folder)
-    fileinfo = {'Linux': ('iqtree-2.0.6-Linux.tar.gz', 'iqtree-2.0.6-Linux'),
-                'Darwin': ('iqtree-2.0.6-MacOSX.zip', 'iqtree-2.0.6-MacOSX'),
-                'Windows': ('iqtree-2.0.6-Windows.zip',
-                            'iqtree-2.0.6-Windows')}
+    fileinfo = {'Linux': ('iqtree-2.2.0-Linux.tar.gz', 'iqtree-2.2.0-Linux'),
+                'Darwin': ('iqtree-2.2.0-MacOSX.zip', 'iqtree-2.2.0-MacOSX'),
+                'Windows': ('iqtree-2.2.0-Windows.zip',
+                            'iqtree-2.2.0-Windows')}
     system = platform.system()
     filename = fileinfo[system][0]
     home_iqtree = third_party / fileinfo[system][1] / 'bin' / iqtree
@@ -533,9 +533,9 @@ def get_mafft(third_party=None, result=None) -> (bool, str):
     # win_home_blast = home_blast.with_name('blastn.exe')
     ok = False
     url = 'https://mafft.cbrc.jp/alignment/software/'
-    fileinfo = {'Linux': ('mafft-7.475-linux.tgz', 'mafft-linux64'),
-                'Darwin': ('mafft-7.475-mac.zip', 'mafft-mac'),
-                'Windows': ('mafft-7.475-win64-signed.zip', 'mafft-win')}
+    fileinfo = {'Linux': ('mafft-7.490-linux.tgz', 'mafft-linux64'),
+                'Darwin': ('mafft-7.490-mac.zip', 'mafft-mac'),
+                'Windows': ('mafft-7.490-win64-signed.zip', 'mafft-win')}
     home_mafft = third_party / fileinfo[system][1] / mafft
     if test_cmd(mafft, '--version'):
         ok = True
@@ -590,6 +590,7 @@ def get_all_third_party() -> bool:
     third_party_ok, third_party = get_third_party()
     if not third_party_ok:
         return False
+    # todo integrated third_party software
     result_queue = Queue()
     iqtree = Thread(target=get_iqtree, args=(third_party, result_queue),
                     daemon=True)

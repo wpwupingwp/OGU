@@ -1,20 +1,31 @@
 #!/usr/bin/python3
 
 import setuptools
+from BarcodeFinder.utils import get_all_third_party
 from urllib.request import urlopen
 from pathlib import Path
 from zipfile import ZipFile
+
+
+def download_taxon() -> Path:
+    data_folder = Path('.') / 'BarcodeFinder' / 'data'
+    zip_file = data_folder / 'taxdmp.zip'
+    if zip_file.exists():
+        pass
+    else:
+        url = 'https://ftp.ncbi.nih.gov/pub/taxonomy/taxdmp.zip'
+        with urlopen(url) as response, zip_file.open('wb') as out_file:
+            data = response.read()
+            out_file.write(data)
+    return zip_file
 
 
 def init_lineage():
     """
     Only called by setup.py
     """
-    data_folder = Path('.') / 'BarcodeFinder' / 'data'
-    url = 'ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdmp.zip'
-    with open('taxdmp.zip', 'wb') as out:
-        out.write(urlopen(url).read())
-    with ZipFile('taxdmp.zip', 'r') as dumpfile:
+    zip_file = download_taxon()
+    with ZipFile(zip_file, 'r') as dumpfile:
         dumpfile.extract('names.dmp', path='.')
         dumpfile.extract('nodes.dmp', path='.')
     id_name = {}
@@ -67,6 +78,7 @@ def init_lineage():
 
 
 init_lineage()
+# get_all_third_party()
 
 with open('README.md', 'r') as _:
     long_description = _.read()
@@ -80,25 +92,28 @@ setuptools.setup(
     description='All-in-one solution for discovering novel DNA barcode',
     install_requires=requires,
     include_package_data=True,
-    # package_data={'BarcodeFinder': ['data/animal_orders.csv',
-    #                                 'data/classes.csv', 'data/kingdoms.csv',
-    #                                 'data/phyla.csv',
-    #                                 'data/superkingdoms.csv']},
+    package_data={'BarcodeFinder': ['data/animal_orders.csv', 'data/classes.csv',
+                                    'data/kingdoms.csv', 'data/phyla.csv',
+                                    'data/superkingdoms.csv']},
     license='GNU AGPL v3',
     long_description=long_description,
     long_description_content_type='text/markdown',
     name='BarcodeFinder',
     packages=setuptools.find_packages(),
     url='https://github.com/wpwupingwp/BarcodeFinder',
-    version='0.9.49',
+    version='0.9.50',
     classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: GNU Affero General Public License v3',
-        'Operating System :: OS Independent',
+        'Operating System :: MacOS :: MacOS X',
+        'Operating System :: Microsoft :: Windows',
+        'Operating System :: POSIX',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
         'Topic :: Scientific/Engineering :: Bio-Informatics'
     ],
 )
