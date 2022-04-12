@@ -52,12 +52,12 @@ def parse_args(arg_str=None):
     arg.add_argument('-out', help='output directory')
     # trnK-matK
     arg.add_argument('-allow_mosaic_spacer', action='store_true',
-                       help='allow mosaic spacer')
+                     help='allow mosaic spacer')
     # genes in IR regions
     arg.add_argument('-allow_repeat', action='store_true',
-                       help='allow repeat genes or spacer')
+                     help='allow repeat genes or spacer')
     arg.add_argument('-allow_invert_repeat', action='store_true',
-                       help='allow invert-repeat spacers')
+                     help='allow invert-repeat spacers')
     # for primer
     arg.add_argument('-expand', type=int, default=0,
                      help='expand length of upstream/downstream')
@@ -821,7 +821,7 @@ def gb2fasta_main():
             else:
                 expanded_files = arg._expand.glob('*.fasta')
                 expanded_files = [i for i in expanded_files
-                                 if i.name != 'Unknown.fasta']
+                                  if i.name != 'Unknown.fasta']
                 unique_files = unique(expanded_files, arg)
     # for i in unique_files:
     #     utils.move(i, arg._unique/(i.name), copy=True)
