@@ -207,7 +207,7 @@ class PrimerWithInfo(SeqRecord):
             self.avg_bitscore, self.start, self.end))
 
 
-def parse_args(arg_str=None):
+def parse_args(arg_list=None):
     arg = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description=primer_main.__doc__)
@@ -237,7 +237,10 @@ def parse_args(arg_str=None):
                         help='maximum product length(include primer)')
     arg.add_argument('-size', type=int, default=500, help='window size')
     arg.add_argument('-step', type=int, default=50, help='step length')
-    return arg.parse_known_args()
+    if arg_list is None:
+        return arg.parse_known_args()
+    else:
+        return arg.parse_known_args(arg_list)
 
 
 def init_arg(arg):
@@ -729,12 +732,15 @@ def primer_design(aln: Path, result: Path, arg):
     return True
 
 
-def primer_main():
+def primer_main(arg_str=None):
     """
     Evaluate variance of alignments.
     """
     log.info('Running primer module...')
-    arg, other_args = parse_args()
+    if arg_str is None:
+        arg, other_args = parse_args()
+    else:
+        arg, other_args = parse_args(arg_str.split(' '))
     arg = init_arg(arg)
     if arg is None:
         log.info('Quit primer module.')

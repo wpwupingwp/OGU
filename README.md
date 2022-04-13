@@ -720,7 +720,7 @@ not the target sequence the user wants. By setting this option, BarcodeFinder
 will truncate the annotation's feature name if it is too long. By default, the
 value is `50`.
 
-`-max_seq_len [value]`: The maximum length of a sequence for one annotation.
+`-max_gene_len [value]`: The maximum length of a sequence for one annotation.
 Some annotations' sequences are too long (for instance, one gene has two
 exons, and its intron is longer than 10 Kb). This option will skip those long
 sequences.  By default, the value is `20000` (bp).

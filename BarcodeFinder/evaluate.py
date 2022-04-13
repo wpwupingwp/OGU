@@ -34,7 +34,7 @@ except ImportError:
     pass
 
 
-def parse_args():
+def parse_args(arg_list=None):
     arg = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description=evaluate_main.__doc__)
@@ -59,7 +59,10 @@ def parse_args():
                                 help='window size')
     sliding_window.add_argument('-step', type=int, default=50,
                                 help='step length')
-    return arg.parse_known_args()
+    if arg_list is None:
+        return arg.parse_known_args()
+    else:
+        return arg.parse_known_args(arg_list)
 
 
 def init_arg(arg):
@@ -539,12 +542,15 @@ def evaluate(aln: Path, arg) -> tuple:
     return summary, gc_array, sliding
 
 
-def evaluate_main():
+def evaluate_main(arg_str=None):
     """
     Evaluate variance of alignments.
     """
     log.info('Running evaluate module...')
-    arg, other_args2 = parse_args()
+    if arg_str is None:
+        arg, other_args2 = parse_args()
+    else:
+        arg, other_args2 = parse_args(arg_str.split(' '))
     arg = init_arg(arg)
     if arg is None:
         log.info('Quit evaluate module.')

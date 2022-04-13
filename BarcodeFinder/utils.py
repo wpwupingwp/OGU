@@ -278,7 +278,7 @@ def gene_rename(old_name: str, genbank_format=False) -> (str, str):
 
 def plastid_rename():
     """
-    # todo Use name database.
+    Use name database.
     """
     pass
 
@@ -379,6 +379,7 @@ def get_third_party():
     return success, third_party
 
 
+# todo test in linux and windows
 def get_software(software: str, url: str, filename: Path,
                  third_party: Path, home_bin: Path, test_option='-version'):
     log.warning(f'Cannot find {software}, try to install. May cost minutes')
@@ -608,12 +609,10 @@ def parse_blast_tab(filename):
 
 
 def codon_usage(alignment):
-    # todo
     pass
 
 
 def gap_analyze(gap_alignment):
-    # todo
     """
 
     Args:

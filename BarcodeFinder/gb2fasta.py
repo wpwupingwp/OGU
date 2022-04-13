@@ -45,33 +45,34 @@ with open(resource_filename('BarcodeFinder', 'data/animal_orders.csv'),
     ANIMAL_ORDERS = set(_.read().split(','))
 
 
-def parse_args(arg_str=None):
+def parse_args(arg_list=None):
     arg = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     arg.add_argument('-gb', nargs='*', help='input filename')
     arg.add_argument('-out', help='output directory')
-    # trnK-matK
-    arg.add_argument('-allow_mosaic_spacer', action='store_true',
-                     help='allow mosaic spacer')
-    # genes in IR regions
-    arg.add_argument('-allow_repeat', action='store_true',
-                     help='allow repeat genes or spacer')
-    arg.add_argument('-allow_invert_repeat', action='store_true',
-                     help='allow invert-repeat spacers')
-    # for primer
-    arg.add_argument('-expand', type=int, default=0,
-                     help='expand length of upstream/downstream')
-    arg.add_argument('-max_name_len', default=100, type=int,
-                     help='maximum length of feature name')
-    # handle rps12
-    arg.add_argument('-max_seq_len', default=20000, type=int,
-                     help='maximum length of feature sequence')
     arg.add_argument('-no_divide', action='store_true', help='only download')
     # for plastid genes
     arg.add_argument('-rename', action='store_true', help='try to rename gene')
     arg.add_argument('-unique', choices=('longest', 'first', 'no'),
                      default='first',
                      help='method to remove redundant sequences')
+    adv = arg.add_argument_group('Advance')
+    # trnK-matK
+    adv.add_argument('-allow_mosaic_spacer', action='store_true',
+                     help='allow mosaic spacer')
+    # genes in IR regions
+    adv.add_argument('-allow_repeat', action='store_true',
+                     help='allow repeat genes or spacer')
+    adv.add_argument('-allow_invert_repeat', action='store_true',
+                     help='allow invert-repeat spacers')
+    # for primer
+    adv.add_argument('-expand', type=int, default=0,
+                     help='expand length of upstream/downstream')
+    adv.add_argument('-max_name_len', default=100, type=int,
+                     help='maximum length of feature name')
+    # handle rps12
+    adv.add_argument('-max_gene_len', default=20000, type=int,
+                     help='maximum length of feature sequence')
     query = arg.add_argument_group('Query')
     query.add_argument('-email', type=str,
                        help='email address for querying Genbank')
@@ -105,7 +106,10 @@ def parse_args(arg_str=None):
                        help='maximum number of records to download, '
                             '0 for unlimited')
     query.add_argument('-taxon', help='Taxonomy name')
-    return arg.parse_known_args()
+    if arg_list is None:
+        return arg.parse_known_args()
+    else:
+        return arg.parse_known_args(arg_list)
 
 
 def get_query_string(arg, silence=False):
@@ -684,8 +688,8 @@ def write_seq(record, seq_info, whole_seq, arg):
     for i in record_unique:
         name, feature = i
         # skip abnormal annotation
-        if len(feature) > arg.max_seq_len:
-            log.debug('Annotaion of {} (Accession {}) '
+        if len(feature) > arg.max_gene_len:
+            log.debug('Annotation of {} (Accession {}) '
                       'is too long. Skip.'.format(name, seq_info[1]))
         filename = arg._divide / (feature.type+'-'+name+'.fasta')
         with open(filename, 'a', encoding='utf-8') as handle:
@@ -779,12 +783,17 @@ def unique(files: list, arg) -> list:
     return unique_files
 
 
-def gb2fasta_main():
+def gb2fasta_main(arg_str=None):
     """
     Collect genbank files and convert them to fasta files.
+    Args:
+        arg_str(str or None): string for parse_arg
     """
     log.info('Running gb2fasta module...')
-    arg, other_args = parse_args()
+    if arg_str is None:
+        arg, other_args = parse_args()
+    else:
+        arg, other_args = parse_args(arg_str.split(' '))
     arg = init_arg(arg)
     if arg is None:
         log.info('Quit gb2fasta module.')

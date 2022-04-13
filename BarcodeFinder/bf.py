@@ -47,8 +47,8 @@ def parse_args():
     gb2fasta_.add_argument('-max_name_len', default=100, type=int,
                            help='maximum length of feature name')
     # handle rps12
-    gb2fasta_.add_argument('-max_seq_len', default=20000, type=int,
-                           help='maximum length of feature sequence')
+    gb2fasta_.add_argument('-max_gene_len', default=20000, type=int,
+                           help='maximum length of gene fragments ')
     gb2fasta_.add_argument('-no_divide', action='store_true',
                            help='only download')
     # for plastid genes
