@@ -392,7 +392,7 @@ def get_software(software: str, url: str, filename: Path,
     try:
         # file is 10mb or larger
         log.info(f'Downloading {filename.name} from {url}')
-        down = urlopen(f'{url}', timeout=10)
+        down = urlopen(f'{url}', timeout=100)
     except Exception:
         log.critical(f'Cannot download {software}. '
                      f'Please manually download it from {url}')

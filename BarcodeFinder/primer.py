@@ -672,7 +672,7 @@ def primer_design(aln: Path, result: Path, arg):
     locus_name = aln.stem
     name, alignment, = evaluate.fasta_to_array(aln)
     if name is None:
-        log.info(f'Invalid alignment file {aln}.')
+        log.debug(f'Invalid alignment file {aln}.')
         return False
     rows, columns = alignment.shape
     # generate consensus
