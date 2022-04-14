@@ -507,11 +507,11 @@ def validate(primer_candidate: list, aln: Path, n_seqs: int, arg):
         log.critical('Cannot find BLAST.')
         return []
     locus_name = aln.stem
-    makeblastdb = Path(blast).parent / 'makeblastdb'
     # chmod +x
     if platform.system() == 'Windows':
-        pass
+        makeblastdb = Path(blast).parent / 'makeblastdb.exe'
     else:
+        makeblastdb = Path(blast).parent / 'makeblastdb'
         makeblastdb.chmod(0o755)
     query_file = arg._primer / (locus_name+'.candidate.fasta')
     query_file_fastq = arg._primer / (locus_name+'.candidate.fastq')
@@ -672,7 +672,7 @@ def primer_design(aln: Path, result: Path, arg):
     locus_name = aln.stem
     name, alignment, = evaluate.fasta_to_array(aln)
     if name is None:
-        log.info(f'Invalid alignment file {aln}.')
+        log.debug(f'Invalid alignment file {aln}.')
         return False
     rows, columns = alignment.shape
     # generate consensus
