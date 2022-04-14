@@ -2,9 +2,11 @@
 
 import argparse
 import logging
+import platform
 import re
 import subprocess
 from collections import defaultdict
+from io import StringIO
 from itertools import product as cartesian_product
 from os import cpu_count
 from pathlib import Path
@@ -498,6 +500,27 @@ def find_primer(consensus, arg):
     return primers, consensus
 
 
+def old_remove_gap(aln_fasta: Path, new_file: Path) -> Path:
+    # to be removed
+    """
+    old function, for BLAST
+    Args:
+        aln_fasta: fasta with gap
+        new_file: fasta without gap
+    Returns:
+        new_file: fasta without gap
+    """
+    no_gap = StringIO()
+    with open(aln_fasta, 'r', encoding='utf-8') as raw:
+        for line in raw:
+            no_gap.write(line.replace('-', ''))
+    # try to avoid makeblastdb error
+    no_gap.seek(0)
+    SeqIO.convert(no_gap, 'fasta', new_file, 'fasta')
+    no_gap.close()
+    return new_file
+
+
 def validate(primer_candidate: list, aln: Path, n_seqs: int, arg):
     """
     Do BLAST. Parse BLAST result. Return list of PrimerWithInfo which passed
@@ -509,9 +532,12 @@ def validate(primer_candidate: list, aln: Path, n_seqs: int, arg):
         log.critical('Cannot find BLAST.')
         return []
     locus_name = aln.stem
-    makeblastdb = Path(blast).parent / 'makeblastdb'
     # chmod +x
-    makeblastdb.chmod(0o755)
+    if platform.system() == 'Windows':
+        makeblastdb = Path(blast).parent / 'makeblastdb.exe'
+    else:
+        makeblastdb = Path(blast).parent / 'makeblastdb'
+        makeblastdb.chmod(0o755)
     query_file = arg._primer / (locus_name+'.candidate.fasta')
     query_file_fastq = arg._primer / (locus_name+'.candidate.fastq')
     # SeqIO.write fasta file directly is prohibited. have to write fastq at
@@ -520,7 +546,8 @@ def validate(primer_candidate: list, aln: Path, n_seqs: int, arg):
         SeqIO.write(primer_candidate, _, 'fastq')
     SeqIO.convert(query_file_fastq, 'fastq', query_file, 'fasta')
     # build blast db
-    db_file = utils.move(aln, arg._tmp/(locus_name+'-db_file.fasta'), copy=True)
+    db_file = old_remove_gap(aln, arg._tmp/(locus_name+'-db_file.fasta'))
+    # db_file = utils.move(aln, arg._tmp/(locus_name+'-db_file.fasta'), copy=True)
     _ = subprocess.run(f'{makeblastdb} -in {db_file} -dbtype nucl '
                        f'-out {db_file}', shell=True,
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -671,7 +698,7 @@ def primer_design(aln: Path, result: Path, arg):
     locus_name = aln.stem
     name, alignment, = evaluate.fasta_to_array(aln)
     if name is None:
-        log.info(f'Invalid alignment file {aln}.')
+        log.debug(f'Invalid alignment file {aln}.')
         return False
     rows, columns = alignment.shape
     # generate consensus

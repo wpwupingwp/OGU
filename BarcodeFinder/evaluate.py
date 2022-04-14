@@ -6,7 +6,6 @@ import sys
 import numpy as np
 
 from collections import namedtuple
-from io import StringIO
 from os import devnull, cpu_count
 from pathlib import Path
 from subprocess import run
@@ -196,7 +195,7 @@ def fasta_to_array(aln_fasta: Path) -> (np.array, np.array):
     # check sequence length
     length_check = [len(i[1]) for i in data]
     if len(set(length_check)) != 1:
-        log.error(f'Invalid alignment file {aln_fasta}')
+        log.info(f'Invalid alignment file {aln_fasta}')
         return None, None
     # Convert List to numpy array.
     # order 'F' is a bit faster than 'C'
@@ -234,25 +233,6 @@ def remove_gap(alignment: np.array, silence=False) -> (np.array, np.array):
     return no_gap_columns, gap_columns
 
 
-def old_remove_gap(aln_fasta: Path, new_file: Path) -> Path:
-    # to be removed
-    """
-    old function, for BLAST
-    Args:
-        aln_fasta: fasta with gap
-        new_file: fasta without gap
-    Returns:
-        new_file: fasta without gap
-    """
-    no_gap = StringIO()
-    with open(aln_fasta, 'r', encoding='utf-8') as raw:
-        for line in raw:
-            no_gap.write(line.replace('-', ''))
-    # try to avoid makeblastdb error
-    no_gap.seek(0)
-    SeqIO.convert(no_gap, 'fasta', new_file, 'fasta')
-    no_gap.close()
-    return new_file
 
 
 def gc_ratio(alignment: np.array, ignore_ambiguous=True) -> (
