@@ -3,14 +3,17 @@
 import argparse
 import logging
 import sys
-import numpy as np
 
 from collections import namedtuple
 from os import devnull, cpu_count
 from pathlib import Path
 from subprocess import run
 
-from Bio import Phylo, SeqIO
+import warnings
+# ignore warnings from numpy
+warnings.filterwarnings('ignore', category=RuntimeWarning)
+import numpy as np
+from Bio import Phylo
 from matplotlib import use as mpl_use
 mpl_use('Agg')
 from matplotlib import pyplot as plt
@@ -367,8 +370,8 @@ def phylogenetic_diversity(alignment: np.array, tmp: Path) -> (float, float,
             pd_terminal_sd = np.std([i.branch_length for i in terminals]) / n_terminals
             tree_res = len(non_zero_internals) / n_terminals
         except Exception:
-            log.info('Bad phylogenetic tree.')
-    utils.clean_tmp(aln_file)
+            log.debug('Bad phylogenetic tree.')
+    # utils.clean_tmp(aln_file)
     sys.setrecursionlimit(old_max_recursion)
     return pd, pd_stem, pd_stem_sd, pd_terminal, pd_terminal_sd, tree_res
 
