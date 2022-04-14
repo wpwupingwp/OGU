@@ -267,7 +267,7 @@ def gc_ratio(alignment: np.array, ignore_ambiguous=True) -> (
     total_gc = get_gc_ratio(alignment, ignore_ambiguous)
     gc_array = np.fromiter(
         [get_gc_ratio(row, ignore_ambiguous) for row in alignment],
-        dtype=np.float)
+        dtype=float)
     return total_gc, gc_array
 
 
