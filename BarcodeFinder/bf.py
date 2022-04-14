@@ -147,6 +147,7 @@ def bf_main():
     """
     Call gb2fasta, evaluate and primer functions.
     """
+    utils.check_system()
     log.info('Welcome to BarcodeFinder.')
     arg = parse_args()
     arg = init_arg(arg)

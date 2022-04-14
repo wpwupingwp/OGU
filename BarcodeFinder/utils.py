@@ -13,7 +13,7 @@ from functools import lru_cache
 from pathlib import Path
 from queue import Queue
 from shutil import unpack_archive
-from sys import argv
+from sys import argv, version_info
 from threading import Thread
 from urllib.parse import quote
 from urllib.request import urlopen
@@ -55,6 +55,19 @@ class BlastResult:
         return fmt.format(self.query_id, self.hit_id, self.bitscore_raw,
                           self.query_start, self.query_end, self.hit_start,
                           self.hit_end)
+
+
+def check_system():
+    """
+    primer3-py is currently unavailable on Windows with Python 3.9/3.10
+    f-strings are not available on Python 3.5 or older.
+    """
+    if version_info.minor < 6:
+        raise RuntimeError('Python 3.6 or newer is required.')
+    if platform.system() == 'Windows':
+        if version_info.minor > 8:
+            raise RuntimeError('Python 3.7 or 3.8 is required.')
+    return
 
 
 def arg_to_str(arg) -> str:
@@ -622,3 +635,6 @@ def gap_analyze(gap_alignment):
 
     """
     pass
+
+
+check_system()

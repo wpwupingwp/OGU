@@ -42,7 +42,6 @@ class Pair:
                  'have_heterodimer', 'heterodimer_tm', 'pi', 'score',
                  'length', 'gap_ratio']
 
-
     _title = ('Score,AvgProductLength,StdEV,'
               'MinProductLength,MaxProductLength,'
               'Coverage,Observed_Res,Tree_Res,PD_terminal,Entropy,'
@@ -763,6 +762,7 @@ def primer_main(arg_str=None):
     """
     Evaluate variance of alignments.
     """
+    utils.check_system()
     log.info('Running primer module...')
     if arg_str is None:
         arg, other_args = parse_args()
