@@ -2,6 +2,7 @@
 
 import argparse
 import logging
+import platform
 import re
 import subprocess
 from collections import defaultdict
@@ -508,7 +509,10 @@ def validate(primer_candidate: list, aln: Path, n_seqs: int, arg):
     locus_name = aln.stem
     makeblastdb = Path(blast).parent / 'makeblastdb'
     # chmod +x
-    makeblastdb.chmod(0o755)
+    if platform.system() == 'Windows':
+        pass
+    else:
+        makeblastdb.chmod(0o755)
     query_file = arg._primer / (locus_name+'.candidate.fasta')
     query_file_fastq = arg._primer / (locus_name+'.candidate.fastq')
     # SeqIO.write fasta file directly is prohibited. have to write fastq at
