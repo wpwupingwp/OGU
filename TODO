@@ -149,3 +149,4 @@
 # 2022.4.14
 149. remove primer3-py or restrict python version in windows
 150. Invalid alignment file E:\Linux\barcodefinder\Result\Alignment\CDS-atpB-consensus.fastq
+151. blastn/makeblastdb only requires nghttp2.dll, consider to rewrite get_software
