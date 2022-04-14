@@ -146,3 +146,4 @@
 146. annotation across tail and head will be misextracted
 # 147. add web interface
 # 148. ImportError: cannot import name 'Iterable' from 'collections'
+149. remove primer3-py or restrict python version in windows
