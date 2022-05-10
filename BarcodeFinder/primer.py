@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 
 import argparse
-import logging
 import platform
 import re
 import subprocess
@@ -209,23 +208,23 @@ def parse_args(arg_list=None):
                      help='folder of aligned files')
     arg.add_argument('-out', help='output directory')
     arg.add_argument('-ambiguous', dest='ambiguous_base_n', default=4, type=int,
-                        help='number of ambiguous bases')
+                     help='number of ambiguous bases')
     arg.add_argument('-coverage', dest='coverage', default=0.5, type=float,
-                        help='minimal coverage of base and primer')
+                     help='minimal coverage of base and primer')
     arg.add_argument('-mismatch', dest='mismatch', default=4, type=int,
-                        help='maximum mismatch bases in primer')
+                     help='maximum mismatch bases in primer')
     arg.add_argument('-pmin', dest='min_primer', default=20, type=int,
-                        help='minimum primer length')
+                     help='minimum primer length')
     arg.add_argument('-pmax', dest='max_primer', default=25, type=int,
-                        help='maximum primer length')
+                     help='maximum primer length')
     arg.add_argument('-res', dest='resolution', type=float, default=0.3,
-                        help='minimal resolution')
+                     help='minimal resolution')
     arg.add_argument('-topn', dest='top_n', type=int, default=1,
-                        help='keep n primers for each high variant region')
+                     help='keep n primers for each high variant region')
     arg.add_argument('-tmin', dest='min_product', default=350, type=int,
-                        help='minimum product length(include primer)')
+                     help='minimum product length(include primer)')
     arg.add_argument('-tmax', dest='max_product', default=600, type=int,
-                        help='maximum product length(include primer)')
+                     help='maximum product length(include primer)')
     arg.add_argument('-size', type=int, default=500, help='window size')
     arg.add_argument('-step', type=int, default=50, help='step length')
     if arg_list is None:
