@@ -72,7 +72,7 @@ def parse_args(arg_list=None):
                      help='maximum length of feature name')
     # handle rps12
     adv.add_argument('-max_gene_len', default=20000, type=int,
-                     help='maximum length of feature sequence')
+                     help='maximum length of gene sequence')
     query = arg.add_argument_group('Query')
     query.add_argument('-email', type=str,
                        help='email address for querying Genbank')
