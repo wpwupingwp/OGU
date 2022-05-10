@@ -1,5 +1,13 @@
 #!/usr/bin/python3
 
-global global_dict
-global_dict = {}
+import logging
+import coloredlogs
 
+# define logger
+FMT = '%(asctime)s %(levelname)-8s %(message)s'
+DATEFMT = '%H:%M:%S'
+logging.basicConfig(format=FMT, datefmt=DATEFMT, level=logging.INFO)
+log = logging.getLogger('barcodefinder')
+coloredlogs.install(level=logging.INFO, fmt=FMT, datefmt=DATEFMT)
+# store global values here
+global_dict = {}

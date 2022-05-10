@@ -4,7 +4,6 @@ import re
 import logging
 import platform
 import subprocess
-
 try:
     from collections import Iterable
 except ImportError:

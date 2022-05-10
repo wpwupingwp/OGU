@@ -1,24 +1,9 @@
 #!/usr/bin/python3
 
 import argparse
-import logging
-
 from BarcodeFinder import utils
-from BarcodeFinder import gb2fasta
-from BarcodeFinder import evaluate
-from BarcodeFinder import primer
-
-
-# define logger
-FMT = '%(asctime)s %(levelname)-8s %(message)s'
-DATEFMT = '%H:%M:%S'
-logging.basicConfig(format=FMT, datefmt=DATEFMT, level=logging.INFO)
-log = logging.getLogger('barcodefinder')
-try:
-    import coloredlogs
-    coloredlogs.install(level=logging.INFO, fmt=FMT, datefmt=DATEFMT)
-except ImportError:
-    pass
+from BarcodeFinder import gb2fasta, evaluate, primer
+from BarcodeFinder.global_vars import log
 
 
 def parse_args():

@@ -23,17 +23,8 @@ params = {'axes.labelsize': 12, 'axes.linewidth': 1.5, 'axes.titlesize': 20,
           'legend.fontsize': 10, 'legend.handlelength': 2}
 rcParams.update(params)
 from BarcodeFinder import utils
+from BarcodeFinder.global_vars import log
 
-# define logger
-FMT = '%(asctime)s %(levelname)-8s %(message)s'
-DATEFMT = '%H:%M:%S'
-logging.basicConfig(format=FMT, datefmt=DATEFMT, level=logging.INFO)
-log = logging.getLogger('barcodefinder')
-try:
-    import coloredlogs
-    coloredlogs.install(level=logging.INFO, fmt=FMT, datefmt=DATEFMT)
-except ImportError:
-    pass
 
 
 def parse_args(arg_list=None):

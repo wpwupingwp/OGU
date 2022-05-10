@@ -2,8 +2,6 @@
 
 import argparse
 import json
-import logging
-
 from collections import defaultdict
 from io import StringIO
 from pathlib import Path
@@ -14,17 +12,7 @@ from Bio import Entrez, SeqIO
 from Bio.SeqFeature import SeqFeature, FeatureLocation
 
 from BarcodeFinder import utils
-
-# define logger
-FMT = '%(asctime)s %(levelname)-8s %(message)s'
-DATEFMT = '%H:%M:%S'
-logging.basicConfig(format=FMT, datefmt=DATEFMT, level=logging.INFO)
-log = logging.getLogger('barcodefinder')
-try:
-    import coloredlogs
-    coloredlogs.install(level=logging.INFO, fmt=FMT, datefmt=DATEFMT)
-except ImportError:
-    pass
+from BarcodeFinder.global_vars import log
 
 
 # load data
