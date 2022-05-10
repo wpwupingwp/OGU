@@ -87,8 +87,8 @@ def parse_args():
                           help='window size')
     evaluate.add_argument('-step', default=50, type=int,
                           help='step length for sliding-window scan')
-    evaluate.add_argument('-skip_primer', action='store_true',
-                          help='skip primer designing')
+    evaluate.add_argument('-primer', action='store_true',
+                          help='design universal primer')
     primer = arg.add_argument_group('Primer')
     primer.add_argument('-ambiguous', dest='ambiguous_base_n', default=4,
                         type=int, help='number of ambiguous bases')
@@ -98,16 +98,16 @@ def parse_args():
                         help='maximum mismatch bases in primer')
     primer.add_argument('-pmin', dest='min_primer', default=20, type=int,
                         help='minimum primer length')
-    primer.add_argument('-pmax', dest='max_primer', default=25, type=int,
+    primer.add_argument('-pmax', dest='max_primer', default=30, type=int,
                         help='maximum primer length')
     primer.add_argument('-res', dest='resolution', type=float, default=0.3,
                         help='minimal resolution')
     primer.add_argument('-topn', dest='top_n', type=int, default=1,
                         help='keep n primers for each high variant region')
-    primer.add_argument('-tmin', dest='min_product', default=350, type=int,
-                        help='minimum product length(include primer)')
-    primer.add_argument('-tmax', dest='max_product', default=600, type=int,
-                        help='maximum product length(include primer)')
+    primer.add_argument('-tmin', dest='min_product', default=300, type=int,
+                        help='minimum product length (include primer)')
+    primer.add_argument('-tmax', dest='max_product', default=800, type=int,
+                        help='maximum product length (include primer)')
     return arg.parse_args()
 
 

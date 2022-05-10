@@ -97,7 +97,7 @@ class Pair:
             self.end)
 
     def get_score(self):
-            # calculate score of given primer pairs. Suggestion only
+        # calculate score of given primer pairs. Suggestion only
         # use score to filter primer pairs
         return (utils.safe_average(list(self.length.values())) * 0.5
                 + self.coverage * 200
@@ -201,8 +201,6 @@ def parse_args(arg_list=None):
     arg = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description=primer_main.__doc__)
-    arg.add_argument('-skip_primer', action='store_true',
-                     help='skip primer designing')
     arg.add_argument('-aln', nargs='*', help='alignment files')
     arg.add_argument('-aln_folder', default=None,
                      help='folder of aligned files')
@@ -215,18 +213,19 @@ def parse_args(arg_list=None):
                      help='maximum mismatch bases in primer')
     arg.add_argument('-pmin', dest='min_primer', default=20, type=int,
                      help='minimum primer length')
-    arg.add_argument('-pmax', dest='max_primer', default=25, type=int,
+    arg.add_argument('-pmax', dest='max_primer', default=30, type=int,
                      help='maximum primer length')
     arg.add_argument('-res', dest='resolution', type=float, default=0.3,
                      help='minimal resolution')
     arg.add_argument('-topn', dest='top_n', type=int, default=1,
                      help='keep n primers for each high variant region')
-    arg.add_argument('-tmin', dest='min_product', default=350, type=int,
-                     help='minimum product length(include primer)')
-    arg.add_argument('-tmax', dest='max_product', default=600, type=int,
+    arg.add_argument('-tmin', dest='min_product', default=300, type=int,
+                     help='minimum product length (include primer)')
+    arg.add_argument('-tmax', dest='max_product', default=800, type=int,
                      help='maximum product length(include primer)')
-    arg.add_argument('-size', type=int, default=500, help='window size')
-    arg.add_argument('-step', type=int, default=50, help='step length')
+    arg.add_argument('-size', type=int, default=500, help='window size for sliding scan')
+    arg.add_argument('-step', type=int, default=50, help='step length for sliding scan')
+    arg.add_argument('-primer', action='store_true', help='design universal primer')
     if arg_list is None:
         return arg.parse_known_args()
     else:
@@ -752,19 +751,19 @@ def primer_main(arg_str=None):
     Evaluate variance of alignments.
     """
     utils.check_system()
-    log.info('Running primer module...')
     if arg_str is None:
         arg, other_args = parse_args()
     else:
         arg, other_args = parse_args(arg_str.split(' '))
+    if not arg.primer:
+        log.info('Skip primer module.')
+        return None, None
+    log.info('Running primer module...')
     arg = init_arg(arg)
     if arg is None:
         log.info('Quit primer module.')
         return None, None
     utils.add_file_log(arg)
-    if arg.skip_primer:
-        log.info('Skip primer module.')
-        return None, None
     primer_result = arg.out / 'Primers.csv'
     csv_title = 'Locus,Samples,' + Pair._title + '\n'
     with open(primer_result, 'w', encoding='utf-8') as out:
