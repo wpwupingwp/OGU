@@ -18,7 +18,7 @@ from urllib.parse import quote
 from urllib.request import urlopen
 
 from Bio.Seq import Seq
-from BarcodeFinder.global_vars import log
+from BarcodeFinder.global_vars import log, FMT, DATEFMT
 
 
 # hosting in free AWS S3 server
