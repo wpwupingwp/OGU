@@ -10,7 +10,7 @@ __OR__
 Open terminal, run
    ```shell
    # Install, using pip (recommended)
-   pip install BarcodeFinder --user
+   pip3 install BarcodeFinder --user
 
    # Initiliaze with Internet
    # Windows
@@ -53,7 +53,7 @@ Open terminal, run
 # Features
 :heavy_check_mark: Automatically collect, organize and clean sequence data
 from NCBI GenBank or local: collect data with abundant options; extract CDS,
-intergenic spacer, or any other annotations from original sequencep; remove
+intergenic spacer, or any other annotations from original sequence; remove
 redundant sequences according to species information; remove invalid or
 abnormal sequences/fragments; generate clean dataset with uniform sequence id. 
 
@@ -97,7 +97,7 @@ unpack and run with Internet for the first time.
      
 2. Open command line, run
 ```shell
-pip install BarcodeFinder --user
+pip3 install BarcodeFinder --user
 ```
 ## Initialization
 During the first running, `barcodefinder` will check and initialize the
@@ -190,30 +190,30 @@ python -m BarcodeFinder.gb2fasta -query internal transcribed spacer -taxon Rosa 
 # Linux and macOS
 python3 -m BarcodeFinder.gb2fasta -query internal transcribed spacer -taxon Rosa -out Rosa_its -uniq no
 ```
-3. Download all Lamiaceae chloroplast genome sequences in the RefSeq database.
+3. Download all Lamiaceae chloroplast genomic sequences in the RefSeq database.
    Then do pre-process and evaluation of variance (skip primer designing):
 ```
 # Windows
-python -m BarcodeFinder -og cp -refseq -taxon Lamiaceae -out Lamiaceae_cp -skip_primer
+python -m BarcodeFinder -og cp -refseq -taxon Lamiaceae -out Lamiaceae_cp
 # Linux and macOS
-python3 -m BarcodeFinder -og cp -refseq -taxon Lamiaceae -out Lamiaceae_cp -skip_primer
+python3 -m BarcodeFinder -og cp -refseq -taxon Lamiaceae -out Lamiaceae_cp
 ```
 4. Download sequences of _Zea mays_, set length between 100 bp and 3000 bp,
    and then perform evaluation and primer designing. Note that the space in
    the species name is replaced with underscore "\_".
 ```
 # Windows
-python -m BarcodeFinder -taxon Zea_mays -min_len 100 -max_len 3000 -out Zea_mays
+python -m BarcodeFinder -taxon Zea_mays -min_len 100 -max_len 3000 -out Zea_mays -primer
 # Linux and macOS
-python3 -m BarcodeFinder -taxon Zea_mays -min_len 100 -max_len 3000 -out Zea_mays
+python3 -m BarcodeFinder -taxon Zea_mays -min_len 100 -max_len 3000 -out Zea_mays -primer
 ```
 5. Download all _Oryza_ mitochondria genomes in RefSeq database, keep the
    longest sequence for each species and run a full analysis: 
 ```
 # Windows
-python -m BarcodeFinder -taxon Oryza -og mt -min_len 50000 -max_len 200000 -uniq longest -out Oryza_cp -refseq yes
+python -m BarcodeFinder -taxon Oryza -og mt -min_len 50000 -max_len 200000 -uniq longest -out Oryza_cp -refseq yes -primer
 # Linux and macOS
-python3 -m BarcodeFinder -taxon Oryza -og mt -min_len 50000 -max_len 200000 -uniq longest -out Oryza_cp -refseq yes
+python3 -m BarcodeFinder -taxon Oryza -og mt -min_len 50000 -max_len 200000 -uniq longest -out Oryza_cp -refseq yes -primer
 ```
 ## Sequence ID
 BarcodeFinder uses a uniform sequence id format for input fasta files and all output sequences.
