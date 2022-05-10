@@ -1,4 +1,3 @@
-[![Build Status](https://travis-ci.com/wpwupingwp/BarcodeFinder.svg?branch=master)](https://travis-ci.com/wpwupingwp/BarcodeFinder)
 [![PyPI version](https://badge.fury.io/py/BarcodeFinder.svg)](https://badge.fury.io/py/BarcodeFinder)
 
 # Quick start
@@ -15,13 +14,13 @@ Open terminal, run
    # Initiliaze with Internet
    # Windows
    python -m BarcodeFinder init
-   # Linux and MacOS
+   # Linux and macOS
    python3 -m BarcodeFinder init
 
    # Run
    # Windows
    python -m BarcodeFinder
-   # Linux and MacOS
+   # Linux and macOS
    python3 -m BarcodeFinder
    ```
 # Table of Contents
@@ -107,7 +106,7 @@ This step requires Internet connection.
 ```shell
 # Windows
 python -m BarcodeFinder init
-# Linux and MacOS
+# Linux and macOS
 python3 -m BarcodeFinder init
 ```
 
@@ -127,7 +126,7 @@ sudo pacman -S mafft ncbi-blast+ iqtree
 # FreeBSD
 sudo pkg install mafft ncbi-blast+ iqtree
 ```
-For MacOS users with root privileges, install `brew` if it has not been
+For macOS users with root privileges, install `brew` if it has not been
 installed previously:
 ```
 /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
@@ -143,7 +142,7 @@ instructions:
 1. BLAST+
 
     * [Windows](https://www.ncbi.nlm.nih.gov/books/NBK52637/)
-    * [Linux and MacOS](https://www.ncbi.nlm.nih.gov/books/NBK52640/)
+    * [Linux and macOS](https://www.ncbi.nlm.nih.gov/books/NBK52640/)
 2. MAFFT
 
     * [Windows](https://mafft.cbrc.jp/alignment/software/windows.html)
@@ -154,7 +153,7 @@ instructions:
 
         Choose "Portable package", download and unzip. Then follow the
         instructions of BLAST+ to set the `PATH` for `MAFFT`.
-    * [MacOS](https://mafft.cbrc.jp/alignment/software/macosx.html)
+    * [macOS](https://mafft.cbrc.jp/alignment/software/macosx.html)
 
         Choose "All-in-one version", download and unzip. Then follow the steps
         in the BLAST+ installation manual to set the `PATH`.
@@ -166,11 +165,11 @@ instructions:
         subfolder `bin` to `PATH`.
 # Usage
 BarcodeFinder is a command-line program. Once a user opens the command line
-(Windows) or terminal (Linux and MacOS), just type the command:
+(Windows) or terminal (Linux and macOS), just type the command:
 ```
 # Windows
 python -m BarcodeFinder [input] -[options] -out [out_folder]
-# Linux and MacOS
+# Linux and macOS
 python3 -m BarcodeFinder [input] -[options] -out [out_folder]
 ```
 ## Quick examples
@@ -274,7 +273,7 @@ contain the record's version.
 `Isolate`: Isolate ID of the sequence. May be empty.
 
 ## Command line
-:exclamation: In Linux and MacOS, Python2 is `python2` and Python3 is
+:exclamation: In Linux and macOS, Python2 is `python2` and Python3 is
 `python3`.  However, in Windows, Python3 is called `python`, too. Please
 notice the difference.
 
@@ -285,7 +284,7 @@ notice the difference.
  python -m BarcodeFinder.gb2fasta -h
  python -m BarcodeFinder.evaluate -h
  python -m BarcodeFinder.primer -h
- # Linux and MacOS
+ # Linux and macOS
  python3 -m BarcodeFinder.gb2fasta -h
  python3 -m BarcodeFinder.evaluate -h
  python3 -m BarcodeFinder.primer -h
@@ -294,28 +293,28 @@ notice the difference.
  ```shell
  # Windows
  python -m BarcodeFinder -gene [gene name] -taxon [taxon name] -og [organelle type] -out [output name]
- # Linux and MacOS
+ # Linux and macOS
  python3 -m BarcodeFinder -gene [gene name] -taxon [taxon name] -og [organelle type] -out [output name]
  ```
  * Collect, convert, and clean GenBank data with gb2fasta module
  ```shell
  # Windows
  python -m BarcodeFinder.gb2fasta -gene [gene name] -taxon [taxon name] -og [organelle type] -out [output name]
- # Linux and MacOS
+ # Linux and macOS
  python3 -m BarcodeFinder.gb2fasta -gene [gene name] -taxon [taxon name] -og [organelle type] -out [output name]
  ```
  * Evaluate variance of given fasta files
  ```shell
  # Windows
  python -m BarcodeFinder.evaluate -fasta [fasta files]
- # Linux and MacOS
+ # Linux and macOS
  python3 -m BarcodeFinder.evaluate -fasta [input file]
  ```
  * Design universal primers of given alignments.
  ```shell
  # Windows
  python -m BarcodeFinder.primer -aln [alignment files]
- # Linux and MacOS
+ # Linux and macOS
  python3 -m BarcodeFinder.primer -aln [alignment files]
  ```
 # Input
@@ -385,12 +384,12 @@ In the output folder, several subfolders will be created.
     two sequences, and the direction is 5' to 3'. The first is the forward
     primer, and the second is the reverse primer. The quality of each base is
     equal to its proportion of the column in the alignment. Note that the
-    sequence may contains ambiguous bases if it was not disabled.
+    sequence may contain ambiguous bases if it was not disabled.
 
     `.primers.csv`: The list of primer pairs in CSV (comma-separated values
     text) format.
 
-    `.candidate.fasta`: The candidate primers. This file may contains
+    `.candidate.fasta`: The candidate primers. This file may contain
     thousands of records. Do not recommend paying attention to it.
 
     `.candidate.fastq`: Again, the candidate primers. This time, each file has
@@ -531,7 +530,7 @@ For instance,
 `-fasta [filename]`: User-provided unaligned fasta files. Could be one or
 multiple.
 
-`-aln [filename]`: Alignment files that the user provides. Could be one ore
+`-aln [filename]`: Alignment files that the user provides. Could be one or
 multiple.
 
 It only supports the fasta format. Ambiguous bases and gaps ("-") are supported.
@@ -707,7 +706,7 @@ repeat region to be extracted, otherwise any repeated region will be omitted.
 The default value is `False`.
 
 `-allow_invert_repeat`: If two genes invert-repeated in downstream, this
-option will allow the spacer of them to be extracted, otherwise the spacer
+option will allow spacers of them to be extracted, otherwise the spacer
 will be omitted. The default value is `False`.
 
 For instance, geneA-geneB located in one invert-repeat region (IR) of
@@ -783,7 +782,7 @@ greater than 500, s/he could consider setting "-tmin" to 550 and "-tmax" to
 primer. The default value is `4`.
 
 `-mismatch [number]`: The maximum number of mismatched bases in a primer. This
-options is used to remove primer candidates if the BLAST results show that
+option is used to remove primer candidates if the BLAST results show that
 there is too much mismatch. The default value is `4`.
 
 # Performance
@@ -798,7 +797,7 @@ large taxon BLAST may require more) and few CPUs (one core is enough). It can
 run very well on a normal PC. Multiple CPU cores may be helpful for the
 alignment and tree construction steps.
 
-For Windows users, MAFFT [may be very slow due to anti-virus
+For Windows users, MAFFT [may be very slow due to antivirus
 software](https://mafft.cbrc.jp/alignment/software/windows_without_cygwin.html).
 Please consider following [this instruction](https://mafft.cbrc.jp/alignment/software/ubuntu_on_windows.html) to install
 Ubuntu on Windows to obtain better results.
@@ -824,5 +823,5 @@ Please submit your questions in the
   For Windows users, please download and unpack files into
   `%HOMEDRIVE%%HOMEPATH%/.barcodefinder`.
 
-  For Linux  and MacOS users, please download and unpack files into
+  For Linux  and macOS users, please download and unpack files into
   `~/.barcodefinder`.

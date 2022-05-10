@@ -152,8 +152,8 @@ class PrimerWithInfo(SeqRecord):
         self.mid_loc = self.annotations['mid_loc'] = mid_loc
         self.avg_mismatch = self.annotations['avg_mismatch'] = avg_mismatch
         self.detail = self.annotations['detail'] = detail
-        self.is_reverse_complement = self.annotations['is_reverse_complement'
-        ] = False
+        self.is_reverse_complement = self.annotations[
+            'is_reverse_complement'] = False
         self.description = self.annotations['description'] = ''
         self.avg_mid_loc = 0
         self.hairpin_tm = 0
@@ -265,7 +265,7 @@ def calc_ambiguous_seq(func, seq, seq2=None):
     """
     # Seems primer3 only accept seqs shorter than 60 bp. Plus, too long seq
     # will cost too much memory.
-    LEN_LIMIT = 60
+    len_limit = 60
 
     def _expand(seq):
         seq_list = []
@@ -278,14 +278,14 @@ def calc_ambiguous_seq(func, seq, seq2=None):
         seq_str = [''.join(i) for i in seq_product]
         return seq_str
 
-    if len(seq) > LEN_LIMIT:
+    if len(seq) > len_limit:
         log.warning('Too many ambiguous bases. Skip')
         return 0
     seq_str = _expand(seq)
     if seq2 is None:
         values = [func(i) for i in seq_str]
     else:
-        if len(seq2) > LEN_LIMIT:
+        if len(seq2) > len_limit:
             log.warning('Too many ambiguous bases. Skip')
             return 0
         seq_str2 = _expand(seq2)
@@ -513,7 +513,7 @@ def validate(primer_candidate: list, aln: Path, n_seqs: int, arg):
     Do BLAST. Parse BLAST result. Return list of PrimerWithInfo which passed
     the validation.
     """
-    EVALUE = 1e-2
+    evalue = 1e-2
     _, blast = utils.get_blast()
     if not _:
         log.critical('Cannot find BLAST.')
@@ -545,7 +545,7 @@ def validate(primer_candidate: list, aln: Path, n_seqs: int, arg):
     blast_result_file = arg._tmp / (locus_name+'-blast.result.tsv')
     fmt = '7 qseqid sseqid qseq nident mismatch score qstart qend sstart send'
     cmd = (f'{blast} -task blastn-short -num_threads {max(1, cpu_count()-1)} '
-           f'-query {query_file} -db {db_file} -evalue {EVALUE} -max_hsps 1 '
+           f'-query {query_file} -db {db_file} -evalue {evalue} -max_hsps 1 '
            f'-outfmt "{fmt}" -out {blast_result_file}')
     # hide output
     _ = subprocess.run(cmd, shell=True, stdout=subprocess.DEVNULL,

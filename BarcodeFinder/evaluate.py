@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 
 import argparse
-import logging
 import sys
 
 from collections import namedtuple
@@ -10,21 +9,21 @@ from pathlib import Path
 from subprocess import run
 
 import warnings
-# ignore warnings from numpy
-warnings.filterwarnings('ignore', category=RuntimeWarning)
 import numpy as np
 from Bio import Phylo
 from matplotlib import use as mpl_use
 mpl_use('Agg')
 from matplotlib import pyplot as plt
 from matplotlib import rcParams
+from BarcodeFinder import utils
+from BarcodeFinder.global_vars import log
+# ignore warnings from numpy
+warnings.filterwarnings('ignore', category=RuntimeWarning)
+# update matplotlib settings
 params = {'axes.labelsize': 12, 'axes.linewidth': 1.5, 'axes.titlesize': 20,
           'font.size': 12, 'lines.linewidth': 1.5,
           'legend.fontsize': 10, 'legend.handlelength': 2}
 rcParams.update(params)
-from BarcodeFinder import utils
-from BarcodeFinder.global_vars import log
-
 
 
 def parse_args(arg_list=None):
@@ -210,6 +209,7 @@ def remove_gap(alignment: np.array, silence=False) -> (np.array, np.array):
     Split alignment into with_gap and without_gap.
     Args:
         alignment: raw array
+        silence: if True, don't print log
     Returns:
         no_gap_columns: without gap
         gap_columns: columns having gaps

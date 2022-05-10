@@ -214,10 +214,10 @@ def download(arg):
     Because of connection to Genbank website is not stable (especially in
     Asia), it will retry if failed. Ctrl+C to break.
     """
-    TOO_MUCH = 50000
+    too_much = 50000
     # although Bio.Entrez has max_tries, current code could handle error
     # clearly
-    RETRY_MAX = 10
+    retry_max = 10
     if arg.email is None:
         Entrez.email = 'guest@example.com'
         log.info(f'\tEmail address for using Entrez missing, '
@@ -232,7 +232,7 @@ def download(arg):
         log.warning('Got 0 record. Please check the query.')
         log.info('Abort download.')
         return None
-    elif count > TOO_MUCH:
+    elif count > too_much:
         log.warning(f'Got {count} records. May cost long time to download.')
     else:
         log.info(f'\tGot {count} records.')
@@ -279,12 +279,12 @@ def download(arg):
         # IOError could not handle all types of failure
         except Exception:
             sleep(1)
-            if retry <= RETRY_MAX:
+            if retry <= retry_max:
                 log.warning('Failed on download. Retrying...')
                 retry += 1
                 continue
             else:
-                log.critical(f'Too much failure ({RETRY_MAX} times).')
+                log.critical(f'Too much failure ({retry_max} times).')
                 log.info('Abort download.')
                 return None
         ret_start += ret_max
@@ -643,10 +643,12 @@ def divide(gbfile, arg):
 def write_seq(record, seq_info, whole_seq, arg):
     """
     Write fasta files to "by-gene" folder only.
+    ID format: >name|taxon|accession|specimen|type
     Args:
         record: [name, feature]
         seq_info: (taxon, accession, specimen)
-        ID format: >name|taxon|accession|specimen|type
+        whole_seq: whole sequence
+        arg: arguments
     Return: {filename}
     """
     def careful_extract(name, feature, whole_seq):
