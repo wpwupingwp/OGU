@@ -11,7 +11,7 @@ Open terminal, run
    # Install, using pip (recommended)
    pip3 install BarcodeFinder --user
 
-   # Initiliaze with Internet
+   # Initialize with Internet
    # Windows
    python -m BarcodeFinder init
    # Linux and macOS
@@ -217,9 +217,9 @@ python3 -m BarcodeFinder -taxon Oryza -og mt -min_len 50000 -max_len 200000 -uni
 ## Sequence ID
 BarcodeFinder uses a uniform sequence id format for input fasta files and all output sequences.
 ```
-Locus|Kingdom|Phylum|Class|Order|Family|Genus|Species|Accession|SpecimenID|Isolate
+Locus|Kingdom|Phylum|Class|Order|Family|Genus|Species|Accession|SpecimenID_Isolate|Type
 # example
-rbcL|Viridiplantae|Streptophyta|Magnoliopsida|Poales|Poaceae|Oryza|longistaminata|MF998442|TAN:GB60B-2014|
+rbcL|Viridiplantae|Streptophyta|Magnoliopsida|Poales|Poaceae|Oryza|longistaminata|MF998442|TAN:GB60B-2014|gene
 ```
 The order of the fields is fixed. The fields are separated by vertical bars
 ("|"). The space character (" ") was disallowed and was replaced by an
@@ -268,9 +268,9 @@ scientific name of the species. It may contain the subspecies' name.
 `Accession`: The GenBank Accession number for the sequence. It does not
 contain the record's version.
 
-`SpecimenID`: Specimen ID of the sequence. May be empty.
+`SpecimenID` and `Isolate`: Specimen ID and Isolate ID of the sequence. May be empty.
 
-`Isolate`: Isolate ID of the sequence. May be empty.
+`Type`: Type of the sequence. It is usually "gene" or "spacer".
 
 ## Command line
 :exclamation: In Linux and macOS, Python2 is `python2` and Python3 is

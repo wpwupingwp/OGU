@@ -162,6 +162,10 @@ def get_query_string(arg, silence=False):
         condition.append('refseq[filter]')
     else:
         condition.append('NOT refseq[filter]')
+    # join nargs
+    if arg.query is not None:
+        log.warning('Query string is not empty, make sure the syntax is ok.')
+        condition.append(' '.join(arg.query))
     if len(condition) > 0:
         if arg.refseq == 'yes':
             pass
@@ -180,12 +184,7 @@ def get_query_string(arg, silence=False):
 
 
 def init_arg(arg):
-    # join nargs
-    if arg.query is not None:
-        arg.query = ' '.join(arg.query)
-        log.warning('Query string is not empty, ignore other options.')
-    else:
-        arg.query = get_query_string(arg)
+    arg.query = get_query_string(arg)
     arg = utils.init_out(arg)
     if arg.gb is None and arg.query is None:
         log.warning('Empty input.')
@@ -239,9 +238,9 @@ def download(arg):
     if arg.seq_n != 0:
         if count > arg.seq_n:
             count = arg.seq_n
-            log.info(f'\tDownload {arg.seq_n} records because of "-seq_n".')
+            log.info(f'\tDownload {arg.seq_n} records due to "-seq_n".')
     log.info('\tDownloading...')
-    log.warning('\tMay be slow if connection is bad. Ctrl+C to quit.')
+    log.warning('\tMay be slow if connection is unstable. Ctrl+C to quit.')
     name_words = []
     for i in (arg.taxon, arg.organelle, arg.gene):
         if i is not None and i not in ('both', 'ignore', 'no'):
@@ -674,8 +673,9 @@ def write_seq(record, seq_info, whole_seq, arg):
         name, feature = i
         # skip abnormal annotation
         if len(feature) > arg.max_gene_len:
-            log.debug('Annotation of {} (Accession {}) '
+            log.debug('The fragment of {} (Accession {}) '
                       'is too long. Skip.'.format(name, seq_info[1]))
+            continue
         filename = arg._divide / (feature.type+'-'+name+'.fasta')
         with open(filename, 'a', encoding='utf-8') as handle:
             sequence_id = '>' + '|'.join([name, *seq_info, feature.type])
