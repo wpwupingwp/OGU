@@ -2,7 +2,7 @@
 rm -rf rbcL_Poaceae Rosa_ITS Lamiaceae_cp zea_mays Oryza_cp
 seq_n=101
 python=python3
-out=~/Ramdisk/
+out=./
 $python -m BarcodeFinder.gb2fasta -gene rbcL -taxon Poaceae -out ${out}rbcL_Poaceae -seq_n $seq_n
 $python -m BarcodeFinder.gb2fasta -query "internal transcribed spacer" -taxon Rosa -out ${out}Rosa_ITS -uniq no -seq_n $seq_n
 $python -m BarcodeFinder -og cp -refseq yes -taxon Lamiaceae -out ${out}Lamiaceae_cp -seq_n $seq_n
