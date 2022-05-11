@@ -193,9 +193,9 @@ python3 -m BarcodeFinder.gb2fasta -query internal transcribed spacer -taxon Rosa
    Then do pre-process and evaluation of variance (skip primer designing):
 ```
 # Windows
-python -m BarcodeFinder -og cp -refseq -taxon Lamiaceae -out Lamiaceae_cp
+python -m BarcodeFinder -og cp -refseq yes -taxon Lamiaceae -out Lamiaceae_cp
 # Linux and macOS
-python3 -m BarcodeFinder -og cp -refseq -taxon Lamiaceae -out Lamiaceae_cp
+python3 -m BarcodeFinder -og cp -refseq yes -taxon Lamiaceae -out Lamiaceae_cp
 ```
 4. Download sequences of _Zea mays_, set length between 100 bp and 3000 bp,
    and then perform evaluation and primer designing. Note that the space in

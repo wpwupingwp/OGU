@@ -232,7 +232,7 @@ def download(arg):
         log.warning('Got 0 record. Please check the query.')
         log.info('Abort download.')
         return None
-    elif count > too_much:
+    elif count > too_much and arg.seq_n > too_much:
         log.warning(f'Got {count} records. May cost long time to download.')
     else:
         log.info(f'\tGot {count} records.')
@@ -253,14 +253,9 @@ def download(arg):
     file_name = arg._gb / name
     output = open(file_name, 'w', encoding='utf-8')
     ret_start = 0
-    if count >= 1000:
-        ret_max = 1000
-    elif count >= 100:
-        ret_max = 100
-    elif count >= 10:
-        ret_max = 10
-    else:
-        ret_max = 1
+    # get ret_max
+    bit = len(str(count)) - 2
+    ret_max = min(1000, max(10, 10 ** bit))
     retry = 0
     while ret_start < count:
         log.info('\t{:d}--{:d}'.format(ret_start, ret_start + ret_max))
