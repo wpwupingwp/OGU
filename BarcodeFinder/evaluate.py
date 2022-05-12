@@ -362,7 +362,7 @@ def phylogenetic_diversity(alignment: np.array, tmp: Path) -> (float, float,
             tree_res = len(non_zero_internals) / n_terminals
         except Exception:
             log.debug('Bad phylogenetic tree.')
-    # utils.clean_tmp(aln_file)
+    utils.clean_tmp(aln_file)
     sys.setrecursionlimit(old_max_recursion)
     return pd, pd_stem, pd_stem_sd, pd_terminal, pd_terminal_sd, tree_res
 
