@@ -1,6 +1,12 @@
 Traceback (most recent call last):
-  File "E:\Linux\barcodefinder\ui\ui.py", line 366, in <module>
+  File "E:\Linux\barcodefinder\ui\ui.py", line 444, in <module>
     ui_support.main()
-  File "E:\Linux\barcodefinder\ui\ui_support.py", line 28, in main
-    _w45.deiconify()
-AttributeError: 'gb2fasta' object has no attribute 'deiconify'
+  File "E:\Linux\barcodefinder\ui\ui_support.py", line 29, in main
+    _w45 = ui.gb2fasta(_top45)
+  File "E:\Linux\barcodefinder\ui\ui.py", line 245, in __init__
+    self.open_gb.configure(text='''Open''',font='-size -14')
+  File "C:\Program Files\Python310\lib\tkinter\__init__.py", line 1675, in configure
+    return self._configure('configure', cnf, kw)
+  File "C:\Program Files\Python310\lib\tkinter\__init__.py", line 1665, in _configure
+    self.tk.call(_flatten((self._w, cmd)) + self._options(cnf))
+_tkinter.TclError: unknown option "-font"

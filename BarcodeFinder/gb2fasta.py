@@ -90,7 +90,7 @@ def parse_args(arg_list=None):
     query.add_argument('-query', nargs='*', help='query text')
     query.add_argument('-refseq', choices=('both', 'yes', 'no'),
                        default='both', help='include RefSeq or not')
-    query.add_argument('-seq_n', default=0, type=int,
+    query.add_argument('-count', default=0, type=int,
                        help='maximum number of records to download, '
                             '0 for unlimited')
     query.add_argument('-taxon', help='Taxonomy name')
@@ -231,14 +231,14 @@ def download(arg):
         log.warning('Got 0 record. Please check the query.')
         log.info('Abort download.')
         return None
-    elif count > too_much and arg.seq_n > too_much:
+    elif count > too_much and arg.count > too_much:
         log.warning(f'Got {count} records. May cost long time to download.')
     else:
         log.info(f'\tGot {count} records.')
-    if arg.seq_n != 0:
-        if count > arg.seq_n:
-            count = arg.seq_n
-            log.info(f'\tDownload {arg.seq_n} records due to "-seq_n".')
+    if arg.count != 0:
+        if count > arg.count:
+            count = arg.count
+            log.info(f'\tDownload {arg.count} records due to "-count".')
     log.info('\tDownloading...')
     log.warning('\tMay be slow if connection is unstable. Ctrl+C to quit.')
     name_words = []
