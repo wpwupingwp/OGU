@@ -1,8 +1,13 @@
 # mac
-rm -Recurse -Force rbcL_Poaceae Rosa_ITS Lamiaceae_cp zea_mays Oryza_cp
+$folder="rbcL_Poaceae","Rosa_ITS","Lamiaceae_cp","zea_mays","Oryza_cp"
+foreach ($f in $folder)
+{
+    Remove-Item -Recurse -Force R:\test\$f
+}
+New-Item -p R:\test
 $seq_n="101"
 $python="python"
-$out="R:\test"
+$out="R:\test\"
 &$python -m BarcodeFinder.gb2fasta -gene rbcL -taxon Poaceae -out ${out}rbcL_Poaceae -seq_n $seq_n
 &$python -m BarcodeFinder.gb2fasta -query "internal transcribed spacer" -taxon Rosa -out ${out}Rosa_ITS -uniq no -seq_n $seq_n
 &$python -m BarcodeFinder -og cp -refseq yes -taxon Lamiaceae -out ${out}Lamiaceae_cp -seq_n $seq_n
