@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "E:\Linux\barcodefinder\ui\ui.py", line 366, in <module>
+    ui_support.main()
+  File "E:\Linux\barcodefinder\ui\ui_support.py", line 28, in main
+    _w45.deiconify()
+AttributeError: 'gb2fasta' object has no attribute 'deiconify'
