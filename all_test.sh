@@ -1,6 +1,6 @@
 # mac
 rm -rf rbcL_Poaceae Rosa_ITS Lamiaceae_cp zea_mays Oryza_cp
-seq_n=101
+seq_n=11
 python=python3
 out=./
 $python -m BarcodeFinder.gb2fasta -gene rbcL -taxon Poaceae -out ${out}rbcL_Poaceae -seq_n $seq_n
