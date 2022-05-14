@@ -61,9 +61,9 @@ def parse_args(arg_list=None):
     # handle rps12
     adv.add_argument('-max_gene_len', default=20000, type=int,
                      help='maximum length of gene sequence')
+    adv.add_argument('-email', type=str,
+                     help='email address for querying Genbank')
     query = arg.add_argument_group('Query')
-    query.add_argument('-email', type=str,
-                       help='email address for querying Genbank')
     query.add_argument('-exclude', type=str, help='exclude option')
     query.add_argument('-gene', type=str, help='gene name')
     # in case of same taxonomy name in different group
