@@ -598,7 +598,7 @@ higher sequence and annotation quality than GenBank. This option could be used
 for getting nuclear/organelle genomes from NCBI. In this situation (`-refseq
     yes`), the length limit will be removed automatically.
 
-`-seq_n [number]`: Restrict numbers of sequences to be downloaded. The default
+`-count [number]`: Restrict numbers of sequences to be downloaded. The default
 value `0` means no restriction.
 
 `-min_len [length]`: The minimum length of the records downloaded from
@@ -761,13 +761,14 @@ tree resolution/phylogenetic diversity, either.
 The default value is `1`, i.e., only keep the _best_ primer pair according to
 its `score`.  To keep more pairs, set "-t" to more than 1.
 
-`-tmin [length]`: The minimum product length (include primer). The default
+`-amin [length]`: The minimum amplified length (include primer). The default
 value is `300` (bp). Note this limits the PCR product's length instead of the
 sub-alignment's length.
 
-`-tmax [length]`: The maximum product length (include primer). 
+`-amax [length]`: The maximum amplified length (include primer). The default
+value is `800` (bp).
 
-The "-tmin" and "-tmax" are used to screen primer candidates. It uses BLAST
+The "-amin" and "-amax" are used to screen primer candidates. It uses BLAST
 results to set the location of primers on each template sequence and
 calculates the average lengths of the products. Because of the variance of
 species, the same locus may have different lengths in different species, plus
@@ -775,7 +776,7 @@ with the stretching of the alignment that gaps were added during the aligning,
 please consider adding some *margins* for these two options.
 
 For instance, if a user wants the amplified length to be smaller than 800 and
-greater than 500, s/he could consider setting "-tmin" to 550 and "-tmax" to
+greater than 500, s/he could consider setting "-amin" to 550 and "-amax" to
 750.
 
 `-ambiguous [number]`: The maximum number of ambiguous bases allowed in one

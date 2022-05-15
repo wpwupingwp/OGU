@@ -219,10 +219,10 @@ def parse_args(arg_list=None):
                      help='minimal resolution')
     arg.add_argument('-topn', dest='top_n', type=int, default=1,
                      help='keep n primers for each high variant region')
-    arg.add_argument('-tmin', dest='min_product', default=300, type=int,
-                     help='minimum product length (include primer)')
-    arg.add_argument('-tmax', dest='max_product', default=800, type=int,
-                     help='maximum product length(include primer)')
+    arg.add_argument('-amin', dest='min_product', default=300, type=int,
+                     help='minimum amplified length (include primer)')
+    arg.add_argument('-amax', dest='max_product', default=800, type=int,
+                     help='maximum amplified length (include primer)')
     arg.add_argument('-size', type=int, default=500, help='window size for sliding scan')
     arg.add_argument('-step', type=int, default=50, help='step length for sliding scan')
     arg.add_argument('-primer', action='store_true', help='design universal primer')

@@ -104,10 +104,10 @@ def parse_args():
                         help='minimal resolution')
     primer.add_argument('-topn', dest='top_n', type=int, default=1,
                         help='keep n primers for each high variant region')
-    primer.add_argument('-tmin', dest='min_product', default=300, type=int,
-                        help='minimum product length (include primer)')
-    primer.add_argument('-tmax', dest='max_product', default=800, type=int,
-                        help='maximum product length (include primer)')
+    primer.add_argument('-amin', dest='min_product', default=300, type=int,
+                        help='minimum amplified length (include primer)')
+    primer.add_argument('-amax', dest='max_product', default=800, type=int,
+                        help='maximum amplified length (include primer)')
     return arg.parse_args()
 
 
