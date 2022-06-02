@@ -12,11 +12,12 @@ from tkinter.constants import *
 
 import ui
 
+
 def main(*args):
     '''Main entry point for the application.'''
     global root
     root = tk.Tk()
-    root.protocol( 'WM_DELETE_WINDOW' , root.destroy)
+    root.protocol('WM_DELETE_WINDOW', root.destroy)
     # Creates a toplevel widget.
     global _top44, _w44
     _top44 = root
@@ -35,39 +36,41 @@ def main(*args):
     _w47 = ui.primer(_top47)
     root.mainloop()
 
+
 def open_file(*args):
     print('ui_support.open_file')
     for arg in args:
-        print ('another arg:', arg)
+        print('another arg:', arg)
     sys.stdout.flush()
+
 
 def run_evaluate(*args):
     print('ui_support.run_evaluate')
     for arg in args:
-        print ('another arg:', arg)
+        print('another arg:', arg)
     sys.stdout.flush()
+
 
 def run_gb2fasta(*args):
     print('ui_support.run_gb2fasta')
     for arg in args:
-        print ('another arg:', arg)
+        print('another arg:', arg)
     sys.stdout.flush()
+
 
 def run_help(*args):
     print('ui_support.run_help')
     for arg in args:
-        print ('another arg:', arg)
+        print('another arg:', arg)
     sys.stdout.flush()
+
 
 def run_primer(*args):
     print('ui_support.run_primer')
     for arg in args:
-        print ('another arg:', arg)
+        print('another arg:', arg)
     sys.stdout.flush()
+
 
 if __name__ == '__main__':
     ui.start_up()
-
-
-
-
