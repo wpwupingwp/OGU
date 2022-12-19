@@ -1,15 +1,32 @@
 #!/usr/bin/env python
 # from tkinter.constants import *
+# from tkinter.constants import *
 from time import time, localtime, strftime
+from tkinter import filedialog
 import platform
 import sys
 import tkinter as tk
 import tkinter.ttk as ttk
 
-import ui_support
 
+def open_file(entry, single=True, entry2=None, title=''):
+    """
+    Set title, fill entry 1, empty entry 2.
+    """
 
-class main:
+    def func():
+        if single:
+            a = filedialog.askopenfilename(title=title)
+        else:
+            a = filedialog.askopenfilenames(title=title)
+        entry.delete(0, 'end')
+        entry.insert(0, a)
+        if entry2 is not None:
+            entry2.delete(0, 'end')
+
+    return func
+
+class Root:
     def __init__(self, top=None):
         '''This class configures and populates the toplevel window.
            top is the toplevel containing window.'''
@@ -46,13 +63,13 @@ class main:
         self.help_b.configure(activeforeground="#000000")
         self.help_b.configure(background="#edf0f3")
         self.help_b.configure(borderwidth="1")
-        self.help_b.configure(command=ui_support.run_help)
+        self.help_b.configure(command=run_help)
         self.help_b.configure(foreground="#000000")
         self.help_b.configure(highlightbackground="#edf0f3")
         self.help_b.configure(highlightcolor="black")
-        global _img0
-        _img0 = tk.PhotoImage(file=photo_location1)
-        self.help_b.configure(image=_img0)
+        global _img4
+        _img4 = tk.PhotoImage(file=photo_location4)
+        self.help_b.configure(image=_img4)
         self.help_b.configure(pady="0")
         self.help_b.configure(text='''Button''')
 
@@ -62,13 +79,13 @@ class main:
         self.gb2fasta_b.configure(activeforeground="#000000")
         self.gb2fasta_b.configure(background="#edf0f3")
         self.gb2fasta_b.configure(borderwidth="0")
-        self.gb2fasta_b.configure(command=ui_support.run_gb2fasta)
+        self.gb2fasta_b.configure(command=run_gb2fasta)
         self.gb2fasta_b.configure(foreground="#000000")
         self.gb2fasta_b.configure(highlightbackground="#edf0f3")
         self.gb2fasta_b.configure(highlightcolor="black")
-        global _img1
-        _img1 = tk.PhotoImage(file=photo_location2)
-        self.gb2fasta_b.configure(image=_img1)
+        global _img0
+        _img0 = tk.PhotoImage(file=photo_location1)
+        self.gb2fasta_b.configure(image=_img0)
         self.gb2fasta_b.configure(pady="0")
         self.gb2fasta_b.configure(text='''Button''')
 
@@ -78,13 +95,13 @@ class main:
         self.evaluate_b.configure(activeforeground="#000000")
         self.evaluate_b.configure(background="#edf0f3")
         self.evaluate_b.configure(borderwidth="0")
-        self.evaluate_b.configure(command=ui_support.run_evaluate)
+        self.evaluate_b.configure(command=run_evaluate)
         self.evaluate_b.configure(foreground="#000000")
         self.evaluate_b.configure(highlightbackground="#edf0f3")
         self.evaluate_b.configure(highlightcolor="black")
-        global _img2
-        _img2 = tk.PhotoImage(file=photo_location3)
-        self.evaluate_b.configure(image=_img2)
+        global _img1
+        _img1 = tk.PhotoImage(file=photo_location2)
+        self.evaluate_b.configure(image=_img1)
         self.evaluate_b.configure(pady="0")
         self.evaluate_b.configure(text='''Button''')
 
@@ -94,13 +111,13 @@ class main:
         self.primer_b.configure(activeforeground="#000000")
         self.primer_b.configure(background="#edf0f3")
         self.primer_b.configure(borderwidth="0")
-        self.primer_b.configure(command=ui_support.run_primer)
+        self.primer_b.configure(command=run_primer)
         self.primer_b.configure(foreground="#000000")
         self.primer_b.configure(highlightbackground="#edf0f3")
         self.primer_b.configure(highlightcolor="black")
-        global _img3
-        _img3 = tk.PhotoImage(file=photo_location4)
-        self.primer_b.configure(image=_img3)
+        global _img2
+        _img2 = tk.PhotoImage(file=photo_location3)
+        self.primer_b.configure(image=_img2)
         self.primer_b.configure(pady="0")
         self.primer_b.configure(text='''Button''')
 
@@ -170,7 +187,7 @@ class main:
         self.note_label.configure(text='''Click button to run modules''')
 
 
-class gb2fasta:
+class GB2Fasta:
     def __init__(self, top=None):
         '''This class configures and populates the toplevel window.
            top is the toplevel containing window.'''
@@ -586,7 +603,7 @@ class gb2fasta:
         self.query_entry.configure(cursor="fleur")
         self.tooltip_font = "TkDefaultFont"
         self.query_entry_tooltip = ToolTip(self.query_entry, self.tooltip_font,
-                    '''Entrez query string''')
+                                           '''Entrez query string''')
 
         self.Button1 = tk.Button(self.Labelframe1)
         self.Button1.place(relx=0.82, rely=0.054, height=35, width=90
@@ -594,7 +611,7 @@ class gb2fasta:
         self.Button1.configure(activebackground="#ececec")
         self.Button1.configure(activeforeground="#000000")
         self.Button1.configure(background="#edf0f3")
-        self.Button1.configure(command=ui_support.open_file)
+        self.Button1.configure(command=open_file)
         self.Button1.configure(compound='left')
         self.Button1.configure(font="-family {TkDefaultFont} -size 12")
         self.Button1.configure(foreground="#000000")
@@ -856,7 +873,7 @@ class gb2fasta:
         self.Button1_1.configure(activebackground="#edf0f3")
         self.Button1_1.configure(activeforeground="#000000")
         self.Button1_1.configure(background="#edf0f3")
-        self.Button1_1.configure(command=ui_support.open_file)
+        self.Button1_1.configure(command=open_file)
         self.Button1_1.configure(compound='left')
         self.Button1_1.configure(font="-family {TkDefaultFont} -size 12")
         self.Button1_1.configure(foreground="#000000")
@@ -870,7 +887,7 @@ class gb2fasta:
         self.Button1.configure(activebackground="#ececec")
         self.Button1.configure(activeforeground="#000000")
         self.Button1.configure(background="#edf0f3")
-        self.Button1.configure(command=ui_support.run_gb2fasta)
+        self.Button1.configure(command=run_gb2fasta)
         self.Button1.configure(compound='left')
         self.Button1.configure(font="-family {TkDefaultFont} -size 14")
         self.Button1.configure(foreground="#000000")
@@ -880,7 +897,7 @@ class gb2fasta:
         self.Button1.configure(text='''Run''')
 
 
-class evaluate:
+class Evaluate:
     def __init__(self, top=None):
         '''This class configures and populates the toplevel window.
            top is the toplevel containing window.'''
@@ -968,7 +985,7 @@ class evaluate:
         self.open_btn.configure(activebackground="#ececec")
         self.open_btn.configure(activeforeground="#000000")
         self.open_btn.configure(background="#edf0f3")
-        self.open_btn.configure(command=ui_support.open_file)
+        self.open_btn.configure(command=open_file)
         self.open_btn.configure(compound='left')
         self.open_btn.configure(font="-family {TkDefaultFont} -size 12")
         self.open_btn.configure(foreground="#000000")
@@ -1040,7 +1057,7 @@ class evaluate:
         self.open_btn.configure(activebackground="#ececec")
         self.open_btn.configure(activeforeground="#000000")
         self.open_btn.configure(background="#edf0f3")
-        self.open_btn.configure(command=ui_support.open_file)
+        self.open_btn.configure(command=open_file)
         self.open_btn.configure(compound='left')
         self.open_btn.configure(font="-family {TkDefaultFont} -size 12")
         self.open_btn.configure(foreground="#000000")
@@ -1055,7 +1072,7 @@ class evaluate:
         self.open2_btn.configure(activebackground="#ececec")
         self.open2_btn.configure(activeforeground="#000000")
         self.open2_btn.configure(background="#edf0f3")
-        self.open2_btn.configure(command=ui_support.open_file)
+        self.open2_btn.configure(command=open_file)
         self.open2_btn.configure(compound='left')
         self.open2_btn.configure(font="-family {TkDefaultFont} -size 12")
         self.open2_btn.configure(foreground="#000000")
@@ -1097,7 +1114,7 @@ class evaluate:
         self.open3_btn.configure(activebackground="#ececec")
         self.open3_btn.configure(activeforeground="#000000")
         self.open3_btn.configure(background="#edf0f3")
-        self.open3_btn.configure(command=ui_support.open_file)
+        self.open3_btn.configure(command=open_file)
         self.open3_btn.configure(compound='left')
         self.open3_btn.configure(font="-family {TkDefaultFont} -size 12")
         self.open3_btn.configure(foreground="#000000")
@@ -1218,7 +1235,7 @@ class evaluate:
         self.Button1_3.configure(activebackground="#ececec")
         self.Button1_3.configure(activeforeground="#000000")
         self.Button1_3.configure(background="#edf0f3")
-        self.Button1_3.configure(command=ui_support.run_evaluate)
+        self.Button1_3.configure(command=run_evaluate)
         self.Button1_3.configure(compound='left')
         self.Button1_3.configure(font="-family {TkDefaultFont} -size 14")
         self.Button1_3.configure(foreground="#000000")
@@ -1229,7 +1246,7 @@ class evaluate:
         self.Button1_3.configure(text='''Run''')
 
 
-class primer:
+class Primer:
     def __init__(self, top=None):
         '''This class configures and populates the toplevel window.
            top is the toplevel containing window.'''
@@ -1322,7 +1339,7 @@ class primer:
         self.Button1.configure(activebackground="#ececec")
         self.Button1.configure(activeforeground="#000000")
         self.Button1.configure(background="#edf0f3")
-        self.Button1.configure(command=ui_support.open_file)
+        self.Button1.configure(command=open_file)
         self.Button1.configure(compound='left')
         self.Button1.configure(font="-family {TkDefaultFont} -size 12")
         self.Button1.configure(foreground="#000000")
@@ -1367,7 +1384,7 @@ class primer:
         self.Button1.configure(activebackground="#ececec")
         self.Button1.configure(activeforeground="#000000")
         self.Button1.configure(background="#edf0f3")
-        self.Button1.configure(command=ui_support.open_file)
+        self.Button1.configure(command=open_file)
         self.Button1.configure(compound='left')
         self.Button1.configure(font="-family {TkDefaultFont} -size 12")
         self.Button1.configure(foreground="#000000")
@@ -1410,7 +1427,7 @@ class primer:
         self.Button1.configure(activebackground="#ececec")
         self.Button1.configure(activeforeground="#000000")
         self.Button1.configure(background="#edf0f3")
-        self.Button1.configure(command=ui_support.open_file)
+        self.Button1.configure(command=open_file)
         self.Button1.configure(compound='left')
         self.Button1.configure(font="-family {TkDefaultFont} -size 12")
         self.Button1.configure(foreground="#000000")
@@ -1675,7 +1692,7 @@ class primer:
         self.Button1_3.configure(activebackground="#ececec")
         self.Button1_3.configure(activeforeground="#000000")
         self.Button1_3.configure(background="#edf0f3")
-        self.Button1_3.configure(command=ui_support.run_primer)
+        self.Button1_3.configure(command=run_primer)
         self.Button1_3.configure(compound='left')
         self.Button1_3.configure(font="-family {TkDefaultFont} -size 14")
         self.Button1_3.configure(foreground="#000000")
@@ -1686,7 +1703,7 @@ class primer:
         self.Button1_3.configure(text='''Run''')
 
 
-class log:
+class LOG:
     def __init__(self, top=None):
         '''This class configures and populates the toplevel window.
            top is the toplevel containing window.'''
@@ -1913,9 +1930,42 @@ def _on_shiftmouse(event, widget):
             widget.xview_scroll(1, 'units')
 
 
-def start_up():
-    ui_support.main()
+def ui_main():
+    '''Main entry point for the application.'''
+    global root
+    root = tk.Tk()
+    root.protocol('WM_DELETE_WINDOW', root.destroy)
+    # Creates a toplevel widget.
+    global _top1, _w1
+    _top1 = root
+    _w1 = Root(_top1)
+    root.mainloop()
+
+
+def run_gb2fasta():
+    global _top2, _w2
+    _top2 = tk.Toplevel(root)
+    _w2 = GB2Fasta(_top2)
+
+
+def run_evaluate():
+    global _top3, _w3
+    _top3 = tk.Toplevel(root)
+    _w3 = Evaluate(_top3)
+
+
+def run_primer(*args):
+    # Creates a toplevel widget.
+    global _top4, _w4
+    _top4 = tk.Toplevel(root)
+    _w4 = Primer(_top4)
+
+
+def run_help():
+    global _top5, _w5
+    _top5 = tk.Toplevel(root)
+    _w5 = LOG(_top5)
 
 
 if __name__ == '__main__':
-    ui_support.main()
+    ui_main()
