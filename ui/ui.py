@@ -526,12 +526,14 @@ class GB2Fasta:
         self.to_label.configure(highlightcolor="black")
         self.to_label.configure(text='''to''')
 
-        self.max_len_enry = ttk.Entry(self.Labelframe1)
-        self.max_len_enry.place(relx=0.839, rely=0.435, relheight=0.095
-                                , relwidth=0.14, bordermode='ignore')
-        self.max_len_enry.configure(textvariable=self.max_len)
-        self.max_len_enry.configure(takefocus="")
-        self.max_len_enry.configure(cursor="fleur")
+        self.max_len_entry = ttk.Entry(self.Labelframe1)
+        self.max_len_entry.place(relx=0.839, rely=0.435, relheight=0.095
+                                 , relwidth=0.14, bordermode='ignore')
+        self.max_len_entry.configure(textvariable=self.max_len)
+        self.max_len_entry.configure(takefocus="")
+        self.max_len_entry.configure(cursor="fleur")
+        self.min_len_entry.insert(0, '0')
+        self.max_len_entry.insert(0, '300000')
 
         self.date_label = tk.Label(self.Labelframe1)
         self.date_label.place(relx=0.558, rely=0.541, height=35, width=60
@@ -826,6 +828,8 @@ class GB2Fasta:
         self.max_gene_len_entry_tooltip = \
             ToolTip(self.max_gene_len_entry, self.tooltip_font,
                     '''max fragment sequence length''')
+        self.max_name_len_entry.insert(0, '100')
+        self.max_gene_len_entry.insert(0, '20000')
 
         self.TSeparator2 = ttk.Separator(self.Labelframe1)
         self.TSeparator2.place(relx=0.524, rely=0.135, relheight=0.78
@@ -1204,6 +1208,8 @@ class Evaluate:
         self.step_entry.configure(textvariable=self.step)
         self.step_entry.configure(takefocus="")
         self.step_entry.configure(cursor="fleur")
+        self.size_entry.insert(0, '500')
+        self.step_entry.insert(0, '50')
 
         self.Labelframe1 = tk.LabelFrame(self.top)
         self.Labelframe1.place(relx=0.017, rely=0.644, relheight=0.156
@@ -1326,7 +1332,7 @@ class Primer:
         self.TLabel1.configure(anchor='w')
         self.TLabel1.configure(background="#edf0f3")
         self.TLabel1.configure(compound='left')
-        self.TLabel1.configure(font="-family {TkDefaultFont} -size 12")
+        self.TLabel1.configure(font="-family {TkDefaultFont} -size 10")
         self.TLabel1.configure(foreground="#000000")
         self.TLabel1.configure(highlightbackground="#edf0f3")
         self.TLabel1.configure(highlightcolor="black")
@@ -1356,7 +1362,7 @@ class Primer:
         self.Button1.configure(background="#edf0f3")
         self.Button1.configure(command=open_file)
         self.Button1.configure(compound='left')
-        self.Button1.configure(font="-family {TkDefaultFont} -size 12")
+        self.Button1.configure(font="-family {TkDefaultFont} -size 10")
         self.Button1.configure(foreground="#000000")
         self.Button1.configure(highlightbackground="#edf0f3")
         self.Button1.configure(highlightcolor="black")
@@ -1365,14 +1371,14 @@ class Primer:
         self.Button1.configure(text='''Open''')
 
         self.TLabel1 = tk.Label(self.Labelframe1)
-        self.TLabel1.place(relx=0.052, rely=0.6, height=35, width=140
+        self.TLabel1.place(relx=0.052, rely=0.6, height=35, width=160
                            , bordermode='ignore')
         self.TLabel1.configure(activebackground="#f9f9f9")
         self.TLabel1.configure(activeforeground="black")
         self.TLabel1.configure(anchor='w')
         self.TLabel1.configure(background="#edf0f3")
         self.TLabel1.configure(compound='left')
-        self.TLabel1.configure(font="-family {TkDefaultFont} -size 12")
+        self.TLabel1.configure(font="-family {TkDefaultFont} -size 10")
         self.TLabel1.configure(foreground="#000000")
         self.TLabel1.configure(highlightbackground="#edf0f3")
         self.TLabel1.configure(highlightcolor="black")
@@ -1401,7 +1407,7 @@ class Primer:
         self.Button1.configure(background="#edf0f3")
         self.Button1.configure(command=open_file)
         self.Button1.configure(compound='left')
-        self.Button1.configure(font="-family {TkDefaultFont} -size 12")
+        self.Button1.configure(font="-family {TkDefaultFont} -size 10")
         self.Button1.configure(foreground="#000000")
         self.Button1.configure(highlightbackground="#edf0f3")
         self.Button1.configure(highlightcolor="black")
@@ -1416,7 +1422,7 @@ class Primer:
         self.out_label.configure(anchor='w')
         self.out_label.configure(background="#edf0f3")
         self.out_label.configure(compound='left')
-        self.out_label.configure(font="-family {TkDefaultFont} -size 12")
+        self.out_label.configure(font="-family {TkDefaultFont} -size 10")
         self.out_label.configure(foreground="#000000")
         self.out_label.configure(highlightbackground="#edf0f3")
         self.out_label.configure(highlightcolor="black")
@@ -1444,7 +1450,7 @@ class Primer:
         self.Button1.configure(background="#edf0f3")
         self.Button1.configure(command=open_file)
         self.Button1.configure(compound='left')
-        self.Button1.configure(font="-family {TkDefaultFont} -size 12")
+        self.Button1.configure(font="-family {TkDefaultFont} -size 10")
         self.Button1.configure(foreground="#000000")
         self.Button1.configure(highlightbackground="#edf0f3")
         self.Button1.configure(highlightcolor="black")
@@ -1456,7 +1462,6 @@ class Primer:
         self.Labelframe1.place(relx=0.017, rely=0.34, relheight=0.38
                                , relwidth=0.955)
         self.Labelframe1.configure(relief='groove')
-        self.Labelframe1.configure(font="-family {TkDefaultFont} -size 14")
         self.Labelframe1.configure(foreground="#000000")
         self.Labelframe1.configure(text='''Advance''')
         self.Labelframe1.configure(background="#edf0f3")
@@ -1471,7 +1476,7 @@ class Primer:
         self.coverage_label.configure(anchor='w')
         self.coverage_label.configure(background="#edf0f3")
         self.coverage_label.configure(compound='left')
-        self.coverage_label.configure(font="-family {TkDefaultFont} -size 12")
+        self.coverage_label.configure(font="-family {TkDefaultFont} -size 10")
         self.coverage_label.configure(foreground="#000000")
         self.coverage_label.configure(highlightbackground="#edf0f3")
         self.coverage_label.configure(highlightcolor="black")
@@ -1488,6 +1493,7 @@ class Primer:
         self.coverage_entry_tooltip = \
             ToolTip(self.coverage_entry, self.tooltip_font,
                     '''minimal coverage of primer on alignment''')
+        self.coverage_entry.insert(0, '0.5')
 
         self.mismatch_label = tk.Label(self.Labelframe1)
         self.mismatch_label.place(relx=0.07, rely=0.368, height=35
@@ -1497,7 +1503,7 @@ class Primer:
         self.mismatch_label.configure(anchor='w')
         self.mismatch_label.configure(background="#edf0f3")
         self.mismatch_label.configure(compound='left')
-        self.mismatch_label.configure(font="-family {TkDefaultFont} -size 12")
+        self.mismatch_label.configure(font="-family {TkDefaultFont} -size 10")
         self.mismatch_label.configure(foreground="#000000")
         self.mismatch_label.configure(highlightbackground="#edf0f3")
         self.mismatch_label.configure(highlightcolor="black")
@@ -1512,7 +1518,7 @@ class Primer:
         self.res_label.configure(anchor='w')
         self.res_label.configure(background="#edf0f3")
         self.res_label.configure(compound='left')
-        self.res_label.configure(font="-family {TkDefaultFont} -size 12")
+        self.res_label.configure(font="-family {TkDefaultFont} -size 10")
         self.res_label.configure(foreground="#000000")
         self.res_label.configure(highlightbackground="#edf0f3")
         self.res_label.configure(highlightcolor="black")
@@ -1540,6 +1546,8 @@ class Primer:
         self.resolution_entry_tooltip = \
             ToolTip(self.resolution_entry, self.tooltip_font,
                     '''minimal resolution of amplified fragment''')
+        self.mismatch_entry.insert(0, '4')
+        self.resolution_entry.insert(0, '0.3')
 
         self.TSeparator2 = ttk.Separator(self.Labelframe1)
         self.TSeparator2.place(relx=0.524, rely=0.137, relheight=0.779
@@ -1554,7 +1562,7 @@ class Primer:
         self.topn_label.configure(anchor='w')
         self.topn_label.configure(background="#edf0f3")
         self.topn_label.configure(compound='left')
-        self.topn_label.configure(font="-family {TkDefaultFont} -size 12")
+        self.topn_label.configure(font="-family {TkDefaultFont} -size 10")
         self.topn_label.configure(foreground="#000000")
         self.topn_label.configure(highlightbackground="#edf0f3")
         self.topn_label.configure(highlightcolor="black")
@@ -1571,16 +1579,17 @@ class Primer:
         self.top_n_entry_tooltip = \
             ToolTip(self.top_n_entry, self.tooltip_font,
                     '''Only keep top best primers''')
+        self.top_n_entry.insert(0, '1')
 
         self.primer_len_label = tk.Label(self.Labelframe1)
         self.primer_len_label.place(relx=0.541, rely=0.158, height=35
-                                    , width=80, bordermode='ignore')
+                                    , width=100, bordermode='ignore')
         self.primer_len_label.configure(activebackground="#f9f9f9")
         self.primer_len_label.configure(activeforeground="black")
         self.primer_len_label.configure(anchor='w')
         self.primer_len_label.configure(background="#edf0f3")
         self.primer_len_label.configure(compound='left')
-        self.primer_len_label.configure(font="-family {TkDefaultFont} -size 12")
+        self.primer_len_label.configure(font="-family {TkDefaultFont} -size 10")
         self.primer_len_label.configure(foreground="#000000")
         self.primer_len_label.configure(highlightbackground="#edf0f3")
         self.primer_len_label.configure(highlightcolor="black")
@@ -1614,21 +1623,23 @@ class Primer:
         self.pmax_entry.configure(textvariable=self.pmax)
         self.pmax_entry.configure(takefocus="")
         self.pmax_entry.configure(cursor="fleur")
+        self.pmin_entry.insert(0, '20')
+        self.pmax_entry.insert(0, '30')
 
         self.amp_len_label = tk.Label(self.Labelframe1)
         self.amp_len_label.place(relx=0.541, rely=0.368, height=35
-                                 , width=100, bordermode='ignore')
+                                 , width=120, bordermode='ignore')
         self.amp_len_label.configure(activebackground="#f9f9f9")
         self.amp_len_label.configure(activeforeground="black")
         self.amp_len_label.configure(anchor='w')
         self.amp_len_label.configure(background="#edf0f3")
         self.amp_len_label.configure(compound='left')
-        self.amp_len_label.configure(font="-family {TkDefaultFont} -size 12")
+        self.amp_len_label.configure(font="-family {TkDefaultFont} -size 10")
         self.amp_len_label.configure(foreground="#000000")
         self.amp_len_label.configure(highlightbackground="#edf0f3")
         self.amp_len_label.configure(highlightcolor="black")
         self.amp_len_label.configure(justify='left')
-        self.amp_len_label.configure(text='''Amplified length''')
+        self.amp_len_label.configure(text='''Amplicon size''')
 
         self.amin_entry = ttk.Entry(self.Labelframe1)
         self.amin_entry.place(relx=0.716, rely=0.368, relheight=0.184
@@ -1661,6 +1672,8 @@ class Primer:
         self.amax_entry.configure(textvariable=self.amax)
         self.amax_entry.configure(takefocus="")
         self.amax_entry.configure(cursor="fleur")
+        self.amin_entry.insert(0, '300')
+        self.amax_entry.insert(0, '800')
 
         self.sliding_window_label = tk.Label(self.Labelframe1)
         self.sliding_window_label.place(relx=0.541, rely=0.579, height=35,
@@ -1701,21 +1714,23 @@ class Primer:
         self.step_entry.configure(textvariable=self.step)
         self.step_entry.configure(takefocus="")
         self.step_entry.configure(cursor="fleur")
+        self.size_entry.insert(0, '500')
+        self.step_entry.insert(0, '50')
 
-        self.Button1_3 = tk.Button(self.top)
-        self.Button1_3.place(relx=0.367, rely=0.82, height=40, width=180)
-        self.Button1_3.configure(activebackground="#ececec")
-        self.Button1_3.configure(activeforeground="#000000")
-        self.Button1_3.configure(background="#edf0f3")
-        self.Button1_3.configure(command=run_primer)
-        self.Button1_3.configure(compound='left')
-        self.Button1_3.configure(font="-family {TkDefaultFont} -size 14")
-        self.Button1_3.configure(foreground="#000000")
-        self.Button1_3.configure(highlightbackground="#edf0f3")
-        self.Button1_3.configure(highlightcolor="black")
-        self.Button1_3.configure(pady="0")
-        self.Button1_3.configure(relief="raised")
-        self.Button1_3.configure(text='''Run''')
+        self.run_b = tk.Button(self.top)
+        self.run_b.place(relx=0.367, rely=0.82, height=40, width=180)
+        self.run_b.configure(activebackground="#ececec")
+        self.run_b.configure(activeforeground="#000000")
+        self.run_b.configure(background="#edf0f3")
+        self.run_b.configure(command=run_primer)
+        self.run_b.configure(compound='left')
+        self.run_b.configure(font="-family {TkDefaultFont} -size 14")
+        self.run_b.configure(foreground="#000000")
+        self.run_b.configure(highlightbackground="#edf0f3")
+        self.run_b.configure(highlightcolor="black")
+        self.run_b.configure(pady="0")
+        self.run_b.configure(relief="raised")
+        self.run_b.configure(text='''Run''')
 
 
 class LOG:
