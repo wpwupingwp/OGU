@@ -1,12 +1,11 @@
 #!/usr/bin/env python
-# from tkinter.constants import *
-# from tkinter.constants import *
 from time import time, localtime, strftime
 from tkinter import filedialog
 import platform
 import sys
 import tkinter as tk
 import tkinter.ttk as ttk
+import webbrowser
 
 
 def move_to_center(window: tk.Tk, width: int, height: int) -> None:
@@ -18,22 +17,25 @@ def move_to_center(window: tk.Tk, width: int, height: int) -> None:
     return
 
 
-def open_file(entry, single=True, entry2=None, title=''):
+def open_file(entry, single=True, type_='file', entry2=None, title=''):
     """
     Set title, fill entry 1, empty entry 2.
     """
 
     def func():
-        if single:
-            a = filedialog.askopenfilename(title=title)
+        if type_ != 'file':
+            a = filedialog.askdirectory(title=title)
         else:
-            a = filedialog.askopenfilenames(title=title)
+            if single:
+                a = filedialog.askopenfilename(title=title)
+            else:
+                a = filedialog.askopenfilenames(title=title)
         entry.delete(0, 'end')
         entry.insert(0, a)
         if entry2 is not None:
             entry2.delete(0, 'end')
-
     return func
+
 
 class Root:
     def __init__(self, top=None):
@@ -63,7 +65,6 @@ class Root:
         top.configure(background="#edf0f3")
         top.configure(highlightbackground="#edf0f3")
         top.configure(highlightcolor="black")
-
         self.top = top
 
         self.help_b = tk.Button(self.top)
@@ -88,7 +89,7 @@ class Root:
         self.gb2fasta_b.configure(activeforeground="#000000")
         self.gb2fasta_b.configure(background="#edf0f3")
         self.gb2fasta_b.configure(borderwidth="0")
-        self.gb2fasta_b.configure(command=run_gb2fasta)
+        self.gb2fasta_b.configure(command=ui_gb2fasta)
         self.gb2fasta_b.configure(foreground="#000000")
         self.gb2fasta_b.configure(highlightbackground="#edf0f3")
         self.gb2fasta_b.configure(highlightcolor="black")
@@ -104,7 +105,7 @@ class Root:
         self.evaluate_b.configure(activeforeground="#000000")
         self.evaluate_b.configure(background="#edf0f3")
         self.evaluate_b.configure(borderwidth="0")
-        self.evaluate_b.configure(command=run_evaluate)
+        self.evaluate_b.configure(command=ui_evaluate)
         self.evaluate_b.configure(foreground="#000000")
         self.evaluate_b.configure(highlightbackground="#edf0f3")
         self.evaluate_b.configure(highlightcolor="black")
@@ -120,7 +121,7 @@ class Root:
         self.primer_b.configure(activeforeground="#000000")
         self.primer_b.configure(background="#edf0f3")
         self.primer_b.configure(borderwidth="0")
-        self.primer_b.configure(command=run_primer)
+        self.primer_b.configure(command=ui_primer)
         self.primer_b.configure(foreground="#000000")
         self.primer_b.configure(highlightbackground="#edf0f3")
         self.primer_b.configure(highlightcolor="black")
@@ -153,7 +154,7 @@ class Root:
         self.gb2fasta_label.configure(anchor='w')
         self.gb2fasta_label.configure(background="#edf0f3")
         self.gb2fasta_label.configure(compound='left')
-        self.gb2fasta_label.configure(font="-family {Arial} -size 14")
+        self.gb2fasta_label.configure(font="-family {TKDefaultFont} -size 14")
         self.gb2fasta_label.configure(foreground="#000000")
         self.gb2fasta_label.configure(highlightbackground="#edf0f3")
         self.gb2fasta_label.configure(highlightcolor="black")
@@ -165,7 +166,7 @@ class Root:
         self.evaluate_label.configure(anchor='w')
         self.evaluate_label.configure(background="#edf0f3")
         self.evaluate_label.configure(compound='left')
-        self.evaluate_label.configure(font="-family {Arial} -size 14")
+        self.evaluate_label.configure(font="-family {TKDefaultFont} -size 14")
         self.evaluate_label.configure(foreground="#000000")
         self.evaluate_label.configure(highlightbackground="#edf0f3")
         self.evaluate_label.configure(highlightcolor="black")
@@ -177,7 +178,7 @@ class Root:
         self.primer_label.configure(anchor='w')
         self.primer_label.configure(background="#edf0f3")
         self.primer_label.configure(compound='left')
-        self.primer_label.configure(font="-family {Arial} -size 14")
+        self.primer_label.configure(font="-family {TKDefaultFont} -size 14")
         self.primer_label.configure(foreground="#000000")
         self.primer_label.configure(highlightbackground="#edf0f3")
         self.primer_label.configure(highlightcolor="black")
@@ -189,7 +190,7 @@ class Root:
         self.note_label.configure(anchor='w')
         self.note_label.configure(background="#edf0f3")
         self.note_label.configure(compound='left')
-        self.note_label.configure(font="-family {Arial} -size 14")
+        self.note_label.configure(font="-family {TKDefaultFont} -size 14")
         self.note_label.configure(foreground="#000000")
         self.note_label.configure(highlightbackground="#edf0f3")
         self.note_label.configure(highlightcolor="black")
@@ -216,8 +217,14 @@ class GB2Fasta:
         self.style.configure('.', background=_bgcolor)
         self.style.configure('.', foreground=_fgcolor)
         self.style.configure('.', font="TkDefaultFont")
-        self.style.map('.', background=
-        [('selected', _compcolor), ('active', _ana2color)])
+        self.style.map('.', background=[('selected', _compcolor),
+                                        ('active', _ana2color)])
+        self.combo_style = ttk.Style()
+        self.combo_style.theme_create('combostyle', parent='alt', settings={
+            'TCombobox': {'configure': {'selectbackground': 'white',
+                                        'fieldbackground': 'white',
+                                        'background': 'white'}}})
+        self.combo_style.theme_use('combostyle')
 
         top.geometry("600x800+5+139")
         move_to_center(top, 600, 800)
@@ -256,31 +263,35 @@ class GB2Fasta:
         self.Labelframe1.place(relx=0.025, rely=0.013, relheight=0.46
                                , relwidth=0.955)
         self.Labelframe1.configure(relief='groove')
-        self.Labelframe1.configure(font="-family {TkDefaultFont} -size 14")
+        self.Labelframe1.configure(font="-family {TkDefaultFont} -size 12")
         self.Labelframe1.configure(foreground="#000000")
         self.Labelframe1.configure(text='''Input''')
         self.Labelframe1.configure(background="#edf0f3")
         self.Labelframe1.configure(highlightbackground="#edf0f3")
         self.Labelframe1.configure(highlightcolor="black")
+        self.TSeparator1 = ttk.Separator(self.Labelframe1)
+        self.TSeparator1.place(relx=0.524, rely=0.19, relheight=0.541
+                               , bordermode='ignore')
+        self.TSeparator1.configure(orient="vertical")
 
         self.gbfile_label = tk.Label(self.Labelframe1)
-        self.gbfile_label.place(relx=0.052, rely=0.057, height=35, width=90
-                                , bordermode='ignore')
+        self.gbfile_label.place(relx=0.050, rely=0.057, height=35, width=100,
+                                bordermode='ignore')
         self.gbfile_label.configure(activebackground="#f9f9f9")
         self.gbfile_label.configure(activeforeground="black")
         self.gbfile_label.configure(anchor='w')
         self.gbfile_label.configure(background="#edf0f3")
         self.gbfile_label.configure(compound='left')
-        self.gbfile_label.configure(font="-family {TkDefaultFont} -size 12")
+        self.gbfile_label.configure(font="-family {TKDefaultFont} -size 12")
         self.gbfile_label.configure(foreground="#000000")
         self.gbfile_label.configure(highlightbackground="#edf0f3")
         self.gbfile_label.configure(highlightcolor="black")
         self.gbfile_label.configure(justify='left')
         self.gbfile_label.configure(text='''Genbank files''')
 
-        self.gb_entry = ttk.Entry(self.Labelframe1)
-        self.gb_entry.place(relx=0.241, rely=0.057, relheight=0.095
-                            , relwidth=0.562, bordermode='ignore')
+        self.gb_entry = tk.Entry(self.Labelframe1)
+        self.gb_entry.place(relx=0.241, rely=0.057, relheight=0.095,
+                            relwidth=0.562, bordermode='ignore')
         self.gb_entry.configure(textvariable=self.gb)
         self.gb_entry.configure(takefocus="")
         self.gb_entry.configure(cursor="fleur")
@@ -288,9 +299,20 @@ class GB2Fasta:
         self.gb_entry_tooltip = ToolTip(self.gb_entry, self.tooltip_font,
                                         '''gb format files''')
 
-        self.TSeparator1 = ttk.Separator(self.Labelframe1)
-        self.TSeparator1.place(relx=0.002, rely=0.171, relwidth=0.995,
-                               bordermode='ignore')
+        self.gb_file_b = tk.Button(self.Labelframe1)
+        self.gb_file_b.place(relx=0.82, rely=0.054, height=35, width=90
+                             , bordermode='ignore')
+        self.gb_file_b.configure(activebackground="#ececec")
+        self.gb_file_b.configure(activeforeground="#000000")
+        self.gb_file_b.configure(background="#edf0f3")
+        self.gb_file_b.configure(command=open_file(self.gb_entry, single=False))
+        self.gb_file_b.configure(compound='left')
+        self.gb_file_b.configure(font="-family {TkDefaultFont} -size 12")
+        self.gb_file_b.configure(foreground="#000000")
+        self.gb_file_b.configure(highlightbackground="#edf0f3")
+        self.gb_file_b.configure(highlightcolor="black")
+        self.gb_file_b.configure(pady="0")
+        self.gb_file_b.configure(text='''Open''')
 
         self.gene_label = tk.Label(self.Labelframe1)
         self.gene_label.place(relx=0.035, rely=0.217, height=35, width=60,
@@ -308,19 +330,14 @@ class GB2Fasta:
         self.gene_label.configure(text='''Gene''')
 
         self.gene_entry = ttk.Entry(self.Labelframe1)
-        self.gene_entry.place(relx=0.201, rely=0.217, relheight=0.095
-                              , relwidth=0.314, bordermode='ignore')
+        self.gene_entry.place(relx=0.201, rely=0.217, height=35,
+                              relwidth=0.314, bordermode='ignore')
         self.gene_entry.configure(textvariable=self.gene)
         self.gene_entry.configure(takefocus="")
         self.gene_entry.configure(cursor="fleur")
         self.tooltip_font = "TkDefaultFont"
-        self.gene_entry_tooltip = \
-            ToolTip(self.gene_entry, self.tooltip_font, '''gene name''')
-
-        self.TSeparator1 = ttk.Separator(self.Labelframe1)
-        self.TSeparator1.place(relx=0.524, rely=0.19, relheight=0.541
-                               , bordermode='ignore')
-        self.TSeparator1.configure(orient="vertical")
+        self.gene_entry_tooltip = ToolTip(self.gene_entry, self.tooltip_font,
+                                          'gene name')
 
         self.taxon_label = tk.Label(self.Labelframe1)
         self.taxon_label.place(relx=0.035, rely=0.326, height=35, width=70
@@ -338,7 +355,7 @@ class GB2Fasta:
         self.taxon_label.configure(text='''Taxonomy''')
 
         self.molecular_label = tk.Label(self.Labelframe1)
-        self.molecular_label.place(relx=0.558, rely=0.217, height=35, width=60
+        self.molecular_label.place(relx=0.558, rely=0.217, height=35, width=80
                                    , bordermode='ignore')
         self.molecular_label.configure(activebackground="#f9f9f9")
         self.molecular_label.configure(activeforeground="black")
@@ -353,12 +370,13 @@ class GB2Fasta:
         self.molecular_label.configure(text='''Molecular''')
 
         self.TCombobox_molecular = ttk.Combobox(self.Labelframe1)
-        self.TCombobox_molecular.place(relx=0.716, rely=0.217, relheight=0.095
-                                       , relwidth=0.258, bordermode='ignore')
+        self.TCombobox_molecular.place(relx=0.716, rely=0.217, height=35,
+                                       width=150, bordermode='ignore')
         self.value_list = ['all', 'DNA', 'RNA', ]
         self.TCombobox_molecular.configure(values=self.value_list)
         self.TCombobox_molecular.configure(state='readonly')
         self.TCombobox_molecular.configure(textvariable=self.molecular)
+        self.TCombobox_molecular.current(0)
         self.TCombobox_molecular.configure(takefocus="")
 
         self.group_label = tk.Label(self.Labelframe1)
@@ -377,17 +395,18 @@ class GB2Fasta:
         self.group_label.configure(text='''Group''')
 
         self.TCombobox_group = ttk.Combobox(self.Labelframe1)
-        self.TCombobox_group.place(relx=0.719, rely=0.326, relheight=0.095
-                                   , relwidth=0.257, bordermode='ignore')
+        self.TCombobox_group.place(relx=0.716, rely=0.326, height=35, width=150,
+                                   bordermode='ignore')
         self.value_list = ['all', 'animals', 'plants', 'fungi', 'protists',
                            'bacteria', 'archaea', 'viruses', ]
         self.TCombobox_group.configure(values=self.value_list)
         self.TCombobox_group.configure(state='readonly')
         self.TCombobox_group.configure(textvariable=self.group)
         self.TCombobox_group.configure(takefocus="")
+        self.TCombobox_group.current(0)
 
         self.organelle_label = tk.Label(self.Labelframe1)
-        self.organelle_label.place(relx=0.035, rely=0.435, height=35, width=60
+        self.organelle_label.place(relx=0.035, rely=0.435, height=35, width=80
                                    , bordermode='ignore')
         self.organelle_label.configure(activebackground="#f9f9f9")
         self.organelle_label.configure(activeforeground="black")
@@ -402,17 +421,18 @@ class GB2Fasta:
         self.organelle_label.configure(text='''Organelle''')
 
         self.TCombobox_og = ttk.Combobox(self.Labelframe1)
-        self.TCombobox_og.place(relx=0.201, rely=0.435, relheight=0.095
-                                , relwidth=0.314, bordermode='ignore')
+        self.TCombobox_og.place(relx=0.201, rely=0.435, height=35, width=170,
+                                bordermode='ignore')
         self.value_list = ['ignore', 'both', 'no', 'mitochondrion',
                            'chloroplast', ]
         self.TCombobox_og.configure(values=self.value_list)
         self.TCombobox_og.configure(state='readonly')
         self.TCombobox_og.configure(textvariable=self.og)
         self.TCombobox_og.configure(takefocus="")
+        self.TCombobox_og.current(0)
 
         self.refseq_label = tk.Label(self.Labelframe1)
-        self.refseq_label.place(relx=0.035, rely=0.541, height=35, width=60
+        self.refseq_label.place(relx=0.035, rely=0.541, height=35, width=70
                                 , bordermode='ignore')
         self.refseq_label.configure(activebackground="#f9f9f9")
         self.refseq_label.configure(activeforeground="black")
@@ -427,17 +447,18 @@ class GB2Fasta:
         self.refseq_label.configure(text='''RefSeq''')
 
         self.TCombobox_refseq = ttk.Combobox(self.Labelframe1)
-        self.TCombobox_refseq.place(relx=0.201, rely=0.516, relheight=0.095
-                                    , relwidth=0.314, bordermode='ignore')
+        self.TCombobox_refseq.place(relx=0.201, rely=0.541, height=35,
+                                    width=150, bordermode='ignore')
         self.value_list = ['both', 'yes', 'no', ]
         self.TCombobox_refseq.configure(values=self.value_list)
         self.TCombobox_refseq.configure(state='readonly')
         self.TCombobox_refseq.configure(textvariable=self.refseq)
         self.TCombobox_refseq.configure(takefocus="")
+        self.TCombobox_refseq.current(0)
         self.tooltip_font = "TkDefaultFont"
-        self.TCombobox_refseq_tooltip = \
-            ToolTip(self.TCombobox_refseq, self.tooltip_font,
-                    '''Use RefSeq or not''')
+        self.TCombobox_refseq_tooltip = ToolTip(self.TCombobox_refseq,
+                                                self.tooltip_font,
+                                                'Use RefSeq or not')
 
         self.count_label = tk.Label(self.Labelframe1)
         self.count_label.place(relx=0.035, rely=0.649, height=35, width=60
@@ -612,21 +633,6 @@ class GB2Fasta:
         self.query_entry_tooltip = ToolTip(self.query_entry, self.tooltip_font,
                                            '''Entrez query string''')
 
-        self.Button1 = tk.Button(self.Labelframe1)
-        self.Button1.place(relx=0.82, rely=0.054, height=35, width=90
-                           , bordermode='ignore')
-        self.Button1.configure(activebackground="#ececec")
-        self.Button1.configure(activeforeground="#000000")
-        self.Button1.configure(background="#edf0f3")
-        self.Button1.configure(command=open_file)
-        self.Button1.configure(compound='left')
-        self.Button1.configure(font="-family {TkDefaultFont} -size 12")
-        self.Button1.configure(foreground="#000000")
-        self.Button1.configure(highlightbackground="#edf0f3")
-        self.Button1.configure(highlightcolor="black")
-        self.Button1.configure(pady="0")
-        self.Button1.configure(text='''Open''')
-
         self.taxon_entry = ttk.Entry(self.Labelframe1)
         self.taxon_entry.place(relx=0.201, rely=0.326, relheight=0.095
                                , relwidth=0.314, bordermode='ignore')
@@ -656,8 +662,21 @@ class GB2Fasta:
         self.out_entry.configure(takefocus="")
         self.out_entry.configure(cursor="fleur")
         self.tooltip_font = "TkDefaultFont"
-        self.out_entry_tooltip = \
-            ToolTip(self.out_entry, self.tooltip_font, '''output folder''')
+        self.out_entry_tooltip = ToolTip(self.out_entry, self.tooltip_font,
+                                         'output folder')
+        self.out_b = tk.Button(self.top)
+        self.out_b.place(relx=0.833, rely=0.563, height=35, width=80)
+        self.out_b.configure(activebackground="#edf0f3")
+        self.out_b.configure(activeforeground="#000000")
+        self.out_b.configure(background="#edf0f3")
+        self.out_b.configure(command=open_file(self.out_entry, type_='folder'))
+        self.out_b.configure(compound='left')
+        self.out_b.configure(font="-family {TkDefaultFont} -size 12")
+        self.out_b.configure(foreground="#000000")
+        self.out_b.configure(highlightbackground="#edf0f3")
+        self.out_b.configure(highlightcolor="black")
+        self.out_b.configure(pady="0")
+        self.out_b.configure(text='''Open''')
 
         self.Labelframe1 = tk.LabelFrame(self.top)
         self.Labelframe1.place(relx=0.025, rely=0.65, relheight=0.176
@@ -755,8 +774,8 @@ class GB2Fasta:
                     '''expand for primer design''')
 
         self.max_name_len_label = tk.Label(self.Labelframe1)
-        self.max_name_len_label.place(relx=0.07, rely=0.426, height=35
-                                      , width=120, bordermode='ignore')
+        self.max_name_len_label.place(relx=0.05, rely=0.426, height=35
+                                      , width=130, bordermode='ignore')
         self.max_name_len_label.configure(activebackground="#f9f9f9")
         self.max_name_len_label.configure(activeforeground="black")
         self.max_name_len_label.configure(anchor='e')
@@ -870,38 +889,24 @@ class GB2Fasta:
         self.TCombobox_unique.configure(state='readonly')
         self.TCombobox_unique.configure(textvariable=self.unique)
         self.TCombobox_unique.configure(takefocus="")
-        self.tooltip_font = "TkDefaultFont"
-        self.TCombobox_unique_tooltip = \
-            ToolTip(self.TCombobox_unique, self.tooltip_font,
-                    '''methods to remove redundant records''')
+        self.TCombobox_unique.current(0)
+        self.TCombobox_unique_tooltip = ToolTip(
+            self.TCombobox_unique, self.tooltip_font,
+            'methods to remove redundant records')
 
-        self.Button1_1 = tk.Button(self.top)
-        self.Button1_1.place(relx=0.833, rely=0.563, height=35, width=80)
-        self.Button1_1.configure(activebackground="#edf0f3")
-        self.Button1_1.configure(activeforeground="#000000")
-        self.Button1_1.configure(background="#edf0f3")
-        self.Button1_1.configure(command=open_file)
-        self.Button1_1.configure(compound='left')
-        self.Button1_1.configure(font="-family {TkDefaultFont} -size 12")
-        self.Button1_1.configure(foreground="#000000")
-        self.Button1_1.configure(highlightbackground="#edf0f3")
-        self.Button1_1.configure(highlightcolor="black")
-        self.Button1_1.configure(pady="0")
-        self.Button1_1.configure(text='''Open''')
-
-        self.Button1 = tk.Button(self.top)
-        self.Button1.place(relx=0.333, rely=0.863, height=40, width=189)
-        self.Button1.configure(activebackground="#ececec")
-        self.Button1.configure(activeforeground="#000000")
-        self.Button1.configure(background="#edf0f3")
-        self.Button1.configure(command=run_gb2fasta)
-        self.Button1.configure(compound='left')
-        self.Button1.configure(font="-family {TkDefaultFont} -size 14")
-        self.Button1.configure(foreground="#000000")
-        self.Button1.configure(highlightbackground="#edf0f3")
-        self.Button1.configure(highlightcolor="black")
-        self.Button1.configure(pady="0")
-        self.Button1.configure(text='''Run''')
+        self.run_b = tk.Button(self.top)
+        self.run_b.place(relx=0.333, rely=0.863, height=40, width=189)
+        self.run_b.configure(activebackground="#ececec")
+        self.run_b.configure(activeforeground="#000000")
+        self.run_b.configure(background="#edf0f3")
+        self.run_b.configure(command=run_gb2fasta)
+        self.run_b.configure(compound='left')
+        self.run_b.configure(font="-family {TkDefaultFont} -size 14")
+        self.run_b.configure(foreground="#000000")
+        self.run_b.configure(highlightbackground="#edf0f3")
+        self.run_b.configure(highlightcolor="black")
+        self.run_b.configure(pady="0")
+        self.run_b.configure(text='''Run''')
 
 
 class Evaluate:
@@ -924,8 +929,15 @@ class Evaluate:
         self.style.configure('.', background=_bgcolor)
         self.style.configure('.', foreground=_fgcolor)
         self.style.configure('.', font="TkDefaultFont")
-        self.style.map('.', background=
-        [('selected', _compcolor), ('active', _ana2color)])
+        self.style.map('.', background=[('selected', _compcolor),
+                                        ('active', _ana2color)])
+
+        self.combo_style = ttk.Style()
+        self.combo_style.theme_create('combostyle2', parent='alt', settings={
+            'TCombobox': {'configure': {'selectbackground': 'white',
+                                        'fieldbackground': 'white',
+                                        'background': 'white'}}})
+        self.combo_style.theme_use('combostyle2')
 
         top.geometry("600x450+109+248")
         move_to_center(top, 600, 450)
@@ -956,14 +968,14 @@ class Evaluate:
         self.Labelframe1.configure(highlightcolor="black")
 
         self.unalign_label = tk.Label(self.Labelframe1)
-        self.unalign_label.place(relx=0.052, rely=0.133, height=35, width=130
+        self.unalign_label.place(relx=0.03, rely=0.133, height=35, width=160
                                  , bordermode='ignore')
         self.unalign_label.configure(activebackground="#f9f9f9")
         self.unalign_label.configure(activeforeground="black")
         self.unalign_label.configure(anchor='w')
         self.unalign_label.configure(background="#edf0f3")
         self.unalign_label.configure(compound='left')
-        self.unalign_label.configure(font="-family {TkDefaultFont} -size 12")
+        self.unalign_label.configure(font="-family {TkDefaultFont} -size 10")
         self.unalign_label.configure(foreground="#000000")
         self.unalign_label.configure(highlightbackground="#edf0f3")
         self.unalign_label.configure(highlightcolor="black")
@@ -990,42 +1002,67 @@ class Evaluate:
         self.open_btn.configure(activebackground="#ececec")
         self.open_btn.configure(activeforeground="#000000")
         self.open_btn.configure(background="#edf0f3")
-        self.open_btn.configure(command=open_file)
+        self.open_btn.configure(command=open_file(self.fasta_entry,
+                                                  single=False))
         self.open_btn.configure(compound='left')
-        self.open_btn.configure(font="-family {TkDefaultFont} -size 12")
+        self.open_btn.configure(font="-family {TkDefaultFont} -size 10")
         self.open_btn.configure(foreground="#000000")
         self.open_btn.configure(highlightbackground="#edf0f3")
         self.open_btn.configure(highlightcolor="black")
         self.open_btn.configure(pady="0")
         self.open_btn.configure(text='''Open''')
 
-        self.unalign_label = tk.Label(self.Labelframe1)
-        self.unalign_label.place(relx=0.052, rely=0.4, height=35, width=140
+        self.unalign_label2 = tk.Label(self.Labelframe1)
+        self.unalign_label2.place(relx=0.03, rely=0.4, height=35, width=160
                                  , bordermode='ignore')
-        self.unalign_label.configure(activebackground="#f9f9f9")
-        self.unalign_label.configure(activeforeground="black")
-        self.unalign_label.configure(anchor='w')
-        self.unalign_label.configure(background="#edf0f3")
-        self.unalign_label.configure(compound='left')
-        self.unalign_label.configure(font="-family {TkDefaultFont} -size 12")
-        self.unalign_label.configure(foreground="#000000")
-        self.unalign_label.configure(highlightbackground="#edf0f3")
-        self.unalign_label.configure(highlightcolor="black")
-        self.unalign_label.configure(justify='left')
-        self.unalign_label.configure(text='''Unaligned FASTA folder''')
+        self.unalign_label2.configure(activebackground="#f9f9f9")
+        self.unalign_label2.configure(activeforeground="black")
+        self.unalign_label2.configure(anchor='w')
+        self.unalign_label2.configure(background="#edf0f3")
+        self.unalign_label2.configure(compound='left')
+        self.unalign_label2.configure(font="-family {TkDefaultFont} -size 10")
+        self.unalign_label2.configure(foreground="#000000")
+        self.unalign_label2.configure(highlightbackground="#edf0f3")
+        self.unalign_label2.configure(highlightcolor="black")
+        self.unalign_label2.configure(justify='left')
+        self.unalign_label2.configure(text='''Unaligned FASTA folder''')
         self.tooltip_font = "TkDefaultFont"
-        self.TLabel1_tooltip = ToolTip(self.unalign_label, self.tooltip_font,
+        self.TLabel1_tooltip = ToolTip(self.unalign_label2, self.tooltip_font,
                                        '''unaligned''')
+        self.fasta_folder_entry = ttk.Entry(self.Labelframe1)
+        self.fasta_folder_entry.place(relx=0.314, rely=0.4, relheight=0.233
+                                      , relwidth=0.489, bordermode='ignore')
+        self.fasta_folder_entry.configure(textvariable=self.fasta_folder)
+        self.fasta_folder_entry.configure(takefocus="")
+        self.fasta_folder_entry.configure(cursor="fleur")
+        self.fasta_folder_entry_tooltip = ToolTip(
+            self.fasta_folder_entry, self.tooltip_font,
+            'unaligned fasta files')
+        self.open1_btn = tk.Button(self.Labelframe1)
+        self.open1_btn.place(relx=0.82, rely=0.4, height=35, width=90
+                             , bordermode='ignore')
+        self.open1_btn.configure(activebackground="#ececec")
+        self.open1_btn.configure(activeforeground="#000000")
+        self.open1_btn.configure(background="#edf0f3")
+        self.open1_btn.configure(command=open_file(self.fasta_folder_entry,
+                                                   type_='folder'))
+        self.open1_btn.configure(compound='left')
+        self.open1_btn.configure(font="-family {TkDefaultFont} -size 10")
+        self.open1_btn.configure(foreground="#000000")
+        self.open1_btn.configure(highlightbackground="#edf0f3")
+        self.open1_btn.configure(highlightcolor="black")
+        self.open1_btn.configure(pady="0")
+        self.open1_btn.configure(text='''Open''')
 
         self.align_label = tk.Label(self.Labelframe1)
-        self.align_label.place(relx=0.052, rely=0.667, height=35, width=90
+        self.align_label.place(relx=0.03, rely=0.667, height=35, width=150
                                , bordermode='ignore')
         self.align_label.configure(activebackground="#f9f9f9")
         self.align_label.configure(activeforeground="black")
         self.align_label.configure(anchor='w')
         self.align_label.configure(background="#edf0f3")
         self.align_label.configure(compound='left')
-        self.align_label.configure(font="-family {TkDefaultFont} -size 12")
+        self.align_label.configure(font="-family {TkDefaultFont} -size 10")
         self.align_label.configure(foreground="#000000")
         self.align_label.configure(highlightbackground="#edf0f3")
         self.align_label.configure(highlightcolor="black")
@@ -1034,17 +1071,6 @@ class Evaluate:
         self.tooltip_font = "TkDefaultFont"
         self.TLabel1_3_tooltip = ToolTip(self.align_label, self.tooltip_font,
                                          '''aligned''')
-
-        self.fasta_folder_entry = ttk.Entry(self.Labelframe1)
-        self.fasta_folder_entry.place(relx=0.314, rely=0.4, relheight=0.233
-                                      , relwidth=0.489, bordermode='ignore')
-        self.fasta_folder_entry.configure(textvariable=self.fasta_folder)
-        self.fasta_folder_entry.configure(takefocus="")
-        self.fasta_folder_entry.configure(cursor="fleur")
-        self.tooltip_font = "TkDefaultFont"
-        self.fasta_folder_entry_tooltip = \
-            ToolTip(self.fasta_folder_entry, self.tooltip_font,
-                    '''unaligned fasta files''')
 
         self.aln_entry = ttk.Entry(self.Labelframe1)
         self.aln_entry.place(relx=0.314, rely=0.667, relheight=0.233
@@ -1055,31 +1081,16 @@ class Evaluate:
         self.tooltip_font = "TkDefaultFont"
         self.aln_entry_tooltip = ToolTip(self.aln_entry, self.tooltip_font,
                                          '''aligned fasta files''')
-
-        self.open_btn = tk.Button(self.Labelframe1)
-        self.open_btn.place(relx=0.82, rely=0.4, height=35, width=90
-                            , bordermode='ignore')
-        self.open_btn.configure(activebackground="#ececec")
-        self.open_btn.configure(activeforeground="#000000")
-        self.open_btn.configure(background="#edf0f3")
-        self.open_btn.configure(command=open_file)
-        self.open_btn.configure(compound='left')
-        self.open_btn.configure(font="-family {TkDefaultFont} -size 12")
-        self.open_btn.configure(foreground="#000000")
-        self.open_btn.configure(highlightbackground="#edf0f3")
-        self.open_btn.configure(highlightcolor="black")
-        self.open_btn.configure(pady="0")
-        self.open_btn.configure(text='''Open''')
-
         self.open2_btn = tk.Button(self.Labelframe1)
         self.open2_btn.place(relx=0.82, rely=0.667, height=35, width=90
                              , bordermode='ignore')
         self.open2_btn.configure(activebackground="#ececec")
         self.open2_btn.configure(activeforeground="#000000")
         self.open2_btn.configure(background="#edf0f3")
-        self.open2_btn.configure(command=open_file)
+        self.open2_btn.configure(command=open_file(self.aln_entry,
+                                                   single=False))
         self.open2_btn.configure(compound='left')
-        self.open2_btn.configure(font="-family {TkDefaultFont} -size 12")
+        self.open2_btn.configure(font="-family {TkDefaultFont} -size 10")
         self.open2_btn.configure(foreground="#000000")
         self.open2_btn.configure(highlightbackground="#edf0f3")
         self.open2_btn.configure(highlightcolor="black")
@@ -1087,13 +1098,13 @@ class Evaluate:
         self.open2_btn.configure(text='''Open''')
 
         self.out_label = tk.Label(self.top)
-        self.out_label.place(relx=0.117, rely=0.356, height=35, width=90)
+        self.out_label.place(relx=0.117, rely=0.356, height=35, width=100)
         self.out_label.configure(activebackground="#f9f9f9")
         self.out_label.configure(activeforeground="black")
         self.out_label.configure(anchor='w')
         self.out_label.configure(background="#edf0f3")
         self.out_label.configure(compound='left')
-        self.out_label.configure(font="-family {TkDefaultFont} -size 12")
+        self.out_label.configure(font="-family {TkDefaultFont} -size 10")
         self.out_label.configure(foreground="#000000")
         self.out_label.configure(highlightbackground="#edf0f3")
         self.out_label.configure(highlightcolor="black")
@@ -1119,9 +1130,10 @@ class Evaluate:
         self.open3_btn.configure(activebackground="#ececec")
         self.open3_btn.configure(activeforeground="#000000")
         self.open3_btn.configure(background="#edf0f3")
-        self.open3_btn.configure(command=open_file)
+        self.open3_btn.configure(command=open_file(self.out_entry,
+                                                   type_='folder'))
         self.open3_btn.configure(compound='left')
-        self.open3_btn.configure(font="-family {TkDefaultFont} -size 12")
+        self.open3_btn.configure(font="-family {TkDefaultFont} -size 10")
         self.open3_btn.configure(foreground="#000000")
         self.open3_btn.configure(highlightbackground="#edf0f3")
         self.open3_btn.configure(highlightcolor="black")
@@ -1242,7 +1254,7 @@ class Evaluate:
         self.Button1_3.configure(background="#edf0f3")
         self.Button1_3.configure(command=run_evaluate)
         self.Button1_3.configure(compound='left')
-        self.Button1_3.configure(font="-family {TkDefaultFont} -size 14")
+        self.Button1_3.configure(font="-family {TkDefaultFont} -size 12")
         self.Button1_3.configure(foreground="#000000")
         self.Button1_3.configure(highlightbackground="#edf0f3")
         self.Button1_3.configure(highlightcolor="black")
@@ -1945,29 +1957,49 @@ def ui_main():
     root.mainloop()
 
 
-def run_gb2fasta():
+def ui_gb2fasta():
     global _top2, _w2
     _top2 = tk.Toplevel(root)
     _w2 = GB2Fasta(_top2)
 
 
-def run_evaluate():
+def ui_evaluate():
     global _top3, _w3
     _top3 = tk.Toplevel(root)
     _w3 = Evaluate(_top3)
 
 
-def run_primer():
+def ui_primer():
     # Creates a toplevel widget.
     global _top4, _w4
     _top4 = tk.Toplevel(root)
     _w4 = Primer(_top4)
 
 
-def run_help():
+def ui_help():
     global _top5, _w5
     _top5 = tk.Toplevel(root)
     _w5 = LOG(_top5)
+
+
+def run_gb2fasta():
+    #todo
+    pass
+
+
+def run_evaluate():
+    #todo
+    pass
+
+
+def run_primer():
+    #todo
+    pass
+
+
+def run_help():
+    url = 'https://github.com/wpwupingwp/barcodefinder'
+    webbrowser.open(url, new=2)
 
 
 if __name__ == '__main__':
