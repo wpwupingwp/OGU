@@ -9,6 +9,15 @@ import tkinter as tk
 import tkinter.ttk as ttk
 
 
+def move_to_center(window: tk.Tk, width: int, height: int) -> None:
+    screen_width = root.winfo_screenwidth()
+    screen_height = root.winfo_screenheight()
+    x = (screen_width - width) // 2
+    y = (screen_height - height) // 2
+    window.geometry(f'{width}x{height}+{x}+{y}')
+    return
+
+
 def open_file(entry, single=True, entry2=None, title=''):
     """
     Set title, fill entry 1, empty entry 2.
@@ -46,9 +55,9 @@ class Root:
         photo_location3 = "./button3.png"
         photo_location4 = "./button4.png"
 
-        top.geometry("800x451+1875+33")
+        top.geometry("800x450+400+0")
+        move_to_center(top, 800, 450)
         top.minsize(120, 15)
-        top.maxsize(2564, 1421)
         top.resizable(1, 1)
         top.title("BarcodeFinder")
         top.configure(background="#edf0f3")
@@ -130,7 +139,7 @@ class Root:
         self.install_third_party.configure(borderwidth="1")
         self.install_third_party.configure(compound='left')
         self.install_third_party.configure(
-            font="-family {TkDefaultFont} -size 14")
+            font="-family {TkDefaultFont} -size 10")
         self.install_third_party.configure(foreground="#000000")
         self.install_third_party.configure(highlightbackground="#edf0f3")
         self.install_third_party.configure(highlightcolor="black")
@@ -144,7 +153,7 @@ class Root:
         self.gb2fasta_label.configure(anchor='w')
         self.gb2fasta_label.configure(background="#edf0f3")
         self.gb2fasta_label.configure(compound='left')
-        self.gb2fasta_label.configure(font="-family {Arial} -size 20")
+        self.gb2fasta_label.configure(font="-family {Arial} -size 14")
         self.gb2fasta_label.configure(foreground="#000000")
         self.gb2fasta_label.configure(highlightbackground="#edf0f3")
         self.gb2fasta_label.configure(highlightcolor="black")
@@ -156,7 +165,7 @@ class Root:
         self.evaluate_label.configure(anchor='w')
         self.evaluate_label.configure(background="#edf0f3")
         self.evaluate_label.configure(compound='left')
-        self.evaluate_label.configure(font="-family {Arial} -size 20")
+        self.evaluate_label.configure(font="-family {Arial} -size 14")
         self.evaluate_label.configure(foreground="#000000")
         self.evaluate_label.configure(highlightbackground="#edf0f3")
         self.evaluate_label.configure(highlightcolor="black")
@@ -168,7 +177,7 @@ class Root:
         self.primer_label.configure(anchor='w')
         self.primer_label.configure(background="#edf0f3")
         self.primer_label.configure(compound='left')
-        self.primer_label.configure(font="-family {Arial} -size 20")
+        self.primer_label.configure(font="-family {Arial} -size 14")
         self.primer_label.configure(foreground="#000000")
         self.primer_label.configure(highlightbackground="#edf0f3")
         self.primer_label.configure(highlightcolor="black")
@@ -180,7 +189,7 @@ class Root:
         self.note_label.configure(anchor='w')
         self.note_label.configure(background="#edf0f3")
         self.note_label.configure(compound='left')
-        self.note_label.configure(font="-family {Arial} -size 20")
+        self.note_label.configure(font="-family {Arial} -size 14")
         self.note_label.configure(foreground="#000000")
         self.note_label.configure(highlightbackground="#edf0f3")
         self.note_label.configure(highlightcolor="black")
@@ -210,10 +219,8 @@ class GB2Fasta:
         self.style.map('.', background=
         [('selected', _compcolor), ('active', _ana2color)])
 
-        top.geometry("600x800+2235+139")
-        top.minsize(120, 15)
-        top.maxsize(2564, 1421)
-        top.resizable(1, 1)
+        top.geometry("600x800+5+139")
+        move_to_center(top, 600, 800)
         top.title("GB2Fasta")
         top.configure(background="#edf0f3")
         top.configure(highlightbackground="#edf0f3")
@@ -920,10 +927,8 @@ class Evaluate:
         self.style.map('.', background=
         [('selected', _compcolor), ('active', _ana2color)])
 
-        top.geometry("600x450+2109+248")
-        top.minsize(72, 15)
-        top.maxsize(1728, 997)
-        top.resizable(1, 1)
+        top.geometry("600x450+109+248")
+        move_to_center(top, 600, 450)
         top.title("Evaluate")
         top.configure(background="#edf0f3")
         top.configure(highlightbackground="#d9d9d9")
@@ -1269,10 +1274,8 @@ class Primer:
         self.style.map('.', background=
         [('selected', _compcolor), ('active', _ana2color)])
 
-        top.geometry("600x500+2484+458")
-        top.minsize(72, 15)
-        top.maxsize(1728, 997)
-        top.resizable(1, 1)
+        top.geometry("600x500+284+458")
+        move_to_center(top, 600, 600)
         top.title("Primer")
         top.configure(background="#edf0f3")
         top.configure(highlightbackground="#d9d9d9")
@@ -1954,7 +1957,7 @@ def run_evaluate():
     _w3 = Evaluate(_top3)
 
 
-def run_primer(*args):
+def run_primer():
     # Creates a toplevel widget.
     global _top4, _w4
     _top4 = tk.Toplevel(root)
