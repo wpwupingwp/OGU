@@ -1,11 +1,20 @@
 #!/usr/bin/env python
+from logging import handlers
 from time import time, localtime, strftime
-from tkinter import filedialog
+from tkinter import filedialog, messagebox, scrolledtext
+import logging
 import platform
+import queue
 import sys
+import threading
 import tkinter as tk
 import tkinter.ttk as ttk
 import webbrowser
+
+from BarcodeFinder.global_vars import log, FMT, DATEFMT
+from BarcodeFinder.gb2fasta import gb2fasta_main
+from BarcodeFinder.evaluate import evaluate_main
+from BarcodeFinder.primer import primer_main
 
 
 def set_combo_style(win: tk.Frame):
@@ -37,8 +46,67 @@ def after_close(frame):
     def func():
         root.deiconify()
         frame.destroy()
-
     return func
+
+
+def scroll_text(window):
+    """
+    ScrolledText that shows logs.
+    """
+    def poll():
+        while True:
+            try:
+                msg = log_queue.get(block=False)
+                level = msg.levelname
+                msg = formatter.format(msg) + '\n'
+                scroll.insert('end', msg, level)
+                scroll.yview('end')
+            except queue.Empty:
+                break
+        # to avoid orphan poll()
+        if log.hasHandlers():
+            scroll.after(10, poll)
+        else:
+            return
+
+    # clean old handlers
+    for i in log.handlers:
+        log.removeHandler(i)
+    log_queue = queue.Queue()
+    formatter = logging.Formatter(fmt=FMT, datefmt=DATEFMT)
+    # do not add formatter to queuehandler, or msg will be formatted twice
+    queue_handler = handlers.QueueHandler(log_queue)
+    # give poll() time to quit
+    root.after(100, log.addHandler(queue_handler))
+    scroll = scrolledtext.ScrolledText(window)
+    scroll.tag_config('INFO', foreground='black')
+    scroll.tag_config('WARNING', foreground='orange')
+    scroll.tag_config('ERROR', foreground='red')
+    scroll.tag_config('CRITICAL', foreground='red')
+    scroll.tag_config('EXCEPTION', foreground='red')
+    scroll.pack(fill='both')
+    scroll.after(0, poll)
+
+def thread_wrap(function, arg_str, window):
+    """
+    Wrap for callback.
+    Args:
+        function(callable): function to call
+        arg_str(str): string for function's argparse
+        window(Toplevel): window to hide
+    """
+    try:
+        result = function(arg_str)
+    except Exception as e:
+        log.exception(str(e))
+        log.exception('Abort.')
+        messagebox.showinfo(message='Abort.')
+        root.deiconify()
+        return
+    messagebox.showinfo(message=f'Done. See {result[0].out} for details.')
+    window.withdraw()
+    root.deiconify()
+    return
 
 
 def open_file(entry, single=True, type_='file', entry2=None, title=''):
@@ -923,7 +991,7 @@ class GB2Fasta:
         self.run_b.configure(activebackground="#ececec")
         self.run_b.configure(activeforeground="#000000")
         self.run_b.configure(background="#edf0f3")
-        self.run_b.configure(command=run_gb2fasta)
+        self.run_b.configure(command=run_gb2fasta(self))
         self.run_b.configure(compound='left')
         self.run_b.configure(font="-family {TkDefaultFont} -size 14")
         self.run_b.configure(foreground="#000000")
@@ -2011,9 +2079,66 @@ def ui_primer():
     _w4 = Primer(_top4)
 
 
-def run_gb2fasta():
+def get_arg_str(value: tk.Variable, name: str, arg_str: str,
+                is_bool=False) -> str:
+    value_str = ''
+    if value.get():
+        if is_bool:
+            value_str = f'{name} '
+        else:
+            value_str = f'{name} {value.get()} '
+    arg_str += value_str
+    print(value_str)
+    return arg_str
+
+
+def run_gb2fasta(w: tk.Frame):
     # todo
-    pass
+    def f(w):
+        arg_str = ''
+        get_arg_str(w.gb, '-gb', arg_str)
+        get_arg_str(w.gene, '-gene', arg_str)
+        get_arg_str(w.molecular, '-molecular', arg_str)
+        get_arg_str(w.group, '-group', arg_str)
+        get_arg_str(w.og, '-og', arg_str)
+        get_arg_str(w.refseq, '-refseq', arg_str)
+        get_arg_str(w.count, '-count', arg_str)
+        get_arg_str(w.min_len, '-min_len', arg_str)
+        get_arg_str(w.max_len, '-max_len', arg_str)
+        get_arg_str(w.date_start, '-date_start', arg_str)
+        get_arg_str(w.date_end, '-date_end', arg_str)
+        get_arg_str(w.exclude, '-exclude', arg_str)
+        get_arg_str(w.query, '-query', arg_str)
+        get_arg_str(w.taxon, '-taxon', arg_str)
+        get_arg_str(w.out, '-out', arg_str)
+        get_arg_str(w.expand, '-expand', arg_str)
+        get_arg_str(w.max_name_len, '-max_name_len', arg_str)
+        get_arg_str(w.max_gene_len, '-max_gene_len', arg_str)
+        get_arg_str(w.unique, '-unique', arg_str)
+        get_arg_str(w.allow_repeat, '-allow_repeat', arg_str, is_bool=True)
+        get_arg_str(w.allow_invert_repeat, '-allow_invert_repeat', arg_str,
+                    is_bool=True)
+        get_arg_str(w.allow_mosaic_repeat, '-allow_mosaic_repeat', arg_str,
+                    is_bool=True)
+        get_arg_str(w.no_divide, '-no_divide', arg_str, is_bool=True)
+        get_arg_str(w.rename, '-rename', arg_str, is_bool=True)
+        w.withdraw()
+        w, h = root.winfo_screenwidth(), root.winfo_screenheight()
+        s = min(w, h) // 2
+        size = f'{s}x{int(s*0.618)}+{w//3}+{h//3}'
+        run = tk.Toplevel(root)
+        run.geometry(size)
+        run.title('Running...')
+        run.wm_transient()
+        frame = ttk.Frame(run)
+        frame.pack(fill='both')
+        scroll_text(frame)
+        r = threading.Thread(target=thread_wrap,
+                             args=(gb2fasta_main, arg_str, run),
+                             daemon=True)
+        r.start()
+
+    return f
 
 
 def run_evaluate():
