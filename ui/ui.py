@@ -924,39 +924,39 @@ class GB2Fasta:
                                , bordermode='ignore')
         self.TSeparator2.configure(orient="vertical")
 
-        self.no_divide = tk.Checkbutton(self.top)
-        self.no_divide.place(relx=0.733, rely=0.488, relheight=0.044
-                             , relwidth=0.215)
-        self.no_divide.configure(activebackground="#ececec")
-        self.no_divide.configure(activeforeground="#000000")
-        self.no_divide.configure(anchor='w')
-        self.no_divide.configure(background="#edf0f3")
-        self.no_divide.configure(compound='left')
-        self.no_divide.configure(font="-family {TkDefaultFont} -size 12")
-        self.no_divide.configure(foreground="#000000")
-        self.no_divide.configure(highlightbackground="#edf0f3")
-        self.no_divide.configure(highlightcolor="black")
-        self.no_divide.configure(justify='left')
-        self.no_divide.configure(selectcolor="#d9d9d9")
-        self.no_divide.configure(text='''No divide''')
-        self.no_divide.configure(variable=self.no_divide)
+        self.no_divide_b = tk.Checkbutton(self.top)
+        self.no_divide_b.place(relx=0.733, rely=0.488, relheight=0.044
+                               , relwidth=0.215)
+        self.no_divide_b.configure(activebackground="#ececec")
+        self.no_divide_b.configure(activeforeground="#000000")
+        self.no_divide_b.configure(anchor='w')
+        self.no_divide_b.configure(background="#edf0f3")
+        self.no_divide_b.configure(compound='left')
+        self.no_divide_b.configure(font="-family {TkDefaultFont} -size 12")
+        self.no_divide_b.configure(foreground="#000000")
+        self.no_divide_b.configure(highlightbackground="#edf0f3")
+        self.no_divide_b.configure(highlightcolor="black")
+        self.no_divide_b.configure(justify='left')
+        self.no_divide_b.configure(selectcolor="#d9d9d9")
+        self.no_divide_b.configure(text='''No divide''')
+        self.no_divide_b.configure(variable=self.no_divide)
 
-        self.Checkbutton1_1 = tk.Checkbutton(self.top)
-        self.Checkbutton1_1.place(relx=0.467, rely=0.488, relheight=0.044
-                                  , relwidth=0.243)
-        self.Checkbutton1_1.configure(activebackground="#ececec")
-        self.Checkbutton1_1.configure(activeforeground="#000000")
-        self.Checkbutton1_1.configure(anchor='w')
-        self.Checkbutton1_1.configure(background="#edf0f3")
-        self.Checkbutton1_1.configure(compound='left')
-        self.Checkbutton1_1.configure(font="-family {TkDefaultFont} -size 12")
-        self.Checkbutton1_1.configure(foreground="#000000")
-        self.Checkbutton1_1.configure(highlightbackground="#edf0f3")
-        self.Checkbutton1_1.configure(highlightcolor="black")
-        self.Checkbutton1_1.configure(justify='left')
-        self.Checkbutton1_1.configure(selectcolor="#d9d9d9")
-        self.Checkbutton1_1.configure(text='''Rename gene''')
-        self.Checkbutton1_1.configure(variable=self.rename)
+        self.rename_b = tk.Checkbutton(self.top)
+        self.rename_b.place(relx=0.467, rely=0.488, relheight=0.044
+                            , relwidth=0.243)
+        self.rename_b.configure(activebackground="#ececec")
+        self.rename_b.configure(activeforeground="#000000")
+        self.rename_b.configure(anchor='w')
+        self.rename_b.configure(background="#edf0f3")
+        self.rename_b.configure(compound='left')
+        self.rename_b.configure(font="-family {TkDefaultFont} -size 12")
+        self.rename_b.configure(foreground="#000000")
+        self.rename_b.configure(highlightbackground="#edf0f3")
+        self.rename_b.configure(highlightcolor="black")
+        self.rename_b.configure(justify='left')
+        self.rename_b.configure(selectcolor="#d9d9d9")
+        self.rename_b.configure(text='''Rename gene''')
+        self.rename_b.configure(variable=self.rename)
 
         self.unique_label = tk.Label(self.top)
         self.unique_label.place(relx=0.05, rely=0.488, height=35
@@ -991,7 +991,7 @@ class GB2Fasta:
         self.run_b.configure(activebackground="#ececec")
         self.run_b.configure(activeforeground="#000000")
         self.run_b.configure(background="#edf0f3")
-        self.run_b.configure(command=run_gb2fasta(self))
+        self.run_b.configure(command=run_gb2fasta(self, self.top))
         self.run_b.configure(compound='left')
         self.run_b.configure(font="-family {TkDefaultFont} -size 14")
         self.run_b.configure(foreground="#000000")
@@ -2088,41 +2088,42 @@ def get_arg_str(value: tk.Variable, name: str, arg_str: str,
         else:
             value_str = f'{name} {value.get()} '
     arg_str += value_str
-    print(value_str)
+    print(name, value_str)
     return arg_str
 
 
-def run_gb2fasta(w: tk.Frame):
+def run_gb2fasta(w: tk.Frame, t: tk.Toplevel):
     # todo
-    def f(w):
+    def f():
+        nonlocal w
         arg_str = ''
-        get_arg_str(w.gb, '-gb', arg_str)
-        get_arg_str(w.gene, '-gene', arg_str)
-        get_arg_str(w.molecular, '-molecular', arg_str)
-        get_arg_str(w.group, '-group', arg_str)
-        get_arg_str(w.og, '-og', arg_str)
-        get_arg_str(w.refseq, '-refseq', arg_str)
-        get_arg_str(w.count, '-count', arg_str)
-        get_arg_str(w.min_len, '-min_len', arg_str)
-        get_arg_str(w.max_len, '-max_len', arg_str)
-        get_arg_str(w.date_start, '-date_start', arg_str)
-        get_arg_str(w.date_end, '-date_end', arg_str)
-        get_arg_str(w.exclude, '-exclude', arg_str)
-        get_arg_str(w.query, '-query', arg_str)
-        get_arg_str(w.taxon, '-taxon', arg_str)
-        get_arg_str(w.out, '-out', arg_str)
-        get_arg_str(w.expand, '-expand', arg_str)
-        get_arg_str(w.max_name_len, '-max_name_len', arg_str)
-        get_arg_str(w.max_gene_len, '-max_gene_len', arg_str)
-        get_arg_str(w.unique, '-unique', arg_str)
-        get_arg_str(w.allow_repeat, '-allow_repeat', arg_str, is_bool=True)
-        get_arg_str(w.allow_invert_repeat, '-allow_invert_repeat', arg_str,
+        arg_str = get_arg_str(w.gb, '-gb', arg_str)
+        arg_str = get_arg_str(w.gene, '-gene', arg_str)
+        arg_str = get_arg_str(w.molecular, '-molecular', arg_str)
+        arg_str = get_arg_str(w.group, '-group', arg_str)
+        arg_str = get_arg_str(w.og, '-og', arg_str)
+        arg_str = get_arg_str(w.refseq, '-refseq', arg_str)
+        arg_str = get_arg_str(w.count, '-count', arg_str)
+        arg_str = get_arg_str(w.min_len, '-min_len', arg_str)
+        arg_str = get_arg_str(w.max_len, '-max_len', arg_str)
+        arg_str = get_arg_str(w.date_start, '-date_start', arg_str)
+        arg_str = get_arg_str(w.date_end, '-date_end', arg_str)
+        arg_str = get_arg_str(w.exclude, '-exclude', arg_str)
+        arg_str = get_arg_str(w.query, '-query', arg_str)
+        arg_str = get_arg_str(w.taxon, '-taxon', arg_str)
+        arg_str = get_arg_str(w.out, '-out', arg_str)
+        arg_str = get_arg_str(w.expand, '-expand', arg_str)
+        arg_str = get_arg_str(w.max_name_len, '-max_name_len', arg_str)
+        arg_str = get_arg_str(w.max_gene_len, '-max_gene_len', arg_str)
+        arg_str = get_arg_str(w.unique, '-unique', arg_str)
+        arg_str = get_arg_str(w.allow_repeat, '-allow_repeat', arg_str, is_bool=True)
+        arg_str = get_arg_str(w.allow_invert_repeat, '-allow_invert_repeat', arg_str,
                     is_bool=True)
-        get_arg_str(w.allow_mosaic_repeat, '-allow_mosaic_repeat', arg_str,
+        arg_str = get_arg_str(w.allow_mosaic_repeat, '-allow_mosaic_repeat', arg_str,
                     is_bool=True)
-        get_arg_str(w.no_divide, '-no_divide', arg_str, is_bool=True)
-        get_arg_str(w.rename, '-rename', arg_str, is_bool=True)
-        w.withdraw()
+        arg_str = get_arg_str(w.no_divide, '-no_divide', arg_str, is_bool=True)
+        arg_str = get_arg_str(w.rename, '-rename', arg_str, is_bool=True)
+        t.withdraw()
         w, h = root.winfo_screenwidth(), root.winfo_screenheight()
         s = min(w, h) // 2
         size = f'{s}x{int(s*0.618)}+{w//3}+{h//3}'
@@ -2133,6 +2134,7 @@ def run_gb2fasta(w: tk.Frame):
         frame = ttk.Frame(run)
         frame.pack(fill='both')
         scroll_text(frame)
+        print(arg_str)
         r = threading.Thread(target=thread_wrap,
                              args=(gb2fasta_main, arg_str, run),
                              daemon=True)
