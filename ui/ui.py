@@ -17,6 +17,28 @@ def move_to_center(window: tk.Tk, width: int, height: int) -> None:
     return
 
 
+def after_close(frame):
+    """
+    Deiconify root before destroy.
+    """
+    def func():
+        root.deiconify()
+        frame.destroy()
+    return func
+
+
+def set_combobox_style(window):
+    if getattr(window, 'combo_style', None) is not None:
+        window.combo_style.theme_use('combostyle')
+    else:
+        window.combo_style = ttk.Style()
+        window.combo_style.theme_create('combostyle', parent='alt', settings={
+            'TCombobox': {'configure': {'selectbackground': 'white',
+                                        'fieldbackground': 'white',
+                                        'background': 'white'}}})
+        window.combo_style.theme_use('combostyle')
+
+
 def open_file(entry, single=True, type_='file', entry2=None, title=''):
     """
     Set title, fill entry 1, empty entry 2.
@@ -219,12 +241,7 @@ class GB2Fasta:
         self.style.configure('.', font="TkDefaultFont")
         self.style.map('.', background=[('selected', _compcolor),
                                         ('active', _ana2color)])
-        self.combo_style = ttk.Style()
-        self.combo_style.theme_create('combostyle', parent='alt', settings={
-            'TCombobox': {'configure': {'selectbackground': 'white',
-                                        'fieldbackground': 'white',
-                                        'background': 'white'}}})
-        self.combo_style.theme_use('combostyle')
+        set_combobox_style(self)
 
         top.geometry("600x800+5+139")
         move_to_center(top, 600, 800)
@@ -1354,21 +1371,21 @@ class Primer:
             ToolTip(self.aln_entry, self.tooltip_font,
                     '''unaligned fasta files''')
 
-        self.Button1 = tk.Button(self.Labelframe1)
-        self.Button1.place(relx=0.82, rely=0.2, height=35, width=90
-                           , bordermode='ignore')
-        self.Button1.configure(activebackground="#ececec")
-        self.Button1.configure(activeforeground="#000000")
-        self.Button1.configure(background="#edf0f3")
-        self.Button1.configure(command=open_file)
-        self.Button1.configure(compound='left')
-        self.Button1.configure(font="-family {TkDefaultFont} -size 10")
-        self.Button1.configure(foreground="#000000")
-        self.Button1.configure(highlightbackground="#edf0f3")
-        self.Button1.configure(highlightcolor="black")
-        self.Button1.configure(pady="0")
-        self.Button1.configure(relief="raised")
-        self.Button1.configure(text='''Open''')
+        self.out_b = tk.Button(self.Labelframe1)
+        self.out_b.place(relx=0.82, rely=0.2, height=35, width=90
+                         , bordermode='ignore')
+        self.out_b.configure(activebackground="#ececec")
+        self.out_b.configure(activeforeground="#000000")
+        self.out_b.configure(background="#edf0f3")
+        self.out_b.configure(command=open_file(self.aln_entry, single=False))
+        self.out_b.configure(compound='left')
+        self.out_b.configure(font="-family {TkDefaultFont} -size 10")
+        self.out_b.configure(foreground="#000000")
+        self.out_b.configure(highlightbackground="#edf0f3")
+        self.out_b.configure(highlightcolor="black")
+        self.out_b.configure(pady="0")
+        self.out_b.configure(relief="raised")
+        self.out_b.configure(text='''Open''')
 
         self.TLabel1 = tk.Label(self.Labelframe1)
         self.TLabel1.place(relx=0.052, rely=0.6, height=35, width=160
@@ -1399,21 +1416,22 @@ class Primer:
             ToolTip(self.aln_folder_entry, self.tooltip_font,
                     '''unaligned fasta files''')
 
-        self.Button1 = tk.Button(self.Labelframe1)
-        self.Button1.place(relx=0.82, rely=0.6, height=35, width=90
-                           , bordermode='ignore')
-        self.Button1.configure(activebackground="#ececec")
-        self.Button1.configure(activeforeground="#000000")
-        self.Button1.configure(background="#edf0f3")
-        self.Button1.configure(command=open_file)
-        self.Button1.configure(compound='left')
-        self.Button1.configure(font="-family {TkDefaultFont} -size 10")
-        self.Button1.configure(foreground="#000000")
-        self.Button1.configure(highlightbackground="#edf0f3")
-        self.Button1.configure(highlightcolor="black")
-        self.Button1.configure(pady="0")
-        self.Button1.configure(relief="raised")
-        self.Button1.configure(text='''Open''')
+        self.folder_b = tk.Button(self.Labelframe1)
+        self.folder_b.place(relx=0.82, rely=0.6, height=35, width=90
+                         , bordermode='ignore')
+        self.folder_b.configure(activebackground="#ececec")
+        self.folder_b.configure(activeforeground="#000000")
+        self.folder_b.configure(background="#edf0f3")
+        self.folder_b.configure(command=open_file(self.aln_folder_entry,
+                                               type_='folder'))
+        self.folder_b.configure(compound='left')
+        self.folder_b.configure(font="-family {TkDefaultFont} -size 10")
+        self.folder_b.configure(foreground="#000000")
+        self.folder_b.configure(highlightbackground="#edf0f3")
+        self.folder_b.configure(highlightcolor="black")
+        self.folder_b.configure(pady="0")
+        self.folder_b.configure(relief="raised")
+        self.folder_b.configure(text='''Open''')
 
         self.out_label = tk.Label(self.top)
         self.out_label.place(relx=0.117, rely=0.24, height=35, width=90)
@@ -1443,20 +1461,20 @@ class Primer:
             ToolTip(self.out_entry, self.tooltip_font,
                     '''unaligned fasta files''')
 
-        self.Button1 = tk.Button(self.top)
-        self.Button1.place(relx=0.8, rely=0.24, height=35, width=90)
-        self.Button1.configure(activebackground="#ececec")
-        self.Button1.configure(activeforeground="#000000")
-        self.Button1.configure(background="#edf0f3")
-        self.Button1.configure(command=open_file)
-        self.Button1.configure(compound='left')
-        self.Button1.configure(font="-family {TkDefaultFont} -size 10")
-        self.Button1.configure(foreground="#000000")
-        self.Button1.configure(highlightbackground="#edf0f3")
-        self.Button1.configure(highlightcolor="black")
-        self.Button1.configure(pady="0")
-        self.Button1.configure(relief="raised")
-        self.Button1.configure(text='''Open''')
+        self.out_b = tk.Button(self.top)
+        self.out_b.place(relx=0.8, rely=0.24, height=35, width=90)
+        self.out_b.configure(activebackground="#ececec")
+        self.out_b.configure(activeforeground="#000000")
+        self.out_b.configure(background="#edf0f3")
+        self.out_b.configure(command=open_file(self.out_entry, type_='folder'))
+        self.out_b.configure(compound='left')
+        self.out_b.configure(font="-family {TkDefaultFont} -size 10")
+        self.out_b.configure(foreground="#000000")
+        self.out_b.configure(highlightbackground="#edf0f3")
+        self.out_b.configure(highlightcolor="black")
+        self.out_b.configure(pady="0")
+        self.out_b.configure(relief="raised")
+        self.out_b.configure(text='''Open''')
 
         self.Labelframe1 = tk.LabelFrame(self.top)
         self.Labelframe1.place(relx=0.017, rely=0.34, relheight=0.38
@@ -1975,12 +1993,16 @@ def ui_main():
 def ui_gb2fasta():
     global _top2, _w2
     _top2 = tk.Toplevel(root)
+    root.iconify()
+    _top2.protocol('WM_DELETE_WINDOW', after_close(_top2))
     _w2 = GB2Fasta(_top2)
 
 
 def ui_evaluate():
     global _top3, _w3
     _top3 = tk.Toplevel(root)
+    root.iconify()
+    _top3.protocol('WM_DELETE_WINDOW', after_close(_top3))
     _w3 = Evaluate(_top3)
 
 
@@ -1988,13 +2010,9 @@ def ui_primer():
     # Creates a toplevel widget.
     global _top4, _w4
     _top4 = tk.Toplevel(root)
+    root.iconify()
+    _top4.protocol('WM_DELETE_WINDOW', after_close(_top4))
     _w4 = Primer(_top4)
-
-
-def ui_help():
-    global _top5, _w5
-    _top5 = tk.Toplevel(root)
-    _w5 = LOG(_top5)
 
 
 def run_gb2fasta():
