@@ -8,6 +8,18 @@ import tkinter.ttk as ttk
 import webbrowser
 
 
+def set_combo_style(win: tk.Frame):
+    style = 'combostyle'
+    win.combo_style = ttk.Style()
+    if style not in ttk.Style().theme_names():
+        win.combo_style.theme_create(style, parent='alt', settings={
+            'TCombobox': {'configure': {
+                'selectbackground': 'white',
+                'fieldbackground': 'white',
+                'background': 'white'}}})
+    win.combo_style.theme_use(style)
+
+
 def move_to_center(window: tk.Tk, width: int, height: int) -> None:
     screen_width = root.winfo_screenwidth()
     screen_height = root.winfo_screenheight()
@@ -21,22 +33,12 @@ def after_close(frame):
     """
     Deiconify root before destroy.
     """
+
     def func():
         root.deiconify()
         frame.destroy()
+
     return func
-
-
-def set_combobox_style(window):
-    if getattr(window, 'combo_style', None) is not None:
-        window.combo_style.theme_use('combostyle')
-    else:
-        window.combo_style = ttk.Style()
-        window.combo_style.theme_create('combostyle', parent='alt', settings={
-            'TCombobox': {'configure': {'selectbackground': 'white',
-                                        'fieldbackground': 'white',
-                                        'background': 'white'}}})
-        window.combo_style.theme_use('combostyle')
 
 
 def open_file(entry, single=True, type_='file', entry2=None, title=''):
@@ -56,6 +58,7 @@ def open_file(entry, single=True, type_='file', entry2=None, title=''):
         entry.insert(0, a)
         if entry2 is not None:
             entry2.delete(0, 'end')
+
     return func
 
 
@@ -241,7 +244,7 @@ class GB2Fasta:
         self.style.configure('.', font="TkDefaultFont")
         self.style.map('.', background=[('selected', _compcolor),
                                         ('active', _ana2color)])
-        set_combobox_style(self)
+        set_combo_style(self)
 
         top.geometry("600x800+5+139")
         move_to_center(top, 600, 800)
@@ -953,13 +956,6 @@ class Evaluate:
         self.style.map('.', background=[('selected', _compcolor),
                                         ('active', _ana2color)])
 
-        self.combo_style = ttk.Style()
-        self.combo_style.theme_create('combostyle2', parent='alt', settings={
-            'TCombobox': {'configure': {'selectbackground': 'white',
-                                        'fieldbackground': 'white',
-                                        'background': 'white'}}})
-        self.combo_style.theme_use('combostyle2')
-
         top.geometry("600x450+109+248")
         move_to_center(top, 600, 450)
         top.title("Evaluate")
@@ -1035,7 +1031,7 @@ class Evaluate:
 
         self.unalign_label2 = tk.Label(self.Labelframe1)
         self.unalign_label2.place(relx=0.03, rely=0.4, height=35, width=160
-                                 , bordermode='ignore')
+                                  , bordermode='ignore')
         self.unalign_label2.configure(activebackground="#f9f9f9")
         self.unalign_label2.configure(activeforeground="black")
         self.unalign_label2.configure(anchor='w')
@@ -1418,12 +1414,12 @@ class Primer:
 
         self.folder_b = tk.Button(self.Labelframe1)
         self.folder_b.place(relx=0.82, rely=0.6, height=35, width=90
-                         , bordermode='ignore')
+                            , bordermode='ignore')
         self.folder_b.configure(activebackground="#ececec")
         self.folder_b.configure(activeforeground="#000000")
         self.folder_b.configure(background="#edf0f3")
         self.folder_b.configure(command=open_file(self.aln_folder_entry,
-                                               type_='folder'))
+                                                  type_='folder'))
         self.folder_b.configure(compound='left')
         self.folder_b.configure(font="-family {TkDefaultFont} -size 10")
         self.folder_b.configure(foreground="#000000")
@@ -2016,17 +2012,17 @@ def ui_primer():
 
 
 def run_gb2fasta():
-    #todo
+    # todo
     pass
 
 
 def run_evaluate():
-    #todo
+    # todo
     pass
 
 
 def run_primer():
-    #todo
+    # todo
     pass
 
 
