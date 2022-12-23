@@ -147,8 +147,8 @@ def init_out(arg):
     if arg.out.exists():
         from BarcodeFinder import global_vars
         if not global_vars.global_dict.get('out_inited', False):
-            log.error(f'Output folder {arg.out} exists.')
-            arg.out = arg.out.parent / (arg.out.name+'_')
+            log.warning(f'Output folder {arg.out} exists.')
+            arg.out = arg.out / (arg.out.name+'_')
             log.info(f'Use {arg.out} instead.')
             if arg.out.exists():
                 log.error(f'{arg.out} exists, too!')
