@@ -11,7 +11,7 @@ import tkinter as tk
 import tkinter.ttk as ttk
 import webbrowser
 
-from BarcodeFinder.global_vars import log, FMT, DATEFMT
+from BarcodeFinder.global_vars import global_dict, log, FMT, DATEFMT
 from BarcodeFinder.gb2fasta import gb2fasta_main
 from BarcodeFinder.evaluate import evaluate_main
 from BarcodeFinder.primer import primer_main
@@ -2043,7 +2043,6 @@ def _on_shiftmouse(event, widget):
 
 
 def ui_main():
-    '''Main entry point for the application.'''
     global root
     root = tk.Tk()
     root.protocol('WM_DELETE_WINDOW', root.destroy)
@@ -2093,7 +2092,7 @@ def get_arg_str(value: tk.Variable, name: str, arg_str: str,
 
 
 def run_gb2fasta(w: tk.Frame, t: tk.Toplevel):
-    # todo
+    # todo: test options and functions
     def f():
         nonlocal w
         arg_str = ''

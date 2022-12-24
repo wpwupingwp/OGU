@@ -764,7 +764,7 @@ def unique(files: list, arg) -> list:
                 if idx in keep:
                     SeqIO.write(record, out, 'fasta')
         unique_files.append(new)
-    log.info(f'{kept} of {total} records are left.')
+    log.info(f'{kept} of {total} unique records.')
     return unique_files
 
 

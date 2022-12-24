@@ -144,7 +144,7 @@ def init_out(arg):
         arg.out = Path().cwd().absolute() / 'Result'
     else:
         arg.out = Path(arg.out).absolute()
-    if arg.out.exists():
+    if arg.out.exists() and len(list(arg.out.iterdir())) == 0:
         from BarcodeFinder import global_vars
         if not global_vars.global_dict.get('out_inited', False):
             log.warning(f'Output folder {arg.out} exists.')
