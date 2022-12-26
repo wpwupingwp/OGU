@@ -2194,6 +2194,7 @@ def run_primer(w: tk.Frame, t: tk.Toplevel):
         arg_str = get_arg_str(w.amax, '-amax', arg_str)
         arg_str = get_arg_str(w.size, '-size', arg_str)
         arg_str = get_arg_str(w.step, '-step', arg_str)
+        arg_str += '-primer'
         t.withdraw()
         w, h = root.winfo_screenwidth(), root.winfo_screenheight()
         s = min(w, h) // 2
