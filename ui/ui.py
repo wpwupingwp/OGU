@@ -73,7 +73,7 @@ def my_checkbutton(frame: tk.LabelFrame) -> tk.Checkbutton:
     check_b.configure(highlightbackground="#edf0f3")
     check_b.configure(highlightcolor="black")
     check_b.configure(justify='left')
-    check_b.configure(selectcolor="#d9d9d9")
+    check_b.configure(selectcolor="#ffffff")
     return check_b
 
 
@@ -247,8 +247,8 @@ class Root:
         self.primer_b.configure(image=_img2)
 
         self.install_third_party = my_button(self.top)
-        self.install_third_party.place(relx=0.713, rely=0.865, height=30,
-                                       width=200)
+        self.install_third_party.place(relx=0.613, rely=0.865, height=30,
+                                       width=250)
         self.install_third_party.configure(text='Install third-party software')
         self.install_third_party.configure(command=run_install(self, self.top))
 
