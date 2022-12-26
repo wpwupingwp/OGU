@@ -11,10 +11,11 @@ import tkinter as tk
 import tkinter.ttk as ttk
 import webbrowser
 
-from BarcodeFinder.global_vars import global_dict, log, FMT, DATEFMT
+from BarcodeFinder.global_vars import log, FMT, DATEFMT
 from BarcodeFinder.gb2fasta import gb2fasta_main
 from BarcodeFinder.evaluate import evaluate_main
 from BarcodeFinder.primer import primer_main
+from BarcodeFinder.utils import get_all_third_party
 
 
 def set_combo_style(win: tk.Frame):
@@ -27,6 +28,53 @@ def set_combo_style(win: tk.Frame):
                 'fieldbackground': 'white',
                 'background': 'white'}}})
     win.combo_style.theme_use(style)
+
+
+def my_label(frame: tk.LabelFrame) -> tk.Label:
+    label = tk.Label(frame)
+    label.configure(activebackground="#f9f9f9")
+    label.configure(activeforeground="black")
+    label.configure(anchor='w')
+    label.configure(background="#edf0f3")
+    label.configure(compound='left')
+    label.configure(foreground="#000000")
+    label.configure(highlightbackground="#edf0f3")
+    label.configure(highlightcolor="black")
+    label.configure(justify='left')
+    label.configure(font="-family {TkDefaultFont} -size 10")
+    return label
+
+
+def my_button(frame: tk.LabelFrame) -> tk.Button:
+    button = tk.Button(frame)
+    button.configure(compound='left')
+    button.configure(activebackground="#ececec")
+    button.configure(activeforeground="#000000")
+    button.configure(background="#edf0f3")
+    button.configure(font="-family {TkDefaultFont} -size 10")
+    button.configure(foreground="#000000")
+    button.configure(highlightbackground="#edf0f3")
+    button.configure(highlightcolor="black")
+    button.configure(pady="0")
+    button.configure(relief="raised")
+    button.configure(borderwidth=1)
+    return button
+
+
+def my_checkbutton(frame: tk.LabelFrame) -> tk.Checkbutton:
+    check_b = tk.Checkbutton(frame)
+    check_b.configure(activebackground="#ececec")
+    check_b.configure(activeforeground="#000000")
+    check_b.configure(anchor='w')
+    check_b.configure(background="#edf0f3")
+    check_b.configure(compound='left')
+    check_b.configure(font="-family {TkDefaultFont} -size 10")
+    check_b.configure(foreground="#000000")
+    check_b.configure(highlightbackground="#edf0f3")
+    check_b.configure(highlightcolor="black")
+    check_b.configure(justify='left')
+    check_b.configure(selectcolor="#d9d9d9")
+    return check_b
 
 
 def move_to_center(window: tk.Tk, width: int, height: int) -> None:
@@ -46,6 +94,7 @@ def after_close(frame):
     def func():
         root.deiconify()
         frame.destroy()
+
     return func
 
 
@@ -53,6 +102,7 @@ def scroll_text(window):
     """
     ScrolledText that shows logs.
     """
+
     def poll():
         while True:
             try:
@@ -87,23 +137,31 @@ def scroll_text(window):
     scroll.pack(fill='both')
     scroll.after(0, poll)
 
-def thread_wrap(function, arg_str, window):
+
+def thread_wrap(function, arg_str, window, no_arg=False):
     """
     Wrap for callback.
     Args:
         function(callable): function to call
         arg_str(str): string for function's argparse
         window(Toplevel): window to hide
+        no_arg: function do not need args
     """
     try:
-        result = function(arg_str)
+        if not no_arg:
+            result = function(arg_str)
+        else:
+            result = function()
     except Exception as e:
         log.exception(str(e))
         log.exception('Abort.')
         messagebox.showinfo(message='Abort.')
         root.deiconify()
         return
-    messagebox.showinfo(message=f'Done. See {result[0].out} for details.')
+    if not no_arg:
+        messagebox.showinfo(message=f'Done. See {result[0].out} for details.')
+    else:
+        messagebox.showinfo(message='Install third-party software finished.')
     window.withdraw()
     root.deiconify()
     return
@@ -160,133 +218,58 @@ class Root:
         top.configure(highlightcolor="black")
         self.top = top
 
-        self.help_b = tk.Button(self.top)
+        self.help_b = my_button(self.top)
         self.help_b.place(relx=0.913, rely=0.067, height=40, width=40)
-        self.help_b.configure(activebackground="#ececec")
-        self.help_b.configure(activeforeground="#000000")
-        self.help_b.configure(background="#edf0f3")
-        self.help_b.configure(borderwidth="1")
         self.help_b.configure(command=run_help)
-        self.help_b.configure(foreground="#000000")
-        self.help_b.configure(highlightbackground="#edf0f3")
-        self.help_b.configure(highlightcolor="black")
         global _img4
         _img4 = tk.PhotoImage(file=photo_location4)
         self.help_b.configure(image=_img4)
-        self.help_b.configure(pady="0")
-        self.help_b.configure(text='''Button''')
 
-        self.gb2fasta_b = tk.Button(self.top)
+        self.gb2fasta_b = my_button(self.top)
         self.gb2fasta_b.place(relx=0.188, rely=0.288, height=100, width=100)
-        self.gb2fasta_b.configure(activebackground="#ececec")
-        self.gb2fasta_b.configure(activeforeground="#000000")
-        self.gb2fasta_b.configure(background="#edf0f3")
-        self.gb2fasta_b.configure(borderwidth="0")
         self.gb2fasta_b.configure(command=ui_gb2fasta)
-        self.gb2fasta_b.configure(foreground="#000000")
-        self.gb2fasta_b.configure(highlightbackground="#edf0f3")
-        self.gb2fasta_b.configure(highlightcolor="black")
         global _img0
         _img0 = tk.PhotoImage(file=photo_location1)
         self.gb2fasta_b.configure(image=_img0)
-        self.gb2fasta_b.configure(pady="0")
-        self.gb2fasta_b.configure(text='''Button''')
 
-        self.evaluate_b = tk.Button(self.top)
+        self.evaluate_b = my_button(self.top)
         self.evaluate_b.place(relx=0.438, rely=0.288, height=100, width=100)
-        self.evaluate_b.configure(activebackground="#ececec")
-        self.evaluate_b.configure(activeforeground="#000000")
-        self.evaluate_b.configure(background="#edf0f3")
-        self.evaluate_b.configure(borderwidth="0")
         self.evaluate_b.configure(command=ui_evaluate)
-        self.evaluate_b.configure(foreground="#000000")
-        self.evaluate_b.configure(highlightbackground="#edf0f3")
-        self.evaluate_b.configure(highlightcolor="black")
         global _img1
         _img1 = tk.PhotoImage(file=photo_location2)
         self.evaluate_b.configure(image=_img1)
-        self.evaluate_b.configure(pady="0")
-        self.evaluate_b.configure(text='''Button''')
 
-        self.primer_b = tk.Button(self.top)
+        self.primer_b = my_button(self.top)
         self.primer_b.place(relx=0.688, rely=0.288, height=100, width=100)
-        self.primer_b.configure(activebackground="#ececec")
-        self.primer_b.configure(activeforeground="#000000")
-        self.primer_b.configure(background="#edf0f3")
-        self.primer_b.configure(borderwidth="0")
         self.primer_b.configure(command=ui_primer)
-        self.primer_b.configure(foreground="#000000")
-        self.primer_b.configure(highlightbackground="#edf0f3")
-        self.primer_b.configure(highlightcolor="black")
         global _img2
         _img2 = tk.PhotoImage(file=photo_location3)
         self.primer_b.configure(image=_img2)
-        self.primer_b.configure(pady="0")
-        self.primer_b.configure(text='''Button''')
 
-        self.install_third_party = tk.Button(self.top)
+        self.install_third_party = my_button(self.top)
         self.install_third_party.place(relx=0.713, rely=0.865, height=30,
                                        width=200)
-        self.install_third_party.configure(activebackground="#ececec")
-        self.install_third_party.configure(activeforeground="#000000")
-        self.install_third_party.configure(background="#edf0f3")
-        self.install_third_party.configure(borderwidth="1")
-        self.install_third_party.configure(compound='left')
-        self.install_third_party.configure(
-            font="-family {TkDefaultFont} -size 10")
-        self.install_third_party.configure(foreground="#000000")
-        self.install_third_party.configure(highlightbackground="#edf0f3")
-        self.install_third_party.configure(highlightcolor="black")
-        self.install_third_party.configure(pady="0")
-        self.install_third_party.configure(
-            text='''Install third-party software''')
+        self.install_third_party.configure(text='Install third-party software')
+        self.install_third_party.configure(command=run_install(self, self.top))
 
-        self.gb2fasta_label = tk.Label(self.top)
+        self.gb2fasta_label = my_label(self.top)
         self.gb2fasta_label.place(relx=0.188, rely=0.532, height=30, width=100)
-        self.gb2fasta_label.configure(activebackground="#f9f9f9")
-        self.gb2fasta_label.configure(anchor='w')
-        self.gb2fasta_label.configure(background="#edf0f3")
-        self.gb2fasta_label.configure(compound='left')
         self.gb2fasta_label.configure(font="-family {TKDefaultFont} -size 14")
-        self.gb2fasta_label.configure(foreground="#000000")
-        self.gb2fasta_label.configure(highlightbackground="#edf0f3")
-        self.gb2fasta_label.configure(highlightcolor="black")
         self.gb2fasta_label.configure(text='''GB2Fasta''')
 
-        self.evaluate_label = tk.Label(self.top)
+        self.evaluate_label = my_label(self.top)
         self.evaluate_label.place(relx=0.45, rely=0.532, height=30, width=100)
-        self.evaluate_label.configure(activebackground="#f9f9f9")
-        self.evaluate_label.configure(anchor='w')
-        self.evaluate_label.configure(background="#edf0f3")
-        self.evaluate_label.configure(compound='left')
         self.evaluate_label.configure(font="-family {TKDefaultFont} -size 14")
-        self.evaluate_label.configure(foreground="#000000")
-        self.evaluate_label.configure(highlightbackground="#edf0f3")
-        self.evaluate_label.configure(highlightcolor="black")
         self.evaluate_label.configure(text='''Evaluate''')
 
-        self.primer_label = tk.Label(self.top)
+        self.primer_label = my_label(self.top)
         self.primer_label.place(relx=0.713, rely=0.532, height=30, width=100)
-        self.primer_label.configure(activebackground="#f9f9f9")
-        self.primer_label.configure(anchor='w')
-        self.primer_label.configure(background="#edf0f3")
-        self.primer_label.configure(compound='left')
         self.primer_label.configure(font="-family {TKDefaultFont} -size 14")
-        self.primer_label.configure(foreground="#000000")
-        self.primer_label.configure(highlightbackground="#edf0f3")
-        self.primer_label.configure(highlightcolor="black")
         self.primer_label.configure(text='''Primer''')
 
-        self.note_label = tk.Label(self.top)
+        self.note_label = my_label(self.top)
         self.note_label.place(relx=0.35, rely=0.643, height=35, width=252)
-        self.note_label.configure(activebackground="#f9f9f9")
-        self.note_label.configure(anchor='w')
-        self.note_label.configure(background="#edf0f3")
-        self.note_label.configure(compound='left')
         self.note_label.configure(font="-family {TKDefaultFont} -size 14")
-        self.note_label.configure(foreground="#000000")
-        self.note_label.configure(highlightbackground="#edf0f3")
-        self.note_label.configure(highlightcolor="black")
         self.note_label.configure(text='''Click button to run modules''')
 
 
@@ -362,19 +345,10 @@ class GB2Fasta:
                                , bordermode='ignore')
         self.TSeparator1.configure(orient="vertical")
 
-        self.gbfile_label = tk.Label(self.Labelframe1)
+        self.gbfile_label = my_label(self.Labelframe1)
         self.gbfile_label.place(relx=0.050, rely=0.057, height=35, width=100,
                                 bordermode='ignore')
-        self.gbfile_label.configure(activebackground="#f9f9f9")
-        self.gbfile_label.configure(activeforeground="black")
-        self.gbfile_label.configure(anchor='w')
-        self.gbfile_label.configure(background="#edf0f3")
-        self.gbfile_label.configure(compound='left')
         self.gbfile_label.configure(font="-family {TKDefaultFont} -size 12")
-        self.gbfile_label.configure(foreground="#000000")
-        self.gbfile_label.configure(highlightbackground="#edf0f3")
-        self.gbfile_label.configure(highlightcolor="black")
-        self.gbfile_label.configure(justify='left')
         self.gbfile_label.configure(text='''Genbank files''')
 
         self.gb_entry = tk.Entry(self.Labelframe1)
@@ -387,34 +361,17 @@ class GB2Fasta:
         self.gb_entry_tooltip = ToolTip(self.gb_entry, self.tooltip_font,
                                         '''gb format files''')
 
-        self.gb_file_b = tk.Button(self.Labelframe1)
+        self.gb_file_b = my_button(self.Labelframe1)
         self.gb_file_b.place(relx=0.82, rely=0.054, height=35, width=90
                              , bordermode='ignore')
-        self.gb_file_b.configure(activebackground="#ececec")
-        self.gb_file_b.configure(activeforeground="#000000")
-        self.gb_file_b.configure(background="#edf0f3")
         self.gb_file_b.configure(command=open_file(self.gb_entry, single=False))
-        self.gb_file_b.configure(compound='left')
         self.gb_file_b.configure(font="-family {TkDefaultFont} -size 12")
-        self.gb_file_b.configure(foreground="#000000")
-        self.gb_file_b.configure(highlightbackground="#edf0f3")
-        self.gb_file_b.configure(highlightcolor="black")
-        self.gb_file_b.configure(pady="0")
         self.gb_file_b.configure(text='''Open''')
 
-        self.gene_label = tk.Label(self.Labelframe1)
+        self.gene_label = my_label(self.Labelframe1)
         self.gene_label.place(relx=0.035, rely=0.217, height=35, width=60,
                               bordermode='ignore')
-        self.gene_label.configure(activebackground="#f9f9f9")
-        self.gene_label.configure(activeforeground="black")
-        self.gene_label.configure(anchor='w')
-        self.gene_label.configure(background="#edf0f3")
-        self.gene_label.configure(compound='left')
         self.gene_label.configure(font="-family {TkDefaultFont} -size 12")
-        self.gene_label.configure(foreground="#000000")
-        self.gene_label.configure(highlightbackground="#edf0f3")
-        self.gene_label.configure(highlightcolor="black")
-        self.gene_label.configure(justify='left')
         self.gene_label.configure(text='''Gene''')
 
         self.gene_entry = ttk.Entry(self.Labelframe1)
@@ -427,34 +384,16 @@ class GB2Fasta:
         self.gene_entry_tooltip = ToolTip(self.gene_entry, self.tooltip_font,
                                           'gene name')
 
-        self.taxon_label = tk.Label(self.Labelframe1)
+        self.taxon_label = my_label(self.Labelframe1)
         self.taxon_label.place(relx=0.035, rely=0.326, height=35, width=70
                                , bordermode='ignore')
-        self.taxon_label.configure(activebackground="#f9f9f9")
-        self.taxon_label.configure(activeforeground="black")
-        self.taxon_label.configure(anchor='w')
-        self.taxon_label.configure(background="#edf0f3")
-        self.taxon_label.configure(compound='left')
         self.taxon_label.configure(font="-family {TkDefaultFont} -size 12")
-        self.taxon_label.configure(foreground="#000000")
-        self.taxon_label.configure(highlightbackground="#edf0f3")
-        self.taxon_label.configure(highlightcolor="black")
-        self.taxon_label.configure(justify='left')
         self.taxon_label.configure(text='''Taxonomy''')
 
-        self.molecular_label = tk.Label(self.Labelframe1)
+        self.molecular_label = my_label(self.Labelframe1)
         self.molecular_label.place(relx=0.558, rely=0.217, height=35, width=80
                                    , bordermode='ignore')
-        self.molecular_label.configure(activebackground="#f9f9f9")
-        self.molecular_label.configure(activeforeground="black")
-        self.molecular_label.configure(anchor='w')
-        self.molecular_label.configure(background="#edf0f3")
-        self.molecular_label.configure(compound='left')
         self.molecular_label.configure(font="-family {TkDefaultFont} -size 12")
-        self.molecular_label.configure(foreground="#000000")
-        self.molecular_label.configure(highlightbackground="#edf0f3")
-        self.molecular_label.configure(highlightcolor="black")
-        self.molecular_label.configure(justify='left')
         self.molecular_label.configure(text='''Molecular''')
 
         self.TCombobox_molecular = ttk.Combobox(self.Labelframe1)
@@ -467,19 +406,10 @@ class GB2Fasta:
         self.TCombobox_molecular.current(0)
         self.TCombobox_molecular.configure(takefocus="")
 
-        self.group_label = tk.Label(self.Labelframe1)
+        self.group_label = my_label(self.Labelframe1)
         self.group_label.place(relx=0.558, rely=0.326, height=35, width=60
                                , bordermode='ignore')
-        self.group_label.configure(activebackground="#f9f9f9")
-        self.group_label.configure(activeforeground="black")
-        self.group_label.configure(anchor='w')
-        self.group_label.configure(background="#edf0f3")
-        self.group_label.configure(compound='left')
         self.group_label.configure(font="-family {TkDefaultFont} -size 12")
-        self.group_label.configure(foreground="#000000")
-        self.group_label.configure(highlightbackground="#edf0f3")
-        self.group_label.configure(highlightcolor="black")
-        self.group_label.configure(justify='left')
         self.group_label.configure(text='''Group''')
 
         self.TCombobox_group = ttk.Combobox(self.Labelframe1)
@@ -493,19 +423,10 @@ class GB2Fasta:
         self.TCombobox_group.configure(takefocus="")
         self.TCombobox_group.current(0)
 
-        self.organelle_label = tk.Label(self.Labelframe1)
+        self.organelle_label = my_label(self.Labelframe1)
         self.organelle_label.place(relx=0.035, rely=0.435, height=35, width=80
                                    , bordermode='ignore')
-        self.organelle_label.configure(activebackground="#f9f9f9")
-        self.organelle_label.configure(activeforeground="black")
-        self.organelle_label.configure(anchor='w')
-        self.organelle_label.configure(background="#edf0f3")
-        self.organelle_label.configure(compound='left')
         self.organelle_label.configure(font="-family {TkDefaultFont} -size 12")
-        self.organelle_label.configure(foreground="#000000")
-        self.organelle_label.configure(highlightbackground="#edf0f3")
-        self.organelle_label.configure(highlightcolor="black")
-        self.organelle_label.configure(justify='left')
         self.organelle_label.configure(text='''Organelle''')
 
         self.TCombobox_og = ttk.Combobox(self.Labelframe1)
@@ -519,19 +440,10 @@ class GB2Fasta:
         self.TCombobox_og.configure(takefocus="")
         self.TCombobox_og.current(0)
 
-        self.refseq_label = tk.Label(self.Labelframe1)
+        self.refseq_label = my_label(self.Labelframe1)
         self.refseq_label.place(relx=0.035, rely=0.541, height=35, width=70
                                 , bordermode='ignore')
-        self.refseq_label.configure(activebackground="#f9f9f9")
-        self.refseq_label.configure(activeforeground="black")
-        self.refseq_label.configure(anchor='w')
-        self.refseq_label.configure(background="#edf0f3")
-        self.refseq_label.configure(compound='left')
         self.refseq_label.configure(font="-family {TkDefaultFont} -size 12")
-        self.refseq_label.configure(foreground="#000000")
-        self.refseq_label.configure(highlightbackground="#edf0f3")
-        self.refseq_label.configure(highlightcolor="black")
-        self.refseq_label.configure(justify='left')
         self.refseq_label.configure(text='''RefSeq''')
 
         self.TCombobox_refseq = ttk.Combobox(self.Labelframe1)
@@ -548,19 +460,10 @@ class GB2Fasta:
                                                 self.tooltip_font,
                                                 'Use RefSeq or not')
 
-        self.count_label = tk.Label(self.Labelframe1)
+        self.count_label = my_label(self.Labelframe1)
         self.count_label.place(relx=0.035, rely=0.649, height=35, width=60
                                , bordermode='ignore')
-        self.count_label.configure(activebackground="#f9f9f9")
-        self.count_label.configure(activeforeground="black")
-        self.count_label.configure(anchor='w')
-        self.count_label.configure(background="#edf0f3")
-        self.count_label.configure(compound='left')
         self.count_label.configure(font="-family {TkDefaultFont} -size 12")
-        self.count_label.configure(foreground="#000000")
-        self.count_label.configure(highlightbackground="#edf0f3")
-        self.count_label.configure(highlightcolor="black")
-        self.count_label.configure(justify='left')
         self.count_label.configure(text='''Count''')
 
         self.count_entry = ttk.Entry(self.Labelframe1)
@@ -574,19 +477,10 @@ class GB2Fasta:
             ToolTip(self.count_entry, self.tooltip_font,
                     '''numbers of sequences to download, 0 for no limit''')
 
-        self.len_label = tk.Label(self.Labelframe1)
+        self.len_label = my_label(self.Labelframe1)
         self.len_label.place(relx=0.558, rely=0.435, height=35, width=60
                              , bordermode='ignore')
-        self.len_label.configure(activebackground="#f9f9f9")
-        self.len_label.configure(activeforeground="black")
-        self.len_label.configure(anchor='w')
-        self.len_label.configure(background="#edf0f3")
-        self.len_label.configure(compound='left')
         self.len_label.configure(font="-family {TkDefaultFont} -size 12")
-        self.len_label.configure(foreground="#000000")
-        self.len_label.configure(highlightbackground="#edf0f3")
-        self.len_label.configure(highlightcolor="black")
-        self.len_label.configure(justify='left')
         self.len_label.configure(text='''Length''')
 
         self.min_len_entry = ttk.Entry(self.Labelframe1)
@@ -600,18 +494,10 @@ class GB2Fasta:
             ToolTip(self.min_len_entry, self.tooltip_font,
                     '''sequence length limit''')
 
-        self.to_label = tk.Label(self.Labelframe1)
+        self.to_label = my_label(self.Labelframe1)
         self.to_label.place(relx=0.785, rely=0.435, height=35, width=36
                             , bordermode='ignore')
-        self.to_label.configure(activebackground="#f9f9f9")
-        self.to_label.configure(activeforeground="SystemButtonText")
-        self.to_label.configure(anchor='w')
-        self.to_label.configure(background="#edf0f3")
-        self.to_label.configure(compound='left')
-        self.to_label.configure(font="-family {TkDefaultFont} -size 13")
-        self.to_label.configure(foreground="#000000")
-        self.to_label.configure(highlightbackground="#edf0f3")
-        self.to_label.configure(highlightcolor="black")
+        self.to_label.configure(font="-family {TkDefaultFont} -size 12")
         self.to_label.configure(text='''to''')
 
         self.max_len_entry = ttk.Entry(self.Labelframe1)
@@ -623,19 +509,10 @@ class GB2Fasta:
         self.min_len_entry.insert(0, '0')
         self.max_len_entry.insert(0, '300000')
 
-        self.date_label = tk.Label(self.Labelframe1)
+        self.date_label = my_label(self.Labelframe1)
         self.date_label.place(relx=0.558, rely=0.541, height=35, width=60
                               , bordermode='ignore')
-        self.date_label.configure(activebackground="#f9f9f9")
-        self.date_label.configure(activeforeground="black")
-        self.date_label.configure(anchor='w')
-        self.date_label.configure(background="#edf0f3")
-        self.date_label.configure(compound='left')
         self.date_label.configure(font="-family {TkDefaultFont} -size 12")
-        self.date_label.configure(foreground="#000000")
-        self.date_label.configure(highlightbackground="#edf0f3")
-        self.date_label.configure(highlightcolor="black")
-        self.date_label.configure(justify='left')
         self.date_label.configure(text='''Date''')
 
         self.date_start_entry = ttk.Entry(self.Labelframe1)
@@ -648,18 +525,10 @@ class GB2Fasta:
         self.date_start_entry_tooltip = \
             ToolTip(self.date_start_entry, self.tooltip_font, '''1970/1/1''')
 
-        self.to2_label = tk.Label(self.Labelframe1)
+        self.to2_label = my_label(self.Labelframe1)
         self.to2_label.place(relx=0.789, rely=0.541, height=35, width=36
                              , bordermode='ignore')
-        self.to2_label.configure(activebackground="#f9f9f9")
-        self.to2_label.configure(activeforeground="SystemButtonText")
-        self.to2_label.configure(anchor='w')
-        self.to2_label.configure(background="#edf0f3")
-        self.to2_label.configure(compound='left')
-        self.to2_label.configure(font="-family {TkDefaultFont} -size 13")
-        self.to2_label.configure(foreground="#000000")
-        self.to2_label.configure(highlightbackground="#edf0f3")
-        self.to2_label.configure(highlightcolor="black")
+        self.to2_label.configure(font="-family {TkDefaultFont} -size 12")
         self.to2_label.configure(text='''to''')
 
         self.date_end_entry = ttk.Entry(self.Labelframe1)
@@ -669,22 +538,14 @@ class GB2Fasta:
         self.date_end_entry.configure(takefocus="")
         self.date_end_entry.configure(cursor="fleur")
         self.tooltip_font = "TkDefaultFont"
-        self.date_end_entry_tooltip = \
-            ToolTip(self.date_end_entry, self.tooltip_font, '''2022/12/31''')
+        self.date_end_entry_tooltip = ToolTip(self.date_end_entry,
+                                              self.tooltip_font,
+                                              '''2022/12/31''')
 
-        self.exclude_label = tk.Label(self.Labelframe1)
+        self.exclude_label = my_label(self.Labelframe1)
         self.exclude_label.place(relx=0.558, rely=0.649, height=35, width=60
                                  , bordermode='ignore')
-        self.exclude_label.configure(activebackground="#f9f9f9")
-        self.exclude_label.configure(activeforeground="black")
-        self.exclude_label.configure(anchor='w')
-        self.exclude_label.configure(background="#edf0f3")
-        self.exclude_label.configure(compound='left')
         self.exclude_label.configure(font="-family {TkDefaultFont} -size 12")
-        self.exclude_label.configure(foreground="#000000")
-        self.exclude_label.configure(highlightbackground="#edf0f3")
-        self.exclude_label.configure(highlightcolor="black")
-        self.exclude_label.configure(justify='left')
         self.exclude_label.configure(text='''Exclude''')
 
         self.exclude_entry = ttk.Entry(self.Labelframe1)
@@ -698,19 +559,10 @@ class GB2Fasta:
             ToolTip(self.exclude_entry, self.tooltip_font,
                     '''exclude expression''')
 
-        self.query_label = tk.Label(self.Labelframe1)
+        self.query_label = my_label(self.Labelframe1)
         self.query_label.place(relx=0.035, rely=0.813, height=35, width=60
                                , bordermode='ignore')
-        self.query_label.configure(activebackground="#f9f9f9")
-        self.query_label.configure(activeforeground="black")
-        self.query_label.configure(anchor='w')
-        self.query_label.configure(background="#edf0f3")
-        self.query_label.configure(compound='left')
         self.query_label.configure(font="-family {TkDefaultFont} -size 12")
-        self.query_label.configure(foreground="#000000")
-        self.query_label.configure(highlightbackground="#edf0f3")
-        self.query_label.configure(highlightcolor="black")
-        self.query_label.configure(justify='left')
         self.query_label.configure(text='''Query''')
 
         self.query_entry = ttk.Entry(self.Labelframe1)
@@ -730,19 +582,10 @@ class GB2Fasta:
         self.taxon_entry.configure(takefocus="")
         self.taxon_entry.configure(cursor="fleur")
 
-        self.out_label = tk.Label(self.top)
+        self.out_label = my_label(self.top)
         self.out_label.place(relx=0.05, rely=0.563, height=36
                              , width=60)
-        self.out_label.configure(activebackground="#f9f9f9")
-        self.out_label.configure(activeforeground="black")
-        self.out_label.configure(anchor='w')
-        self.out_label.configure(background="#edf0f3")
-        self.out_label.configure(compound='left')
         self.out_label.configure(font="-family {TkDefaultFont} -size 12")
-        self.out_label.configure(foreground="#000000")
-        self.out_label.configure(highlightbackground="#edf0f3")
-        self.out_label.configure(highlightcolor="black")
-        self.out_label.configure(justify='left')
         self.out_label.configure(text='''Output''')
 
         self.out_entry = ttk.Entry(self.top)
@@ -754,7 +597,7 @@ class GB2Fasta:
         self.tooltip_font = "TkDefaultFont"
         self.out_entry_tooltip = ToolTip(self.out_entry, self.tooltip_font,
                                          'output folder')
-        self.out_b = tk.Button(self.top)
+        self.out_b = my_button(self.top)
         self.out_b.place(relx=0.833, rely=0.563, height=35, width=80)
         self.out_b.configure(activebackground="#edf0f3")
         self.out_b.configure(activeforeground="#000000")
@@ -779,77 +622,38 @@ class GB2Fasta:
         self.Labelframe1.configure(highlightbackground="#edf0f3")
         self.Labelframe1.configure(highlightcolor="black")
 
-        self.allow_repeat_button = tk.Checkbutton(self.Labelframe1)
+        self.allow_repeat_button = my_checkbutton(self.Labelframe1)
         self.allow_repeat_button.place(relx=0.576, rely=0.142, relheight=0.248
                                        , relwidth=0.276, bordermode='ignore')
-        self.allow_repeat_button.configure(activebackground="#ececec")
-        self.allow_repeat_button.configure(activeforeground="#000000")
-        self.allow_repeat_button.configure(anchor='w')
-        self.allow_repeat_button.configure(background="#edf0f3")
-        self.allow_repeat_button.configure(compound='left')
         self.allow_repeat_button.configure(
             font="-family {TkDefaultFont} -size 12")
-        self.allow_repeat_button.configure(foreground="#000000")
-        self.allow_repeat_button.configure(highlightbackground="#edf0f3")
-        self.allow_repeat_button.configure(highlightcolor="black")
-        self.allow_repeat_button.configure(justify='left')
-        self.allow_repeat_button.configure(selectcolor="#d9d9d9")
         self.allow_repeat_button.configure(text='''Allow repeat''')
         self.allow_repeat_button.configure(variable=self.allow_repeat)
 
-        self.allow_invert_repeat_button = tk.Checkbutton(self.Labelframe1)
+        self.allow_invert_repeat_button = my_checkbutton(self.Labelframe1)
         self.allow_invert_repeat_button.place(relx=0.576, rely=0.709,
                                               relheight=0.248
                                               , relwidth=0.361,
                                               bordermode='ignore')
-        self.allow_invert_repeat_button.configure(activebackground="#ececec")
-        self.allow_invert_repeat_button.configure(activeforeground="#000000")
-        self.allow_invert_repeat_button.configure(anchor='w')
-        self.allow_invert_repeat_button.configure(background="#edf0f3")
-        self.allow_invert_repeat_button.configure(compound='left')
         self.allow_invert_repeat_button.configure(
             font="-family {TkDefaultFont} -size 12")
-        self.allow_invert_repeat_button.configure(foreground="#000000")
-        self.allow_invert_repeat_button.configure(highlightbackground="#edf0f3")
-        self.allow_invert_repeat_button.configure(highlightcolor="black")
-        self.allow_invert_repeat_button.configure(justify='left')
-        self.allow_invert_repeat_button.configure(selectcolor="#d9d9d9")
         self.allow_invert_repeat_button.configure(
             text='''Allow invert repeat''')
         self.allow_invert_repeat_button.configure(
             variable=self.allow_invert_repeat)
 
-        self.allow_mosaic_button = tk.Checkbutton(self.Labelframe1)
+        self.allow_mosaic_button = my_checkbutton(self.Labelframe1)
         self.allow_mosaic_button.place(relx=0.576, rely=0.426, relheight=0.248
                                        , relwidth=0.361, bordermode='ignore')
-        self.allow_mosaic_button.configure(activebackground="#ececec")
-        self.allow_mosaic_button.configure(activeforeground="#000000")
-        self.allow_mosaic_button.configure(anchor='w')
-        self.allow_mosaic_button.configure(background="#edf0f3")
-        self.allow_mosaic_button.configure(compound='left')
         self.allow_mosaic_button.configure(
             font="-family {TkDefaultFont} -size 12")
-        self.allow_mosaic_button.configure(foreground="#000000")
-        self.allow_mosaic_button.configure(highlightbackground="#edf0f3")
-        self.allow_mosaic_button.configure(highlightcolor="black")
-        self.allow_mosaic_button.configure(justify='left')
-        self.allow_mosaic_button.configure(selectcolor="#d9d9d9")
         self.allow_mosaic_button.configure(text='''Allow mosaic repeat''')
         self.allow_mosaic_button.configure(variable=self.allow_mosaic_repeat)
 
-        self.expand_label = tk.Label(self.Labelframe1)
+        self.expand_label = my_label(self.Labelframe1)
         self.expand_label.place(relx=0.175, rely=0.142, height=35
                                 , width=60, bordermode='ignore')
-        self.expand_label.configure(activebackground="#f9f9f9")
-        self.expand_label.configure(activeforeground="black")
-        self.expand_label.configure(anchor='e')
-        self.expand_label.configure(background="#edf0f3")
-        self.expand_label.configure(compound='left')
         self.expand_label.configure(font="-family {TkDefaultFont} -size 12")
-        self.expand_label.configure(foreground="#000000")
-        self.expand_label.configure(highlightbackground="#edf0f3")
-        self.expand_label.configure(highlightcolor="black")
-        self.expand_label.configure(justify='left')
         self.expand_label.configure(text='''Expand''')
 
         self.expand_entry = ttk.Entry(self.Labelframe1)
@@ -863,36 +667,18 @@ class GB2Fasta:
             ToolTip(self.expand_entry, self.tooltip_font,
                     '''expand for primer design''')
 
-        self.max_name_len_label = tk.Label(self.Labelframe1)
+        self.max_name_len_label = my_label(self.Labelframe1)
         self.max_name_len_label.place(relx=0.05, rely=0.426, height=35
                                       , width=130, bordermode='ignore')
-        self.max_name_len_label.configure(activebackground="#f9f9f9")
-        self.max_name_len_label.configure(activeforeground="black")
-        self.max_name_len_label.configure(anchor='e')
-        self.max_name_len_label.configure(background="#edf0f3")
-        self.max_name_len_label.configure(compound='left')
         self.max_name_len_label.configure(
             font="-family {TkDefaultFont} -size 12")
-        self.max_name_len_label.configure(foreground="#000000")
-        self.max_name_len_label.configure(highlightbackground="#edf0f3")
-        self.max_name_len_label.configure(highlightcolor="black")
-        self.max_name_len_label.configure(justify='left')
         self.max_name_len_label.configure(text='''Max name length''')
 
-        self.max_frag_len_label = tk.Label(self.Labelframe1)
+        self.max_frag_len_label = my_label(self.Labelframe1)
         self.max_frag_len_label.place(relx=0.052, rely=0.709, height=35
                                       , width=130, bordermode='ignore')
-        self.max_frag_len_label.configure(activebackground="#f9f9f9")
-        self.max_frag_len_label.configure(activeforeground="black")
-        self.max_frag_len_label.configure(anchor='e')
-        self.max_frag_len_label.configure(background="#edf0f3")
-        self.max_frag_len_label.configure(compound='left')
         self.max_frag_len_label.configure(
             font="-family {TkDefaultFont} -size 12")
-        self.max_frag_len_label.configure(foreground="#000000")
-        self.max_frag_len_label.configure(highlightbackground="#edf0f3")
-        self.max_frag_len_label.configure(highlightcolor="black")
-        self.max_frag_len_label.configure(justify='left')
         self.max_frag_len_label.configure(text='''Max fragment length''')
 
         self.max_name_len_entry = ttk.Entry(self.Labelframe1)
@@ -924,53 +710,24 @@ class GB2Fasta:
                                , bordermode='ignore')
         self.TSeparator2.configure(orient="vertical")
 
-        self.no_divide_b = tk.Checkbutton(self.top)
+        self.no_divide_b = my_checkbutton(self.top)
         self.no_divide_b.place(relx=0.733, rely=0.488, relheight=0.044
                                , relwidth=0.215)
-        self.no_divide_b.configure(activebackground="#ececec")
-        self.no_divide_b.configure(activeforeground="#000000")
-        self.no_divide_b.configure(anchor='w')
-        self.no_divide_b.configure(background="#edf0f3")
-        self.no_divide_b.configure(compound='left')
         self.no_divide_b.configure(font="-family {TkDefaultFont} -size 12")
-        self.no_divide_b.configure(foreground="#000000")
-        self.no_divide_b.configure(highlightbackground="#edf0f3")
-        self.no_divide_b.configure(highlightcolor="black")
-        self.no_divide_b.configure(justify='left')
-        self.no_divide_b.configure(selectcolor="#d9d9d9")
         self.no_divide_b.configure(text='''No divide''')
         self.no_divide_b.configure(variable=self.no_divide)
 
-        self.rename_b = tk.Checkbutton(self.top)
+        self.rename_b = my_checkbutton(self.top)
         self.rename_b.place(relx=0.467, rely=0.488, relheight=0.044
                             , relwidth=0.243)
-        self.rename_b.configure(activebackground="#ececec")
-        self.rename_b.configure(activeforeground="#000000")
-        self.rename_b.configure(anchor='w')
-        self.rename_b.configure(background="#edf0f3")
-        self.rename_b.configure(compound='left')
         self.rename_b.configure(font="-family {TkDefaultFont} -size 12")
-        self.rename_b.configure(foreground="#000000")
-        self.rename_b.configure(highlightbackground="#edf0f3")
-        self.rename_b.configure(highlightcolor="black")
-        self.rename_b.configure(justify='left')
-        self.rename_b.configure(selectcolor="#d9d9d9")
         self.rename_b.configure(text='''Rename gene''')
         self.rename_b.configure(variable=self.rename)
 
-        self.unique_label = tk.Label(self.top)
+        self.unique_label = my_label(self.top)
         self.unique_label.place(relx=0.05, rely=0.488, height=35
                                 , width=69)
-        self.unique_label.configure(activebackground="#f9f9f9")
-        self.unique_label.configure(activeforeground="black")
-        self.unique_label.configure(anchor='w')
-        self.unique_label.configure(background="#edf0f3")
-        self.unique_label.configure(compound='left')
         self.unique_label.configure(font="-family {TkDefaultFont} -size 12")
-        self.unique_label.configure(foreground="#000000")
-        self.unique_label.configure(highlightbackground="#edf0f3")
-        self.unique_label.configure(highlightcolor="black")
-        self.unique_label.configure(justify='left')
         self.unique_label.configure(text='''Unique''')
 
         self.TCombobox_unique = ttk.Combobox(self.top)
@@ -986,18 +743,10 @@ class GB2Fasta:
             self.TCombobox_unique, self.tooltip_font,
             'methods to remove redundant records')
 
-        self.run_b = tk.Button(self.top)
+        self.run_b = my_button(self.top)
         self.run_b.place(relx=0.333, rely=0.863, height=40, width=189)
-        self.run_b.configure(activebackground="#ececec")
-        self.run_b.configure(activeforeground="#000000")
-        self.run_b.configure(background="#edf0f3")
         self.run_b.configure(command=run_gb2fasta(self, self.top))
-        self.run_b.configure(compound='left')
         self.run_b.configure(font="-family {TkDefaultFont} -size 14")
-        self.run_b.configure(foreground="#000000")
-        self.run_b.configure(highlightbackground="#edf0f3")
-        self.run_b.configure(highlightcolor="black")
-        self.run_b.configure(pady="0")
         self.run_b.configure(text='''Run''')
 
 
@@ -1052,23 +801,14 @@ class Evaluate:
         self.Labelframe1.configure(highlightbackground="#d9d9d9")
         self.Labelframe1.configure(highlightcolor="black")
 
-        self.unalign_label = tk.Label(self.Labelframe1)
+        self.unalign_label = my_label(self.Labelframe1)
         self.unalign_label.place(relx=0.03, rely=0.133, height=35, width=160
                                  , bordermode='ignore')
-        self.unalign_label.configure(activebackground="#f9f9f9")
-        self.unalign_label.configure(activeforeground="black")
-        self.unalign_label.configure(anchor='w')
-        self.unalign_label.configure(background="#edf0f3")
-        self.unalign_label.configure(compound='left')
         self.unalign_label.configure(font="-family {TkDefaultFont} -size 10")
-        self.unalign_label.configure(foreground="#000000")
-        self.unalign_label.configure(highlightbackground="#edf0f3")
-        self.unalign_label.configure(highlightcolor="black")
-        self.unalign_label.configure(justify='left')
         self.unalign_label.configure(text='''Unaligned FASTA files''')
         self.tooltip_font = "TkDefaultFont"
-        self.TLabel1_tooltip = \
-            ToolTip(self.unalign_label, self.tooltip_font, '''unaligned''')
+        self.TLabel1_tooltip = ToolTip(self.unalign_label, self.tooltip_font,
+                                       'unaligned')
 
         self.fasta_entry = ttk.Entry(self.Labelframe1)
         self.fasta_entry.place(relx=0.314, rely=0.133, relheight=0.233
@@ -1076,44 +816,25 @@ class Evaluate:
         self.fasta_entry.configure(textvariable=self.fasta)
         self.fasta_entry.configure(takefocus="")
         self.fasta_entry.configure(cursor="fleur")
-        self.tooltip_font = "TkDefaultFont"
         self.fasta_entry_tooltip = \
             ToolTip(self.fasta_entry, self.tooltip_font,
                     '''unaligned fasta files''')
 
-        self.open_btn = tk.Button(self.Labelframe1)
+        self.open_btn = my_button(self.Labelframe1)
         self.open_btn.place(relx=0.82, rely=0.133, height=35, width=90
                             , bordermode='ignore')
-        self.open_btn.configure(activebackground="#ececec")
-        self.open_btn.configure(activeforeground="#000000")
-        self.open_btn.configure(background="#edf0f3")
         self.open_btn.configure(command=open_file(self.fasta_entry,
                                                   single=False))
-        self.open_btn.configure(compound='left')
-        self.open_btn.configure(font="-family {TkDefaultFont} -size 10")
-        self.open_btn.configure(foreground="#000000")
-        self.open_btn.configure(highlightbackground="#edf0f3")
-        self.open_btn.configure(highlightcolor="black")
-        self.open_btn.configure(pady="0")
         self.open_btn.configure(text='''Open''')
 
-        self.unalign_label2 = tk.Label(self.Labelframe1)
+        self.unalign_label2 = my_label(self.Labelframe1)
         self.unalign_label2.place(relx=0.03, rely=0.4, height=35, width=160
                                   , bordermode='ignore')
-        self.unalign_label2.configure(activebackground="#f9f9f9")
-        self.unalign_label2.configure(activeforeground="black")
-        self.unalign_label2.configure(anchor='w')
-        self.unalign_label2.configure(background="#edf0f3")
-        self.unalign_label2.configure(compound='left')
         self.unalign_label2.configure(font="-family {TkDefaultFont} -size 10")
-        self.unalign_label2.configure(foreground="#000000")
-        self.unalign_label2.configure(highlightbackground="#edf0f3")
-        self.unalign_label2.configure(highlightcolor="black")
-        self.unalign_label2.configure(justify='left')
         self.unalign_label2.configure(text='''Unaligned FASTA folder''')
-        self.tooltip_font = "TkDefaultFont"
         self.TLabel1_tooltip = ToolTip(self.unalign_label2, self.tooltip_font,
                                        '''unaligned''')
+
         self.fasta_folder_entry = ttk.Entry(self.Labelframe1)
         self.fasta_folder_entry.place(relx=0.314, rely=0.4, relheight=0.233
                                       , relwidth=0.489, bordermode='ignore')
@@ -1123,37 +844,18 @@ class Evaluate:
         self.fasta_folder_entry_tooltip = ToolTip(
             self.fasta_folder_entry, self.tooltip_font,
             'unaligned fasta files')
-        self.open1_btn = tk.Button(self.Labelframe1)
+        self.open1_btn = my_button(self.Labelframe1)
         self.open1_btn.place(relx=0.82, rely=0.4, height=35, width=90
                              , bordermode='ignore')
-        self.open1_btn.configure(activebackground="#ececec")
-        self.open1_btn.configure(activeforeground="#000000")
-        self.open1_btn.configure(background="#edf0f3")
         self.open1_btn.configure(command=open_file(self.fasta_folder_entry,
                                                    type_='folder'))
-        self.open1_btn.configure(compound='left')
-        self.open1_btn.configure(font="-family {TkDefaultFont} -size 10")
-        self.open1_btn.configure(foreground="#000000")
-        self.open1_btn.configure(highlightbackground="#edf0f3")
-        self.open1_btn.configure(highlightcolor="black")
-        self.open1_btn.configure(pady="0")
         self.open1_btn.configure(text='''Open''')
 
-        self.align_label = tk.Label(self.Labelframe1)
+        self.align_label = my_label(self.Labelframe1)
         self.align_label.place(relx=0.03, rely=0.667, height=35, width=150
                                , bordermode='ignore')
-        self.align_label.configure(activebackground="#f9f9f9")
-        self.align_label.configure(activeforeground="black")
-        self.align_label.configure(anchor='w')
-        self.align_label.configure(background="#edf0f3")
-        self.align_label.configure(compound='left')
         self.align_label.configure(font="-family {TkDefaultFont} -size 10")
-        self.align_label.configure(foreground="#000000")
-        self.align_label.configure(highlightbackground="#edf0f3")
-        self.align_label.configure(highlightcolor="black")
-        self.align_label.configure(justify='left')
         self.align_label.configure(text='''Aligned FASTA files''')
-        self.tooltip_font = "TkDefaultFont"
         self.TLabel1_3_tooltip = ToolTip(self.align_label, self.tooltip_font,
                                          '''aligned''')
 
@@ -1166,36 +868,17 @@ class Evaluate:
         self.tooltip_font = "TkDefaultFont"
         self.aln_entry_tooltip = ToolTip(self.aln_entry, self.tooltip_font,
                                          '''aligned fasta files''')
-        self.open2_btn = tk.Button(self.Labelframe1)
+        self.open2_btn = my_button(self.Labelframe1)
         self.open2_btn.place(relx=0.82, rely=0.667, height=35, width=90
                              , bordermode='ignore')
-        self.open2_btn.configure(activebackground="#ececec")
-        self.open2_btn.configure(activeforeground="#000000")
-        self.open2_btn.configure(background="#edf0f3")
         self.open2_btn.configure(command=open_file(self.aln_entry,
                                                    single=False))
-        self.open2_btn.configure(compound='left')
-        self.open2_btn.configure(font="-family {TkDefaultFont} -size 10")
-        self.open2_btn.configure(foreground="#000000")
-        self.open2_btn.configure(highlightbackground="#edf0f3")
-        self.open2_btn.configure(highlightcolor="black")
-        self.open2_btn.configure(pady="0")
         self.open2_btn.configure(text='''Open''')
 
-        self.out_label = tk.Label(self.top)
+        self.out_label = my_label(self.top)
         self.out_label.place(relx=0.117, rely=0.356, height=35, width=100)
-        self.out_label.configure(activebackground="#f9f9f9")
-        self.out_label.configure(activeforeground="black")
-        self.out_label.configure(anchor='w')
-        self.out_label.configure(background="#edf0f3")
-        self.out_label.configure(compound='left')
         self.out_label.configure(font="-family {TkDefaultFont} -size 10")
-        self.out_label.configure(foreground="#000000")
-        self.out_label.configure(highlightbackground="#edf0f3")
-        self.out_label.configure(highlightcolor="black")
-        self.out_label.configure(justify='left')
         self.out_label.configure(text='''Output folder''')
-        self.tooltip_font = "TkDefaultFont"
         self.TLabel1_3_1_tooltip = ToolTip(self.out_label, self.tooltip_font,
                                            '''output''')
 
@@ -1205,24 +888,14 @@ class Evaluate:
         self.out_entry.configure(textvariable=self.out)
         self.out_entry.configure(takefocus="")
         self.out_entry.configure(cursor="fleur")
-        self.tooltip_font = "TkDefaultFont"
         self.out_entry_tooltip = \
             ToolTip(self.out_entry, self.tooltip_font,
                     '''unaligned fasta files''')
 
-        self.open3_btn = tk.Button(self.top)
+        self.open3_btn = my_button(self.top)
         self.open3_btn.place(relx=0.8, rely=0.356, height=35, width=90)
-        self.open3_btn.configure(activebackground="#ececec")
-        self.open3_btn.configure(activeforeground="#000000")
-        self.open3_btn.configure(background="#edf0f3")
         self.open3_btn.configure(command=open_file(self.out_entry,
                                                    type_='folder'))
-        self.open3_btn.configure(compound='left')
-        self.open3_btn.configure(font="-family {TkDefaultFont} -size 10")
-        self.open3_btn.configure(foreground="#000000")
-        self.open3_btn.configure(highlightbackground="#edf0f3")
-        self.open3_btn.configure(highlightcolor="black")
-        self.open3_btn.configure(pady="0")
         self.open3_btn.configure(text='''Open''')
 
         self.Labelframe1 = tk.LabelFrame(self.top)
@@ -1236,44 +909,22 @@ class Evaluate:
         self.Labelframe1.configure(highlightbackground="#d9d9d9")
         self.Labelframe1.configure(highlightcolor="black")
 
-        self.Checkbutton1 = tk.Checkbutton(self.Labelframe1)
+        self.Checkbutton1 = my_checkbutton(self.Labelframe1)
         self.Checkbutton1.place(relx=0.035, rely=0.429, relheight=0.3
                                 , relwidth=0.262, bordermode='ignore')
-        self.Checkbutton1.configure(activebackground="#ececec")
-        self.Checkbutton1.configure(activeforeground="#000000")
-        self.Checkbutton1.configure(anchor='w')
-        self.Checkbutton1.configure(background="#edf0f3")
-        self.Checkbutton1.configure(compound='left')
-        self.Checkbutton1.configure(foreground="#000000")
-        self.Checkbutton1.configure(highlightbackground="#edf0f3")
-        self.Checkbutton1.configure(highlightcolor="black")
-        self.Checkbutton1.configure(justify='left')
-        self.Checkbutton1.configure(selectcolor="#edf0f3")
         self.Checkbutton1.configure(text='''Skip sliding window''')
         self.Checkbutton1.configure(variable=self.quick)
 
-        self.window_size_label = tk.Label(self.Labelframe1)
+        self.window_size_label = my_label(self.Labelframe1)
         self.window_size_label.place(relx=0.314, rely=0.429, height=22, width=80
                                      , bordermode='ignore')
-        self.window_size_label.configure(activebackground="#f9f9f9")
-        self.window_size_label.configure(anchor='w')
-        self.window_size_label.configure(background="#edf0f3")
-        self.window_size_label.configure(compound='left')
-        self.window_size_label.configure(foreground="#000000")
-        self.window_size_label.configure(highlightbackground="#d9d9d9")
-        self.window_size_label.configure(highlightcolor="black")
-        self.window_size_label.configure(text='''Window size''')
+        self.window_size_label.configure(
+            font="-family {TkDefaultFont} -size 10")
+        self.window_size_label.configure(text='Window size')
 
-        self.step_len_label = tk.Label(self.Labelframe1)
+        self.step_len_label = my_label(self.Labelframe1)
         self.step_len_label.place(relx=0.681, rely=0.429, height=22, width=80
                                   , bordermode='ignore')
-        self.step_len_label.configure(activebackground="#f9f9f9")
-        self.step_len_label.configure(anchor='w')
-        self.step_len_label.configure(background="#edf0f3")
-        self.step_len_label.configure(compound='left')
-        self.step_len_label.configure(foreground="#000000")
-        self.step_len_label.configure(highlightbackground="#d9d9d9")
-        self.step_len_label.configure(highlightcolor="black")
         self.step_len_label.configure(text='''Step length''')
 
         self.size_entry = ttk.Entry(self.Labelframe1)
@@ -1302,52 +953,22 @@ class Evaluate:
         self.Labelframe1.configure(highlightbackground="#d9d9d9")
         self.Labelframe1.configure(highlightcolor="black")
 
-        self.Checkbutton1 = tk.Checkbutton(self.Labelframe1)
+        self.Checkbutton1 = my_checkbutton(self.Labelframe1)
         self.Checkbutton1.place(relx=0.087, rely=0.429, relheight=0.3
                                 , relwidth=0.314, bordermode='ignore')
-        self.Checkbutton1.configure(activebackground="#ececec")
-        self.Checkbutton1.configure(activeforeground="#000000")
-        self.Checkbutton1.configure(anchor='w')
-        self.Checkbutton1.configure(background="#edf0f3")
-        self.Checkbutton1.configure(compound='left')
-        self.Checkbutton1.configure(foreground="#000000")
-        self.Checkbutton1.configure(highlightbackground="#edf0f3")
-        self.Checkbutton1.configure(highlightcolor="black")
-        self.Checkbutton1.configure(justify='left')
-        self.Checkbutton1.configure(selectcolor="#edf0f3")
         self.Checkbutton1.configure(text='''Ignore gaps in alignment''')
         self.Checkbutton1.configure(variable=self.ig)
 
-        self.Checkbutton1_2 = tk.Checkbutton(self.Labelframe1)
+        self.Checkbutton1_2 = my_checkbutton(self.Labelframe1)
         self.Checkbutton1_2.place(relx=0.593, rely=0.429, relheight=0.3
                                   , relwidth=0.314, bordermode='ignore')
-        self.Checkbutton1_2.configure(activebackground="#ececec")
-        self.Checkbutton1_2.configure(activeforeground="#000000")
-        self.Checkbutton1_2.configure(anchor='w')
-        self.Checkbutton1_2.configure(background="#edf0f3")
-        self.Checkbutton1_2.configure(compound='left')
-        self.Checkbutton1_2.configure(foreground="#000000")
-        self.Checkbutton1_2.configure(highlightbackground="#edf0f3")
-        self.Checkbutton1_2.configure(highlightcolor="black")
-        self.Checkbutton1_2.configure(justify='left')
-        self.Checkbutton1_2.configure(selectcolor="#edf0f3")
         self.Checkbutton1_2.configure(text='''Ignore ambiguous bases''')
         self.Checkbutton1_2.configure(variable=self.iab)
 
-        self.Button1_3 = tk.Button(self.top)
-        self.Button1_3.place(relx=0.333, rely=0.867, height=40, width=189)
-        self.Button1_3.configure(activebackground="#ececec")
-        self.Button1_3.configure(activeforeground="#000000")
-        self.Button1_3.configure(background="#edf0f3")
-        self.Button1_3.configure(command=run_evaluate(self, self.top))
-        self.Button1_3.configure(compound='left')
-        self.Button1_3.configure(font="-family {TkDefaultFont} -size 12")
-        self.Button1_3.configure(foreground="#000000")
-        self.Button1_3.configure(highlightbackground="#edf0f3")
-        self.Button1_3.configure(highlightcolor="black")
-        self.Button1_3.configure(pady="0")
-        self.Button1_3.configure(relief="raised")
-        self.Button1_3.configure(text='''Run''')
+        self.run_b = my_button(self.top)
+        self.run_b.place(relx=0.333, rely=0.867, height=40, width=189)
+        self.run_b.configure(command=run_evaluate(self, self.top))
+        self.run_b.configure(text='''Run''')
 
 
 class Primer:
@@ -1370,8 +991,8 @@ class Primer:
         self.style.configure('.', background=_bgcolor)
         self.style.configure('.', foreground=_fgcolor)
         self.style.configure('.', font="TkDefaultFont")
-        self.style.map('.', background=
-        [('selected', _compcolor), ('active', _ana2color)])
+        self.style.map('.', background=[('selected', _compcolor),
+                                        ('active', _ana2color)])
 
         top.geometry("600x500+284+458")
         move_to_center(top, 600, 600)
@@ -1405,23 +1026,14 @@ class Primer:
         self.Labelframe1.configure(highlightbackground="#d9d9d9")
         self.Labelframe1.configure(highlightcolor="black")
 
-        self.TLabel1 = tk.Label(self.Labelframe1)
-        self.TLabel1.place(relx=0.052, rely=0.2, height=35, width=130
-                           , bordermode='ignore')
-        self.TLabel1.configure(activebackground="#f9f9f9")
-        self.TLabel1.configure(activeforeground="black")
-        self.TLabel1.configure(anchor='w')
-        self.TLabel1.configure(background="#edf0f3")
-        self.TLabel1.configure(compound='left')
-        self.TLabel1.configure(font="-family {TkDefaultFont} -size 10")
-        self.TLabel1.configure(foreground="#000000")
-        self.TLabel1.configure(highlightbackground="#edf0f3")
-        self.TLabel1.configure(highlightcolor="black")
-        self.TLabel1.configure(justify='left')
-        self.TLabel1.configure(text='''Aligned FASTA files''')
+        self.aln_fasta_label = my_label(self.Labelframe1)
+        self.aln_fasta_label.place(relx=0.052, rely=0.2, height=35, width=130
+                                   , bordermode='ignore')
+        self.aln_fasta_label.configure(font="-family {TkDefaultFont} -size 10")
+        self.aln_fasta_label.configure(text='''Aligned FASTA files''')
         self.tooltip_font = "TkDefaultFont"
-        self.TLabel1_tooltip = \
-            ToolTip(self.TLabel1, self.tooltip_font, '''unaligned''')
+        self.TLabel1_tooltip = ToolTip(self.aln_fasta_label, self.tooltip_font,
+                                       'unaligned')
 
         self.aln_entry = ttk.Entry(self.Labelframe1)
         self.aln_entry.place(relx=0.314, rely=0.2, relheight=0.35,
@@ -1431,43 +1043,21 @@ class Primer:
         self.aln_entry.configure(takefocus="")
         self.aln_entry.configure(cursor="fleur")
         self.tooltip_font = "TkDefaultFont"
-        self.aln_entry_tooltip = \
-            ToolTip(self.aln_entry, self.tooltip_font,
-                    '''unaligned fasta files''')
+        self.aln_entry_tooltip = ToolTip(self.aln_entry, self.tooltip_font,
+                                         '''unaligned fasta files''')
 
-        self.out_b = tk.Button(self.Labelframe1)
+        self.out_b = my_button(self.Labelframe1)
         self.out_b.place(relx=0.82, rely=0.2, height=35, width=90
                          , bordermode='ignore')
-        self.out_b.configure(activebackground="#ececec")
-        self.out_b.configure(activeforeground="#000000")
-        self.out_b.configure(background="#edf0f3")
         self.out_b.configure(command=open_file(self.aln_entry, single=False))
-        self.out_b.configure(compound='left')
-        self.out_b.configure(font="-family {TkDefaultFont} -size 10")
-        self.out_b.configure(foreground="#000000")
-        self.out_b.configure(highlightbackground="#edf0f3")
-        self.out_b.configure(highlightcolor="black")
-        self.out_b.configure(pady="0")
-        self.out_b.configure(relief="raised")
         self.out_b.configure(text='''Open''')
 
-        self.TLabel1 = tk.Label(self.Labelframe1)
-        self.TLabel1.place(relx=0.052, rely=0.6, height=35, width=160
-                           , bordermode='ignore')
-        self.TLabel1.configure(activebackground="#f9f9f9")
-        self.TLabel1.configure(activeforeground="black")
-        self.TLabel1.configure(anchor='w')
-        self.TLabel1.configure(background="#edf0f3")
-        self.TLabel1.configure(compound='left')
-        self.TLabel1.configure(font="-family {TkDefaultFont} -size 10")
-        self.TLabel1.configure(foreground="#000000")
-        self.TLabel1.configure(highlightbackground="#edf0f3")
-        self.TLabel1.configure(highlightcolor="black")
-        self.TLabel1.configure(justify='left')
-        self.TLabel1.configure(text='''Aligned FASTA folder''')
-        self.tooltip_font = "TkDefaultFont"
-        self.TLabel1_tooltip = \
-            ToolTip(self.TLabel1, self.tooltip_font, '''unaligned''')
+        self.aln_folder_label = my_label(self.Labelframe1)
+        self.aln_folder_label.place(relx=0.052, rely=0.6, height=35, width=160
+                                    , bordermode='ignore')
+        self.aln_folder_label.configure(text='''Aligned FASTA folder''')
+        self.TLabel1_tooltip = ToolTip(self.aln_folder_label, self.tooltip_font,
+                                       'Folder with aligned fasta files')
 
         self.aln_folder_entry = ttk.Entry(self.Labelframe1)
         self.aln_folder_entry.place(relx=0.314, rely=0.6, relheight=0.35
@@ -1480,39 +1070,18 @@ class Primer:
             ToolTip(self.aln_folder_entry, self.tooltip_font,
                     '''unaligned fasta files''')
 
-        self.folder_b = tk.Button(self.Labelframe1)
+        self.folder_b = my_button(self.Labelframe1)
         self.folder_b.place(relx=0.82, rely=0.6, height=35, width=90
                             , bordermode='ignore')
-        self.folder_b.configure(activebackground="#ececec")
-        self.folder_b.configure(activeforeground="#000000")
-        self.folder_b.configure(background="#edf0f3")
         self.folder_b.configure(command=open_file(self.aln_folder_entry,
                                                   type_='folder'))
-        self.folder_b.configure(compound='left')
-        self.folder_b.configure(font="-family {TkDefaultFont} -size 10")
-        self.folder_b.configure(foreground="#000000")
-        self.folder_b.configure(highlightbackground="#edf0f3")
-        self.folder_b.configure(highlightcolor="black")
-        self.folder_b.configure(pady="0")
-        self.folder_b.configure(relief="raised")
         self.folder_b.configure(text='''Open''')
 
-        self.out_label = tk.Label(self.top)
+        self.out_label = my_label(self.top)
         self.out_label.place(relx=0.07, rely=0.24, height=35, width=150)
-        self.out_label.configure(activebackground="#f9f9f9")
-        self.out_label.configure(activeforeground="black")
-        self.out_label.configure(anchor='w')
-        self.out_label.configure(background="#edf0f3")
-        self.out_label.configure(compound='left')
-        self.out_label.configure(font="-family {TkDefaultFont} -size 10")
-        self.out_label.configure(foreground="#000000")
-        self.out_label.configure(highlightbackground="#edf0f3")
-        self.out_label.configure(highlightcolor="black")
-        self.out_label.configure(justify='left')
         self.out_label.configure(text='''Output folder''')
-        self.tooltip_font = "TkDefaultFont"
-        self.TLabel1_3_1_tooltip = \
-            ToolTip(self.out_label, self.tooltip_font, '''Output''')
+        self.TLabel1_3_1_tooltip = ToolTip(self.out_label, self.tooltip_font,
+                                           'Output')
 
         self.out_entry = ttk.Entry(self.top)
         self.out_entry.place(relx=0.317, rely=0.24, relheight=0.07
@@ -1520,24 +1089,10 @@ class Primer:
         self.out_entry.configure(textvariable=self.out)
         self.out_entry.configure(takefocus="")
         self.out_entry.configure(cursor="fleur")
-        self.tooltip_font = "TkDefaultFont"
-        self.out_entry_tooltip = \
-            ToolTip(self.out_entry, self.tooltip_font,
-                    '''unaligned fasta files''')
 
-        self.out_b = tk.Button(self.top)
+        self.out_b = my_button(self.top)
         self.out_b.place(relx=0.8, rely=0.24, height=35, width=90)
-        self.out_b.configure(activebackground="#ececec")
-        self.out_b.configure(activeforeground="#000000")
-        self.out_b.configure(background="#edf0f3")
         self.out_b.configure(command=open_file(self.out_entry, type_='folder'))
-        self.out_b.configure(compound='left')
-        self.out_b.configure(font="-family {TkDefaultFont} -size 10")
-        self.out_b.configure(foreground="#000000")
-        self.out_b.configure(highlightbackground="#edf0f3")
-        self.out_b.configure(highlightcolor="black")
-        self.out_b.configure(pady="0")
-        self.out_b.configure(relief="raised")
         self.out_b.configure(text='''Open''')
 
         self.Labelframe1 = tk.LabelFrame(self.top)
@@ -1550,20 +1105,11 @@ class Primer:
         self.Labelframe1.configure(highlightbackground="#edf0f3")
         self.Labelframe1.configure(highlightcolor="black")
 
-        self.coverage_label = tk.Label(self.Labelframe1)
+        self.coverage_label = my_label(self.Labelframe1)
         self.coverage_label.place(relx=0.07, rely=0.158, height=35
                                   , width=60, bordermode='ignore')
-        self.coverage_label.configure(activebackground="#f9f9f9")
-        self.coverage_label.configure(activeforeground="black")
-        self.coverage_label.configure(anchor='w')
-        self.coverage_label.configure(background="#edf0f3")
-        self.coverage_label.configure(compound='left')
-        self.coverage_label.configure(font="-family {TkDefaultFont} -size 10")
-        self.coverage_label.configure(foreground="#000000")
-        self.coverage_label.configure(highlightbackground="#edf0f3")
-        self.coverage_label.configure(highlightcolor="black")
-        self.coverage_label.configure(justify='left')
         self.coverage_label.configure(text='''Coverage''')
+        self.coverage_label.configure(font="-family {TkDefaultFont} -size 10")
 
         self.coverage_entry = ttk.Entry(self.Labelframe1)
         self.coverage_entry.place(relx=0.297, rely=0.142, relheight=0.184
@@ -1577,34 +1123,14 @@ class Primer:
                     '''minimal coverage of primer on alignment''')
         self.coverage_entry.insert(0, '0.5')
 
-        self.mismatch_label = tk.Label(self.Labelframe1)
+        self.mismatch_label = my_label(self.Labelframe1)
         self.mismatch_label.place(relx=0.07, rely=0.368, height=35
                                   , width=120, bordermode='ignore')
-        self.mismatch_label.configure(activebackground="#f9f9f9")
-        self.mismatch_label.configure(activeforeground="black")
-        self.mismatch_label.configure(anchor='w')
-        self.mismatch_label.configure(background="#edf0f3")
-        self.mismatch_label.configure(compound='left')
-        self.mismatch_label.configure(font="-family {TkDefaultFont} -size 10")
-        self.mismatch_label.configure(foreground="#000000")
-        self.mismatch_label.configure(highlightbackground="#edf0f3")
-        self.mismatch_label.configure(highlightcolor="black")
-        self.mismatch_label.configure(justify='left')
         self.mismatch_label.configure(text='''Mismatch''')
 
-        self.res_label = tk.Label(self.Labelframe1)
+        self.res_label = my_label(self.Labelframe1)
         self.res_label.place(relx=0.07, rely=0.579, height=35
                              , width=130, bordermode='ignore')
-        self.res_label.configure(activebackground="#f9f9f9")
-        self.res_label.configure(activeforeground="black")
-        self.res_label.configure(anchor='w')
-        self.res_label.configure(background="#edf0f3")
-        self.res_label.configure(compound='left')
-        self.res_label.configure(font="-family {TkDefaultFont} -size 10")
-        self.res_label.configure(foreground="#000000")
-        self.res_label.configure(highlightbackground="#edf0f3")
-        self.res_label.configure(highlightcolor="black")
-        self.res_label.configure(justify='left')
         self.res_label.configure(text='''Resolution''')
 
         self.mismatch_entry = ttk.Entry(self.Labelframe1)
@@ -1613,10 +1139,9 @@ class Primer:
         self.mismatch_entry.configure(textvariable=self.mismatch)
         self.mismatch_entry.configure(takefocus="")
         self.mismatch_entry.configure(cursor="fleur")
-        self.tooltip_font = "TkDefaultFont"
-        self.mismatch_entry_tooltip = \
-            ToolTip(self.mismatch_entry, self.tooltip_font,
-                    '''maximum mismatch bases in primer''')
+        self.mismatch_entry_tooltip = ToolTip(
+            self.mismatch_entry, self.tooltip_font,
+            'maximum mismatch bases in primer')
 
         self.resolution_entry = ttk.Entry(self.Labelframe1)
         self.resolution_entry.place(relx=0.297, rely=0.579, relheight=0.184
@@ -1625,9 +1150,9 @@ class Primer:
         self.resolution_entry.configure(takefocus="")
         self.resolution_entry.configure(cursor="fleur")
         self.tooltip_font = "TkDefaultFont"
-        self.resolution_entry_tooltip = \
-            ToolTip(self.resolution_entry, self.tooltip_font,
-                    '''minimal resolution of amplified fragment''')
+        self.resolution_entry_tooltip = ToolTip(
+            self.resolution_entry, self.tooltip_font,
+            'minimal resolution of amplified fragment''')
         self.mismatch_entry.insert(0, '4')
         self.resolution_entry.insert(0, '0.3')
 
@@ -1636,19 +1161,9 @@ class Primer:
                                , bordermode='ignore')
         self.TSeparator2.configure(orient="vertical")
 
-        self.topn_label = tk.Label(self.Labelframe1)
+        self.topn_label = my_label(self.Labelframe1)
         self.topn_label.place(relx=0.07, rely=0.789, height=35
                               , width=130, bordermode='ignore')
-        self.topn_label.configure(activebackground="#f9f9f9")
-        self.topn_label.configure(activeforeground="black")
-        self.topn_label.configure(anchor='w')
-        self.topn_label.configure(background="#edf0f3")
-        self.topn_label.configure(compound='left')
-        self.topn_label.configure(font="-family {TkDefaultFont} -size 10")
-        self.topn_label.configure(foreground="#000000")
-        self.topn_label.configure(highlightbackground="#edf0f3")
-        self.topn_label.configure(highlightcolor="black")
-        self.topn_label.configure(justify='left')
         self.topn_label.configure(text='''Top n''')
 
         self.top_n_entry = ttk.Entry(self.Labelframe1)
@@ -1663,19 +1178,9 @@ class Primer:
                     '''Only keep top best primers''')
         self.top_n_entry.insert(0, '1')
 
-        self.primer_len_label = tk.Label(self.Labelframe1)
+        self.primer_len_label = my_label(self.Labelframe1)
         self.primer_len_label.place(relx=0.541, rely=0.158, height=35
                                     , width=100, bordermode='ignore')
-        self.primer_len_label.configure(activebackground="#f9f9f9")
-        self.primer_len_label.configure(activeforeground="black")
-        self.primer_len_label.configure(anchor='w')
-        self.primer_len_label.configure(background="#edf0f3")
-        self.primer_len_label.configure(compound='left')
-        self.primer_len_label.configure(font="-family {TkDefaultFont} -size 10")
-        self.primer_len_label.configure(foreground="#000000")
-        self.primer_len_label.configure(highlightbackground="#edf0f3")
-        self.primer_len_label.configure(highlightcolor="black")
-        self.primer_len_label.configure(justify='left')
         self.primer_len_label.configure(text='''Primer length''')
 
         self.pmin_entry = ttk.Entry(self.Labelframe1)
@@ -1685,19 +1190,10 @@ class Primer:
         self.pmin_entry.configure(takefocus="")
         self.pmin_entry.configure(cursor="fleur")
 
-        self.Label1 = tk.Label(self.Labelframe1)
-        self.Label1.place(relx=0.803, rely=0.158, height=35, width=36
-                          , bordermode='ignore')
-        self.Label1.configure(activebackground="#f9f9f9")
-        self.Label1.configure(activeforeground="SystemButtonText")
-        self.Label1.configure(anchor='w')
-        self.Label1.configure(background="#edf0f3")
-        self.Label1.configure(compound='left')
-        self.Label1.configure(font="-family {TkDefaultFont} -size 13")
-        self.Label1.configure(foreground="#000000")
-        self.Label1.configure(highlightbackground="#edf0f3")
-        self.Label1.configure(highlightcolor="black")
-        self.Label1.configure(text='''to''')
+        self.to_label1 = my_label(self.Labelframe1)
+        self.to_label1.place(relx=0.803, rely=0.158, height=35, width=36
+                             , bordermode='ignore')
+        self.to_label1.configure(text='''to''')
 
         self.pmax_entry = ttk.Entry(self.Labelframe1)
         self.pmax_entry.place(relx=0.855, rely=0.158, relheight=0.184
@@ -1708,19 +1204,9 @@ class Primer:
         self.pmin_entry.insert(0, '20')
         self.pmax_entry.insert(0, '30')
 
-        self.amp_len_label = tk.Label(self.Labelframe1)
+        self.amp_len_label = my_label(self.Labelframe1)
         self.amp_len_label.place(relx=0.541, rely=0.368, height=35
                                  , width=120, bordermode='ignore')
-        self.amp_len_label.configure(activebackground="#f9f9f9")
-        self.amp_len_label.configure(activeforeground="black")
-        self.amp_len_label.configure(anchor='w')
-        self.amp_len_label.configure(background="#edf0f3")
-        self.amp_len_label.configure(compound='left')
-        self.amp_len_label.configure(font="-family {TkDefaultFont} -size 10")
-        self.amp_len_label.configure(foreground="#000000")
-        self.amp_len_label.configure(highlightbackground="#edf0f3")
-        self.amp_len_label.configure(highlightcolor="black")
-        self.amp_len_label.configure(justify='left')
         self.amp_len_label.configure(text='''Amplicon size''')
 
         self.amin_entry = ttk.Entry(self.Labelframe1)
@@ -1729,24 +1215,13 @@ class Primer:
         self.amin_entry.configure(textvariable=self.amin)
         self.amin_entry.configure(takefocus="")
         self.amin_entry.configure(cursor="fleur")
-        self.tooltip_font = "TkDefaultFont"
-        self.amin_entry_tooltip = \
-            ToolTip(self.amin_entry, self.tooltip_font,
-                    '''including primer length''')
+        self.amin_entry_tooltip = ToolTip(self.amin_entry, self.tooltip_font,
+                                          'including primer length')
 
-        self.Label1 = tk.Label(self.Labelframe1)
-        self.Label1.place(relx=0.803, rely=0.368, height=35, width=36
-                          , bordermode='ignore')
-        self.Label1.configure(activebackground="#f9f9f9")
-        self.Label1.configure(activeforeground="SystemButtonText")
-        self.Label1.configure(anchor='w')
-        self.Label1.configure(background="#edf0f3")
-        self.Label1.configure(compound='left')
-        self.Label1.configure(font="-family {TkDefaultFont} -size 13")
-        self.Label1.configure(foreground="#000000")
-        self.Label1.configure(highlightbackground="#edf0f3")
-        self.Label1.configure(highlightcolor="black")
-        self.Label1.configure(text='''to''')
+        self.to2_label = my_label(self.Labelframe1)
+        self.to2_label.place(relx=0.803, rely=0.368, height=35, width=36
+                             , bordermode='ignore')
+        self.to2_label.configure(text='''to''')
 
         self.amax_entry = ttk.Entry(self.Labelframe1)
         self.amax_entry.place(relx=0.855, rely=0.368, relheight=0.184
@@ -1757,30 +1232,16 @@ class Primer:
         self.amin_entry.insert(0, '300')
         self.amax_entry.insert(0, '800')
 
-        self.sliding_window_label = tk.Label(self.Labelframe1)
+        self.sliding_window_label = my_label(self.Labelframe1)
         self.sliding_window_label.place(relx=0.541, rely=0.579, height=35,
                                         width=130
                                         , bordermode='ignore')
-        self.sliding_window_label.configure(activebackground="#f9f9f9")
-        self.sliding_window_label.configure(anchor='w')
-        self.sliding_window_label.configure(background="#edf0f3")
-        self.sliding_window_label.configure(compound='left')
-        self.sliding_window_label.configure(foreground="#000000")
-        self.sliding_window_label.configure(highlightbackground="#d9d9d9")
-        self.sliding_window_label.configure(highlightcolor="black")
         self.sliding_window_label.configure(text='''Sliding window size''')
 
-        self.sliding_window2_label = tk.Label(self.Labelframe1)
+        self.sliding_window2_label = my_label(self.Labelframe1)
         self.sliding_window2_label.place(relx=0.541, rely=0.789, height=35,
                                          width=130
                                          , bordermode='ignore')
-        self.sliding_window2_label.configure(activebackground="#f9f9f9")
-        self.sliding_window2_label.configure(anchor='w')
-        self.sliding_window2_label.configure(background="#edf0f3")
-        self.sliding_window2_label.configure(compound='left')
-        self.sliding_window2_label.configure(foreground="#000000")
-        self.sliding_window2_label.configure(highlightbackground="#d9d9d9")
-        self.sliding_window2_label.configure(highlightcolor="black")
         self.sliding_window2_label.configure(text='''Sliding window step''')
 
         self.size_entry = ttk.Entry(self.Labelframe1)
@@ -1799,19 +1260,10 @@ class Primer:
         self.size_entry.insert(0, '500')
         self.step_entry.insert(0, '50')
 
-        self.run_b = tk.Button(self.top)
+        self.run_b = my_button(self.top)
         self.run_b.place(relx=0.367, rely=0.82, height=40, width=180)
-        self.run_b.configure(activebackground="#ececec")
-        self.run_b.configure(activeforeground="#000000")
-        self.run_b.configure(background="#edf0f3")
         self.run_b.configure(command=run_primer(self, self.top))
-        self.run_b.configure(compound='left')
         self.run_b.configure(font="-family {TkDefaultFont} -size 14")
-        self.run_b.configure(foreground="#000000")
-        self.run_b.configure(highlightbackground="#edf0f3")
-        self.run_b.configure(highlightcolor="black")
-        self.run_b.configure(pady="0")
-        self.run_b.configure(relief="raised")
         self.run_b.configure(text='''Run''')
 
 
@@ -2091,41 +1543,45 @@ def get_arg_str(value: tk.Variable, name: str, arg_str: str,
     return arg_str
 
 
-def run_gb2fasta(w: tk.Frame, t: tk.Toplevel):
+def run_gb2fasta(win: tk.Frame, t: tk.Toplevel):
     # todo: test options and functions
     def f():
-        nonlocal w
+        nonlocal win
         arg_str = ''
-        arg_str = get_arg_str(w.gb, '-gb', arg_str)
-        arg_str = get_arg_str(w.gene, '-gene', arg_str)
-        arg_str = get_arg_str(w.molecular, '-molecular', arg_str)
-        arg_str = get_arg_str(w.group, '-group', arg_str)
-        arg_str = get_arg_str(w.og, '-og', arg_str)
-        arg_str = get_arg_str(w.refseq, '-refseq', arg_str)
-        arg_str = get_arg_str(w.count, '-count', arg_str)
-        arg_str = get_arg_str(w.min_len, '-min_len', arg_str)
-        arg_str = get_arg_str(w.max_len, '-max_len', arg_str)
-        arg_str = get_arg_str(w.date_start, '-date_start', arg_str)
-        arg_str = get_arg_str(w.date_end, '-date_end', arg_str)
-        arg_str = get_arg_str(w.exclude, '-exclude', arg_str)
-        arg_str = get_arg_str(w.query, '-query', arg_str)
-        arg_str = get_arg_str(w.taxon, '-taxon', arg_str)
-        arg_str = get_arg_str(w.out, '-out', arg_str)
-        arg_str = get_arg_str(w.expand, '-expand', arg_str)
-        arg_str = get_arg_str(w.max_name_len, '-max_name_len', arg_str)
-        arg_str = get_arg_str(w.max_gene_len, '-max_gene_len', arg_str)
-        arg_str = get_arg_str(w.unique, '-unique', arg_str)
-        arg_str = get_arg_str(w.allow_repeat, '-allow_repeat', arg_str, is_bool=True)
-        arg_str = get_arg_str(w.allow_invert_repeat, '-allow_invert_repeat', arg_str,
-                    is_bool=True)
-        arg_str = get_arg_str(w.allow_mosaic_repeat, '-allow_mosaic_repeat', arg_str,
-                    is_bool=True)
-        arg_str = get_arg_str(w.no_divide, '-no_divide', arg_str, is_bool=True)
-        arg_str = get_arg_str(w.rename, '-rename', arg_str, is_bool=True)
+        arg_str = get_arg_str(win.gb, '-gb', arg_str)
+        arg_str = get_arg_str(win.gene, '-gene', arg_str)
+        arg_str = get_arg_str(win.molecular, '-molecular', arg_str)
+        arg_str = get_arg_str(win.group, '-group', arg_str)
+        arg_str = get_arg_str(win.og, '-og', arg_str)
+        arg_str = get_arg_str(win.refseq, '-refseq', arg_str)
+        arg_str = get_arg_str(win.count, '-count', arg_str)
+        arg_str = get_arg_str(win.min_len, '-min_len', arg_str)
+        arg_str = get_arg_str(win.max_len, '-max_len', arg_str)
+        arg_str = get_arg_str(win.date_start, '-date_start', arg_str)
+        arg_str = get_arg_str(win.date_end, '-date_end', arg_str)
+        arg_str = get_arg_str(win.exclude, '-exclude', arg_str)
+        arg_str = get_arg_str(win.query, '-query', arg_str)
+        arg_str = get_arg_str(win.taxon, '-taxon', arg_str)
+        arg_str = get_arg_str(win.out, '-out', arg_str)
+        arg_str = get_arg_str(win.expand, '-expand', arg_str)
+        arg_str = get_arg_str(win.max_name_len, '-max_name_len', arg_str)
+        arg_str = get_arg_str(win.max_gene_len, '-max_gene_len', arg_str)
+        arg_str = get_arg_str(win.unique, '-unique', arg_str)
+        arg_str = get_arg_str(win.allow_repeat, '-allow_repeat', arg_str,
+                              is_bool=True)
+        arg_str = get_arg_str(win.allow_invert_repeat, '-allow_invert_repeat',
+                              arg_str,
+                              is_bool=True)
+        arg_str = get_arg_str(win.allow_mosaic_repeat, '-allow_mosaic_repeat',
+                              arg_str,
+                              is_bool=True)
+        arg_str = get_arg_str(win.no_divide, '-no_divide', arg_str,
+                              is_bool=True)
+        arg_str = get_arg_str(win.rename, '-rename', arg_str, is_bool=True)
         t.withdraw()
         w, h = root.winfo_screenwidth(), root.winfo_screenheight()
         s = min(w, h) // 2
-        size = f'{s}x{int(s*0.618)}+{w//3}+{h//3}'
+        size = f'{s}x{int(s * 0.618)}+{w // 3}+{h // 3}'
         run = tk.Toplevel(root)
         run.geometry(size)
         run.title('Running...')
@@ -2141,24 +1597,24 @@ def run_gb2fasta(w: tk.Frame, t: tk.Toplevel):
     return f
 
 
-def run_evaluate(w: tk.Frame, t: tk.Toplevel):
+def run_evaluate(win: tk.Frame, t: tk.Toplevel):
     # todo: test options and functions
     def f():
-        nonlocal w
+        nonlocal win
         arg_str = ''
-        arg_str = get_arg_str(w.fasta, '-fasta', arg_str)
-        arg_str = get_arg_str(w.fasta_folder, '-fasta_folder', arg_str)
-        arg_str = get_arg_str(w.aln, '-aln', arg_str)
-        arg_str = get_arg_str(w.out, '-out', arg_str)
-        arg_str = get_arg_str(w.size, '-size', arg_str)
-        arg_str = get_arg_str(w.step, '-step', arg_str)
-        arg_str = get_arg_str(w.quick, '-quick', arg_str, is_bool=True)
-        arg_str = get_arg_str(w.ig, '-ig', arg_str, is_bool=True)
-        arg_str = get_arg_str(w.iab, '-iab', arg_str, is_bool=True)
+        arg_str = get_arg_str(win.fasta, '-fasta', arg_str)
+        arg_str = get_arg_str(win.fasta_folder, '-fasta_folder', arg_str)
+        arg_str = get_arg_str(win.aln, '-aln', arg_str)
+        arg_str = get_arg_str(win.out, '-out', arg_str)
+        arg_str = get_arg_str(win.size, '-size', arg_str)
+        arg_str = get_arg_str(win.step, '-step', arg_str)
+        arg_str = get_arg_str(win.quick, '-quick', arg_str, is_bool=True)
+        arg_str = get_arg_str(win.ig, '-ig', arg_str, is_bool=True)
+        arg_str = get_arg_str(win.iab, '-iab', arg_str, is_bool=True)
         t.withdraw()
         w, h = root.winfo_screenwidth(), root.winfo_screenheight()
         s = min(w, h) // 2
-        size = f'{s}x{int(s*0.618)}+{w//3}+{h//3}'
+        size = f'{s}x{int(s * 0.618)}+{w // 3}+{h // 3}'
         run = tk.Toplevel(root)
         run.geometry(size)
         run.title('Running...')
@@ -2174,29 +1630,29 @@ def run_evaluate(w: tk.Frame, t: tk.Toplevel):
     return f
 
 
-def run_primer(w: tk.Frame, t: tk.Toplevel):
+def run_primer(win: tk.Frame, t: tk.Toplevel):
     # todo: test options and functions
     def f():
-        nonlocal w
+        nonlocal win
         arg_str = ''
-        arg_str = get_arg_str(w.aln, '-aln', arg_str)
-        arg_str = get_arg_str(w.aln_folder, '-aln_folder', arg_str)
-        arg_str = get_arg_str(w.out, '-out', arg_str)
-        arg_str = get_arg_str(w.coverage, '-coverage', arg_str)
-        arg_str = get_arg_str(w.mismatch, '-mismatch', arg_str)
-        arg_str = get_arg_str(w.resolution, '-resolution', arg_str)
-        arg_str = get_arg_str(w.top_n, '-top_n', arg_str)
-        arg_str = get_arg_str(w.pmin, '-pmin', arg_str)
-        arg_str = get_arg_str(w.pmax, '-pmax', arg_str)
-        arg_str = get_arg_str(w.amin, '-amin', arg_str)
-        arg_str = get_arg_str(w.amax, '-amax', arg_str)
-        arg_str = get_arg_str(w.size, '-size', arg_str)
-        arg_str = get_arg_str(w.step, '-step', arg_str)
+        arg_str = get_arg_str(win.aln, '-aln', arg_str)
+        arg_str = get_arg_str(win.aln_folder, '-aln_folder', arg_str)
+        arg_str = get_arg_str(win.out, '-out', arg_str)
+        arg_str = get_arg_str(win.coverage, '-coverage', arg_str)
+        arg_str = get_arg_str(win.mismatch, '-mismatch', arg_str)
+        arg_str = get_arg_str(win.resolution, '-resolution', arg_str)
+        arg_str = get_arg_str(win.top_n, '-top_n', arg_str)
+        arg_str = get_arg_str(win.pmin, '-pmin', arg_str)
+        arg_str = get_arg_str(win.pmax, '-pmax', arg_str)
+        arg_str = get_arg_str(win.amin, '-amin', arg_str)
+        arg_str = get_arg_str(win.amax, '-amax', arg_str)
+        arg_str = get_arg_str(win.size, '-size', arg_str)
+        arg_str = get_arg_str(win.step, '-step', arg_str)
         arg_str += '-primer'
         t.withdraw()
         w, h = root.winfo_screenwidth(), root.winfo_screenheight()
         s = min(w, h) // 2
-        size = f'{s}x{int(s*0.618)}+{w//3}+{h//3}'
+        size = f'{s}x{int(s * 0.618)}+{w // 3}+{h // 3}'
         run = tk.Toplevel(root)
         run.geometry(size)
         run.title('Running...')
@@ -2215,6 +1671,27 @@ def run_primer(w: tk.Frame, t: tk.Toplevel):
 def run_help():
     url = 'https://github.com/wpwupingwp/barcodefinder'
     webbrowser.open(url, new=2)
+
+
+def run_install(win, t: tk.Toplevel):
+    def f():
+        t.withdraw()
+        w, h = root.winfo_screenwidth(), root.winfo_screenheight()
+        s = min(w, h) // 2
+        size = f'{s}x{int(s * 0.618)}+{w // 3}+{h // 3}'
+        run = tk.Toplevel(root)
+        run.geometry(size)
+        run.title('Running...')
+        run.wm_transient()
+        frame = ttk.Frame(run)
+        frame.pack(fill='both')
+        scroll_text(frame)
+        r = threading.Thread(target=thread_wrap,
+                             args=(get_all_third_party, '', run, True),
+                             daemon=True)
+        r.start()
+
+    return f
 
 
 if __name__ == '__main__':
