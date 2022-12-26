@@ -85,8 +85,16 @@ def my_checkbutton(frame: tk.LabelFrame, fontsize=11) -> tk.Checkbutton:
     check_b.configure(highlightcolor="black")
     check_b.configure(justify='left')
     check_b.configure(selectcolor="#ffffff")
-    check_b.configure(font=f"-family {font_family} -size {fontsize}")
+    check_b.configure(font=f'-family {font_family} -size {fontsize}')
     return check_b
+
+
+def my_entry(frame: tk.LabelFrame, fontsize=11) -> tk.Entry:
+    entry = tk.Entry(frame)
+    entry.configure(font=f'-family {font_family} -size {fontsize}')
+    entry.configure(takefocus="")
+    entry.configure(cursor="fleur")
+    return entry
 
 
 def move_to_center(window: tk.Tk, width: int, height: int) -> None:
@@ -302,6 +310,7 @@ class GB2Fasta:
         self.style.configure('.', foreground=_fgcolor)
         self.style.map('.', background=[('selected', _compcolor),
                                         ('active', _ana2color)])
+        self.tooltip_font = "TkDefaultFont"
         set_combo_style(self)
 
         top.geometry("600x800+5+139")
@@ -352,13 +361,10 @@ class GB2Fasta:
                                 bordermode='ignore')
         self.gbfile_label.configure(text='''Genbank files''')
 
-        self.gb_entry = tk.Entry(self.Labelframe1)
+        self.gb_entry = my_entry(self.Labelframe1)
         self.gb_entry.place(relx=0.241, rely=0.057, relheight=0.095,
                             relwidth=0.562, bordermode='ignore')
         self.gb_entry.configure(textvariable=self.gb)
-        self.gb_entry.configure(takefocus="")
-        self.gb_entry.configure(cursor="fleur")
-        self.tooltip_font = "TkDefaultFont"
         self.gb_entry_tooltip = ToolTip(self.gb_entry, self.tooltip_font,
                                         '''gb format files''')
 
@@ -373,13 +379,10 @@ class GB2Fasta:
                               bordermode='ignore')
         self.gene_label.configure(text='''Gene''')
 
-        self.gene_entry = ttk.Entry(self.Labelframe1)
+        self.gene_entry = my_entry(self.Labelframe1)
         self.gene_entry.place(relx=0.201, rely=0.217, height=35,
                               relwidth=0.314, bordermode='ignore')
         self.gene_entry.configure(textvariable=self.gene)
-        self.gene_entry.configure(takefocus="")
-        self.gene_entry.configure(cursor="fleur")
-        self.tooltip_font = "TkDefaultFont"
         self.gene_entry_tooltip = ToolTip(self.gene_entry, self.tooltip_font,
                                           'gene name')
 
@@ -449,7 +452,6 @@ class GB2Fasta:
         self.TCombobox_refseq.configure(textvariable=self.refseq)
         self.TCombobox_refseq.configure(takefocus="")
         self.TCombobox_refseq.current(0)
-        self.tooltip_font = "TkDefaultFont"
         self.TCombobox_refseq_tooltip = ToolTip(self.TCombobox_refseq,
                                                 self.tooltip_font,
                                                 'Use RefSeq or not')
@@ -459,13 +461,10 @@ class GB2Fasta:
                                , bordermode='ignore')
         self.count_label.configure(text='''Count''')
 
-        self.count_entry = ttk.Entry(self.Labelframe1)
+        self.count_entry = my_entry(self.Labelframe1)
         self.count_entry.place(relx=0.201, rely=0.649, relheight=0.095
                                , relwidth=0.314, bordermode='ignore')
         self.count_entry.configure(textvariable=self.count)
-        self.count_entry.configure(takefocus="")
-        self.count_entry.configure(cursor="fleur")
-        self.tooltip_font = "TkDefaultFont"
         self.count_entry_tooltip = ToolTip(
             self.count_entry, self.tooltip_font,
             'numbers of sequences to download, 0 for no limit')
@@ -475,13 +474,10 @@ class GB2Fasta:
                              , bordermode='ignore')
         self.len_label.configure(text='''Length''')
 
-        self.min_len_entry = ttk.Entry(self.Labelframe1)
+        self.min_len_entry = my_entry(self.Labelframe1)
         self.min_len_entry.place(relx=0.686, rely=0.435, relheight=0.095
                                  , relwidth=0.087, bordermode='ignore')
         self.min_len_entry.configure(textvariable=self.min_len)
-        self.min_len_entry.configure(takefocus="")
-        self.min_len_entry.configure(cursor="fleur")
-        self.tooltip_font = "TkDefaultFont"
         self.min_len_entry_tooltip = ToolTip(self.min_len_entry,
                                              self.tooltip_font,
                                              'sequence length limit')
@@ -491,12 +487,10 @@ class GB2Fasta:
                             , bordermode='ignore')
         self.to_label.configure(text='''to''')
 
-        self.max_len_entry = ttk.Entry(self.Labelframe1)
+        self.max_len_entry = my_entry(self.Labelframe1)
         self.max_len_entry.place(relx=0.839, rely=0.435, relheight=0.095
                                  , relwidth=0.14, bordermode='ignore')
         self.max_len_entry.configure(textvariable=self.max_len)
-        self.max_len_entry.configure(takefocus="")
-        self.max_len_entry.configure(cursor="fleur")
         self.min_len_entry.insert(0, '0')
         self.max_len_entry.insert(0, '300000')
 
@@ -505,28 +499,21 @@ class GB2Fasta:
                               , bordermode='ignore')
         self.date_label.configure(text='''Date''')
 
-        self.date_start_entry = ttk.Entry(self.Labelframe1)
+        self.date_start_entry = my_entry(self.Labelframe1)
         self.date_start_entry.place(relx=0.686, rely=0.541, relheight=0.095
                                     , relwidth=0.087, bordermode='ignore')
         self.date_start_entry.configure(textvariable=self.date_start)
-        self.date_start_entry.configure(takefocus="")
-        self.date_start_entry.configure(cursor="fleur")
-        self.tooltip_font = "TkDefaultFont"
-        self.date_start_entry_tooltip = \
-            ToolTip(self.date_start_entry, self.tooltip_font, '''1970/1/1''')
+        self.date_start_entry_tooltip = ToolTip(self.date_start_entry, self.tooltip_font, '''1970/1/1''')
 
         self.to2_label = my_label(self.Labelframe1)
         self.to2_label.place(relx=0.789, rely=0.541, height=35, width=36
                              , bordermode='ignore')
         self.to2_label.configure(text='''to''')
 
-        self.date_end_entry = ttk.Entry(self.Labelframe1)
+        self.date_end_entry = my_entry(self.Labelframe1)
         self.date_end_entry.place(relx=0.839, rely=0.541, relheight=0.095
                                   , relwidth=0.136, bordermode='ignore')
         self.date_end_entry.configure(textvariable=self.date_end)
-        self.date_end_entry.configure(takefocus="")
-        self.date_end_entry.configure(cursor="fleur")
-        self.tooltip_font = "TkDefaultFont"
         self.date_end_entry_tooltip = ToolTip(self.date_end_entry,
                                               self.tooltip_font,
                                               '''2022/12/31''')
@@ -536,13 +523,10 @@ class GB2Fasta:
                                  , bordermode='ignore')
         self.exclude_label.configure(text='''Exclude''')
 
-        self.exclude_entry = ttk.Entry(self.Labelframe1)
+        self.exclude_entry = my_entry(self.Labelframe1)
         self.exclude_entry.place(relx=0.686, rely=0.649, relheight=0.095
                                  , relwidth=0.279, bordermode='ignore')
         self.exclude_entry.configure(textvariable=self.exclude)
-        self.exclude_entry.configure(takefocus="")
-        self.exclude_entry.configure(cursor="fleur")
-        self.tooltip_font = "TkDefaultFont"
         self.exclude_entry_tooltip = \
             ToolTip(self.exclude_entry, self.tooltip_font,
                     '''exclude expression''')
@@ -552,35 +536,27 @@ class GB2Fasta:
                                , bordermode='ignore')
         self.query_label.configure(text='''Query''')
 
-        self.query_entry = ttk.Entry(self.Labelframe1)
+        self.query_entry = my_entry(self.Labelframe1)
         self.query_entry.place(relx=0.201, rely=0.813, relheight=0.095
                                , relwidth=0.785, bordermode='ignore')
         self.query_entry.configure(textvariable=self.query)
-        self.query_entry.configure(takefocus="")
-        self.query_entry.configure(cursor="fleur")
-        self.tooltip_font = "TkDefaultFont"
         self.query_entry_tooltip = ToolTip(self.query_entry, self.tooltip_font,
                                            '''Entrez query string''')
 
-        self.taxon_entry = ttk.Entry(self.Labelframe1)
+        self.taxon_entry = my_entry(self.Labelframe1)
         self.taxon_entry.place(relx=0.201, rely=0.326, relheight=0.095
                                , relwidth=0.314, bordermode='ignore')
         self.taxon_entry.configure(textvariable=self.taxon)
-        self.taxon_entry.configure(takefocus="")
-        self.taxon_entry.configure(cursor="fleur")
 
         self.out_label = my_label(self.top)
         self.out_label.place(relx=0.05, rely=0.563, height=36
                              , width=60)
         self.out_label.configure(text='''Output''')
 
-        self.out_entry = ttk.Entry(self.top)
+        self.out_entry = my_entry(self.top)
         self.out_entry.place(relx=0.167, rely=0.563, relheight=0.045
                              , relwidth=0.633)
         self.out_entry.configure(textvariable=self.out)
-        self.out_entry.configure(takefocus="")
-        self.out_entry.configure(cursor="fleur")
-        self.tooltip_font = "TkDefaultFont"
         self.out_entry_tooltip = ToolTip(self.out_entry, self.tooltip_font,
                                          'output folder')
         self.out_b = my_button(self.top, 12)
@@ -598,13 +574,10 @@ class GB2Fasta:
                                 , width=60, bordermode='ignore')
         self.expand_label.configure(text='''Expand''')
 
-        self.expand_entry = ttk.Entry(self.Labelframe1)
+        self.expand_entry = my_entry(self.Labelframe1)
         self.expand_entry.place(relx=0.297, rely=0.142, relheight=0.248
                                 , relwidth=0.187, bordermode='ignore')
         self.expand_entry.configure(textvariable=self.expand)
-        self.expand_entry.configure(takefocus="")
-        self.expand_entry.configure(cursor="fleur")
-        self.tooltip_font = "TkDefaultFont"
         self.expand_entry_tooltip = ToolTip(self.expand_entry,
                                             self.tooltip_font,
                                             '''expand for primer design''')
@@ -619,24 +592,17 @@ class GB2Fasta:
                                       , width=150, bordermode='ignore')
         self.max_frag_len_label.configure(text='''Max fragment length''')
 
-        self.max_name_len_entry = ttk.Entry(self.Labelframe1)
+        self.max_name_len_entry = my_entry(self.Labelframe1)
         self.max_name_len_entry.place(relx=0.297, rely=0.426, relheight=0.248
                                       , relwidth=0.187, bordermode='ignore')
         self.max_name_len_entry.configure(textvariable=self.max_name_len)
-        self.max_name_len_entry.configure(takefocus="")
-        self.max_name_len_entry.configure(cursor="fleur")
-        self.tooltip_font = "TkDefaultFont"
-        self.max_name_len_entry_tooltip = \
-            ToolTip(self.max_name_len_entry, self.tooltip_font,
+        self.max_name_len_entry_tooltip =  ToolTip(self.max_name_len_entry, self.tooltip_font,
                     '''max feature name length''')
 
-        self.max_gene_len_entry = ttk.Entry(self.Labelframe1)
+        self.max_gene_len_entry = my_entry(self.Labelframe1)
         self.max_gene_len_entry.place(relx=0.297, rely=0.709, relheight=0.248
                                       , relwidth=0.187, bordermode='ignore')
         self.max_gene_len_entry.configure(textvariable=self.max_gene_len)
-        self.max_gene_len_entry.configure(takefocus="")
-        self.max_gene_len_entry.configure(cursor="fleur")
-        self.tooltip_font = "TkDefaultFont"
         self.max_gene_len_entry_tooltip = \
             ToolTip(self.max_gene_len_entry, self.tooltip_font,
                     '''max fragment sequence length''')
@@ -727,6 +693,7 @@ class Evaluate:
         self.style.configure('.', foreground=_fgcolor)
         self.style.map('.', background=[('selected', _compcolor),
                                         ('active', _ana2color)])
+        self.tooltip_font = "TkDefaultFont"
 
         top.geometry("600x450+109+248")
         move_to_center(top, 600, 450)
@@ -755,16 +722,13 @@ class Evaluate:
         self.unalign_label.place(relx=0.03, rely=0.133, height=35, width=160
                                  , bordermode='ignore')
         self.unalign_label.configure(text='''Unaligned FASTA files''')
-        self.tooltip_font = "TkDefaultFont"
         self.TLabel1_tooltip = ToolTip(self.unalign_label, self.tooltip_font,
                                        'unaligned')
 
-        self.fasta_entry = ttk.Entry(self.Labelframe1)
+        self.fasta_entry = my_entry(self.Labelframe1)
         self.fasta_entry.place(relx=0.314, rely=0.133, relheight=0.233
                                , relwidth=0.489, bordermode='ignore')
         self.fasta_entry.configure(textvariable=self.fasta)
-        self.fasta_entry.configure(takefocus="")
-        self.fasta_entry.configure(cursor="fleur")
         self.fasta_entry_tooltip = ToolTip(self.fasta_entry, self.tooltip_font,
                                            '''unaligned fasta files''')
 
@@ -782,12 +746,10 @@ class Evaluate:
         self.TLabel1_tooltip = ToolTip(self.unalign_label2, self.tooltip_font,
                                        '''unaligned''')
 
-        self.fasta_folder_entry = ttk.Entry(self.Labelframe1)
+        self.fasta_folder_entry = my_entry(self.Labelframe1)
         self.fasta_folder_entry.place(relx=0.314, rely=0.4, relheight=0.233
                                       , relwidth=0.489, bordermode='ignore')
         self.fasta_folder_entry.configure(textvariable=self.fasta_folder)
-        self.fasta_folder_entry.configure(takefocus="")
-        self.fasta_folder_entry.configure(cursor="fleur")
         self.fasta_folder_entry_tooltip = ToolTip(
             self.fasta_folder_entry, self.tooltip_font,
             'unaligned fasta files')
@@ -805,13 +767,10 @@ class Evaluate:
         self.TLabel1_3_tooltip = ToolTip(self.align_label, self.tooltip_font,
                                          '''aligned''')
 
-        self.aln_entry = ttk.Entry(self.Labelframe1)
+        self.aln_entry = my_entry(self.Labelframe1)
         self.aln_entry.place(relx=0.314, rely=0.667, relheight=0.233
                              , relwidth=0.489, bordermode='ignore')
         self.aln_entry.configure(textvariable=self.aln)
-        self.aln_entry.configure(takefocus="")
-        self.aln_entry.configure(cursor="fleur")
-        self.tooltip_font = "TkDefaultFont"
         self.aln_entry_tooltip = ToolTip(self.aln_entry, self.tooltip_font,
                                          '''aligned fasta files''')
         self.open2_btn = my_button(self.Labelframe1)
@@ -827,12 +786,10 @@ class Evaluate:
         self.TLabel1_3_1_tooltip = ToolTip(self.out_label, self.tooltip_font,
                                            '''output''')
 
-        self.out_entry = ttk.Entry(self.top)
+        self.out_entry = my_entry(self.top)
         self.out_entry.place(relx=0.317, rely=0.356, relheight=0.078
                              , relwidth=0.467)
         self.out_entry.configure(textvariable=self.out)
-        self.out_entry.configure(takefocus="")
-        self.out_entry.configure(cursor="fleur")
         self.out_entry_tooltip = ToolTip(self.out_entry, self.tooltip_font,
                                          '''unaligned fasta files''')
 
@@ -863,19 +820,15 @@ class Evaluate:
                                   , bordermode='ignore')
         self.step_len_label.configure(text='''Step length''')
 
-        self.size_entry = ttk.Entry(self.Labelframe1)
+        self.size_entry = my_entry(self.Labelframe1)
         self.size_entry.place(relx=0.489, rely=0.357, relheight=0.5
                               , relwidth=0.14, bordermode='ignore')
         self.size_entry.configure(textvariable=self.size)
-        self.size_entry.configure(takefocus="")
-        self.size_entry.configure(cursor="fleur")
 
-        self.step_entry = ttk.Entry(self.Labelframe1)
+        self.step_entry = my_entry(self.Labelframe1)
         self.step_entry.place(relx=0.838, rely=0.357, relheight=0.5
                               , relwidth=0.14, bordermode='ignore')
         self.step_entry.configure(textvariable=self.step)
-        self.step_entry.configure(takefocus="")
-        self.step_entry.configure(cursor="fleur")
         self.size_entry.insert(0, '500')
         self.step_entry.insert(0, '50')
 
@@ -923,6 +876,7 @@ class Primer:
         self.style.configure('.', foreground=_fgcolor)
         self.style.map('.', background=[('selected', _compcolor),
                                         ('active', _ana2color)])
+        self.tooltip_font = "TkDefaultFont"
 
         top.geometry("600x500+284+458")
         move_to_center(top, 600, 600)
@@ -955,18 +909,14 @@ class Primer:
         self.aln_fasta_label.place(relx=0.052, rely=0.2, height=35, width=130
                                    , bordermode='ignore')
         self.aln_fasta_label.configure(text='''Aligned FASTA files''')
-        self.tooltip_font = "TkDefaultFont"
         self.TLabel1_tooltip = ToolTip(self.aln_fasta_label, self.tooltip_font,
                                        'unaligned')
 
-        self.aln_entry = ttk.Entry(self.Labelframe1)
+        self.aln_entry = my_entry(self.Labelframe1)
         self.aln_entry.place(relx=0.314, rely=0.2, relheight=0.35,
                              relwidth=0.489
                              , bordermode='ignore')
         self.aln_entry.configure(textvariable=self.aln)
-        self.aln_entry.configure(takefocus="")
-        self.aln_entry.configure(cursor="fleur")
-        self.tooltip_font = "TkDefaultFont"
         self.aln_entry_tooltip = ToolTip(self.aln_entry, self.tooltip_font,
                                          '''unaligned fasta files''')
 
@@ -983,12 +933,10 @@ class Primer:
         self.TLabel1_tooltip = ToolTip(self.aln_folder_label, self.tooltip_font,
                                        'Folder with aligned fasta files')
 
-        self.aln_folder_entry = ttk.Entry(self.Labelframe1)
+        self.aln_folder_entry = my_entry(self.Labelframe1)
         self.aln_folder_entry.place(relx=0.314, rely=0.6, relheight=0.35
                                     , relwidth=0.489, bordermode='ignore')
         self.aln_folder_entry.configure(textvariable=self.aln_folder)
-        self.aln_folder_entry.configure(takefocus="")
-        self.aln_folder_entry.configure(cursor="fleur")
         self.aln_folder_entry_tooltip = ToolTip(self.aln_folder_entry,
                                                 self.tooltip_font,
                                                 '''unaligned fasta files''')
@@ -1006,12 +954,10 @@ class Primer:
         self.TLabel1_3_1_tooltip = ToolTip(self.out_label, self.tooltip_font,
                                            'Output')
 
-        self.out_entry = ttk.Entry(self.top)
+        self.out_entry = my_entry(self.top)
         self.out_entry.place(relx=0.317, rely=0.24, relheight=0.07
                              , relwidth=0.467)
         self.out_entry.configure(textvariable=self.out)
-        self.out_entry.configure(takefocus="")
-        self.out_entry.configure(cursor="fleur")
 
         self.out_b = my_button(self.top)
         self.out_b.place(relx=0.8, rely=0.24, height=35, width=90)
@@ -1028,13 +974,10 @@ class Primer:
                                   , width=70, bordermode='ignore')
         self.coverage_label.configure(text='''Coverage''')
 
-        self.coverage_entry = ttk.Entry(self.Labelframe1)
+        self.coverage_entry = my_entry(self.Labelframe1)
         self.coverage_entry.place(relx=0.297, rely=0.142, relheight=0.184
                                   , relwidth=0.192, bordermode='ignore')
         self.coverage_entry.configure(textvariable=self.coverage)
-        self.coverage_entry.configure(takefocus="")
-        self.coverage_entry.configure(cursor="fleur")
-        self.tooltip_font = "TkDefaultFont"
         self.coverage_entry_tooltip = \
             ToolTip(self.coverage_entry, self.tooltip_font,
                     '''minimal coverage of primer on alignment''')
@@ -1050,23 +993,18 @@ class Primer:
                              , width=130, bordermode='ignore')
         self.res_label.configure(text='''Resolution''')
 
-        self.mismatch_entry = ttk.Entry(self.Labelframe1)
+        self.mismatch_entry = my_entry(self.Labelframe1)
         self.mismatch_entry.place(relx=0.297, rely=0.368, relheight=0.184
                                   , relwidth=0.192, bordermode='ignore')
         self.mismatch_entry.configure(textvariable=self.mismatch)
-        self.mismatch_entry.configure(takefocus="")
-        self.mismatch_entry.configure(cursor="fleur")
         self.mismatch_entry_tooltip = ToolTip(
             self.mismatch_entry, self.tooltip_font,
             'maximum mismatch bases in primer')
 
-        self.resolution_entry = ttk.Entry(self.Labelframe1)
+        self.resolution_entry = my_entry(self.Labelframe1)
         self.resolution_entry.place(relx=0.297, rely=0.579, relheight=0.184
                                     , relwidth=0.192, bordermode='ignore')
         self.resolution_entry.configure(textvariable=self.resolution)
-        self.resolution_entry.configure(takefocus="")
-        self.resolution_entry.configure(cursor="fleur")
-        self.tooltip_font = "TkDefaultFont"
         self.resolution_entry_tooltip = ToolTip(
             self.resolution_entry, self.tooltip_font,
             'minimal resolution of amplified fragment''')
@@ -1083,13 +1021,10 @@ class Primer:
                               , width=130, bordermode='ignore')
         self.topn_label.configure(text='''Top n''')
 
-        self.top_n_entry = ttk.Entry(self.Labelframe1)
+        self.top_n_entry = my_entry(self.Labelframe1)
         self.top_n_entry.place(relx=0.297, rely=0.789, relheight=0.184
                                , relwidth=0.192, bordermode='ignore')
         self.top_n_entry.configure(textvariable=self.top_n)
-        self.top_n_entry.configure(takefocus="")
-        self.top_n_entry.configure(cursor="fleur")
-        self.tooltip_font = "TkDefaultFont"
         self.top_n_entry_tooltip = \
             ToolTip(self.top_n_entry, self.tooltip_font,
                     '''Only keep top best primers''')
@@ -1100,24 +1035,20 @@ class Primer:
                                     , width=100, bordermode='ignore')
         self.primer_len_label.configure(text='''Primer length''')
 
-        self.pmin_entry = ttk.Entry(self.Labelframe1)
+        self.pmin_entry = my_entry(self.Labelframe1)
         self.pmin_entry.place(relx=0.716, rely=0.158, relheight=0.184
                               , relwidth=0.087, bordermode='ignore')
         self.pmin_entry.configure(textvariable=self.pmin)
-        self.pmin_entry.configure(takefocus="")
-        self.pmin_entry.configure(cursor="fleur")
 
         self.to_label1 = my_label(self.Labelframe1)
         self.to_label1.place(relx=0.803, rely=0.158, height=35, width=36
                              , bordermode='ignore')
         self.to_label1.configure(text='''to''')
 
-        self.pmax_entry = ttk.Entry(self.Labelframe1)
+        self.pmax_entry = my_entry(self.Labelframe1)
         self.pmax_entry.place(relx=0.855, rely=0.158, relheight=0.184
                               , relwidth=0.122, bordermode='ignore')
         self.pmax_entry.configure(textvariable=self.pmax)
-        self.pmax_entry.configure(takefocus="")
-        self.pmax_entry.configure(cursor="fleur")
         self.pmin_entry.insert(0, '20')
         self.pmax_entry.insert(0, '30')
 
@@ -1126,12 +1057,10 @@ class Primer:
                                  , width=120, bordermode='ignore')
         self.amp_len_label.configure(text='''Amplicon size''')
 
-        self.amin_entry = ttk.Entry(self.Labelframe1)
+        self.amin_entry = my_entry(self.Labelframe1)
         self.amin_entry.place(relx=0.716, rely=0.368, relheight=0.184
                               , relwidth=0.087, bordermode='ignore')
         self.amin_entry.configure(textvariable=self.amin)
-        self.amin_entry.configure(takefocus="")
-        self.amin_entry.configure(cursor="fleur")
         self.amin_entry_tooltip = ToolTip(self.amin_entry, self.tooltip_font,
                                           'including primer length')
 
@@ -1140,12 +1069,10 @@ class Primer:
                              , bordermode='ignore')
         self.to2_label.configure(text='''to''')
 
-        self.amax_entry = ttk.Entry(self.Labelframe1)
+        self.amax_entry = my_entry(self.Labelframe1)
         self.amax_entry.place(relx=0.855, rely=0.368, relheight=0.184
                               , relwidth=0.122, bordermode='ignore')
         self.amax_entry.configure(textvariable=self.amax)
-        self.amax_entry.configure(takefocus="")
-        self.amax_entry.configure(cursor="fleur")
         self.amin_entry.insert(0, '300')
         self.amax_entry.insert(0, '800')
 
@@ -1161,19 +1088,15 @@ class Primer:
                                          , bordermode='ignore')
         self.sliding_window2_label.configure(text='''Sliding window step''')
 
-        self.size_entry = ttk.Entry(self.Labelframe1)
+        self.size_entry = my_entry(self.Labelframe1)
         self.size_entry.place(relx=0.803, rely=0.579, relheight=0.184
                               , relwidth=0.14, bordermode='ignore')
         self.size_entry.configure(textvariable=self.size)
-        self.size_entry.configure(takefocus="")
-        self.size_entry.configure(cursor="fleur")
 
-        self.step_entry = ttk.Entry(self.Labelframe1)
+        self.step_entry = my_entry(self.Labelframe1)
         self.step_entry.place(relx=0.803, rely=0.789, relheight=0.184
                               , relwidth=0.14, bordermode='ignore')
         self.step_entry.configure(textvariable=self.step)
-        self.step_entry.configure(takefocus="")
-        self.step_entry.configure(cursor="fleur")
         self.size_entry.insert(0, '500')
         self.step_entry.insert(0, '50')
 
@@ -1299,17 +1222,6 @@ def _on_shiftmouse(event, widget):
             widget.xview_scroll(-1, 'units')
         elif event.num == 5:
             widget.xview_scroll(1, 'units')
-
-
-def ui_main():
-    global root
-    root = tk.Tk()
-    root.protocol('WM_DELETE_WINDOW', root.destroy)
-    # Creates a toplevel widget.
-    global _top1, _w1
-    _top1 = root
-    _w1 = Root(_top1)
-    root.mainloop()
 
 
 def ui_gb2fasta():
@@ -1499,6 +1411,17 @@ def run_install(win, t: tk.Toplevel):
         r.start()
 
     return f
+
+
+def ui_main():
+    global root
+    root = tk.Tk()
+    root.protocol('WM_DELETE_WINDOW', root.destroy)
+    # Creates a toplevel widget.
+    global _top1, _w1
+    _top1 = root
+    _w1 = Root(_top1)
+    root.mainloop()
 
 
 if __name__ == '__main__':
