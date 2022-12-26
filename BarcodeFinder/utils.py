@@ -24,6 +24,11 @@ from BarcodeFinder.global_vars import log, FMT, DATEFMT
 # hosting in free AWS S3 server
 aws_url = 'https://barcodefinder.s3.ap-east-1.amazonaws.com/'
 test_url = 'https://s3.ap-east-1.amazonaws.com'
+# font family
+if platform.system() == 'Windows':
+    font_family = 'Arial'
+else:
+    font_family = 'Helvetica'
 
 
 class BlastResult:
