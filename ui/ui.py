@@ -30,6 +30,18 @@ def set_combo_style(win: tk.Frame):
     win.combo_style.theme_use(style)
 
 
+def my_labelframe(parent: tk.LabelFrame) -> tk.LabelFrame:
+    frame = tk.LabelFrame(parent)
+    frame.configure(background="#edf0f3")
+    frame.configure(cursor="fleur")
+    frame.configure(font='-size 14')
+    frame.configure(foreground="#000000")
+    frame.configure(highlightbackground="#edf0f3")
+    frame.configure(highlightcolor="black")
+    frame.configure(relief='groove')
+    return frame
+
+
 def my_label(frame: tk.LabelFrame) -> tk.Label:
     label = tk.Label(frame)
     label.configure(activebackground="#f9f9f9")
@@ -41,7 +53,7 @@ def my_label(frame: tk.LabelFrame) -> tk.Label:
     label.configure(highlightbackground="#edf0f3")
     label.configure(highlightcolor="black")
     label.configure(justify='left')
-    label.configure(font="-family {TkDefaultFont} -size 10")
+    # label.configure(font="-family {TkDefaultFont} -size 10")
     return label
 
 
@@ -330,16 +342,11 @@ class GB2Fasta:
         self.no_divide = tk.IntVar()
         self.rename = tk.IntVar()
 
-        self.Labelframe1 = tk.LabelFrame(self.top)
+        self.Labelframe1 = my_labelframe(self.top)
         self.Labelframe1.place(relx=0.025, rely=0.013, relheight=0.46
                                , relwidth=0.955)
-        self.Labelframe1.configure(relief='groove')
-        self.Labelframe1.configure(font="-family {TkDefaultFont} -size 12")
-        self.Labelframe1.configure(foreground="#000000")
         self.Labelframe1.configure(text='''Input''')
-        self.Labelframe1.configure(background="#edf0f3")
-        self.Labelframe1.configure(highlightbackground="#edf0f3")
-        self.Labelframe1.configure(highlightcolor="black")
+
         self.TSeparator1 = ttk.Separator(self.Labelframe1)
         self.TSeparator1.place(relx=0.524, rely=0.19, relheight=0.541
                                , bordermode='ignore')
@@ -601,16 +608,10 @@ class GB2Fasta:
         self.out_b.configure(command=open_file(self.out_entry, type_='folder'))
         self.out_b.configure(text='''Open''')
 
-        self.Labelframe1 = tk.LabelFrame(self.top)
+        self.Labelframe1 = my_labelframe(self.top)
         self.Labelframe1.place(relx=0.025, rely=0.65, relheight=0.176
                                , relwidth=0.955)
-        self.Labelframe1.configure(relief='groove')
-        self.Labelframe1.configure(font="-family {TkDefaultFont} -size 14")
-        self.Labelframe1.configure(foreground="#000000")
         self.Labelframe1.configure(text='''Advance''')
-        self.Labelframe1.configure(background="#edf0f3")
-        self.Labelframe1.configure(highlightbackground="#edf0f3")
-        self.Labelframe1.configure(highlightcolor="black")
 
         self.allow_repeat_button = my_checkbutton(self.Labelframe1)
         self.allow_repeat_button.place(relx=0.576, rely=0.142, relheight=0.248
@@ -780,15 +781,10 @@ class Evaluate:
         self.ig = tk.IntVar()
         self.iab = tk.IntVar()
 
-        self.Labelframe1 = tk.LabelFrame(self.top)
+        self.Labelframe1 = my_labelframe(self.top)
         self.Labelframe1.place(relx=0.017, rely=0.0, relheight=0.333
                                , relwidth=0.955)
-        self.Labelframe1.configure(relief='groove')
-        self.Labelframe1.configure(foreground="#000000")
         self.Labelframe1.configure(text='''Input''')
-        self.Labelframe1.configure(background="#edf0f3")
-        self.Labelframe1.configure(highlightbackground="#d9d9d9")
-        self.Labelframe1.configure(highlightcolor="black")
 
         self.unalign_label = my_label(self.Labelframe1)
         self.unalign_label.place(relx=0.03, rely=0.133, height=35, width=160
@@ -843,7 +839,6 @@ class Evaluate:
         self.align_label = my_label(self.Labelframe1)
         self.align_label.place(relx=0.03, rely=0.667, height=35, width=150
                                , bordermode='ignore')
-        self.align_label.configure(font="-family {TkDefaultFont} -size 10")
         self.align_label.configure(text='''Aligned FASTA files''')
         self.TLabel1_3_tooltip = ToolTip(self.align_label, self.tooltip_font,
                                          '''aligned''')
@@ -886,16 +881,10 @@ class Evaluate:
                                                    type_='folder'))
         self.open3_btn.configure(text='''Open''')
 
-        self.Labelframe1 = tk.LabelFrame(self.top)
+        self.Labelframe1 = my_labelframe(self.top)
         self.Labelframe1.place(relx=0.017, rely=0.467, relheight=0.156
                                , relwidth=0.955)
-        self.Labelframe1.configure(relief='groove')
-        self.Labelframe1.configure(foreground="#000000")
         self.Labelframe1.configure(text='''Sliding window''')
-        self.Labelframe1.configure(background="#edf0f3")
-        self.Labelframe1.configure(cursor="fleur")
-        self.Labelframe1.configure(highlightbackground="#d9d9d9")
-        self.Labelframe1.configure(highlightcolor="black")
 
         self.Checkbutton1 = my_checkbutton(self.Labelframe1)
         self.Checkbutton1.place(relx=0.035, rely=0.429, relheight=0.3
@@ -931,15 +920,10 @@ class Evaluate:
         self.size_entry.insert(0, '500')
         self.step_entry.insert(0, '50')
 
-        self.Labelframe1 = tk.LabelFrame(self.top)
+        self.Labelframe1 = my_labelframe(self.top)
         self.Labelframe1.place(relx=0.017, rely=0.644, relheight=0.156
                                , relwidth=0.955)
-        self.Labelframe1.configure(relief='groove')
-        self.Labelframe1.configure(foreground="#000000")
         self.Labelframe1.configure(text='''Advance''')
-        self.Labelframe1.configure(background="#edf0f3")
-        self.Labelframe1.configure(highlightbackground="#d9d9d9")
-        self.Labelframe1.configure(highlightcolor="black")
 
         self.Checkbutton1 = my_checkbutton(self.Labelframe1)
         self.Checkbutton1.place(relx=0.087, rely=0.429, relheight=0.3
@@ -1004,20 +988,14 @@ class Primer:
         self.size = tk.StringVar()
         self.step = tk.StringVar()
 
-        self.Labelframe1 = tk.LabelFrame(self.top)
+        self.Labelframe1 = my_labelframe(self.top)
         self.Labelframe1.place(relx=0.017, rely=0.02, relheight=0.2
                                , relwidth=0.955)
-        self.Labelframe1.configure(relief='groove')
-        self.Labelframe1.configure(foreground="#000000")
         self.Labelframe1.configure(text='''Input''')
-        self.Labelframe1.configure(background="#edf0f3")
-        self.Labelframe1.configure(highlightbackground="#d9d9d9")
-        self.Labelframe1.configure(highlightcolor="black")
 
         self.aln_fasta_label = my_label(self.Labelframe1)
         self.aln_fasta_label.place(relx=0.052, rely=0.2, height=35, width=130
                                    , bordermode='ignore')
-        self.aln_fasta_label.configure(font="-family {TkDefaultFont} -size 10")
         self.aln_fasta_label.configure(text='''Aligned FASTA files''')
         self.tooltip_font = "TkDefaultFont"
         self.TLabel1_tooltip = ToolTip(self.aln_fasta_label, self.tooltip_font,
@@ -1053,7 +1031,6 @@ class Primer:
         self.aln_folder_entry.configure(textvariable=self.aln_folder)
         self.aln_folder_entry.configure(takefocus="")
         self.aln_folder_entry.configure(cursor="fleur")
-        self.tooltip_font = "TkDefaultFont"
         self.aln_folder_entry_tooltip = ToolTip(self.aln_folder_entry,
                                                 self.tooltip_font,
                                                 '''unaligned fasta files''')
@@ -1083,15 +1060,10 @@ class Primer:
         self.out_b.configure(command=open_file(self.out_entry, type_='folder'))
         self.out_b.configure(text='''Open''')
 
-        self.Labelframe1 = tk.LabelFrame(self.top)
+        self.Labelframe1 = my_labelframe(self.top)
         self.Labelframe1.place(relx=0.017, rely=0.34, relheight=0.38
                                , relwidth=0.955)
-        self.Labelframe1.configure(relief='groove')
-        self.Labelframe1.configure(foreground="#000000")
         self.Labelframe1.configure(text='''Advance''')
-        self.Labelframe1.configure(background="#edf0f3")
-        self.Labelframe1.configure(highlightbackground="#edf0f3")
-        self.Labelframe1.configure(highlightcolor="black")
 
         self.coverage_label = my_label(self.Labelframe1)
         self.coverage_label.place(relx=0.07, rely=0.158, height=35
@@ -1488,6 +1460,16 @@ def ui_main():
     # Creates a toplevel widget.
     global _top1, _w1
     _top1 = root
+    from tkinter import font
+    import platform
+
+    default_font = font.nametofont('TkDefaultFont')
+    if platform.system() == 'Windows':
+        default_font.configure(family='Arial')
+    else:
+        default_font.configure(family='Helvetica')
+    default_font.configure(size=11)
+    root.option_add("*Font", default_font)
     _w1 = Root(_top1)
     root.mainloop()
 
