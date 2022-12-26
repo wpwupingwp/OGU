@@ -1339,7 +1339,7 @@ class Evaluate:
         self.Button1_3.configure(activebackground="#ececec")
         self.Button1_3.configure(activeforeground="#000000")
         self.Button1_3.configure(background="#edf0f3")
-        self.Button1_3.configure(command=run_evaluate)
+        self.Button1_3.configure(command=run_evaluate(self, self.top))
         self.Button1_3.configure(compound='left')
         self.Button1_3.configure(font="-family {TkDefaultFont} -size 12")
         self.Button1_3.configure(foreground="#000000")
@@ -1498,7 +1498,7 @@ class Primer:
         self.folder_b.configure(text='''Open''')
 
         self.out_label = tk.Label(self.top)
-        self.out_label.place(relx=0.117, rely=0.24, height=35, width=90)
+        self.out_label.place(relx=0.07, rely=0.24, height=35, width=150)
         self.out_label.configure(activebackground="#f9f9f9")
         self.out_label.configure(activeforeground="black")
         self.out_label.configure(anchor='w')
@@ -1804,7 +1804,7 @@ class Primer:
         self.run_b.configure(activebackground="#ececec")
         self.run_b.configure(activeforeground="#000000")
         self.run_b.configure(background="#edf0f3")
-        self.run_b.configure(command=run_primer)
+        self.run_b.configure(command=run_primer(self, self.top))
         self.run_b.configure(compound='left')
         self.run_b.configure(font="-family {TkDefaultFont} -size 14")
         self.run_b.configure(foreground="#000000")
@@ -2142,14 +2142,76 @@ def run_gb2fasta(w: tk.Frame, t: tk.Toplevel):
     return f
 
 
-def run_evaluate():
-    # todo
-    pass
+def run_evaluate(w: tk.Frame, t: tk.Toplevel):
+    # todo: test options and functions
+    def f():
+        nonlocal w
+        arg_str = ''
+        arg_str = get_arg_str(w.fasta, '-fasta', arg_str)
+        arg_str = get_arg_str(w.fasta_folder, '-fasta_folder', arg_str)
+        arg_str = get_arg_str(w.aln, '-aln', arg_str)
+        arg_str = get_arg_str(w.out, '-out', arg_str)
+        arg_str = get_arg_str(w.size, '-size', arg_str)
+        arg_str = get_arg_str(w.step, '-step', arg_str)
+        arg_str = get_arg_str(w.quick, '-quick', arg_str, is_bool=True)
+        arg_str = get_arg_str(w.ig, '-ig', arg_str, is_bool=True)
+        arg_str = get_arg_str(w.iab, '-iab', arg_str, is_bool=True)
+        t.withdraw()
+        w, h = root.winfo_screenwidth(), root.winfo_screenheight()
+        s = min(w, h) // 2
+        size = f'{s}x{int(s*0.618)}+{w//3}+{h//3}'
+        run = tk.Toplevel(root)
+        run.geometry(size)
+        run.title('Running...')
+        run.wm_transient()
+        frame = ttk.Frame(run)
+        frame.pack(fill='both')
+        scroll_text(frame)
+        print(arg_str)
+        r = threading.Thread(target=thread_wrap,
+                             args=(evaluate_main, arg_str, run),
+                             daemon=True)
+        r.start()
+
+    return f
 
 
-def run_primer():
-    # todo
-    pass
+def run_primer(w: tk.Frame, t: tk.Toplevel):
+    # todo: test options and functions
+    def f():
+        nonlocal w
+        arg_str = ''
+        arg_str = get_arg_str(w.aln, '-aln', arg_str)
+        arg_str = get_arg_str(w.aln_folder, '-aln_folder', arg_str)
+        arg_str = get_arg_str(w.out, '-out', arg_str)
+        arg_str = get_arg_str(w.coverage, '-coverage', arg_str)
+        arg_str = get_arg_str(w.mismatch, '-mismatch', arg_str)
+        arg_str = get_arg_str(w.resolution, '-resolution', arg_str)
+        arg_str = get_arg_str(w.top_n, '-top_n', arg_str)
+        arg_str = get_arg_str(w.pmin, '-pmin', arg_str)
+        arg_str = get_arg_str(w.pmax, '-pmax', arg_str)
+        arg_str = get_arg_str(w.amin, '-amin', arg_str)
+        arg_str = get_arg_str(w.amax, '-amax', arg_str)
+        arg_str = get_arg_str(w.size, '-size', arg_str)
+        arg_str = get_arg_str(w.step, '-step', arg_str)
+        t.withdraw()
+        w, h = root.winfo_screenwidth(), root.winfo_screenheight()
+        s = min(w, h) // 2
+        size = f'{s}x{int(s*0.618)}+{w//3}+{h//3}'
+        run = tk.Toplevel(root)
+        run.geometry(size)
+        run.title('Running...')
+        run.wm_transient()
+        frame = ttk.Frame(run)
+        frame.pack(fill='both')
+        scroll_text(frame)
+        print(arg_str)
+        r = threading.Thread(target=thread_wrap,
+                             args=(primer_main, arg_str, run),
+                             daemon=True)
+        r.start()
+
+    return f
 
 
 def run_help():
