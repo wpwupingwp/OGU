@@ -24,6 +24,7 @@ def set_combo_style(win):
     if style not in ttk.Style().theme_names():
         win.combo_style.theme_create(style, parent='alt', settings={
             'TCombobox': {'configure': {
+                'font': (font_family, 11),
                 'selectbackground': 'white',
                 'fieldbackground': 'white',
                 'background': 'white'}}})
@@ -95,6 +96,13 @@ def my_entry(frame: tk.LabelFrame, fontsize=11) -> tk.Entry:
     entry.configure(takefocus="")
     entry.configure(cursor="fleur")
     return entry
+
+
+def my_combobox(frame: tk.LabelFrame, fontsize=11) -> ttk.Combobox:
+    combobox = ttk.Combobox(frame, font=(font_family, fontsize))
+    combobox.configure(state='readonly')
+    combobox.configure(takefocus="")
+    return combobox
 
 
 def move_to_center(window: tk.Tk, width: int, height: int) -> None:
@@ -396,30 +404,26 @@ class GB2Fasta:
                                    , bordermode='ignore')
         self.molecular_label.configure(text='''Molecular''')
 
-        self.TCombobox_molecular = ttk.Combobox(self.Labelframe1)
+        self.TCombobox_molecular = my_combobox(self.Labelframe1)
         self.TCombobox_molecular.place(relx=0.716, rely=0.217, height=35,
                                        width=150, bordermode='ignore')
         self.value_list = ['all', 'DNA', 'RNA', ]
         self.TCombobox_molecular.configure(values=self.value_list)
-        self.TCombobox_molecular.configure(state='readonly')
         self.TCombobox_molecular.configure(textvariable=self.molecular)
         self.TCombobox_molecular.current(0)
-        self.TCombobox_molecular.configure(takefocus="")
 
         self.group_label = my_label(self.Labelframe1)
         self.group_label.place(relx=0.558, rely=0.326, height=35, width=60
                                , bordermode='ignore')
         self.group_label.configure(text='''Group''')
 
-        self.TCombobox_group = ttk.Combobox(self.Labelframe1)
+        self.TCombobox_group = my_combobox(self.Labelframe1)
         self.TCombobox_group.place(relx=0.716, rely=0.326, height=35, width=150,
                                    bordermode='ignore')
         self.value_list = ['all', 'animals', 'plants', 'fungi', 'protists',
                            'bacteria', 'archaea', 'viruses', ]
         self.TCombobox_group.configure(values=self.value_list)
-        self.TCombobox_group.configure(state='readonly')
         self.TCombobox_group.configure(textvariable=self.group)
-        self.TCombobox_group.configure(takefocus="")
         self.TCombobox_group.current(0)
 
         self.organelle_label = my_label(self.Labelframe1)
@@ -427,15 +431,13 @@ class GB2Fasta:
                                    , bordermode='ignore')
         self.organelle_label.configure(text='''Organelle''')
 
-        self.TCombobox_og = ttk.Combobox(self.Labelframe1)
+        self.TCombobox_og = my_combobox(self.Labelframe1)
         self.TCombobox_og.place(relx=0.201, rely=0.435, height=35, width=170,
                                 bordermode='ignore')
         self.value_list = ['ignore', 'both', 'no', 'mitochondrion',
                            'chloroplast', ]
         self.TCombobox_og.configure(values=self.value_list)
-        self.TCombobox_og.configure(state='readonly')
         self.TCombobox_og.configure(textvariable=self.og)
-        self.TCombobox_og.configure(takefocus="")
         self.TCombobox_og.current(0)
 
         self.refseq_label = my_label(self.Labelframe1)
@@ -443,14 +445,12 @@ class GB2Fasta:
                                 , bordermode='ignore')
         self.refseq_label.configure(text='''RefSeq''')
 
-        self.TCombobox_refseq = ttk.Combobox(self.Labelframe1)
+        self.TCombobox_refseq = my_combobox(self.Labelframe1)
         self.TCombobox_refseq.place(relx=0.201, rely=0.541, height=35,
                                     width=150, bordermode='ignore')
         self.value_list = ['both', 'yes', 'no', ]
         self.TCombobox_refseq.configure(values=self.value_list)
-        self.TCombobox_refseq.configure(state='readonly')
         self.TCombobox_refseq.configure(textvariable=self.refseq)
-        self.TCombobox_refseq.configure(takefocus="")
         self.TCombobox_refseq.current(0)
         self.TCombobox_refseq_tooltip = ToolTip(self.TCombobox_refseq,
                                                 self.tooltip_font,
@@ -656,14 +656,12 @@ class GB2Fasta:
                                 , width=69)
         self.unique_label.configure(text='''Unique''')
 
-        self.TCombobox_unique = ttk.Combobox(self.top)
+        self.TCombobox_unique = my_combobox(self.top)
         self.TCombobox_unique.place(relx=0.167, rely=0.488, relheight=0.044
                                     , relwidth=0.245)
         self.value_list = ['longest', 'first', 'no', ]
         self.TCombobox_unique.configure(values=self.value_list)
-        self.TCombobox_unique.configure(state='readonly')
         self.TCombobox_unique.configure(textvariable=self.unique)
-        self.TCombobox_unique.configure(takefocus="")
         self.TCombobox_unique.current(0)
         self.TCombobox_unique_tooltip = ToolTip(
             self.TCombobox_unique, self.tooltip_font,
