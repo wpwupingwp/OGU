@@ -45,13 +45,13 @@ def my_label(frame: tk.LabelFrame) -> tk.Label:
     return label
 
 
-def my_button(frame: tk.LabelFrame) -> tk.Button:
+def my_button(frame: tk.LabelFrame, fontsize=12) -> tk.Button:
     button = tk.Button(frame)
     button.configure(compound='left')
     button.configure(activebackground="#ececec")
     button.configure(activeforeground="#000000")
     button.configure(background="#edf0f3")
-    button.configure(font="-family {TkDefaultFont} -size 10")
+    button.configure(font=f"-family {{TkDefaultFont}} -size {fontsize}")
     button.configure(foreground="#000000")
     button.configure(highlightbackground="#edf0f3")
     button.configure(highlightcolor="black")
@@ -361,11 +361,10 @@ class GB2Fasta:
         self.gb_entry_tooltip = ToolTip(self.gb_entry, self.tooltip_font,
                                         '''gb format files''')
 
-        self.gb_file_b = my_button(self.Labelframe1)
+        self.gb_file_b = my_button(self.Labelframe1, 12)
         self.gb_file_b.place(relx=0.82, rely=0.054, height=35, width=90
                              , bordermode='ignore')
         self.gb_file_b.configure(command=open_file(self.gb_entry, single=False))
-        self.gb_file_b.configure(font="-family {TkDefaultFont} -size 12")
         self.gb_file_b.configure(text='''Open''')
 
         self.gene_label = my_label(self.Labelframe1)
@@ -473,9 +472,9 @@ class GB2Fasta:
         self.count_entry.configure(takefocus="")
         self.count_entry.configure(cursor="fleur")
         self.tooltip_font = "TkDefaultFont"
-        self.count_entry_tooltip = \
-            ToolTip(self.count_entry, self.tooltip_font,
-                    '''numbers of sequences to download, 0 for no limit''')
+        self.count_entry_tooltip = ToolTip(
+            self.count_entry, self.tooltip_font,
+            'numbers of sequences to download, 0 for no limit')
 
         self.len_label = my_label(self.Labelframe1)
         self.len_label.place(relx=0.558, rely=0.435, height=35, width=60
@@ -490,9 +489,9 @@ class GB2Fasta:
         self.min_len_entry.configure(takefocus="")
         self.min_len_entry.configure(cursor="fleur")
         self.tooltip_font = "TkDefaultFont"
-        self.min_len_entry_tooltip = \
-            ToolTip(self.min_len_entry, self.tooltip_font,
-                    '''sequence length limit''')
+        self.min_len_entry_tooltip = ToolTip(self.min_len_entry,
+                                             self.tooltip_font,
+                                             'sequence length limit')
 
         self.to_label = my_label(self.Labelframe1)
         self.to_label.place(relx=0.785, rely=0.435, height=35, width=36
@@ -597,18 +596,9 @@ class GB2Fasta:
         self.tooltip_font = "TkDefaultFont"
         self.out_entry_tooltip = ToolTip(self.out_entry, self.tooltip_font,
                                          'output folder')
-        self.out_b = my_button(self.top)
+        self.out_b = my_button(self.top, 12)
         self.out_b.place(relx=0.833, rely=0.563, height=35, width=80)
-        self.out_b.configure(activebackground="#edf0f3")
-        self.out_b.configure(activeforeground="#000000")
-        self.out_b.configure(background="#edf0f3")
         self.out_b.configure(command=open_file(self.out_entry, type_='folder'))
-        self.out_b.configure(compound='left')
-        self.out_b.configure(font="-family {TkDefaultFont} -size 12")
-        self.out_b.configure(foreground="#000000")
-        self.out_b.configure(highlightbackground="#edf0f3")
-        self.out_b.configure(highlightcolor="black")
-        self.out_b.configure(pady="0")
         self.out_b.configure(text='''Open''')
 
         self.Labelframe1 = tk.LabelFrame(self.top)
@@ -743,10 +733,9 @@ class GB2Fasta:
             self.TCombobox_unique, self.tooltip_font,
             'methods to remove redundant records')
 
-        self.run_b = my_button(self.top)
+        self.run_b = my_button(self.top, 14)
         self.run_b.place(relx=0.333, rely=0.863, height=40, width=189)
         self.run_b.configure(command=run_gb2fasta(self, self.top))
-        self.run_b.configure(font="-family {TkDefaultFont} -size 14")
         self.run_b.configure(text='''Run''')
 
 
@@ -888,9 +877,8 @@ class Evaluate:
         self.out_entry.configure(textvariable=self.out)
         self.out_entry.configure(takefocus="")
         self.out_entry.configure(cursor="fleur")
-        self.out_entry_tooltip = \
-            ToolTip(self.out_entry, self.tooltip_font,
-                    '''unaligned fasta files''')
+        self.out_entry_tooltip = ToolTip(self.out_entry, self.tooltip_font,
+                                         '''unaligned fasta files''')
 
         self.open3_btn = my_button(self.top)
         self.open3_btn.place(relx=0.8, rely=0.356, height=35, width=90)
@@ -965,7 +953,7 @@ class Evaluate:
         self.Checkbutton1_2.configure(text='''Ignore ambiguous bases''')
         self.Checkbutton1_2.configure(variable=self.iab)
 
-        self.run_b = my_button(self.top)
+        self.run_b = my_button(self.top, 14)
         self.run_b.place(relx=0.333, rely=0.867, height=40, width=189)
         self.run_b.configure(command=run_evaluate(self, self.top))
         self.run_b.configure(text='''Run''')
@@ -1066,9 +1054,9 @@ class Primer:
         self.aln_folder_entry.configure(takefocus="")
         self.aln_folder_entry.configure(cursor="fleur")
         self.tooltip_font = "TkDefaultFont"
-        self.aln_folder_entry_tooltip = \
-            ToolTip(self.aln_folder_entry, self.tooltip_font,
-                    '''unaligned fasta files''')
+        self.aln_folder_entry_tooltip = ToolTip(self.aln_folder_entry,
+                                                self.tooltip_font,
+                                                '''unaligned fasta files''')
 
         self.folder_b = my_button(self.Labelframe1)
         self.folder_b.place(relx=0.82, rely=0.6, height=35, width=90
@@ -1260,10 +1248,9 @@ class Primer:
         self.size_entry.insert(0, '500')
         self.step_entry.insert(0, '50')
 
-        self.run_b = my_button(self.top)
+        self.run_b = my_button(self.top, 14)
         self.run_b.place(relx=0.367, rely=0.82, height=40, width=180)
         self.run_b.configure(command=run_primer(self, self.top))
-        self.run_b.configure(font="-family {TkDefaultFont} -size 14")
         self.run_b.configure(text='''Run''')
 
 
