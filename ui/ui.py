@@ -2087,7 +2087,7 @@ def get_arg_str(value: tk.Variable, name: str, arg_str: str,
         else:
             value_str = f'{name} {value.get()} '
     arg_str += value_str
-    print(name, value_str)
+    log.debug(f'{name} {value_str}')
     return arg_str
 
 
@@ -2133,7 +2133,6 @@ def run_gb2fasta(w: tk.Frame, t: tk.Toplevel):
         frame = ttk.Frame(run)
         frame.pack(fill='both')
         scroll_text(frame)
-        print(arg_str)
         r = threading.Thread(target=thread_wrap,
                              args=(gb2fasta_main, arg_str, run),
                              daemon=True)
@@ -2167,7 +2166,6 @@ def run_evaluate(w: tk.Frame, t: tk.Toplevel):
         frame = ttk.Frame(run)
         frame.pack(fill='both')
         scroll_text(frame)
-        print(arg_str)
         r = threading.Thread(target=thread_wrap,
                              args=(evaluate_main, arg_str, run),
                              daemon=True)
@@ -2206,7 +2204,6 @@ def run_primer(w: tk.Frame, t: tk.Toplevel):
         frame = ttk.Frame(run)
         frame.pack(fill='both')
         scroll_text(frame)
-        print(arg_str)
         r = threading.Thread(target=thread_wrap,
                              args=(primer_main, arg_str, run),
                              daemon=True)
