@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from logging import handlers
-from time import time, localtime, strftime
-from tkinter import filedialog, font, messagebox, scrolledtext
+from time import time
+from tkinter import filedialog, messagebox, scrolledtext
 import logging
 import platform
 import queue
@@ -18,7 +18,7 @@ from BarcodeFinder.primer import primer_main
 from BarcodeFinder.utils import font_family, get_all_third_party
 
 
-def set_combo_style(win: tk.Frame):
+def set_combo_style(win):
     style = 'combostyle'
     win.combo_style = ttk.Style()
     if style not in ttk.Style().theme_names():
@@ -34,7 +34,7 @@ def my_labelframe(parent: tk.LabelFrame) -> tk.LabelFrame:
     frame = tk.LabelFrame(parent)
     frame.configure(background="#edf0f3")
     frame.configure(cursor="fleur")
-    frame.configure(font='-family {font_family} -size 14')
+    frame.configure(font=f'-family {font_family} -size 14')
     frame.configure(foreground="#000000")
     frame.configure(highlightbackground="#edf0f3")
     frame.configure(highlightcolor="black")
@@ -605,8 +605,9 @@ class GB2Fasta:
         self.expand_entry.configure(takefocus="")
         self.expand_entry.configure(cursor="fleur")
         self.tooltip_font = "TkDefaultFont"
-        self.expand_entry_tooltip =  ToolTip(self.expand_entry, self.tooltip_font,
-                    '''expand for primer design''')
+        self.expand_entry_tooltip = ToolTip(self.expand_entry,
+                                            self.tooltip_font,
+                                            '''expand for primer design''')
 
         self.max_name_len_label = my_label(self.Labelframe1)
         self.max_name_len_label.place(relx=0.08, rely=0.426, height=35
@@ -1024,7 +1025,7 @@ class Primer:
 
         self.coverage_label = my_label(self.Labelframe1)
         self.coverage_label.place(relx=0.07, rely=0.158, height=35
-                                  , width=60, bordermode='ignore')
+                                  , width=70, bordermode='ignore')
         self.coverage_label.configure(text='''Coverage''')
 
         self.coverage_entry = ttk.Entry(self.Labelframe1)
@@ -1288,56 +1289,6 @@ class ToolTip(tk.Toplevel):
         self.msgVar.set(msg)
 
 
-class AutoScroll(object):
-    '''Configure the scrollbars for a widget.'''
-
-    def __init__(self, master):
-        #  Rozen. Added the try-except clauses so that this class
-        #  could be used for scrolled entry widget for which vertical
-        #  scrolling is not supported. 5/7/14.
-        try:
-            vsb = ttk.Scrollbar(master, orient='vertical', command=self.yview)
-        except:
-            pass
-        hsb = ttk.Scrollbar(master, orient='horizontal', command=self.xview)
-        try:
-            self.configure(yscrollcommand=self._autoscroll(vsb))
-        except:
-            pass
-        self.configure(xscrollcommand=self._autoscroll(hsb))
-        self.grid(column=0, row=0, sticky='nsew')
-        try:
-            vsb.grid(column=1, row=0, sticky='ns')
-        except:
-            pass
-        hsb.grid(column=0, row=1, sticky='ew')
-        master.grid_columnconfigure(0, weight=1)
-        master.grid_rowconfigure(0, weight=1)
-        # Copy geometry methods of master  (taken from ScrolledText.py)
-        methods = tk.Pack.__dict__.keys() | tk.Grid.__dict__.keys() \
-                  | tk.Place.__dict__.keys()
-        for meth in methods:
-            if meth[0] != '_' and meth not in ('config', 'configure'):
-                setattr(self, meth, getattr(master, meth))
-
-    @staticmethod
-    def _autoscroll(sbar):
-        '''Hide and show scrollbar as needed.'''
-
-        def wrapped(first, last):
-            first, last = float(first), float(last)
-            if first <= 0 and last >= 1:
-                sbar.grid_remove()
-            else:
-                sbar.grid()
-            sbar.set(first, last)
-
-        return wrapped
-
-    def __str__(self):
-        return str(self.master)
-
-
 def _create_container(func):
     '''Creates a ttk Frame with a given master, and use this new frame to
     place the scrollbars and the widget.'''
@@ -1350,16 +1301,6 @@ def _create_container(func):
         return func(cls, container, **kw)
 
     return wrapped
-
-
-class ScrolledText(AutoScroll, tk.Text):
-    '''A standard Tkinter Text widget with scrollbars that will
-    automatically show/hide as needed.'''
-
-    @_create_container
-    def __init__(self, master, **kw):
-        tk.Text.__init__(self, master, **kw)
-        AutoScroll.__init__(self, master)
 
 
 def _bound_to_mousewheel(event, widget):
@@ -1458,7 +1399,7 @@ def get_arg_str(value: tk.Variable, name: str, arg_str: str,
     return arg_str
 
 
-def run_gb2fasta(win: tk.Frame, t: tk.Toplevel):
+def run_gb2fasta(win, t: tk.Toplevel):
     # todo: test options and functions
     def f():
         nonlocal win
@@ -1512,7 +1453,7 @@ def run_gb2fasta(win: tk.Frame, t: tk.Toplevel):
     return f
 
 
-def run_evaluate(win: tk.Frame, t: tk.Toplevel):
+def run_evaluate(win, t: tk.Toplevel):
     # todo: test options and functions
     def f():
         nonlocal win
@@ -1545,7 +1486,7 @@ def run_evaluate(win: tk.Frame, t: tk.Toplevel):
     return f
 
 
-def run_primer(win: tk.Frame, t: tk.Toplevel):
+def run_primer(win, t: tk.Toplevel):
     # todo: test options and functions
     def f():
         nonlocal win
