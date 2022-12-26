@@ -11,24 +11,11 @@ import tkinter as tk
 import tkinter.ttk as ttk
 import webbrowser
 
-from BarcodeFinder.global_vars import log, FMT, DATEFMT
-from BarcodeFinder.gb2fasta import gb2fasta_main
 from BarcodeFinder.evaluate import evaluate_main
+from BarcodeFinder.gb2fasta import gb2fasta_main
+from BarcodeFinder.global_vars import log, FMT, DATEFMT
 from BarcodeFinder.primer import primer_main
 from BarcodeFinder.utils import font_family, get_all_third_party
-
-
-def set_combo_style(win):
-    style = 'combostyle'
-    win.combo_style = ttk.Style()
-    if style not in ttk.Style().theme_names():
-        win.combo_style.theme_create(style, parent='alt', settings={
-            'TCombobox': {'configure': {
-                'font': (font_family, 11),
-                'selectbackground': 'white',
-                'fieldbackground': 'white',
-                'background': 'white'}}})
-    win.combo_style.theme_use(style)
 
 
 def my_labelframe(parent: tk.LabelFrame) -> tk.LabelFrame:
@@ -99,6 +86,15 @@ def my_entry(frame: tk.LabelFrame, fontsize=11) -> tk.Entry:
 
 
 def my_combobox(frame: tk.LabelFrame, fontsize=11) -> ttk.Combobox:
+    style = 'combostyle'
+    combo_style = ttk.Style()
+    if style not in ttk.Style().theme_names():
+        combo_style.theme_create(style, parent='alt', settings={
+            'TCombobox': {'configure': {
+                'selectbackground': 'white',
+                'fieldbackground': 'white',
+                'background': 'white'}}})
+    combo_style.theme_use(style)
     combobox = ttk.Combobox(frame, font=(font_family, fontsize))
     combobox.configure(state='readonly')
     combobox.configure(takefocus="")
@@ -319,7 +315,6 @@ class GB2Fasta:
         self.style.map('.', background=[('selected', _compcolor),
                                         ('active', _ana2color)])
         self.tooltip_font = "TkDefaultFont"
-        set_combo_style(self)
 
         top.geometry("600x800+5+139")
         move_to_center(top, 600, 800)
