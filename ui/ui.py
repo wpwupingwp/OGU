@@ -503,7 +503,9 @@ class GB2Fasta:
         self.date_start_entry.place(relx=0.686, rely=0.541, relheight=0.095
                                     , relwidth=0.087, bordermode='ignore')
         self.date_start_entry.configure(textvariable=self.date_start)
-        self.date_start_entry_tooltip = ToolTip(self.date_start_entry, self.tooltip_font, '''1970/1/1''')
+        self.date_start_entry_tooltip = ToolTip(self.date_start_entry,
+                                                self.tooltip_font,
+                                                '''1970/1/1''')
 
         self.to2_label = my_label(self.Labelframe1)
         self.to2_label.place(relx=0.789, rely=0.541, height=35, width=36
@@ -527,9 +529,9 @@ class GB2Fasta:
         self.exclude_entry.place(relx=0.686, rely=0.649, relheight=0.095
                                  , relwidth=0.279, bordermode='ignore')
         self.exclude_entry.configure(textvariable=self.exclude)
-        self.exclude_entry_tooltip = \
-            ToolTip(self.exclude_entry, self.tooltip_font,
-                    '''exclude expression''')
+        self.exclude_entry_tooltip = ToolTip(self.exclude_entry,
+                                             self.tooltip_font,
+                                             '''exclude expression''')
 
         self.query_label = my_label(self.Labelframe1)
         self.query_label.place(relx=0.035, rely=0.813, height=35, width=60
@@ -596,16 +598,17 @@ class GB2Fasta:
         self.max_name_len_entry.place(relx=0.297, rely=0.426, relheight=0.248
                                       , relwidth=0.187, bordermode='ignore')
         self.max_name_len_entry.configure(textvariable=self.max_name_len)
-        self.max_name_len_entry_tooltip =  ToolTip(self.max_name_len_entry, self.tooltip_font,
-                    '''max feature name length''')
+        self.max_name_len_entry_tooltip = ToolTip(self.max_name_len_entry,
+                                                  self.tooltip_font,
+                                                  '''max feature name length''')
 
         self.max_gene_len_entry = my_entry(self.Labelframe1)
         self.max_gene_len_entry.place(relx=0.297, rely=0.709, relheight=0.248
                                       , relwidth=0.187, bordermode='ignore')
         self.max_gene_len_entry.configure(textvariable=self.max_gene_len)
-        self.max_gene_len_entry_tooltip = \
-            ToolTip(self.max_gene_len_entry, self.tooltip_font,
-                    '''max fragment sequence length''')
+        self.max_gene_len_entry_tooltip = ToolTip(self.max_gene_len_entry,
+                                                  self.tooltip_font,
+                                                  '''max fragment sequence length''')
         self.max_name_len_entry.insert(0, '100')
         self.max_gene_len_entry.insert(0, '20000')
 
@@ -978,9 +981,9 @@ class Primer:
         self.coverage_entry.place(relx=0.297, rely=0.142, relheight=0.184
                                   , relwidth=0.192, bordermode='ignore')
         self.coverage_entry.configure(textvariable=self.coverage)
-        self.coverage_entry_tooltip = \
-            ToolTip(self.coverage_entry, self.tooltip_font,
-                    '''minimal coverage of primer on alignment''')
+        self.coverage_entry_tooltip = ToolTip(self.coverage_entry,
+                                              self.tooltip_font,
+                                              '''minimal coverage of primer on alignment''')
         self.coverage_entry.insert(0, '0.5')
 
         self.mismatch_label = my_label(self.Labelframe1)
@@ -1025,9 +1028,8 @@ class Primer:
         self.top_n_entry.place(relx=0.297, rely=0.789, relheight=0.184
                                , relwidth=0.192, bordermode='ignore')
         self.top_n_entry.configure(textvariable=self.top_n)
-        self.top_n_entry_tooltip = \
-            ToolTip(self.top_n_entry, self.tooltip_font,
-                    '''Only keep top best primers''')
+        self.top_n_entry_tooltip = ToolTip(self.top_n_entry, self.tooltip_font,
+                                           '''Only keep top best primers''')
         self.top_n_entry.insert(0, '1')
 
         self.primer_len_label = my_label(self.Labelframe1)
