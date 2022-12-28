@@ -12,7 +12,7 @@ def parse_args():
     """
     arg = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description=bf_main.__doc__)
+        description=cli_main.__doc__)
     general = arg.add_argument_group('General')
     general.add_argument('-aln', help='aligned fasta files to analyze')
     general.add_argument('-fasta', help='unaligned fasta format data to add')
@@ -128,7 +128,7 @@ def init_arg(arg):
     return arg
 
 
-def bf_main():
+def cli_main():
     """
     Call gb2fasta, evaluate and primer functions.
     """
@@ -159,4 +159,4 @@ def bf_main():
 
 
 if __name__ == '__main__':
-    bf_main()
+    cli_main()
