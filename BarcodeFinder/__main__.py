@@ -6,10 +6,18 @@ from BarcodeFinder.utils import get_all_third_party
 
 
 def main():
-    if argv[-1] == 'init':
+    if argv[-1] in ('init', '-init', '--init'):
         get_all_third_party()
-    else:
+    elif argv[-1] in ('-h', '--help'):
         bf_main()
+    elif len(argv) > 1:
+        bf_main()
+    else:
+        try:
+            from BarcodeFinder.ui import ui_main
+            ui_main()
+        except Exception:
+            bf_main()
 
 
 if __name__ == '__main__':
