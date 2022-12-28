@@ -5,6 +5,8 @@ from urllib.request import urlopen
 from pathlib import Path
 from zipfile import ZipFile
 
+from BarcodeFinder.global_vars import name
+
 
 def download_taxon(data_folder) -> Path:
     zip_file = data_folder / 'taxdmp.zip'
@@ -22,7 +24,7 @@ def init_lineage():
     """
     Only called by setup.py
     """
-    data_folder = Path('.') / 'BarcodeFinder' / 'data'
+    data_folder = Path('.') / name / 'data'
     zip_file = download_taxon(data_folder)
     with ZipFile(zip_file, 'r') as dumpfile:
         dumpfile.extract('names.dmp', path='.')
@@ -90,13 +92,13 @@ setuptools.setup(
     description='All-in-one solution for discovering novel DNA barcode',
     install_requires=requires,
     include_package_data=True,
-    package_data={'BarcodeFinder': ['data/animal_orders.csv', 'data/classes.csv',
+    package_data={name: ['data/animal_orders.csv', 'data/classes.csv',
                                     'data/kingdoms.csv', 'data/phyla.csv',
                                     'data/superkingdoms.csv']},
     license='GNU AGPL v3',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    name='BarcodeFinder',
+    name=name,
     packages=setuptools.find_packages(),
     python_requires='>=3.6',
     url='https://github.com/wpwupingwp/BarcodeFinder',

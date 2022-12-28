@@ -12,23 +12,22 @@ from Bio import Entrez, SeqIO
 from Bio.SeqFeature import SeqFeature, FeatureLocation
 
 from BarcodeFinder import utils
-from BarcodeFinder.global_vars import log
+from BarcodeFinder.global_vars import log, name
 
 
 # load data
-with open(resource_filename('BarcodeFinder', 'data/superkingdoms.csv'),
-          'r') as _:
+with open(resource_filename(name, 'data/superkingdoms.csv'), 'r') as _:
     SUPERKINGDOMS = set(_.read().split(','))
-with open(resource_filename('BarcodeFinder', 'data/kingdoms.csv'),
+with open(resource_filename(name, 'data/kingdoms.csv'),
           'r') as _:
     KINGDOMS = set(_.read().split(','))
-with open(resource_filename('BarcodeFinder', 'data/phyla.csv'),
+with open(resource_filename(name, 'data/phyla.csv'),
           'r') as _:
     PHYLA = set(_.read().split(','))
-with open(resource_filename('BarcodeFinder', 'data/classes.csv'),
+with open(resource_filename(name, 'data/classes.csv'),
           'r') as _:
     CLASSES = set(_.read().split(','))
-with open(resource_filename('BarcodeFinder', 'data/animal_orders.csv'),
+with open(resource_filename(name, 'data/animal_orders.csv'),
           'r') as _:
     ANIMAL_ORDERS = set(_.read().split(','))
 
@@ -119,8 +118,8 @@ def get_query_string(arg, silence=False):
                         'records by Genbank. Please consider to use "-taxon" '
                         'instead.')
         if arg.rename:
-            log.warning('BarcodeFinder will try to rename genes by regular '
-                        'expression.')
+            log.warning('{} will try to rename genes by regular '
+                        'expression.'.format(name))
         if arg.refseq == 'yes':
             log.warning('Conflict options: "-max_len" and "-refseq", '
                         'ignore length limit.')

@@ -3,7 +3,7 @@
 import argparse
 from BarcodeFinder import utils
 from BarcodeFinder import gb2fasta, evaluate, primer
-from BarcodeFinder.global_vars import log
+from BarcodeFinder.global_vars import log, name
 
 
 def parse_args():
@@ -133,7 +133,7 @@ def bf_main():
     Call gb2fasta, evaluate and primer functions.
     """
     utils.check_system()
-    log.info('Welcome to BarcodeFinder.')
+    log.info('Welcome to {}.'.format(name))
     arg = parse_args()
     arg = init_arg(arg)
     if arg is None:

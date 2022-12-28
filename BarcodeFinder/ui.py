@@ -14,7 +14,7 @@ import webbrowser
 
 from BarcodeFinder.evaluate import evaluate_main
 from BarcodeFinder.gb2fasta import gb2fasta_main
-from BarcodeFinder.global_vars import log, FMT, DATEFMT
+from BarcodeFinder.global_vars import log, name, FMT, DATEFMT
 from BarcodeFinder.primer import primer_main
 from BarcodeFinder.utils import font_family, get_all_third_party
 
@@ -228,10 +228,10 @@ class Root:
         _tabbg2 = 'grey89'
         _bgmode = 'light'
 
-        photo_location1 = resource_filename('BarcodeFinder', 'data/button1.png')
-        photo_location2 = resource_filename('BarcodeFinder', 'data/button2.png')
-        photo_location3 = resource_filename('BarcodeFinder', 'data/button3.png')
-        photo_location4 = resource_filename('BarcodeFinder', 'data/button4.png')
+        photo_location1 = resource_filename(name, 'data/button1.png')
+        photo_location2 = resource_filename(name, 'data/button2.png')
+        photo_location3 = resource_filename(name, 'data/button3.png')
+        photo_location4 = resource_filename(name, 'data/button4.png')
         global _img4
         _img4 = tk.PhotoImage(file=photo_location4)
         global _img0
@@ -245,7 +245,7 @@ class Root:
         move_to_center(top, 800, 450)
         top.minsize(120, 15)
         top.resizable(1, 1)
-        top.title("BarcodeFinder")
+        top.title(name)
         top.configure(background="#edf0f3")
         top.configure(highlightbackground="#edf0f3")
         top.configure(highlightcolor="black")
