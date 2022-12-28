@@ -4,3 +4,4 @@ coloredlogs>=10.0
 matplotlib>=3.0.0
 numpy==1.21.6
 primer3-py==0.6.1
+setuptools>=60.2.0
