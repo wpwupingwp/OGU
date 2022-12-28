@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from logging import handlers
+from pkg_resources import resource_filename
 from time import time
 from tkinter import filedialog, messagebox, scrolledtext
 import logging
@@ -227,10 +228,18 @@ class Root:
         _tabbg2 = 'grey89'
         _bgmode = 'light'
 
-        photo_location1 = "./button1.png"
-        photo_location2 = "./button2.png"
-        photo_location3 = "./button3.png"
-        photo_location4 = "./button4.png"
+        photo_location1 = resource_filename('BarcodeFinder', 'data/button1.png')
+        photo_location2 = resource_filename('BarcodeFinder', 'data/button2.png')
+        photo_location3 = resource_filename('BarcodeFinder', 'data/button3.png')
+        photo_location4 = resource_filename('BarcodeFinder', 'data/button4.png')
+        global _img4
+        _img4 = tk.PhotoImage(file=photo_location4)
+        global _img0
+        _img0 = tk.PhotoImage(file=photo_location1)
+        global _img1
+        _img1 = tk.PhotoImage(file=photo_location2)
+        global _img2
+        _img2 = tk.PhotoImage(file=photo_location3)
 
         top.geometry("800x450+400+0")
         move_to_center(top, 800, 450)
@@ -245,29 +254,21 @@ class Root:
         self.help_b = my_button(self.top)
         self.help_b.place(relx=0.913, rely=0.067, height=40, width=40)
         self.help_b.configure(command=run_help)
-        global _img4
-        _img4 = tk.PhotoImage(file=photo_location4)
         self.help_b.configure(image=_img4)
 
         self.gb2fasta_b = my_button(self.top)
         self.gb2fasta_b.place(relx=0.188, rely=0.288, height=100, width=100)
         self.gb2fasta_b.configure(command=ui_gb2fasta)
-        global _img0
-        _img0 = tk.PhotoImage(file=photo_location1)
         self.gb2fasta_b.configure(image=_img0)
 
         self.evaluate_b = my_button(self.top)
         self.evaluate_b.place(relx=0.438, rely=0.288, height=100, width=100)
         self.evaluate_b.configure(command=ui_evaluate)
-        global _img1
-        _img1 = tk.PhotoImage(file=photo_location2)
         self.evaluate_b.configure(image=_img1)
 
         self.primer_b = my_button(self.top)
         self.primer_b.place(relx=0.688, rely=0.288, height=100, width=100)
         self.primer_b.configure(command=ui_primer)
-        global _img2
-        _img2 = tk.PhotoImage(file=photo_location3)
         self.primer_b.configure(image=_img2)
 
         self.install_third_party = my_button(self.top)
