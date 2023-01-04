@@ -623,10 +623,13 @@ def divide(gbfile, arg):
         record.id = '|'.join([name_str, taxon, accession, specimen])
         record.description = ''
         filename = arg._fasta / (name_str+'.fasta')
-        with open(filename, 'a', encoding='utf-8') as out:
-            SeqIO.write(record, out, 'fasta')
-        # write raw fasta
-        SeqIO.write(record, handle_raw, 'fasta')
+        try:
+            with open(filename, 'a', encoding='utf-8') as out:
+                SeqIO.write(record, out, 'fasta')
+            # write raw fasta
+            SeqIO.write(record, handle_raw, 'fasta')
+        except Exception:
+            log.info(f'Invalid sequence {filename}.')
     # skip analyze of Unknown.fasta
     # unknown = arg._divide / 'Unknown.fasta'
     log.info('Divide finished.')
