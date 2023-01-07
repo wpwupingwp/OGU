@@ -10,6 +10,6 @@ foreach (${f} in ${version})
     &${f}/Scripts/Activate.ps1
     &pip install -U cython build setuptools wheel
     &${python} -m build -n --wheel
-    $deactivate
+    &deactivate
 }
 &ls ${src}\dist
