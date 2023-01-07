@@ -92,7 +92,7 @@ def my_combobox(frame: tk.LabelFrame, fontsize=11) -> ttk.Combobox:
     if style not in ttk.Style().theme_names():
         combo_style.theme_create(style, parent='alt', settings={
             'TCombobox': {'configure': {
-                'selectbackground': 'white',
+                'selectbackground': 'gray',
                 'fieldbackground': 'white',
                 'background': 'white'}}})
     combo_style.theme_use(style)
@@ -403,8 +403,8 @@ class GB2Fasta:
         self.TCombobox_molecular = my_combobox(self.Labelframe1)
         self.TCombobox_molecular.place(relx=0.716, rely=0.217, height=35,
                                        width=150, bordermode='ignore')
-        self.value_list = ['all', 'DNA', 'RNA', ]
-        self.TCombobox_molecular.configure(values=self.value_list)
+        self.molecular_value_list = ['all', 'DNA', 'RNA', ]
+        self.TCombobox_molecular.configure(values=self.molecular_value_list)
         self.TCombobox_molecular.configure(textvariable=self.molecular)
         self.TCombobox_molecular.current(0)
 
@@ -416,9 +416,10 @@ class GB2Fasta:
         self.TCombobox_group = my_combobox(self.Labelframe1)
         self.TCombobox_group.place(relx=0.716, rely=0.326, height=35, width=150,
                                    bordermode='ignore')
-        self.value_list = ['all', 'animals', 'plants', 'fungi', 'protists',
-                           'bacteria', 'archaea', 'viruses', ]
-        self.TCombobox_group.configure(values=self.value_list)
+        self.group_value_list = ['all', 'animals', 'plants', 'fungi',
+                                 'protists',
+                                 'bacteria', 'archaea', 'viruses', ]
+        self.TCombobox_group.configure(values=self.group_value_list)
         self.TCombobox_group.configure(textvariable=self.group)
         self.TCombobox_group.current(0)
 
@@ -430,9 +431,9 @@ class GB2Fasta:
         self.TCombobox_og = my_combobox(self.Labelframe1)
         self.TCombobox_og.place(relx=0.201, rely=0.435, height=35, width=170,
                                 bordermode='ignore')
-        self.value_list = ['ignore', 'both', 'no', 'mitochondrion',
-                           'chloroplast', ]
-        self.TCombobox_og.configure(values=self.value_list)
+        self.og_value_list = ['ignore', 'both', 'no', 'mitochondrion',
+                              'chloroplast', ]
+        self.TCombobox_og.configure(values=self.og_value_list)
         self.TCombobox_og.configure(textvariable=self.og)
         self.TCombobox_og.current(0)
 
@@ -444,8 +445,8 @@ class GB2Fasta:
         self.TCombobox_refseq = my_combobox(self.Labelframe1)
         self.TCombobox_refseq.place(relx=0.201, rely=0.541, height=35,
                                     width=150, bordermode='ignore')
-        self.value_list = ['both', 'yes', 'no', ]
-        self.TCombobox_refseq.configure(values=self.value_list)
+        self.refseq_value_list = ['both', 'yes', 'no', ]
+        self.TCombobox_refseq.configure(values=self.refseq_value_list)
         self.TCombobox_refseq.configure(textvariable=self.refseq)
         self.TCombobox_refseq.current(0)
         self.TCombobox_refseq_tooltip = ToolTip(self.TCombobox_refseq,
@@ -655,8 +656,8 @@ class GB2Fasta:
         self.TCombobox_unique = my_combobox(self.top)
         self.TCombobox_unique.place(relx=0.167, rely=0.488, relheight=0.044
                                     , relwidth=0.245)
-        self.value_list = ['longest', 'first', 'no', ]
-        self.TCombobox_unique.configure(values=self.value_list)
+        self.unique_value_list = ['longest', 'first', 'no', ]
+        self.TCombobox_unique.configure(values=self.unique_value_list)
         self.TCombobox_unique.configure(textvariable=self.unique)
         self.TCombobox_unique.current(0)
         self.TCombobox_unique_tooltip = ToolTip(
