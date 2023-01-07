@@ -55,14 +55,16 @@ class BlastResult:
 
 def check_system():
     """
-    primer3-py is currently unavailable on Windows with Python 3.9/3.10
+    # primer3-py is currently unavailable on Windows with Python 3.9/3.10
+    # 2023.1 solved.
     f-strings are not available on Python 3.5 or older.
     """
     if version_info.minor < 6:
         raise RuntimeError('Python 3.6 or newer is required.')
     if platform.system() == 'Windows':
-        if version_info.minor > 8:
-            raise RuntimeError('Python 3.7 or 3.8 is required.')
+        if version_info.minor > 11:
+            # raise RuntimeError('Python 3.7 or 3.8 is required.')
+            raise RuntimeError('Do not support python 3.12 or higher.')
     return
 
 
