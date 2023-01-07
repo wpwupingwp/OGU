@@ -3,7 +3,6 @@ import setuptools
 from BarcodeFinder.global_vars import name
 from BarcodeFinder.utils import init_lineage
 
-
 init_lineage()
 
 with open('README.md', 'r') as _:
@@ -19,8 +18,10 @@ setuptools.setup(
     install_requires=requires,
     include_package_data=True,
     package_data={name: ['data/animal_orders.csv', 'data/classes.csv',
-                                    'data/kingdoms.csv', 'data/phyla.csv',
-                                    'data/superkingdoms.csv']},
+                         'data/kingdoms.csv', 'data/phyla.csv',
+                         'data/superkingdoms.csv', 'data/button1.png',
+                         'data/button2.png', 'data/button3.png',
+                         'data/button4.png']},
     license='GNU AGPL v3',
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -28,7 +29,7 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     python_requires='>=3.6',
     url='https://github.com/wpwupingwp/BarcodeFinder',
-    version='0.10.1',
+    version='1.2',
     classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
