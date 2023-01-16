@@ -3,7 +3,7 @@ import logging
 import coloredlogs
 
 # project name
-name = 'BarcodeFinder'
+name = 'OGU'
 # define logger
 FMT = '%(asctime)s %(levelname)-8s %(message)s'
 DATEFMT = '%H:%M:%S'

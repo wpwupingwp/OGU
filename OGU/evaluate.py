@@ -15,8 +15,8 @@ from matplotlib import use as mpl_use
 mpl_use('Agg')
 from matplotlib import pyplot as plt
 from matplotlib import rcParams
-from BarcodeFinder import utils
-from BarcodeFinder.global_vars import log
+from OGU import utils
+from OGU.global_vars import log
 # ignore warnings from numpy
 warnings.filterwarnings('ignore', category=RuntimeWarning)
 # update matplotlib settings

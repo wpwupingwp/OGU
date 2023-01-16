@@ -12,11 +12,11 @@ import tkinter as tk
 import tkinter.ttk as ttk
 import webbrowser
 
-from BarcodeFinder.evaluate import evaluate_main
-from BarcodeFinder.gb2fasta import gb2fasta_main
-from BarcodeFinder.global_vars import log, name, FMT, DATEFMT
-from BarcodeFinder.primer import primer_main
-from BarcodeFinder.utils import font_family, get_all_third_party
+from OGU.evaluate import evaluate_main
+from OGU.gb2fasta import gb2fasta_main
+from OGU.global_vars import log, name, FMT, DATEFMT
+from OGU.primer import primer_main
+from OGU.utils import font_family, get_all_third_party
 
 
 def my_labelframe(parent: tk.LabelFrame) -> tk.LabelFrame:
@@ -1414,6 +1414,7 @@ def ui_main():
     global root
     root = tk.Tk()
     root.protocol('WM_DELETE_WINDOW', root.destroy)
+    root.title('Organelle Genome Utilities')
     # Creates a toplevel widget.
     global _top1, _w1
     _top1 = root

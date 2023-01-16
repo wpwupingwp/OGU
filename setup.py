@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 import setuptools
-from BarcodeFinder.global_vars import name
-from BarcodeFinder.utils import init_lineage
+from OGU.global_vars import name
+from OGU.utils import init_lineage
 
 init_lineage()
 
@@ -14,7 +14,7 @@ with open('requirements.txt', 'r') as _:
 setuptools.setup(
     author='Ping Wu',
     author_email='wpwupingwp@outlook.com',
-    description='All-in-one solution for discovering novel DNA barcode',
+    description='Organelle Genome Utilities',
     install_requires=requires,
     include_package_data=True,
     package_data={name: ['data/animal_orders.csv', 'data/classes.csv',
@@ -28,10 +28,12 @@ setuptools.setup(
     name=name,
     packages=setuptools.find_packages(),
     python_requires='>=3.6',
+    # todo rename
+    # todo entry point
     url='https://github.com/wpwupingwp/BarcodeFinder',
-    version='1.2',
+    version='1.3',
     classifiers=[
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Stable',
         'Intended Audience :: Developers',
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: GNU Affero General Public License v3',

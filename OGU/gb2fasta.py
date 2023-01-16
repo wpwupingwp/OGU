@@ -11,8 +11,8 @@ from time import sleep
 from Bio import Entrez, SeqIO
 from Bio.SeqFeature import SeqFeature, FeatureLocation
 
-from BarcodeFinder import utils
-from BarcodeFinder.global_vars import log, name
+from OGU import utils
+from OGU.global_vars import log, name
 
 
 # load data

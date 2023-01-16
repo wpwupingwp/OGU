@@ -1,9 +1,9 @@
 #!/usr/bin/python3
 
 import argparse
-from BarcodeFinder import utils
-from BarcodeFinder import gb2fasta, evaluate, primer
-from BarcodeFinder.global_vars import log, name
+from OGU import utils
+from OGU import gb2fasta, evaluate, primer
+from OGU.global_vars import log, name
 
 
 def parse_args():
@@ -89,25 +89,25 @@ def parse_args():
                           help='step length for sliding-window scan')
     evaluate.add_argument('-primer', action='store_true',
                           help='design universal primer')
-    primer = arg.add_argument_group('Primer')
-    primer.add_argument('-ambiguous', dest='ambiguous_base_n', default=4,
-                        type=int, help='number of ambiguous bases')
-    primer.add_argument('-coverage', dest='coverage', default=0.5, type=float,
-                        help='minimal coverage of base and primer')
-    primer.add_argument('-mismatch', dest='mismatch', default=4, type=int,
-                        help='maximum mismatch bases in primer')
-    primer.add_argument('-pmin', dest='min_primer', default=20, type=int,
-                        help='minimum primer length')
-    primer.add_argument('-pmax', dest='max_primer', default=30, type=int,
-                        help='maximum primer length')
-    primer.add_argument('-res', dest='resolution', type=float, default=0.3,
-                        help='minimal resolution')
-    primer.add_argument('-topn', dest='top_n', type=int, default=1,
-                        help='keep n primers for each high variant region')
-    primer.add_argument('-amin', dest='min_product', default=300, type=int,
-                        help='minimum amplified length (include primer)')
-    primer.add_argument('-amax', dest='max_product', default=800, type=int,
-                        help='maximum amplified length (include primer)')
+    primer_ = arg.add_argument_group('Primer')
+    primer_.add_argument('-ambiguous', dest='ambiguous_base_n', default=4,
+                         type=int, help='number of ambiguous bases')
+    primer_.add_argument('-coverage', dest='coverage', default=0.5, type=float,
+                         help='minimal coverage of base and primer')
+    primer_.add_argument('-mismatch', dest='mismatch', default=4, type=int,
+                         help='maximum mismatch bases in primer')
+    primer_.add_argument('-pmin', dest='min_primer', default=20, type=int,
+                         help='minimum primer length')
+    primer_.add_argument('-pmax', dest='max_primer', default=30, type=int,
+                         help='maximum primer length')
+    primer_.add_argument('-res', dest='resolution', type=float, default=0.3,
+                         help='minimal resolution')
+    primer_.add_argument('-topn', dest='top_n', type=int, default=1,
+                         help='keep n primers for each high variant region')
+    primer_.add_argument('-amin', dest='min_product', default=300, type=int,
+                         help='minimum amplified length (include primer)')
+    primer_.add_argument('-amax', dest='max_product', default=800, type=int,
+                         help='maximum amplified length (include primer)')
     return arg.parse_args()
 
 
@@ -140,7 +140,7 @@ def cli_main():
         log.error('Quit.')
         return
     else:
-        from BarcodeFinder import global_vars
+        from OGU import global_vars
         global_vars.global_dict['out_inited'] = True
     utils.add_file_log(arg)
     option = utils.arg_to_str(arg)

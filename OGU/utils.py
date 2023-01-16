@@ -19,7 +19,7 @@ from zipfile import ZipFile
 from pkg_resources import resource_filename
 
 from Bio.Seq import Seq
-from BarcodeFinder.global_vars import log, name, FMT, DATEFMT
+from OGU.global_vars import log, name, FMT, DATEFMT
 
 
 # hosting in free AWS S3 server
@@ -153,7 +153,7 @@ def init_out(arg):
     else:
         arg.out = Path(arg.out).absolute()
     if arg.out.exists() and len(list(arg.out.iterdir())) == 0:
-        from BarcodeFinder import global_vars
+        from OGU import global_vars
         if not global_vars.global_dict.get('out_inited', False):
             log.warning(f'Output folder {arg.out} exists.')
             arg.out = arg.out / (arg.out.name+'_')

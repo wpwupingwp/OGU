@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 
 from sys import argv
-from BarcodeFinder.cli import cli_main
-from BarcodeFinder.utils import get_all_third_party
+from OGU.cli import cli_main
+from OGU.utils import get_all_third_party
 
 
 def main():
@@ -14,7 +14,7 @@ def main():
         cli_main()
     else:
         try:
-            from BarcodeFinder.ui import ui_main
+            from OGU.ui import ui_main
             ui_main()
         except Exception:
             cli_main()

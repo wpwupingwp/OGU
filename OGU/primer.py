@@ -19,9 +19,9 @@ from Bio import SeqIO
 from primer3 import (calcTm, calcHairpinTm, calcHomodimerTm,
                      calcHeterodimerTm)
 
-from BarcodeFinder import utils
-from BarcodeFinder import evaluate
-from BarcodeFinder.global_vars import log
+from OGU import utils
+from OGU import evaluate
+from OGU.global_vars import log
 
 
 class Pair:
