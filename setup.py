@@ -28,8 +28,7 @@ setuptools.setup(
     name=name,
     packages=setuptools.find_packages(),
     python_requires='>=3.6',
-    # todo rename
-    # todo entry point
+    entry_points={'console_scripts': ['OGU = OGU:main', 'ogu = OGU:main']},
     url='https://github.com/wpwupingwp/BarcodeFinder',
     version='1.3',
     classifiers=[
