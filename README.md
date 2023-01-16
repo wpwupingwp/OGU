@@ -151,7 +151,7 @@ installed previously:
 /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 ```
 
-If any errors occur, install Xcode from the App Store and retry.
+If any errors occur, install `Xcode-select` and retry.
 
 Then:
 
