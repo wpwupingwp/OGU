@@ -248,7 +248,7 @@ def gene_rename(old_name: str) -> (str, str):
                 return old_name, 'bad_name'
             # anticodon = anticodon.transcribe()
         # if genbank_format:
-        new_name = f'{prefix}{aa_letter}_{anticodon.upper()}'
+        new_name = f'{prefix}{aa_letter}-{anticodon.upper()}'
         gene_type = 'tRNA'
     elif lower.startswith('rrn'):
         pattern = re.compile(r'(\d+\.?\d?)')
