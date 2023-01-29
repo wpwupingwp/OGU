@@ -629,7 +629,7 @@ def divide(gbfile, arg):
             # write raw fasta
             SeqIO.write(record, handle_raw, 'fasta')
         except Exception:
-            log.info(f'Invalid sequence {filename}.')
+            log.warning(f'Invalid sequence {accession}.')
     # skip analyze of Unknown.fasta
     # unknown = arg._divide / 'Unknown.fasta'
     log.info('Divide finished.')
