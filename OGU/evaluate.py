@@ -452,7 +452,8 @@ def output_sliding(sliding: list, name: str, out: Path,
     out_pdf = out / (name+'.pdf')
     plt.style.use('seaborn-v0_8-colorblind')
     # how to find optimized size?
-    fig, ax1 = plt.subplots(figsize=(15 + len(sliding) // 5000, 10))
+    fig= plt.figure(figsize=(15 + len(sliding) // 5000, 10))
+    ax1 = plt.subplot(211)
     ax1.yaxis.set_ticks(np.linspace(0, 1, num=11))
     ax1.set_title(f'{name} '
                   f'({sliding[0].Samples} sequences, '
@@ -470,9 +471,10 @@ def output_sliding(sliding: list, name: str, out: Path,
     ax1.plot(index, [i.Total_GC for i in sliding], label='GC Ratio',
              alpha=0.8)
     ax1.plot(index, [i.Pi for i in sliding], label=r'$\pi$', alpha=0.8)
-    ax1.legend(loc='lower left', framealpha=0.5)
+    ax1.legend(loc='upper right', framealpha=0.5)
     # different ytick
-    ax2 = ax1.twinx()
+    ax2 = plt.subplot(212)
+    ax1.set_xlabel('Bases')
     # ax2..yaxis.set_ticks(np.linspace(0, max_range, 21))
     ax2.set_ylabel(r'Phylogenetic Diversity', rotation=-90, labelpad=20)
     ax2.plot(index, [i.PD for i in sliding], linestyle='--', label='PD',
