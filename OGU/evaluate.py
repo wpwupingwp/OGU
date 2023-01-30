@@ -305,12 +305,12 @@ def nucleotide_diversity(alignment: np.array) -> float:
 
 def fix_only_gaps(array: np.array) -> np.array:
     # for iqtree only
-    tmp = [b'A', b'A', b'A', b'A', b'A']
+    tmp = b'A'
     new = array.copy()
     n_col = array.shape[1]
     for row in new:
         if np.count_nonzero(row==b'-') == n_col:
-            row[:5] = tmp
+            row[0] = tmp
     return new
 
 
@@ -354,8 +354,6 @@ def phylogenetic_diversity(alignment: np.array, tmp: Path) -> (float, float,
         run_ = run(t_cmd, stdout=out, stderr=out, shell=True)
         # just return 0 if there is error
     if run_.returncode != 0:
-        print(t_cmd)
-        raise
         log.debug('Found sequence with only gaps.')
     else:
         tree = Phylo.read(str(aln_file)+'.treefile', 'newick')
@@ -504,7 +502,6 @@ def evaluate(aln: Path, arg) -> tuple:
     sliding = []
     name, alignment = fasta_to_array(aln)
     if name is None:
-        log.info(f'Invalid fasta file {aln}.')
         return None, None, None
     if arg.ignore_gap:
         no_gap_alignment, gap_alignment = remove_gap(alignment)

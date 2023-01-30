@@ -200,7 +200,7 @@ def clean_tmp(filename: Path):
 
 
 @lru_cache(maxsize=None)
-def gene_rename(old_name: str) -> (str, str):
+def gene_rename(old_name: str, genbank_format=False) -> (str, str):
     """
     Old doc:
         Different name of same gene will cause data to be split to numerous
@@ -247,8 +247,10 @@ def gene_rename(old_name: str) -> (str, str):
             except Exception:
                 return old_name, 'bad_name'
             # anticodon = anticodon.transcribe()
-        # if genbank_format:
-        new_name = f'{prefix}{aa_letter}-{anticodon.upper()}'
+        if genbank_format:
+            new_name = f'{prefix}{aa_letter}-{anticodon.upper()}'
+        else:
+            new_name = f'{prefix}{aa_letter}_{anticodon.upper()}'
         gene_type = 'tRNA'
     elif lower.startswith('rrn'):
         pattern = re.compile(r'(\d+\.?\d?)')
