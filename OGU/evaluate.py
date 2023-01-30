@@ -227,8 +227,6 @@ def remove_gap(alignment: np.array, silence=False) -> (np.array, np.array):
     return no_gap_columns, gap_columns
 
 
-
-
 def gc_ratio(alignment: np.array, ignore_ambiguous=True) -> (
         float, np.array):
     """
@@ -438,13 +436,13 @@ def output_sliding(sliding: list, name: str, out: Path,
     handle.close()
     # draw
     out_pdf = out / (name+'.pdf')
-    plt.style.use('seaborn-colorblind')
+    plt.style.use('seaborn-v0_8-colorblind')
     # how to find optimized size?
     fig, ax1 = plt.subplots(figsize=(15 + len(sliding) // 5000, 10))
     ax1.yaxis.set_ticks(np.linspace(0, 1, num=11))
-    ax1.set_title(f'Sliding window results of {name} '
-                  f'(sample={sliding[0].Samples}, '
-                  f'size={size} bp, step={step} bp)', pad=30)
+    ax1.set_title(f'{name} '
+                  f'({sliding[0].Samples} sequences, '
+                  f'{sliding[0].Length} bp)', pad=30)
     ax1.set_xlabel('Bases')
     ax1.set_ylabel('Gap Ratio, GC Ratio, Resolution, Pi & Shannon Index')
     ax1.plot(index, [i.Gap_Ratio for i in sliding], label='Gap Ratio',
@@ -458,7 +456,7 @@ def output_sliding(sliding: list, name: str, out: Path,
     ax1.plot(index, [i.Total_GC for i in sliding], label='GC Ratio',
              alpha=0.8)
     ax1.plot(index, [i.Pi for i in sliding], label=r'$\pi$', alpha=0.8)
-    ax1.legend(loc='lower left')
+    ax1.legend(loc='lower left', framealpha=0.5)
     # different ytick
     ax2 = ax1.twinx()
     # ax2..yaxis.set_ticks(np.linspace(0, max_range, 21))
@@ -470,7 +468,7 @@ def output_sliding(sliding: list, name: str, out: Path,
     ax2.plot(index, [i.PD_terminal for i in sliding], linestyle='--',
              label='PD_terminal', alpha=0.8)
     # k--
-    ax2.legend(loc='upper right')
+    ax2.legend(loc='upper right', framealpha=0.5)
     plt.savefig(out_pdf)
     plt.close()
     return out_csv, out_pdf
@@ -505,7 +503,7 @@ def evaluate(aln: Path, arg) -> tuple:
         pass
     else:
         # sliding window
-        for i in range(0, columns, arg.step):
+        for i in range(0, columns-arg.size, arg.step):
             # view, not copy
             subalign = alignment[:, i:i+arg.size]
             if arg.ignore_gap:
