@@ -303,6 +303,17 @@ def nucleotide_diversity(alignment: np.array) -> float:
     return max(0, pi)
 
 
+def fix_only_gaps(array: np.array) -> np.array:
+    # for iqtree only
+    tmp = [b'A', b'A', b'A', b'A', b'A']
+    new = array.copy()
+    n_col = array.shape[1]
+    for row in new:
+        if np.count_nonzero(row==b'-') == n_col:
+            row[:5] = tmp
+    return new
+
+
 def phylogenetic_diversity(alignment: np.array, tmp: Path) -> (float, float,
                                                                float, float):
     """
@@ -332,17 +343,20 @@ def phylogenetic_diversity(alignment: np.array, tmp: Path) -> (float, float,
     old_max_recursion = sys.getrecursionlimit()
     sys.setrecursionlimit(max(rows+10, old_max_recursion))
     aln_file = tmp / f'{columns}.tmp'
-    array_to_fasta(alignment, aln_file)
+    fixed_aln = fix_only_gaps(alignment)
+    array_to_fasta(fixed_aln, aln_file)
     _, iqtree = utils.get_iqtree()
     if not _:
         log.critical('Cannot find iqtree.')
         return pd, pd_stem, pd_stem_sd, pd_terminal, pd_terminal_sd, tree_res
     with open(devnull, 'w', encoding='utf-8') as out:
-        run_ = run(f'{iqtree} -s {aln_file} -m HKY -fast -czb -redo',
-                   stdout=out, stderr=out, shell=True)
+        t_cmd = f'{iqtree} -s {aln_file} -m HKY -fast -czb -redo'
+        run_ = run(t_cmd, stdout=out, stderr=out, shell=True)
         # just return 0 if there is error
     if run_.returncode != 0:
-        log.debug('Too much gap in the alignment.')
+        print(t_cmd)
+        raise
+        log.debug('Found sequence with only gaps.')
     else:
         tree = Phylo.read(str(aln_file)+'.treefile', 'newick')
         try:
@@ -538,6 +552,9 @@ def evaluate_main(arg_str=None):
         summary, gc_array, sliding = evaluate(aln, arg)
         if summary is None:
             continue
+        log.info(f'\t{aln.stem}')
+        log.info(f'\tSamples:                   {summary.Samples}')
+        log.info(f'\tLength                     {summary.Length} bp')
         log.info(f'\tGap ratio:                 {summary.Gap_Ratio:.8f}')
         log.info(f'\tObserved resolution:       {summary.Observed_Res:.8f}')
         log.info(f'\tNormalized Shannon Index:  {summary.Entropy:.8f}')
