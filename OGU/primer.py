@@ -755,7 +755,7 @@ def primer_main(arg_str=None):
         arg, other_args = parse_args()
     else:
         arg, other_args = parse_args(arg_str.split(' '))
-    if not arg.primer:
+    if not arg.primer and __name__ != '__main__':
         log.info('Skip primer module.')
         return None, None
     log.info('Running primer module...')

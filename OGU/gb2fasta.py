@@ -651,13 +651,13 @@ def write_seq(record, seq_info, whole_seq, arg):
         # illegal annotation may cause extraction failed
         try:
             sequence = feature.extract(whole_seq)
-        except ValueError:
-            sequence = ''
-            log.warning('Cannot extract sequence of {} from {}.'.format(
-                name, seq_info[1]))
-        return sequence
+            sequence_str = str(sequence)
+        except Exception as e:
+            sequence_str = ''
+            log.warning('Cannot extract sequence of {} from {} '
+                        'due to "{}".'.format(name, seq_info[1], str(e)))
+        return sequence_str
 
-    path = arg._divide
     seq_len = len(whole_seq)
     filenames = set()
     expand_files = set()
@@ -683,7 +683,7 @@ def write_seq(record, seq_info, whole_seq, arg):
             sequence_id = '>' + '|'.join([name, *seq_info, feature.type])
             sequence = careful_extract(name, feature, whole_seq)
             handle.write(sequence_id+'\n')
-            handle.write(str(sequence)+'\n')
+            handle.write(sequence+'\n')
         filenames.add(filename)
         if arg.expand != 0:
             if feature.location_operator == 'join':

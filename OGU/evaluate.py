@@ -453,9 +453,7 @@ def output_sliding(sliding: list, name: str, out: Path,
     fig= plt.figure(figsize=(15 + len(sliding) // 5000, 10))
     ax1 = plt.subplot(211)
     ax1.yaxis.set_ticks(np.linspace(0, 1, num=11))
-    ax1.set_title(f'{name} '
-                  f'({sliding[0].Samples} sequences, '
-                  f'{sliding[0].Length} bp)', pad=30)
+    ax1.set_title(f'{name} ({sliding[0].Samples} sequences, ', pad=30)
     ax1.set_xlabel('Bases')
     ax1.set_ylabel('Gap Ratio, GC Ratio, Resolution, Pi & Shannon Index')
     ax1.plot(index, [i.Gap_Ratio for i in sliding], label='Gap Ratio',
