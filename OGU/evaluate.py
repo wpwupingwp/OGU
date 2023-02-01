@@ -455,7 +455,7 @@ def output_sliding(sliding: list, name: str, out: Path,
     ax1.yaxis.set_ticks(np.linspace(0, 1, num=11))
     ax1.set_title(f'{name} ({sliding[0].Samples} sequences, ', pad=30)
     ax1.set_xlabel('Bases')
-    ax1.set_ylabel('Gap Ratio, GC Ratio, Resolution, Pi & Shannon Index')
+    ax1.set_ylabel('Values')
     ax1.plot(index, [i.Gap_Ratio for i in sliding], label='Gap Ratio',
              alpha=0.8)
     ax1.plot(index, [i.Observed_Res for i in sliding],
@@ -472,7 +472,7 @@ def output_sliding(sliding: list, name: str, out: Path,
     ax2 = plt.subplot(212)
     ax1.set_xlabel('Bases')
     # ax2..yaxis.set_ticks(np.linspace(0, max_range, 21))
-    ax2.set_ylabel(r'Phylogenetic Diversity', rotation=-90, labelpad=20)
+    ax2.set_ylabel('Values')
     ax2.plot(index, [i.PD for i in sliding], linestyle='--', label='PD',
              alpha=0.8)
     ax2.plot(index, [i.PD_stem for i in sliding], linestyle='--',
