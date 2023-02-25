@@ -363,7 +363,7 @@ def test_cmd(program, option='-version') -> bool:
     return success
 
 
-def get_third_party():
+def get_third_party_path():
     """
     Get third_party folder.
     If do not exist, create it.
@@ -451,7 +451,7 @@ def get_blast(third_party=None, result=None) -> (bool, str):
         blast(str): blast path
     """
     if third_party is None:
-        third_party_ok, third_party = get_third_party()
+        third_party_ok, third_party = get_third_party_path()
         if not third_party_ok:
             return third_party_ok, ''
     blast = 'blastn'
@@ -496,7 +496,7 @@ def get_iqtree(third_party=None, result=None) -> (bool, str):
         iqtree(str): blast path
     """
     if third_party is None:
-        third_party_ok, third_party = get_third_party()
+        third_party_ok, third_party = get_third_party_path()
         if not third_party_ok:
             return third_party_ok, ''
     iqtree = 'iqtree2'
@@ -538,7 +538,7 @@ def get_mafft(third_party=None, result=None) -> (bool, str):
         mafft(str): mafft path
     """
     if third_party is None:
-        third_party_ok, third_party = get_third_party()
+        third_party_ok, third_party = get_third_party_path()
         if not third_party_ok:
             return third_party_ok, ''
     system = platform.system()
@@ -576,7 +576,7 @@ def get_all_third_party() -> bool:
     Use three threads to speed up.
     """
     log.info('Try to locate or install all third-party software.')
-    third_party_ok, third_party = get_third_party()
+    third_party_ok, third_party = get_third_party_path()
     if not third_party_ok:
         return False
     result_queue = Queue()
