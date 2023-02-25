@@ -504,10 +504,10 @@ def get_iqtree(third_party=None, result=None) -> (bool, str):
     ok = False
     original_url = 'https://github.com/iqtree/iqtree2/releases/download/v2.2.0/'
     # platform: (filename, folder)
-    fileinfo = {'Linux': ('iqtree-2.2.0-Linux.tar.gz', 'iqtree-2.2.0-Linux'),
-                'Darwin': ('iqtree-2.2.0-MacOSX.zip', 'iqtree-2.2.0-MacOSX'),
-                'Windows': ('iqtree-2.2.0-Windows.zip',
-                            'iqtree-2.2.0-Windows')}
+    fileinfo = {'Linux': ('iqtree-2.2.2.2-Linux.tar.gz', 'iqtree-2.2.2.2-Linux'),
+                'Darwin': ('iqtree-2.2.2.2-MacOSX.zip', 'iqtree-2.2.2.2-MacOSX'),
+                'Windows': ('iqtree-2.2.2.2-Windows.zip',
+                            'iqtree-2.2.2.2-Windows')}
     system = platform.system()
     filename = fileinfo[system][0]
     down_url = f'{aws_url}{quote(filename)}'
@@ -548,9 +548,9 @@ def get_mafft(third_party=None, result=None) -> (bool, str):
     ok = False
     original_url = 'https://mafft.cbrc.jp/alignment/software/'
     # system: {filename, folder}
-    fileinfo = {'Linux': ('mafft-7.490-linux.tgz', 'mafft-linux64'),
-                'Darwin': ('mafft-7.490-mac.zip', 'mafft-mac'),
-                'Windows': ('mafft-7.490-win64-signed.zip', 'mafft-win')}
+    fileinfo = {'Linux': ('mafft-7.511-linux.tgz', 'mafft-linux64'),
+                'Darwin': ('mafft-7.511-mac.zip', 'mafft-mac'),
+                'Windows': ('mafft-7.511-win64-signed.zip', 'mafft-win')}
     home_mafft = third_party / fileinfo[system][1] / mafft
     system = platform.system()
     filename = fileinfo[system][0]
