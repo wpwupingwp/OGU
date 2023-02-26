@@ -23,6 +23,7 @@ from OGU.global_vars import log, name, FMT, DATEFMT
 
 
 # hosting in free AWS S3 server
+# todo
 aws_url = 'https://barcodefinder.s3.ap-east-1.amazonaws.com/'
 test_url = 'https://s3.ap-east-1.amazonaws.com'
 # font family
