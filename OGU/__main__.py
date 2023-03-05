@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 
 from sys import argv
-from .cli import cli_main
-from .utils import get_all_third_party
+from OGU.cli import cli_main
+from OGU.utils import get_all_third_party
 
 
 def main():
