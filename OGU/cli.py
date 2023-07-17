@@ -71,6 +71,8 @@ def parse_args():
     gb2fasta_.add_argument('-query', nargs='*', help='query text')
     gb2fasta_.add_argument('-refseq', choices=('both', 'yes', 'no'),
                            default='both', help='include RefSeq or not')
+    gb2fasta_.add_argument('-genome', action='store_true',
+                            help='get complete genome')
     gb2fasta_.add_argument('-count', default=0, type=int,
                            help='maximum number of records to download')
     gb2fasta_.add_argument('-taxon', help='Taxonomy name')

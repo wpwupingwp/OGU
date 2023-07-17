@@ -81,6 +81,8 @@ def parse_args(arg_list=None):
                        help='release date end, (eg. 2020/12/31)')
     query.add_argument('-molecular', choices=('all', 'DNA', 'RNA'),
                        default='all', help='molecular type')
+    query.add_argument('-genome', action='store_true',
+                       help='get complete organelle genome')
     query.add_argument('-og', '-organelle', dest='organelle',
                        choices=('ignore', 'both', 'no', 'mt',
                                 'mitochondrion', 'cp', 'chloroplast',
@@ -120,8 +122,8 @@ def get_query_string(arg, silence=False):
         if arg.rename:
             log.warning('{} will try to rename genes by regular '
                         'expression.'.format(name))
-        if arg.refseq == 'yes':
-            log.warning('Conflict options: "-max_len" and "-refseq", '
+        if arg.genome:
+            log.warning('Conflict options: "-max_len" and "-genome", '
                         'ignore length limit.')
     else:
         pass
@@ -166,8 +168,8 @@ def get_query_string(arg, silence=False):
         log.warning('Query string is not empty, make sure the syntax is ok.')
         condition.append(' '.join(arg.query))
     if len(condition) > 0:
-        if arg.refseq == 'yes':
-            pass
+        if arg.genome:
+            condition.append(f'("20000"[SLEN] : "{arg.max_len}"[SLEN])')
         else:
             condition.append(f'("{arg.min_len}"[SLEN] : "{arg.max_len}"[SLEN])')
     if arg.exclude is not None:
@@ -253,7 +255,7 @@ def download(arg):
     ret_start = 0
     # get ret_max
     bit = len(str(count)) - 2
-    ret_max = min(1000, max(10, 10 ** bit))
+    ret_max = min(1, max(10, 10 ** bit))
     retry = 0
     while ret_start < count:
         log.info('\t{:d}--{:d}'.format(ret_start, ret_start + ret_max))
