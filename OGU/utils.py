@@ -243,7 +243,9 @@ def gene_rename(old_name: str, genbank_format=False) -> (str, str):
             aa_letter = 'M'
         else:
             try:
-                aa_letter = anticodon.reverse_complement().translate().upper()
+                aa_letter = anticodon.reverse_complement_rna().translate().upper()
+                if aa_letter == '*':
+                    aa_letter = 'UNKNOWN'
             except Exception:
                 return old_name, 'bad_name'
             # anticodon = anticodon.transcribe()

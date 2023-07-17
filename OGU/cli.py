@@ -114,7 +114,7 @@ def parse_args():
 
 
 def init_arg(arg):
-    ok1, _ = utils.get_third_party()
+    ok1, _ = utils.get_third_party_path()
     if not ok1:
         return None
     ok2 = utils.get_all_third_party()
