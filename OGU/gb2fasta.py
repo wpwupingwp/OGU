@@ -62,6 +62,8 @@ def parse_args(arg_list=None):
                      help='maximum length of gene sequence')
     adv.add_argument('-email', type=str,
                      help='email address for querying Genbank')
+    adv.add_argument('-out_debug', action='store_true',
+                     help='output debug gb')
     query = arg.add_argument_group('Query')
     query.add_argument('-exclude', type=str, help='exclude option')
     query.add_argument('-gene', type=str, help='gene name')
@@ -597,13 +599,15 @@ def divide(gbfile, arg):
         # write spacer annotations
         if not arg.allow_mosaic_spacer:
             spacers = [i for i in spacers if i.type != 'mosaic_spacer']
-        # record.features.extend(spacers)
         # extract intron
         introns = get_intron(have_intron.items())
-        # record.features.extend(introns)
         if not arg.allow_invert_repeat:
             spacers = [i for i in spacers if i.qualifiers[
                 'invert_repeat'] == 'False']
+        if arg.out_debug:
+            record.features.extend(spacers)
+            record.features.extend(introns)
+            SeqIO.write(record, arg.out/'extend.gb', 'gb')
         # write seq
         spacers_to_write = [[i.id, i] for i in spacers]
         # write intron or not?
