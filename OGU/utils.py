@@ -646,11 +646,16 @@ def init_lineage():
         dumpfile.extract('nodes.dmp', path='.')
     id_name = {}
     id_rank = {}
-    superkingdoms = []
-    kingdoms = []
-    phyla = []
-    classes = []
-    animal_orders = []
+    superkingdoms = set()
+    kingdoms = set()
+    phyla = set()
+    classes = set()
+    animal_orders = set()
+    other_orders = set()
+    plant_family = set()
+    other_family = set()
+    genus = set()
+    species = set()
     with open('names.dmp', 'r') as names:
         for _ in names:
             line = _.split(sep='|')
@@ -669,16 +674,27 @@ def init_lineage():
         rank_name = id_rank[taxon_id]
         taxon_name = id_name[taxon_id]
         if rank_name == 'superkingdom':
-            superkingdoms.append(taxon_name)
+            superkingdoms.add(taxon_name)
         elif rank_name == 'kingdom':
-            kingdoms.append(taxon_name)
+            kingdoms.add(taxon_name)
         elif rank_name == 'phylum':
-            phyla.append(taxon_name)
+            phyla.add(taxon_name)
         elif rank_name == 'class':
-            classes.append(taxon_name)
+            classes.add(taxon_name)
         elif rank_name == 'order':
-            if not taxon_name.startswith('ales'):
-                animal_orders.append(taxon_name)
+            if not taxon_name.endswith('ales'):
+                animal_orders.add(taxon_name)
+            else:
+                other_orders.add(taxon_name)
+        elif rank_name == 'family':
+            if taxon_name.endswith('aceae'):
+                plant_family.add(taxon_name)
+            else:
+                other_family.add(taxon_name)
+        elif rank_name == 'genus':
+            genus.add(taxon_name)
+        elif rank_name == 'species':
+            species.add(taxon_name)
 
     with open(data_folder / 'superkingdoms.csv', 'w') as out:
         out.write(','.join(superkingdoms))
@@ -690,6 +706,16 @@ def init_lineage():
         out.write(','.join(classes))
     with open(data_folder / 'animal_orders.csv', 'w') as out:
         out.write(','.join(animal_orders))
+    with open(data_folder / 'other_orders.csv', 'w') as out:
+        out.write(','.join(other_orders))
+    with open(data_folder / 'plant_families.csv', 'w') as out:
+        out.write(','.join(plant_family))
+    with open(data_folder / 'other_families.csv', 'w') as out:
+        out.write(','.join(other_family))
+    with open(data_folder / 'genus.csv', 'w') as out:
+        out.write(','.join(genus))
+    with open(data_folder / 'species.csv', 'w') as out:
+        out.write(','.join(species))
     return
 
 
