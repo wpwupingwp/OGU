@@ -1,7 +1,7 @@
-biopython>=1.72
-certifi>=2018.11.29
+biopython==1.82
+certifi>=2023.11.17
 coloredlogs>=10.0
 matplotlib>=3.0.0
 numpy>=1.21.6
-primer3-py==0.6.1
+primer3-py==2.0.1
 setuptools>=60.2.0
