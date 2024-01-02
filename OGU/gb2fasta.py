@@ -107,6 +107,8 @@ def get_query_string(arg, silence=False):
     """
     Based on given options, generate query string from Genbank.
     """
+    if arg.gb is not None:
+        return
     if not silence:
         if arg.allow_repeat:
             log.info("Repeat genes or spacers will be kept as user's wish.")
