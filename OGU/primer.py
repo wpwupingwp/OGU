@@ -422,7 +422,7 @@ def find_continuous(consensus, good_region, min_len):
         if base in skip or index not in good_region:
             if (index - start) >= min_len:
                 consensus.features.append(SeqFeature(FeatureLocation(
-                    start, index), type='continuous', strand=1))
+                    start, index, strand=1), type='continuous'))
             start = index + 1
     return consensus
 
@@ -479,8 +479,8 @@ def find_primer(consensus, arg):
                 primer = consensus[start:start + p_len]
                 if is_good_primer(primer):
                     consensus.features.append(SeqFeature(
-                        FeatureLocation(start, start + p_len),
-                        type='primer', strand=1))
+                        FeatureLocation(start, start + p_len, strand=1),
+                        type='primer'))
                     primer.start = start
                     primer.update_id()
                     primers.append(primer)

@@ -9,7 +9,7 @@ from pkg_resources import resource_filename
 from time import sleep
 
 from Bio import Entrez, SeqIO
-from Bio.SeqFeature import SeqFeature, FeatureLocation
+from Bio.SeqFeature import SeqFeature, FeatureLocation, CompoundLocation
 
 from OGU import utils
 from OGU.global_vars import log, name
@@ -588,7 +588,7 @@ def divide(gbfile, arg):
                 feature_name.append(name)
             else:
                 not_genes.append([name, feature])
-            if feature.location_operator == 'join':
+            if isinstance(feature.location, CompoundLocation):
                 # use dict to remove repeat name of gene/CDS/tRNA/rRNA
                 have_intron[name] = feature
 

@@ -12,11 +12,13 @@ import warnings
 import numpy as np
 from Bio import Phylo
 from matplotlib import use as mpl_use
+
 mpl_use('Agg')
 from matplotlib import pyplot as plt
 from matplotlib import rcParams
 from OGU import utils
 from OGU.global_vars import log
+
 # ignore warnings from numpy
 warnings.filterwarnings('ignore', category=RuntimeWarning)
 # update matplotlib settings
@@ -31,7 +33,8 @@ def parse_args(arg_list=None):
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description=evaluate_main.__doc__)
     arg.add_argument('-fasta', nargs='*', help='unaligned fasta files')
-    arg.add_argument('-fasta_folder', default=None, help='folder of fasta files')
+    arg.add_argument('-fasta_folder', default=None,
+                     help='folder of fasta files')
     arg.add_argument('-aln', nargs='*', help='aligned files')
     arg.add_argument('-out', help='output folder')
     arg.add_argument('-primer', action='store_true',
@@ -154,8 +157,8 @@ def array_to_fasta(alignment: np.array, filename: Path) -> Path:
     """
     with open(filename, 'wb') as aln:
         for index, row in enumerate(alignment):
-            aln.write(b'>'+str(index).encode('utf-8')+b'\n')
-            aln.write(b''.join(row)+b'\n')
+            aln.write(b'>' + str(index).encode('utf-8') + b'\n')
+            aln.write(b''.join(row) + b'\n')
     return filename
 
 
@@ -216,13 +219,13 @@ def remove_gap(alignment: np.array, silence=False) -> (np.array, np.array):
     """
     gap = b'-'
     # axis 0 for column
-    have_gap = np.any(alignment==gap, axis=0)
+    have_gap = np.any(alignment == gap, axis=0)
     gap_columns = alignment[:, have_gap]
     no_gap_columns = alignment[:, ~have_gap]
     n_columns = alignment.shape[1]
     n_gap_columns = gap_columns.shape[1]
     log.info(f'{n_columns} columns, {n_gap_columns} have gaps.')
-    if n_gap_columns/n_columns > 0.5 and not silence:
+    if n_gap_columns / n_columns > 0.5 and not silence:
         log.warning('Too much columns with gaps.')
     return no_gap_columns, gap_columns
 
@@ -238,6 +241,7 @@ def gc_ratio(alignment: np.array, ignore_ambiguous=True) -> (
         total_gc: gc value
         gc_array: np.array of gc value for each row(sequence)
     """
+
     def get_gc_ratio(row: np.array, ignore: bool):
         # if True, do not count ambiguous bases as GC, but count them in total
         # BDVH = 1/3 GC
@@ -253,7 +257,7 @@ def gc_ratio(alignment: np.array, ignore_ambiguous=True) -> (
                 gc += count.get(ambiguous_base, 0) / 3
             for ambiguous_base in (b'M', b'S', b'Y', b'K', b'R', b'S'):
                 gc += count.get(ambiguous_base, 0) / 2
-        return gc / (rows*columns-count.get(b'-', 0))
+        return gc / (rows * columns - count.get(b'-', 0))
 
     rows, columns = alignment.shape
     total_gc = get_gc_ratio(alignment, ignore_ambiguous)
@@ -309,7 +313,7 @@ def fix_only_gaps(array: np.array) -> np.array:
     new = array.copy()
     n_col = array.shape[1]
     for row in new:
-        if np.count_nonzero(row==b'-') == n_col:
+        if np.count_nonzero(row == b'-') == n_col:
             row[0] = tmp
     return new
 
@@ -341,7 +345,7 @@ def phylogenetic_diversity(alignment: np.array, tmp: Path) -> (float, float,
         log.debug('Too few sequences.')
         return pd, pd_stem, pd_stem_sd, pd_terminal, pd_terminal_sd, tree_res
     old_max_recursion = sys.getrecursionlimit()
-    sys.setrecursionlimit(max(rows+10, old_max_recursion))
+    sys.setrecursionlimit(max(rows + 10, old_max_recursion))
     aln_file = tmp / f'{columns}.tmp'
     fixed_aln = fix_only_gaps(alignment)
     array_to_fasta(fixed_aln, aln_file)
@@ -356,19 +360,22 @@ def phylogenetic_diversity(alignment: np.array, tmp: Path) -> (float, float,
     if run_.returncode != 0:
         log.debug('Found sequence with only gaps.')
     else:
-        tree = Phylo.read(str(aln_file)+'.treefile', 'newick')
+        tree = Phylo.read(str(aln_file) + '.treefile', 'newick')
         try:
             # skip the first empty node
             internals = tree.get_nonterminals()[1:]
-            non_zero_internals = [i for i in internals if i.branch_length!=0]
+            non_zero_internals = [i for i in internals if i.branch_length != 0]
             terminals = tree.get_terminals()
             # may be zero
             n_terminals = max(1, len(terminals))
             pd = tree.total_branch_length() / n_terminals
             pd_stem = sum([i.branch_length for i in internals]) / n_terminals
-            pd_stem_sd = np.std([i.branch_length for i in internals]) / n_terminals
-            pd_terminal = sum([i.branch_length for i in terminals]) / n_terminals
-            pd_terminal_sd = np.std([i.branch_length for i in terminals]) / n_terminals
+            pd_stem_sd = np.std(
+                [i.branch_length for i in internals]) / n_terminals
+            pd_terminal = sum(
+                [i.branch_length for i in terminals]) / n_terminals
+            pd_terminal_sd = np.std(
+                [i.branch_length for i in terminals]) / n_terminals
             tree_res = len(non_zero_internals) / n_terminals
         except Exception:
             log.debug('Bad phylogenetic tree.')
@@ -433,7 +440,7 @@ def output_sliding(sliding: list, name: str, out: Path,
     if len(sliding) == 0:
         log.warning('Empty sliding-window result.')
         return Path(), Path()
-    out_csv = out / (name+'.csv')
+    out_csv = out / (name + '.csv')
     head = 'Start,End,' + ','.join(Variance._fields) + '\n'
     handle = open(out_csv, 'w', encoding='utf-8')
     handle.write(head)
@@ -441,16 +448,16 @@ def output_sliding(sliding: list, name: str, out: Path,
     # for human reading
     start = 1
     for variance in sliding:
-        line = f'{start},{start+size},{variance}\n'
+        line = f'{start},{start + size},{variance}\n'
         index.append(start)
         handle.write(line)
         start += step
     handle.close()
     # draw
-    out_pdf = out / (name+'.pdf')
+    out_pdf = out / (name + '.pdf')
     plt.style.use('seaborn-v0_8-colorblind')
     # how to find optimized size?
-    fig= plt.figure(figsize=(15 + len(sliding) // 5000, 10))
+    fig = plt.figure(figsize=(15 + len(sliding) // 5000, 10))
     ax1 = plt.subplot(211)
     ax1.yaxis.set_ticks(np.linspace(0, 1, num=11))
     ax1.set_title(f'{name} ({sliding[0].Samples} sequences)', pad=30)
@@ -514,9 +521,9 @@ def evaluate(aln: Path, arg) -> tuple:
         pass
     else:
         # sliding window
-        for i in range(0, columns-arg.size, arg.step):
+        for i in range(0, columns - arg.size, arg.step):
             # view, not copy
-            subalign = alignment[:, i:i+arg.size]
+            subalign = alignment[:, i:i + arg.size]
             if arg.ignore_gap:
                 subalign, gap_subalign = remove_gap(alignment, silence=True)
             variance, sub_gc_array = get_resolution(subalign, arg._tmp,
@@ -559,7 +566,7 @@ def evaluate_main(arg_str=None):
         log.info(f'\tPhylogenetic diversity:    {summary.PD:.8f}')
         log.info(f'\tTree resolution:           {summary.Tree_Res:.8f}')
         with open(evaluation_result, 'a', encoding='utf-8') as out:
-            out.write(aln.stem+','+str(summary)+'\n')
+            out.write(aln.stem + ',' + str(summary) + '\n')
         if not arg.quick:
             output_sliding(sliding, aln.stem, arg._evaluate, arg.size, arg.step)
     log.info(f'Evaluation results could be found in {evaluation_result}')
