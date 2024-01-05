@@ -3,12 +3,12 @@ name = "OGU"
 version = "1.25"
 description = "Organelle Genome Utilities"
 keywords = ['plastid', 'mitochondria', 'organelle genome', 'analysis',
-'Bioinformatics']
+    'Bioinformatics']
 authors = [
-    {name = "Ping Wu", email = "wpwupingwp@outlook.com"},
+    { name = "Ping Wu", email = "wpwupingwp@outlook.com" },
 ]
 maintainers = [
-    {name = "Ping Wu", email = "wpwupingwp@outlook.com"},
+    { name = "Ping Wu", email = "wpwupingwp@outlook.com" },
 ]
 dependencies = [
     "setuptools>=69.0.3",
@@ -21,18 +21,18 @@ dependencies = [
 ]
 requires-python = ">=3.9"
 readme = "README.md"
-license = {text="AGPL-3.0-or-later"}
+license = { text = "AGPL-3.0-or-later" }
 classifiers = [
-        'Development Status :: 5 - Stable',
-        'Intended Audience :: Developers',
-        'Intended Audience :: Science/Research',
-        'License :: OSI Approved :: GNU Affero General Public License v3',
-        'Operating System :: MacOS :: MacOS X',
-        'Operating System :: Microsoft :: Windows',
-        'Operating System :: POSIX',
-        'Programming Language :: Python :: 3.10',
-        'Topic :: Scientific/Engineering :: Bio-Informatics'
-    ]
+    'Development Status :: 5 - Stable',
+    'Intended Audience :: Developers',
+    'Intended Audience :: Science/Research',
+    'License :: OSI Approved :: GNU Affero General Public License v3',
+    'Operating System :: MacOS :: MacOS X',
+    'Operating System :: Microsoft :: Windows',
+    'Operating System :: POSIX',
+    'Programming Language :: Python :: 3.10',
+    'Topic :: Scientific/Engineering :: Bio-Informatics'
+]
 [project.scripts]
 ogu = 'OGU:main'
 OGU = 'OGU:main'
