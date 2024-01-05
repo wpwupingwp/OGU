@@ -1,0 +1,26 @@
+[project]
+name = "OGU"
+version = "1.25"
+description = "Organelle Genome Utilities"
+authors = [
+    {name = "Ping Wu", email = "wpwupingwp@outlook.com"},
+]
+dependencies = [
+    "setuptools>=69.0.3",
+    "biopython==1.82",
+    "certifi>=2023.11.17",
+    "coloredlogs>=10.0",
+    "matplotlib>=3.0.0",
+    "numpy>=1.21.6",
+    "primer3-py==2.0.1"
+]
+requires-python = ">=3.9"
+readme = "README.md"
+license = {text="AGPL-3.0-only"}
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+[tool.pdm]
+package-type = "library"
