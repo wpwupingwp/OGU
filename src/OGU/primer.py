@@ -16,8 +16,8 @@ from Bio.SeqRecord import SeqRecord
 from Bio.SeqFeature import SeqFeature, FeatureLocation
 from Bio.Data.IUPACData import ambiguous_dna_values as ambiguous_data
 from Bio import SeqIO
-from primer3 import (calcTm, calcHairpinTm, calcHomodimerTm,
-                     calcHeterodimerTm)
+from primer3 import (calc_tm, calc_hairpin_tm, calc_homodimer_tm,
+                     calc_heterodimer_tm)
 
 from OGU import utils
 from OGU import evaluate
@@ -121,7 +121,7 @@ class Pair:
         (self.gap_ratio, self.observed_res, self.entropy, self.pi,
          _, _, self.pd_terminal) = variance[2:9]
         self.heterodimer_tm = calc_ambiguous_seq(
-            calcHeterodimerTm, self.left.seq, self.right.seq)
+            calc_heterodimer_tm, self.left.seq, self.right.seq)
         if max(self.heterodimer_tm, self.left.tm,
                self.right.tm) == self.heterodimer_tm:
             self.have_heterodimer = True
@@ -450,15 +450,15 @@ def find_primer(consensus, arg):
         if re.search(tandem, str(primer.seq)) is not None:
             primer.detail = 'Tandom(NN*5) exist'
             return False
-        primer.hairpin_tm = calc_ambiguous_seq(calcHairpinTm, primer.seq)
-        primer.tm = primer.annotations['tm'] = calc_ambiguous_seq(calcTm,
+        primer.hairpin_tm = calc_ambiguous_seq(calc_hairpin_tm, primer.seq)
+        primer.tm = primer.annotations['tm'] = calc_ambiguous_seq(calc_tm,
                                                                   primer.seq)
         # primer3.calcHairpin or calcHomodimer usually return structure found
         # with low Tm. Here we compare structure_tm with sequence tm
         if primer.hairpin_tm >= primer.tm:
             primer.detail = 'Hairpin found'
             return False
-        primer.homodimer_tm = calc_ambiguous_seq(calcHomodimerTm, primer.seq)
+        primer.homodimer_tm = calc_ambiguous_seq(calc_homodimer_tm, primer.seq)
         if primer.homodimer_tm >= primer.tm:
             primer.detail = 'Homodimer found'
             return False
