@@ -372,6 +372,25 @@ notice the difference.
  python3 -m OGU.primer -aln [alignment files]
  ```
 
+## Visualize
+ 
+Here are to jupyter notebooks for visualize analyze result as detailed circle
+figure:
+  - `draw_circle_plastid.ipynb`: for plastid genomes
+  - `draw_circle_mitochondria.ipynb`: for mitochondria genomes
+
+Since users may want to customize the figure, we provide jupyter notebooks 
+instead of packaged code. Users can get the result following these steps.
+0. Run `pip install jupyterlab` to install jupyter notebooks
+1. Double click to open in jupyter notebook, Visual Studio Code or other IDEs you prefer.
+2. Edit `filename` to the Evaluation.csv you got
+3. Edit `gb_file` to extended gb file you got. Remember to generate it with 
+`-out_debug` in OGU.gb2fasta
+4. If visualize plastid data, you need provide `LSC, SSC, IRa, IRb` lengths. Or
+you can use default value, which is for *Tobacum*.
+5. Edit color themes as your wish
+6. Run all cells to output pdf figure
+ 
 # Input
 
 `Organelle Genome Utilities` accepts:
@@ -720,6 +739,9 @@ records in GenBank. Hence, we strongly recommend using "-taxon" instead.
 ### Divide
 
 Options used for converting GenBank files to fasta files.
+
+`-out_debug`: If you are going to use visualize pipeline to draw detailed circle
+figure, use this option to generate extended version genbank file.
 
 `-no_divide`: If set, it will analyse the whole sequence instead of the
 divided fragments. By default, `OGU` divides one GenBank record into
