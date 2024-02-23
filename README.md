@@ -131,7 +131,7 @@ For Windows users:
 1. paste `%HOMEDRIVE%%HOMEPATH%/` to explorer's address bar and open.
 2. create `.OGU` folder. Don't miss the dot.
 3. open `.OGU` folder, paste downloaded compressed file and unzip. Make sure after
-decompress there are three folder in `.OGU`.
+decompress there are three folders in `.OGU`.
 
 For Linux and macOS users, please download and unpack files into
 `~/.OGU`.
@@ -402,8 +402,8 @@ notice the difference.
  
 Here are to jupyter notebooks for visualize analyze result as detailed circle
 figure:
-  - `draw_circle_plastid.ipynb`: for plastid genomes
-  - `draw_circle_mitochondria.ipynb`: for mitochondria genomes
+  - `Visualize/draw_circle_plastid.ipynb`: for plastid genomes
+  - `Visualize/draw_circle_mitochondria.ipynb`: for mitochondria genomes
 
 Since users may want to customize the figure, we provide jupyter notebooks 
 instead of packaged code. Users can get the result following these steps.

@@ -751,6 +751,7 @@ def primer_main(arg_str=None):
     Evaluate variance of alignments.
     """
     utils.check_system()
+    utils.get_all_third_party(skip_blast=False)
     if arg_str is None:
         arg, other_args = parse_args()
     else:

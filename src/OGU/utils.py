@@ -59,8 +59,8 @@ def check_system():
     # 2023.1 solved.
     f-strings are not available on Python 3.5 or older.
     """
-    if version_info.minor < 6:
-        raise RuntimeError('Python 3.6 or newer is required.')
+    if version_info.minor < 9:
+        raise RuntimeError('Python 3.9 or newer is required.')
     if platform.system() == 'Windows':
         if version_info.minor > 11:
             # raise RuntimeError('Python 3.7 or 3.8 is required.')
@@ -467,7 +467,8 @@ def get_blast(third_party=None, result=None) -> (bool, str):
     file_prefix = 'ncbi-blast-2.13.0+'
     fileinfo = {'Linux': file_prefix+'-x64-linux.tar.gz',
                 'Darwin': file_prefix+'-x64-macosx.tar.gz',
-                'Windows': file_prefix+'-x64-win64.tar.gz'}
+                'Windows': file_prefix+'-win64.zip'}
+                #'Windows': file_prefix + '-x64-win64.tar.gz'}
     system = platform.system()
     filename = fileinfo[system]
     down_url = f'{aws_url}{quote(filename)}'
@@ -573,7 +574,7 @@ def get_mafft(third_party=None, result=None) -> (bool, str):
     return ok, str(home_mafft)
 
 
-def get_all_third_party() -> bool:
+def get_all_third_party(skip_blast=True) -> bool:
     """
     Use three threads to speed up.
     """
@@ -586,14 +587,15 @@ def get_all_third_party() -> bool:
                     daemon=True)
     mafft = Thread(target=get_mafft, args=(third_party, result_queue),
                    daemon=True)
-    blast = Thread(target=get_blast, args=(third_party, result_queue),
-                   daemon=True)
+    if not skip_blast:
+        blast = Thread(target=get_blast, args=(third_party, result_queue),
+                       daemon=True)
+        blast.start()
+        blast.join()
     iqtree.start()
     mafft.start()
-    blast.start()
     iqtree.join()
     mafft.join()
-    blast.join()
     while not result_queue.empty():
         name, ok = result_queue.get()
         if ok:
