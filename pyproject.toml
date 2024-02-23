@@ -1,6 +1,6 @@
 [project]
 name = "OGU"
-version = "1.25"
+version = "1.26"
 description = "Organelle Genome Utilities"
 keywords = ['plastid', 'mitochondria', 'organelle genome', 'analysis',
     'Bioinformatics']
@@ -11,7 +11,6 @@ maintainers = [
     { name = "Ping Wu", email = "wpwupingwp@outlook.com" },
 ]
 dependencies = [
-    "setuptools>=69.0.3",
     "biopython==1.82",
     "certifi>=2023.11.17",
     "coloredlogs>=10.0",
@@ -23,7 +22,7 @@ requires-python = ">=3.9"
 readme = "README.md"
 license = { text = "AGPL-3.0-or-later" }
 classifiers = [
-    'Development Status :: 5 - Stable',
+    'Development Status :: 5 - Production/Stable',
     'Intended Audience :: Developers',
     'Intended Audience :: Science/Research',
     'License :: OSI Approved :: GNU Affero General Public License v3',
@@ -40,7 +39,7 @@ OGU = 'OGU:main'
 'Homepage' = 'https://github.com/wpwupingwp/OGU'
 'Bug Tracker' = 'https://github.com/wpwupingwp/OGU/issues'
 [build-system]
-requires = ["pdm-backend"]
+requires = ["pdm-backend", 'setuptools>=69']
 build-backend = "pdm.backend"
 
 [tool.pdm]
