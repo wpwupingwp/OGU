@@ -1,4 +1,4 @@
-[![PyPI version](https://badge.fury.io/py/BarcodeFinder.svg)](https://badge.fury.io/py/BarcodeFinder)
+[![PyPI version](https://badge.fury.io/py/OGU.svg)](https://badge.fury.io/py/OGU)
 
 # Quick start
 
@@ -125,7 +125,7 @@ python3 -m OGU init
 ```
 
 ### Use prepared package
-According to your system, download related compressed file from [packages](https://github.com/wpwupingwp/releases).
+According to your system, download related compressed file from [packages](https://github.com/wpwupingwp/OGU/releases).
 
 For Windows users: 
 1. paste `%HOMEDRIVE%%HOMEPATH%/` to explorer's address bar and open.
