@@ -2,12 +2,8 @@
 
 # Quick start
 
-Download [the package](https://github.com/wpwupingwp/barcodefinder/releases),
-unzip, and run.
-
-__OR__
-
-Open terminal, run
+- Install Python 3 (3.9 or newer).
+- Open terminal, run
 
    ```shell
    # Install, using pip (recommended)
@@ -94,16 +90,11 @@ installed with Internet, including `biopython`, `matplotlib`, `coloredlogs`,
 # Installation
 
 We assume that users have already installed
-[Python3](https://www.python.org/downloads/) (3.7 or above).
-
-## Portable
-
-Download from the [link](https://github.com/wpwupingwp/barcodefinder/releases),
-unpack and run with Internet for the first time.
+[Python3](https://www.python.org/downloads/) (3.9 or above).
 
 ## Install with pip
 
-1. Install [Python](https://www.python.org/downloads/). 3.7 or newer is
+1. Install [Python](https://www.python.org/downloads/). 3.9 or newer is
    required.
 
 2. Open command line, run
@@ -119,6 +110,13 @@ running environment. Missing dependencies will be automatically installed.
 
 This step requires Internet connection.
 
+By default, the program will automatically finish initialization, if any error
+occurs, users can choose one of the following methods:
+
+### Automatic
+
+Run the following command.
+
 ```shell
 # Windows
 python -m OGU init
@@ -126,8 +124,19 @@ python -m OGU init
 python3 -m OGU init
 ```
 
-If `Organelle Genome Utilities` **FAILED** to install third-party software,
-please follow these steps:
+### Use prepared package
+According to your system, download related compressed file from [packages](https://github.com/wpwupingwp/releases).
+
+For Windows users: 
+1. paste `%HOMEDRIVE%%HOMEPATH%/` to explorer's address bar and open.
+2. create `.OGU` folder. Don't miss the dot.
+3. open `.OGU` folder, paste downloaded compressed file and unzip. Make sure after
+decompress there are three folder in `.OGU`.
+
+For Linux and macOS users, please download and unpack files into
+`~/.OGU`.
+
+### Manually install
 
 For Linux users with root privileges, just use the package manager:
 
@@ -189,8 +198,25 @@ instructions:
 
 # Usage
 
-`Organelle Genome Utilities` is a command-line program. Once a user opens the command line
-(Windows) or terminal (Linux and macOS), just type the command:
+## Graphical user interface
+Open the command line (Windows) or terminal (Linux and macOS),
+run
+
+```bash
+OGU
+```
+
+or 
+```bash
+# linux and macos
+python3 -m OGU
+# windows
+python -m OGU
+```
+
+## command line
+Once a user opens the command line (Windows) or terminal (Linux and macOS), 
+just type the command:
 
 ```
 # Windows
@@ -349,7 +375,7 @@ notice the difference.
 
  ```shell
  # Windows
- python -m OGU.gb2fasta -gene [gene name] -taxon [taxon name] -og [organelle type] -out [output name]
+ python -m OGU.GB2fasta -gene [gene name] -taxon [taxon name] -og [organelle type] -out [output name]
  # Linux and macOS
  python3 -m OGU.gb2fasta -gene [gene name] -taxon [taxon name] -og [organelle type] -out [output name]
  ```
@@ -902,24 +928,17 @@ As yet unpublished.
 # License
 
 The software itself is licensed under
-[AGPL-3.0](https://github.com/wpwupingwp/barcodefinder/blob/master/LICENSE) (**not include
+[AGPL-3.0](https://github.com/wpwupingwp/OGU/blob/master/LICENSE) (**not include
 third-party
 software**).
 
 # Q&A
 
 Please submit your questions in the
-[Issue](https://github.com/wpwupingwp/barcodefinder/issues) page :smiley:
+[Issue](https://github.com/wpwupingwp/OGU/issues) page :smiley:
+* Q: The first-time run is slow.
 
-* Q: I got error message that the program failed to install
-  MAFFT/BLAST/IQTREE.
-
-  A: Uncommonly, users in specific area have connection issue for those
-  websites. Users have to manually download packages and install (see
-  [Software](#software) for the download links).
-
-  For Windows users, please download and unpack files into
-  `%HOMEDRIVE%%HOMEPATH%/.barcodefinder`.
-
-  For Linux and macOS users, please download and unpack files into
-  `~/.barcodefinder`.
+  A: OGU will automaticlly install third-party software (MAFFT/BLAST/IQTREE)
+  from AWS at first-time running. Microsoft Windows users, especially in some 
+  regions may have slow connection. Please be patient, or you can manually 
+  install them. See [Initialization](#Initialization).
