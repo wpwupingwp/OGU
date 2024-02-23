@@ -374,7 +374,7 @@ def get_third_party_path():
         success(bool): ok or not
         third_party(Path): absolute path of third_party folder
     """
-    third_party = Path().home().absolute() / '.barcodefinder'
+    third_party = Path().home().absolute() / '.OGU'
     success = False
     if not third_party.exists():
         log.debug(f'Create folder {third_party}')
