@@ -2,6 +2,8 @@
 import logging
 import coloredlogs
 
+# try to handle matplotlib's annoying logs about font
+logging.getLogger('matplotlib').setLevel(logging.WARNING)
 # project name
 name = 'OGU'
 # define logger
