@@ -1,6 +1,6 @@
 [project]
 name = "OGU"
-version = "1.5"
+version = "1.52"
 description = "Organelle Genome Utilities"
 keywords = ['plastid', 'mitochondria', 'organelle genome', 'analysis',
     'Bioinformatics']
@@ -43,4 +43,4 @@ requires = ["pdm-backend", 'setuptools>=69']
 build-backend = "pdm.backend"
 
 [tool.pdm]
-package-type = "library"
+distribution = true
