@@ -228,7 +228,7 @@ class Root:
         _tabbg2 = 'grey89'
         _bgmode = 'light'
 
-        img_dir = resources(name) / 'data'
+        img_dir = resources.files(name) / 'data'
         photo_location1 = img_dir / 'button1.png'
         photo_location2 = img_dir / 'button2.png'
         photo_location3 = img_dir / 'button3.png'
