@@ -8,6 +8,7 @@ try:
 except ImportError:
     from collections.abc import Iterable
 from functools import lru_cache
+from importlib import resources
 from pathlib import Path
 from queue import Queue
 from shutil import unpack_archive
@@ -16,7 +17,6 @@ from threading import Thread
 from urllib.parse import quote
 from urllib.request import urlopen
 from zipfile import ZipFile
-from pkg_resources import resource_filename
 
 from Bio.Seq import Seq
 from OGU.global_vars import log, name, FMT, DATEFMT
@@ -640,8 +640,7 @@ def init_lineage():
     Only called by setup.py
     """
     global name
-    data_folder = Path(
-        resource_filename(name, 'data/button1.png')).absolute().parent
+    data_folder = resources(name) / 'data'
     zip_file = download_taxon(data_folder)
     with ZipFile(zip_file, 'r') as dumpfile:
         dumpfile.extract('names.dmp', path='.')

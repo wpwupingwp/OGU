@@ -17,6 +17,7 @@ def main():
             from OGU.ui import ui_main
             ui_main()
         except Exception:
+            raise
             cli_main()
 
 
