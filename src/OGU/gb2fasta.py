@@ -3,9 +3,9 @@
 import argparse
 import json
 from collections import defaultdict
+from importlib import resources
 from io import StringIO
 from pathlib import Path
-from pkg_resources import resource_filename
 from time import sleep
 
 from Bio import Entrez, SeqIO
@@ -16,19 +16,16 @@ from OGU.global_vars import log, name
 
 
 # load data
-with open(resource_filename(name, 'data/superkingdoms.csv'), 'r') as _:
+data_dir = resources.files(name) / 'data'
+with open(data_dir/'superkingdoms.csv', 'r') as _:
     SUPERKINGDOMS = set(_.read().split(','))
-with open(resource_filename(name, 'data/kingdoms.csv'),
-          'r') as _:
+with open(data_dir/'kingdoms.csv', 'r') as _:
     KINGDOMS = set(_.read().split(','))
-with open(resource_filename(name, 'data/phyla.csv'),
-          'r') as _:
+with open(data_dir/'phyla.csv', 'r') as _:
     PHYLA = set(_.read().split(','))
-with open(resource_filename(name, 'data/classes.csv'),
-          'r') as _:
+with open(data_dir/'classes.csv', 'r') as _:
     CLASSES = set(_.read().split(','))
-with open(resource_filename(name, 'data/animal_orders.csv'),
-          'r') as _:
+with open(data_dir/'animal_orders.csv', 'r') as _:
     ANIMAL_ORDERS = set(_.read().split(','))
 
 
