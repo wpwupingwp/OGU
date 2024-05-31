@@ -1,6 +1,6 @@
 [project]
 name = "OGU"
-version = "1.5"
+version = "1.54"
 description = "Organelle Genome Utilities"
 keywords = ['plastid', 'mitochondria', 'organelle genome', 'analysis',
     'Bioinformatics']
@@ -16,7 +16,7 @@ dependencies = [
     "coloredlogs>=10.0",
     "matplotlib>=3.0.0",
     "numpy>=1.21.6",
-    "primer3-py==2.0.1"
+    "primer3-py==2.0.2"
 ]
 requires-python = ">=3.9"
 readme = "README.md"
@@ -39,8 +39,5 @@ OGU = 'OGU:main'
 'Homepage' = 'https://github.com/wpwupingwp/OGU'
 'Bug Tracker' = 'https://github.com/wpwupingwp/OGU/issues'
 [build-system]
-requires = ["pdm-backend", 'setuptools>=69']
-build-backend = "pdm.backend"
-
-[tool.pdm]
-package-type = "library"
+requires = ["hatchling"]
+build-backend = "hatchling.build"

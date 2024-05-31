@@ -1,6 +1,6 @@
 #!/usr/bin/env python
+from importlib import resources
 from logging import handlers
-from pkg_resources import resource_filename
 from time import time
 from tkinter import filedialog, messagebox, scrolledtext
 import logging
@@ -228,10 +228,11 @@ class Root:
         _tabbg2 = 'grey89'
         _bgmode = 'light'
 
-        photo_location1 = resource_filename(name, 'data/button1.png')
-        photo_location2 = resource_filename(name, 'data/button2.png')
-        photo_location3 = resource_filename(name, 'data/button3.png')
-        photo_location4 = resource_filename(name, 'data/button4.png')
+        img_dir = resources(name) / 'data'
+        photo_location1 = img_dir / 'button1.png'
+        photo_location2 = img_dir / 'button2.png'
+        photo_location3 = img_dir / 'button3.png'
+        photo_location4 = img_dir / 'button4.png'
         global _img4
         _img4 = tk.PhotoImage(file=photo_location4)
         global _img0
