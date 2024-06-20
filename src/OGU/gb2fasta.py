@@ -256,7 +256,7 @@ def download(arg):
     ret_start = 0
     # get ret_max
     bit = len(str(count)) - 2
-    ret_max = min(1, max(10, 10 ** bit))
+    ret_max = max(10, 10 ** bit)
     retry = 0
     while ret_start < count:
         log.info('\t{:d}--{:d}'.format(ret_start, ret_start + ret_max))
