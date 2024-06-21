@@ -1,6 +1,0 @@
-biopython==1.82
-certifi>=2023.11.17
-coloredlogs>=10.0
-matplotlib>=3.0.0
-numpy>=1.21.6
-primer3-py==2.0.1
