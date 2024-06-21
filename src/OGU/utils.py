@@ -15,21 +15,33 @@ from shutil import unpack_archive
 from sys import argv, version_info
 from threading import Thread
 from urllib.parse import quote
-from urllib.request import urlopen
+from urllib.request import urlopen, Request
 from zipfile import ZipFile
 
 from Bio.Seq import Seq
 from OGU.global_vars import log, name, FMT, DATEFMT
 
 
-# hosting in non-free AWS S3 server
-aws_url = 'https://ogu2023.s3.ap-east-1.amazonaws.com/'
-test_url = 'https://s3.ap-east-1.amazonaws.com'
+# chinese search engine, test if network is ok
+test_url = 'https://bing.com'
+r2_url = 'https://pub-dc55c531ed794a66a22adf48ce78d553.r2.dev/'
 # font family
 if platform.system() == 'Windows':
     font_family = 'Arial'
 else:
     font_family = 'Helvetica'
+
+
+def open_url(url: str, timeout: int):
+    req = Request(url)
+    req.add_header('User-Agent', 'python-urllib/3.11')
+    log.info(f'Connecting to {url}')
+    try:
+        resp = urlopen(req, timeout=timeout)
+    except Exception:
+        log.error(f'Cannot open {url}')
+        raise SystemExit(1)
+    return resp
 
 
 class BlastResult:
@@ -62,9 +74,9 @@ def check_system():
     if version_info.minor < 9:
         raise RuntimeError('Python 3.9 or newer is required.')
     if platform.system() == 'Windows':
-        if version_info.minor > 11:
+        if version_info.minor > 12:
             # raise RuntimeError('Python 3.7 or 3.8 is required.')
-            raise RuntimeError('Do not support python 3.12 or higher.')
+            raise RuntimeError('Do not support python 3.13 or higher.')
     return
 
 
@@ -397,16 +409,15 @@ def get_software(software: str, url: str, filename: Path,
                  third_party: Path, home_bin: Path, test_option='-version'):
     log.warning(f'Cannot find {software}, try to install. May cost minutes')
     try:
-        # 50kb/10s=5kb/s, enough for test
-        _ = urlopen(test_url, timeout=10)
+        _ = urlopen(test_url, timeout=20)
     except Exception:
-        log.critical('Cannot connect to Server.'
+        log.critical('Cannot connect to Server. '
                      'Please check your Internet connection.')
         raise SystemExit(-1)
     try:
         # file is 10mb or larger
         log.info(f'Downloading {filename.name} from {url}')
-        down = urlopen(f'{url}', timeout=100)
+        down = open_url(f'{url}', timeout=100)
     except Exception:
         log.critical(f'Cannot download {software}. '
                      f'Please manually download it from {url}')
@@ -471,7 +482,7 @@ def get_blast(third_party=None, result=None) -> (bool, str):
                 #'Windows': file_prefix + '-x64-win64.tar.gz'}
     system = platform.system()
     filename = fileinfo[system]
-    down_url = f'{aws_url}{quote(filename)}'
+    down_url = f'{r2_url}{quote(filename)}'
     # three software use different name pattern
     down_file = third_party / filename
     if test_cmd(blast):
@@ -513,7 +524,7 @@ def get_iqtree(third_party=None, result=None) -> (bool, str):
                             'iqtree-2.2.2.2-Windows')}
     system = platform.system()
     filename = fileinfo[system][0]
-    down_url = f'{aws_url}{quote(filename)}'
+    down_url = f'{r2_url}{quote(filename)}'
     home_iqtree = third_party / fileinfo[system][1] / 'bin' / iqtree
     down_file = third_party / fileinfo[system][0]
     if test_cmd(iqtree):
@@ -557,7 +568,7 @@ def get_mafft(third_party=None, result=None) -> (bool, str):
     home_mafft = third_party / fileinfo[system][1] / mafft
     system = platform.system()
     filename = fileinfo[system][0]
-    down_url = f'{aws_url}{quote(filename)}'
+    down_url = f'{r2_url}{quote(filename)}'
     down_file = third_party / fileinfo[system][0]
     # mafft use '--version' to test
     test_option = '--version'

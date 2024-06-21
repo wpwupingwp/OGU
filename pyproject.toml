@@ -1,6 +1,6 @@
 [project]
 name = "OGU"
-version = "1.62"
+version = "1.70"
 description = "Organelle Genome Utilities"
 keywords = ['plastid', 'mitochondria', 'organelle genome', 'analysis',
     'Bioinformatics']
@@ -12,7 +12,7 @@ maintainers = [
 ]
 dependencies = [
     "biopython==1.82",
-    "certifi>=2023.11.17",
+    "certifi>=2024.6.2",
     "coloredlogs>=10.0",
     "matplotlib>=3.0.0",
     "numpy>=1.21.6",
@@ -43,8 +43,6 @@ OGU = 'OGU:main'
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[tool.hatch.build.targets.sdist]
+[tool.hatch.build.targets.wheel]
 packages = ["src/OGU", "visualize"]
 
-[tool.hatch.build.targets.wheel]
-packages = ["src/OGU"]

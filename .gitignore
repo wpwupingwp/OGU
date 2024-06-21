@@ -1,6 +1,7 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
 test/
+third-party/
 ui/backups
 test*
 t
