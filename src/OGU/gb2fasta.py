@@ -255,7 +255,7 @@ def download(arg):
     output = open(file_name, 'w', encoding='utf-8')
     ret_start = 0
     # get ret_max
-    bit = len(str(count)) - 2
+    bit = len(str(count)) - 3
     ret_max = max(10, 10 ** bit)
     retry = 0
     while ret_start < count:
