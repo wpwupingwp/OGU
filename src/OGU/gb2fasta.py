@@ -225,24 +225,7 @@ def download(arg):
                  f'use {Entrez.email} instead.')
     else:
         Entrez.email = arg.email
-    query_handle = Entrez.read(Entrez.esearch(db='nuccore', term=arg.query,
-                                              usehistory='y'))
-    count = int(query_handle['Count'])
 
-    if count == 0:
-        log.warning('Got 0 record. Please check the query.')
-        log.info('Abort download.')
-        return None
-    elif count > too_much and arg.count > too_much:
-        log.warning(f'Got {count} records. May cost long time to download.')
-    else:
-        log.info(f'\tGot {count} records.')
-    if arg.count != 0:
-        if count > arg.count:
-            count = arg.count
-            log.info(f'\tDownload {arg.count} records due to "-count".')
-    log.info('\tDownloading...')
-    log.warning('\tMay be slow if connection is unstable. Ctrl+C to quit.')
     name_words = []
     for i in (arg.taxon, arg.organelle, arg.gene):
         if i is not None and i not in ('both', 'ignore', 'no'):
@@ -251,13 +234,29 @@ def download(arg):
         name = utils.safe_path('-'.join(name_words)) + '.gb'
     else:
         name = 'sequence.gb'
-    file_name = arg._gb / name
-    output = open(file_name, 'w', encoding='utf-8')
+    gb_file_name = arg._gb / name
+    id_list_file_name = arg._tmp / 'id_list.txt'
+    query_handle = Entrez.read(Entrez.esearch(db='nuccore', term=arg.query,
+                                              usehistory='y'))
+    count = int(query_handle['Count'])
+
+    if count == 0:
+        log.warning('Found 0 record. Please check the query.')
+        log.info('Abort download.')
+        return None
+    elif count > too_much and arg.count > too_much:
+        log.warning(f'Found {count} records. May cost long time to download.')
+    else:
+        log.info(f'\tFound {count} records.')
+    if arg.count != 0:
+        if count > arg.count:
+            count = arg.count
+            log.info(f'\tDownload {arg.count} records due to "-count".')
+    id_output = open(id_list_file_name, 'w', encoding='utf-8')
     ret_start = 0
-    # get ret_max
-    bit = len(str(count)) - 3
-    ret_max = max(10, 10 ** bit)
+    ret_max = 1000
     retry = 0
+    log.info('\tFetch id list...')
     while ret_start < count:
         log.info('\t{:d}--{:d}'.format(ret_start, ret_start + ret_max))
         # Entrez accept at most 3 times per second
@@ -266,17 +265,16 @@ def download(arg):
             data = Entrez.efetch(db='nuccore',
                                  webenv=query_handle['WebEnv'],
                                  query_key=query_handle['QueryKey'],
-                                 rettype='gb',
-                                 retmode='text',
+                                 rettype='acc',
                                  retstart=ret_start,
                                  retmax=ret_max)
-            output.write(data.read())
+            id_output.write(data.read())
         # just retry if connection failed
         # IOError could not handle all types of failure
         except Exception:
             sleep(1)
             if retry <= retry_max:
-                log.warning('Failed on download. Retrying...')
+                log.warning('Failed to fetch id list. Retrying...')
                 retry += 1
                 continue
             else:
@@ -284,12 +282,45 @@ def download(arg):
                 log.info('Abort download.')
                 return None
         ret_start += ret_max
-    log.info('Download finished.')
+    log.info('Got id list.')
+    id_output.close()
+    with open(id_list_file_name, 'r', encoding='utf-8') as _:
+        id_list = _.read().rstrip().split('\n')
+    retry2 = 0
+    ret_max2 = 100
+    start = 0
+    log.info('\tFetch GenBank records...')
+    log.warning('\tMay be slow if connection is unstable. Ctrl+C to quit.')
+    gb_output = open(gb_file_name, 'w', encoding='utf-8')
+    while start < count:
+        log.info('\t{:d}--{:d}'.format(start, start + ret_max2))
+        # Entrez accept at most 3 times per second
+        # However, due to slow network, it's fine :)
+        try:
+            id_slice = ','.join(id_list[start:start + ret_max2])
+            data = Entrez.efetch(db='nuccore',
+                                 rettype='gb',
+                                 id=id_slice)
+            gb_output.write(data.read())
+        # just retry if connection failed
+        # IOError could not handle all types of failure
+        except Exception:
+            sleep(1)
+            if retry2 <= retry_max:
+                log.warning('Failed on download. Retrying...')
+                retry2 += 1
+                continue
+            else:
+                log.critical(f'Too much failure ({retry_max} times).')
+                log.info('Abort download.')
+                return None
+        start += ret_max2
+    log.info('Got id list.')
     json_file = arg._tmp / 'Query.json'
     with open(json_file, 'w', encoding='utf-8') as _:
         json.dump(query_handle, _, indent=4, sort_keys=True)
     log.info(f'The query info was dumped into {json_file}')
-    return file_name
+    return gb_file_name
 
 
 def clean_gb(gbfile):

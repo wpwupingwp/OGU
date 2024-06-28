@@ -475,10 +475,10 @@ def get_blast(third_party=None, result=None) -> (bool, str):
     # older than 2.8.1 is buggy
     original_url = ('https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.13.0/'
                     'ncbi-blast-2.13.0+')
-    file_prefix = 'ncbi-blast-2.13.0+'
-    fileinfo = {'Linux': file_prefix+'-x64-linux.tar.gz',
-                'Darwin': file_prefix+'-x64-macosx.tar.gz',
-                'Windows': file_prefix+'-win64.zip'}
+    file_prefix = 'ncbi-blast-2.13.0+-x64-'
+    fileinfo = {'Linux': file_prefix+'linux.tar.gz',
+                'Darwin': file_prefix+'macosx.tar.gz',
+                'Windows': file_prefix+'win64.tar.gz'}
                 #'Windows': file_prefix + '-x64-win64.tar.gz'}
     system = platform.system()
     filename = fileinfo[system]
