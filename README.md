@@ -125,13 +125,16 @@ python3 -m OGU init
 ```
 
 ### Use prepared package
-According to your system, download related compressed file from [packages](https://github.com/wpwupingwp/OGU/releases).
 
-For Windows users: 
+According to your system, download related compressed file
+from [packages](https://github.com/wpwupingwp/OGU/releases).
+
+For Windows users:
+
 1. paste `%HOMEDRIVE%%HOMEPATH%/` to explorer's address bar and open.
 2. create `.OGU` folder. Don't miss the dot.
 3. open `.OGU` folder, paste downloaded compressed file and unzip. Make sure after
-decompress there are three folders in `.OGU`.
+   decompress there are three folders in `.OGU`.
 
 For Linux and macOS users, please download and unpack files into
 `~/.OGU`.
@@ -199,6 +202,7 @@ instructions:
 # Usage
 
 ## Graphical user interface
+
 Open the command line (Windows) or terminal (Linux and macOS),
 run
 
@@ -206,7 +210,8 @@ run
 OGU
 ```
 
-or 
+or
+
 ```bash
 # linux and macos
 python3 -m OGU
@@ -215,7 +220,8 @@ python -m OGU
 ```
 
 ## command line
-Once a user opens the command line (Windows) or terminal (Linux and macOS), 
+
+Once a user opens the command line (Windows) or terminal (Linux and macOS),
 just type the command:
 
 ```
@@ -399,24 +405,26 @@ notice the difference.
  ```
 
 ## Visualize
- 
+
 Here are to jupyter notebooks for visualize analyze result as detailed circle
 figure:
-  - `Visualize/draw_circle_plastid.ipynb`: for plastid genomes
-  - `Visualize/draw_circle_mitochondria.ipynb`: for mitochondria genomes
 
-Since users may want to customize the figure, we provide jupyter notebooks 
+- `Visualize/draw_circle_plastid.ipynb`: for plastid genomes
+- `Visualize/draw_circle_mitochondria.ipynb`: for mitochondria genomes
+
+Since users may want to customize the figure, we provide jupyter notebooks
 instead of packaged code. Users can get the result following these steps.
+
 0. Run `pip install jupyterlab` to install jupyter notebooks
 1. Double click to open in jupyter notebook, Visual Studio Code or other IDEs you prefer.
 2. Edit `filename` to the Evaluation.csv you got
-3. Edit `gb_file` to extended gb file you got. Remember to generate it with 
-`-out_debug` in OGU.gb2fasta
+3. Edit `gb_file` to extended gb file you got. Remember to generate it with
+   `-out_debug` in OGU.gb2fasta
 4. If visualize plastid data, you need provide `LSC, SSC, IRa, IRb` lengths. Or
-you can use default value, which is for *Tobacum*.
+   you can use default value, which is for *Tobacum*.
 5. Edit color themes as your wish
 6. Run all cells to output pdf figure
- 
+
 # Input
 
 `Organelle Genome Utilities` accepts:
@@ -820,7 +828,7 @@ The default value is `False`.
 `-allow_invert_repeat`: If two genes invert-repeated in downstream, this
 option change the second spacer's name to be same with the first one. Combine
 with `-allow_repeat` two spacers will be kept. If only one is needed, just set
-`-allow_invert_repeat` and do not set `-allow_repeat` omitted. 
+`-allow_invert_repeat` and do not set `-allow_repeat` omitted.
 The default value is `False`.
 
 For instance, geneA-geneB located in one invert-repeat region (IR) of
@@ -840,9 +848,17 @@ sequences. By default, the value is `20000` (bp).
 
 ## Evaluate
 
-`-ig` or `-ignore_gap`: ignore gaps in the alignment.
+`-ig` or `-ignore_gap`: ignore gaps in the alignment. Missing data is typically represented as the
+letter “N”. Our software retains “N” in its original form for records containing it. During sequence
+variance analysis, “N” is treated as an equal mixture of the four nucleotides (“ATCG”) when
+calculating Pi, observed resolution, and the Shannon Index. Indels are represented as hyphens (“-”)
+in the alignment. For sequence variance analysis, hyphens are treated as a virtual fifth base when
+calculating Pi, observed resolution, and the Shannon Index, receiving the same treatment as the four
+DNA bases.
 
-`-iab` or `-ignore_ambigous`: ignore ambiguous bases in the alignment.
+`-iab` or `-ignore_ambigous`: ignore ambiguous bases in the alignment. Ambiguous bases are treated
+as equal mixtures of the possible bases. For example, the letter “Y”, which represents either C or
+T, is treated as the sum of one-half “C” and one-half “T.”
 
 `-quick`: skip sliding-window scan.
 
@@ -938,9 +954,10 @@ software**).
 
 Please submit your questions in the
 [Issue](https://github.com/wpwupingwp/OGU/issues) page :smiley:
+
 * Q: The first-time run is slow.
 
   A: OGU will automaticlly install third-party software (MAFFT/BLAST/IQTREE)
-  from AWS at first-time running. Microsoft Windows users, especially in some 
-  regions may have slow connection. Please be patient, or you can manually 
+  from AWS at first-time running. Microsoft Windows users, especially in some
+  regions may have slow connection. Please be patient, or you can manually
   install them. See [Initialization](#Initialization).
