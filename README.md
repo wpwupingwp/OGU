@@ -818,8 +818,10 @@ repeat region to be extracted, otherwise any repeated region will be omitted.
 The default value is `False`.
 
 `-allow_invert_repeat`: If two genes invert-repeated in downstream, this
-option will allow spacers of them to be extracted, otherwise the spacer
-will be omitted. The default value is `False`.
+option change the second spacer's name to be same with the first one. Combine
+with `-allow_repeat` two spacers will be kept. If only one is needed, just set
+`-allow_invert_repeat` and do not set `-allow_repeat` omitted. 
+The default value is `False`.
 
 For instance, geneA-geneB located in one invert-repeat region (IR) of
 chloroplast genome. In another IR region, there are geneB-geneA. This option

@@ -408,7 +408,7 @@ def get_feature_name(feature, arg):
     return name
 
 
-def get_spacer(genes):
+def get_spacer(genes, arg):
     """
     Given list of genes, extract spacers.
     genes: [name, feature]
@@ -434,6 +434,8 @@ def get_spacer(genes):
             invert_name = '-'.join([c_name, b_name])
             if invert_name in names:
                 invert_repeat = True
+                if arg.allow_invert_repeat:
+                    name = invert_name
             elif name in names:
                 repeat = True
             else:
@@ -625,15 +627,12 @@ def divide(gbfile, arg):
         # write non-genes
         write_seq(not_genes, seq_info, whole_seq, arg)
         # extract spacer
-        spacers = get_spacer(genes)
+        spacers = get_spacer(genes, arg)
         # write spacer annotations
         if not arg.allow_mosaic_spacer:
             spacers = [i for i in spacers if i.type != 'mosaic_spacer']
         # extract intron
         introns = get_intron(have_intron.items())
-        if not arg.allow_invert_repeat:
-            spacers = [i for i in spacers if i.qualifiers[
-                'invert_repeat'] == 'False']
         if arg.out_debug:
             record.features.extend(spacers)
             record.features.extend(introns)
@@ -697,13 +696,17 @@ def write_seq(record, seq_info, whole_seq, arg):
     seq_len = len(whole_seq)
     filenames = set()
     expand_files = set()
-    record_unique = []
     if not arg.allow_repeat:
-        names = set()
+        name_len_record = dict()
         for i in record:
-            if i[0] not in names:
-                record_unique.append(i)
-                names.add(i[0])
+            if i[0] not in name_len_record:
+                name_len_record[i[0]] = i
+            else:
+                old_len = len(name_len_record[i[0]][1])
+                new_len = len(i[1])
+                if new_len > old_len:
+                    name_len_record[i[0]] = i
+        record_unique = list(name_len_record.values())
     else:
         record_unique = record
 
