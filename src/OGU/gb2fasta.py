@@ -18,15 +18,15 @@ from OGU.global_vars import log, name
 # load data
 data_dir = resources.files(name) / 'data'
 with open(data_dir/'superkingdoms.csv', 'r') as _:
-    SUPERKINGDOMS = set(_.read().split(','))
+    SUPERKINGDOMS = set(_.read().rstrip().split(','))
 with open(data_dir/'kingdoms.csv', 'r') as _:
-    KINGDOMS = set(_.read().split(','))
+    KINGDOMS = set(_.read().rstrip().split(','))
 with open(data_dir/'phyla.csv', 'r') as _:
-    PHYLA = set(_.read().split(','))
+    PHYLA = set(_.read().rstrip().split(','))
 with open(data_dir/'classes.csv', 'r') as _:
-    CLASSES = set(_.read().split(','))
+    CLASSES = set(_.read().rstrip().split(','))
 with open(data_dir/'animal_orders.csv', 'r') as _:
-    ANIMAL_ORDERS = set(_.read().split(','))
+    ANIMAL_ORDERS = set(_.read().rstrip().split(','))
 
 
 def parse_args(arg_list=None):
@@ -362,7 +362,7 @@ def clean_gb(gbfile):
         log.info('\tRemove {} abnormal records.'.format(wrong))
 
 
-def get_feature_name(feature, arg):
+def get_feature_name(feature, arg) -> str|None:
     """
     Get feature name and collect genes for extract spacer.
     Only handle gene, CDS, tRNA, rRNA, misc_feature, misc_RNA.
@@ -404,7 +404,7 @@ def get_feature_name(feature, arg):
     else:
         return name
     if arg.rename:
-        name = utils.gene_rename(name)[0]
+        name, _ = utils.gene_rename(name, og=arg.og)[0]
     return name
 
 

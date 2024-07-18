@@ -1,21 +1,20 @@
 #!/usr/bin/python3
 import setuptools
-from OGU.global_vars import name
-from OGU.utils import init_lineage
+from src.OGU.global_vars import name
+from src.OGU.utils import init_lineage
 
 init_lineage()
 
 with open('README.md', 'r') as _:
     long_description = _.read()
 
-with open('requirements.txt', 'r') as _:
-    requires = [i.strip() for i in _.readlines()]
-
 setuptools.setup(
     author='Ping Wu',
     author_email='wpwupingwp@outlook.com',
     description='Organelle Genome Utilities',
-    install_requires=requires,
+    install_requires=['biopython==1.82', 'certifi', 'coloredlogs',
+                      'matplotlib>=3.0.0',
+                      'numpy>=1.21.6', 'primer3-py==2.0.2'],
     include_package_data=True,
     package_data={name: ['data/animal_orders.csv', 'data/classes.csv',
                          'data/kingdoms.csv', 'data/phyla.csv',

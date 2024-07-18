@@ -714,7 +714,7 @@ def init_lineage():
     Only called by setup.py
     """
     global name
-    data_folder = resources(name) / 'data'
+    data_folder = resources.files(name) / 'data'
     zip_file = download_taxon(data_folder)
     with ZipFile(zip_file, 'r') as dumpfile:
         dumpfile.extract('names.dmp', path='.')
