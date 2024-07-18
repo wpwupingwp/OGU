@@ -38,7 +38,7 @@ def parse_args(arg_list=None):
     # for plastid genes
     arg.add_argument('-rename', action='store_true', help='try to rename gene')
     arg.add_argument('-unique', choices=('longest', 'first', 'no'),
-                     default='first',
+                     default='no',
                      help='method to remove redundant sequences')
     adv = arg.add_argument_group('Advance')
     # trnK-matK
@@ -434,7 +434,7 @@ def get_spacer(genes, arg):
             invert_name = '-'.join([c_name, b_name])
             if invert_name in names:
                 invert_repeat = True
-                if arg.allow_invert_repeat:
+                if not arg.allow_invert_repeat:
                     name = invert_name
             elif name in names:
                 repeat = True
@@ -778,10 +778,10 @@ def unique(files: list, arg) -> list:
     Remove redundant sequences of same species.
     Files were saved in arg._unique
     """
-    log.info('Removing redundant records...')
     unique_files = []
-    # if arg.unique == 'no':
-    #     return unique_files
+    if arg.unique == 'no':
+        return unique_files
+    log.info('Removing redundant records...')
     total = 0
     kept = 0
     for fasta in files:

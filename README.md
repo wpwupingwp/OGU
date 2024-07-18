@@ -826,8 +826,8 @@ repeat region to be extracted, otherwise any repeated region will be omitted.
 The default value is `False`.
 
 `-allow_invert_repeat`: If two genes invert-repeated in downstream, this
-option change the second spacer's name to be same with the first one. Combine
-with `-allow_repeat` two spacers will be kept. If only one is needed, just set
+option allow the second spacer's name to be different with the first one. Combine
+with `-allow_repeat`, two spacers will be kept. If only one is needed, just set
 `-allow_invert_repeat` and do not set `-allow_repeat` omitted.
 The default value is `False`.
 
