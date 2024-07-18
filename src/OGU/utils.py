@@ -263,12 +263,14 @@ def rename_rna(old_name: str, genbank_format=False, table=11) -> (str, bool):
 
 @lru_cache(maxsize=None)
 def rename_mt(old_name: str) -> (str, bool):
+    new_name = old_name
     old_name = old_name.lower()
-    replaced = {'coi': 'cox1', 'coii': 'cox2', 'coiii': 'cox3', 'cob': 'cytb'}
+    replaced = {'coi': 'cox1', 'coii': 'cox2', 'coiii': 'cox3',
+                'cob': 'cytb'}
     nad = re.compile(r'(?P<gene>nad)h?(?P<suffix>\d)')
     cox = re.compile(r'cox?(?P<suffix>\d)')
-    atp = re.compile(r'atp(ase)?(?P<suffix>\d+)')
-    cytb = re.compile(r'cyt(ochrome.*)?_?b')
+    atp = re.compile(r'atp(ase)?-?(?P<suffix>\d+)')
+    cytb = re.compile(r'cyt(ochrome.*)?[ _-]?b')
     if old_name in replaced:
         new_name = replaced[old_name]
         return new_name.upper(), True
@@ -295,14 +297,15 @@ def rename_mt(old_name: str) -> (str, bool):
     if cytb_match is not None:
         gene = 'cytb'
         return gene.upper(), True
-    new_name = old_name.upper()
+    if not old_name.startswith('trn') and len(old_name) < 10:
+        new_name = old_name.upper()
     # force renamed
     renamed = True
     return new_name, renamed
 
 
 @lru_cache(maxsize=None)
-def gene_rename(old_name: str, og='cp', genbank_format=False) -> (str, str):
+def gene_rename(old_name: str, og='cp', genbank_format=False) -> (str, bool):
     """
     Old doc:
         Different name of same gene will cause data to be split to numerous

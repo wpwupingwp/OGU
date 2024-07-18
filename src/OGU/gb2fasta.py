@@ -120,9 +120,6 @@ def get_query_string(arg, silence=False):
             log.warning('The filters "group" was reported to return abnormal '
                         'records by Genbank. Please consider to use "-taxon" '
                         'instead.')
-        if arg.rename:
-            log.warning('{} will try to rename genes by regular '
-                        'expression.'.format(name))
         if arg.genome:
             log.warning('Conflict options: "-max_len" and "-genome", '
                         'ignore length limit.')
@@ -206,6 +203,9 @@ def init_arg(arg):
         arg.gb = list()
     if arg.no_divide:
         log.warning('Only download data because of "-no_divide"')
+    if arg.rename:
+        log.warning('{} will try to rename genes by regular '
+                    'expression.'.format(name))
     return arg
 
 
@@ -381,31 +381,31 @@ def get_feature_name(feature, arg) -> str|None:
             name = None
         return name
 
-    name = None
+    new_name = None
     # ignore exist exon/intron
     accept_type = {'gene', 'CDS', 'tRNA', 'rRNA', 'misc_feature', 'misc_RNA'}
     if feature.type not in accept_type:
-        return name
+        return new_name
     name = _extract_name(feature)
     if name is None:
-        return name
+        return new_name
         # log.warning('Unsupport annotation type {}'.format(feature.type))
     if feature.type == 'misc_feature':
         if 'internal transcribed spacer' in name:
-            name = 'ITS'
+            new_name = 'ITS'
         if 'intergenic_spacer' in name or 'IGS' in name:
-            name = name.replace('intergenic_spacer_region', 'IGS')
+            new_name = name.replace('intergenic_spacer_region', 'IGS')
     if feature.type == 'misc_RNA':
         # handle ITS
         if 'internal transcribed spacer' in name:
-            name = name.replace('internal transcribed spacer', 'ITS')
+            new_name = name.replace('internal transcribed spacer', 'ITS')
     if name is not None:
-        name = utils.safe_path(name)
-    else:
-        return name
+        new_name = utils.safe_path(name)
     if arg.rename:
-        name, _ = utils.gene_rename(name, og=arg.og)[0]
-    return name
+        new_name, _ = utils.gene_rename(name, og=arg.organelle)
+    if new_name != name:
+        log.debug('Renaming {} to {}'.format(name, new_name))
+    return new_name
 
 
 def get_spacer(genes, arg):
