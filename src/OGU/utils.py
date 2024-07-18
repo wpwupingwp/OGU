@@ -212,32 +212,9 @@ def clean_tmp(filename: Path):
 
 
 @lru_cache(maxsize=None)
-def gene_rename(old_name: str, genbank_format=False) -> (str, str):
-    """
-    Old doc:
-        Different name of same gene will cause data to be split to numerous
-        files instead of one and some data may be dropped.
-
-        For chloroplast genes, the author summarized various kinds of
-        annotation error of gene name or synonyms and try to use regular
-        expression to fix it.
-
-        Ideally, use BLAST to re-annotate sequence is the best(and slow) way to
-        find the correct name. This function only offers a "hotfix" which is
-        enough.
-    Rename plastid genes.
-    May be dangerous.
-    Will cache results.
-    Args:
-        old_name: old gene name
-        genbank_format: use style like "trnH-GUG" or "trnHgug"
-    Returns:
-        new_name(str): new name, if fail, return old name
-        gene_type(str): gene types, guessed from name
-    """
+def rename_rna(old_name: str, genbank_format=False) -> (str, bool):
     lower = old_name.lower()
-    # (trna|trn(?=[b-z]))
-    s = re.compile(r'(\d+\.?\d?)(s|rrn|rdna)')
+    s = re.compile(r'(\d+\.?\d?)_?(s|rrn|rdna|rrna)')
     if lower.startswith('trn'):
         pattern = re.compile(r'([atcgu]{3})')
         prefix = 'trn'
@@ -245,7 +222,7 @@ def gene_rename(old_name: str, genbank_format=False) -> (str, str):
         try:
             anticodon = Seq(re.search(pattern, lower[3:]).group(1))
         except Exception:
-            return old_name, 'bad_name'
+            return old_name, False
         # rna editing? trnI-CAU
         if anticodon == 'cau' and lower.startswith('trni'):
             aa_letter = 'I'
@@ -259,24 +236,71 @@ def gene_rename(old_name: str, genbank_format=False) -> (str, str):
                 if aa_letter == '*':
                     aa_letter = 'UNKNOWN'
             except Exception:
-                return old_name, 'bad_name'
+                return old_name, False
             # anticodon = anticodon.transcribe()
         if genbank_format:
             new_name = f'{prefix}{aa_letter}-{anticodon.upper()}'
         else:
             new_name = f'{prefix}{aa_letter}_{anticodon.upper()}'
-        gene_type = 'tRNA'
+        renamed = True
     elif lower.startswith('rrn'):
         pattern = re.compile(r'(\d+\.?\d?)')
         try:
             number = re.search(pattern, lower).group(1)
         except Exception:
-            return old_name, 'bad_name'
+            return old_name, False
         new_name = 'rrn{}'.format(number)
-        gene_type = 'rRNA'
+        renamed = True
     elif re.search(s, lower) is not None:
         new_name = 'rrn{}'.format(re.search(s, lower).group(1))
-        gene_type = 'rRNA'
+        renamed = True
+    else:
+        new_name = old_name
+        renamed = False
+    return new_name, renamed
+
+
+@lru_cache(maxsize=None)
+def rename_mt(old_name: str):
+    lower = old_name.lower()
+    nad = re.compile(r'(?P<gene>nadh?)(?P<suffix>\d)')
+    cox = re.compile(r'cox?\d')
+    pass
+
+
+@lru_cache(maxsize=None)
+def gene_rename(old_name: str, og='cp', genbank_format=False) -> (str, str):
+    """
+    Old doc:
+        Different name of same gene will cause data to be split to numerous
+        files instead of one and some data may be dropped.
+
+        For chloroplast genes, the author summarized various kinds of
+        annotation error of gene name or synonyms and try to use regular
+        expression to fix it.
+
+        Ideally, use BLAST to re-annotate sequence is the best(and slow) way to
+        find the correct name. This function only offers a "hotfix" which is
+        enough.
+    Rename plastid genes.
+    Experimentally rename mitochondria genes.
+    May be dangerous.
+    Will cache results.
+    Args:
+        old_name: old gene name
+        og: organelle type, cp or mt
+        genbank_format: use style like "trnH-GUG" or "trnHgug"
+    Returns:
+        new_name(str): new name, if fail, return old name
+        gene_type(str): gene types, guessed from name
+    """
+    lower = old_name.lower()
+    # (trna|trn(?=[b-z]))
+    new_name, renamed = rename_rna(old_name, genbank_format)
+    if renamed:
+        return new_name, renamed
+    if og == 'mt':
+        new_name, gene_type = rename_mt(old_name)
     else:
         pattern = re.compile(r'[^a-z]*'
                              '(?P<gene>[a-z]+)'
@@ -301,9 +325,9 @@ def gene_rename(old_name: str, genbank_format=False) -> (str, str):
     return new_name, gene_type
 
 
-def plastid_rename():
+def rename_blast():
     """
-    Use name database.
+    Use name database. Too heavy.
     """
     pass
 
