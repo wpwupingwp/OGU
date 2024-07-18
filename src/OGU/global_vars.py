@@ -9,7 +9,7 @@ name = 'OGU'
 # define logger
 FMT = '%(asctime)s %(levelname)-8s %(message)s'
 DATEFMT = '%H:%M:%S'
-logging.basicConfig(format=FMT, datefmt=DATEFMT, level=logging.INFO)
+logging.basicConfig(format=FMT, datefmt=DATEFMT, level=logging.DEBUG)
 log = logging.getLogger(name)
 coloredlogs.install(level=logging.INFO, fmt=FMT, datefmt=DATEFMT)
 # store global values here
