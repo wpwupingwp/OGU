@@ -212,27 +212,28 @@ def clean_tmp(filename: Path):
 
 
 @lru_cache(maxsize=None)
-def rename_rna(old_name: str, genbank_format=False) -> (str, bool):
-    lower = old_name.lower()
+def rename_rna(old_name: str, genbank_format=False, table=11) -> (str, bool):
+    old_name = old_name.lower()
     s = re.compile(r'(\d+\.?\d?)_?(s|rrn|rdna|rrna)')
-    if lower.startswith('trn'):
+    if old_name.startswith('trn'):
         pattern = re.compile(r'([atcgu]{3})')
         prefix = 'trn'
         aa_letter = 'X'
         try:
-            anticodon = Seq(re.search(pattern, lower[3:]).group(1))
+            anticodon = Seq(re.search(pattern, old_name[3:]).group(1))
         except Exception:
             return old_name, False
         # rna editing? trnI-CAU
-        if anticodon == 'cau' and lower.startswith('trni'):
+        if anticodon == 'cau' and old_name.startswith('trni'):
             aa_letter = 'I'
         # for trnfM-CAU
-        elif lower.startswith('trnfm'):
+        elif old_name.startswith('trnfm'):
             prefix = 'trnf'
             aa_letter = 'M'
         else:
             try:
-                aa_letter = anticodon.reverse_complement_rna().translate().upper()
+                aa_letter = anticodon.reverse_complement_rna().translate(
+                    table=table).upper()
                 if aa_letter == '*':
                     aa_letter = 'UNKNOWN'
             except Exception:
@@ -243,16 +244,16 @@ def rename_rna(old_name: str, genbank_format=False) -> (str, bool):
         else:
             new_name = f'{prefix}{aa_letter}_{anticodon.upper()}'
         renamed = True
-    elif lower.startswith('rrn'):
+    elif old_name.startswith('rrn'):
         pattern = re.compile(r'(\d+\.?\d?)')
         try:
-            number = re.search(pattern, lower).group(1)
+            number = re.search(pattern, old_name).group(1)
         except Exception:
             return old_name, False
         new_name = 'rrn{}'.format(number)
         renamed = True
-    elif re.search(s, lower) is not None:
-        new_name = 'rrn{}'.format(re.search(s, lower).group(1))
+    elif re.search(s, old_name) is not None:
+        new_name = 'rrn{}'.format(re.search(s, old_name).group(1))
         renamed = True
     else:
         new_name = old_name
@@ -261,11 +262,43 @@ def rename_rna(old_name: str, genbank_format=False) -> (str, bool):
 
 
 @lru_cache(maxsize=None)
-def rename_mt(old_name: str):
-    lower = old_name.lower()
-    nad = re.compile(r'(?P<gene>nadh?)(?P<suffix>\d)')
-    cox = re.compile(r'cox?\d')
-    pass
+def rename_mt(old_name: str) -> (str, bool):
+    old_name = old_name.lower()
+    replaced = {'coi': 'cox1', 'coii': 'cox2', 'coiii': 'cox3', 'cob': 'cytb'}
+    nad = re.compile(r'(?P<gene>nad)h?(?P<suffix>\d)')
+    cox = re.compile(r'cox?(?P<suffix>\d)')
+    atp = re.compile(r'atp(ase)?(?P<suffix>\d+)')
+    cytb = re.compile(r'cyt(ochrome.*)?_?b')
+    if old_name in replaced:
+        new_name = replaced[old_name]
+        return new_name.upper(), True
+    nad_match = re.search(nad, old_name)
+    if nad_match is not None:
+        gene = 'nad'
+        suffix = nad_match.group('suffix')
+        new_name = '{}{}'.format(gene, suffix)
+        # nad is lower
+        return new_name, True
+    cox_match = re.search(cox, old_name)
+    if cox_match is not None:
+        gene = 'cox'
+        suffix = cox_match.group('suffix')
+        new_name = '{}{}'.format(gene, suffix)
+        return new_name.upper(), True
+    atp_match = re.search(atp, old_name)
+    if atp_match is not None:
+        gene = 'atp'
+        suffix = atp_match.group('suffix')
+        new_name = '{}{}'.format(gene, suffix)
+        return new_name.upper(), True
+    cytb_match = re.search(cytb, old_name)
+    if cytb_match is not None:
+        gene = 'cytb'
+        return gene.upper(), True
+    new_name = old_name.upper()
+    # force renamed
+    renamed = True
+    return new_name, renamed
 
 
 @lru_cache(maxsize=None)
@@ -296,11 +329,17 @@ def gene_rename(old_name: str, og='cp', genbank_format=False) -> (str, str):
     """
     lower = old_name.lower()
     # (trna|trn(?=[b-z]))
-    new_name, renamed = rename_rna(old_name, genbank_format)
+    og_table = dict(cp=11, mt=2)
+    if og in og_table:
+        table = og_table[og]
+    else:
+        table = 1
+    new_name, renamed = rename_rna(old_name, genbank_format, table)
     if renamed:
         return new_name, renamed
     if og == 'mt':
-        new_name, gene_type = rename_mt(old_name)
+        new_name, renamed = rename_mt(old_name)
+        return new_name, renamed
     else:
         pattern = re.compile(r'[^a-z]*'
                              '(?P<gene>[a-z]+)'
@@ -311,7 +350,7 @@ def gene_rename(old_name: str, og='cp', genbank_format=False) -> (str, str):
             gene = match.group('gene')
             suffix = match.group('suffix')
         except Exception:
-            return old_name, 'bad_name'
+            return old_name, False
         new_name = '{}{}'.format(gene, suffix.upper())
         # capitalize last letter
         if len(new_name) > 3:
@@ -319,10 +358,10 @@ def gene_rename(old_name: str, og='cp', genbank_format=False) -> (str, str):
             if s[-1].isalpha():
                 new_name = '{}{}'.format(
                     ''.join(s[:-1]), ''.join(s[-1]).upper())
-        gene_type = 'normal'
-    if len(lower) >= 15:
-        gene_type = 'suspicious_name'
-    return new_name, gene_type
+        renamed = True
+    # if len(lower) >= 15:
+    #     gene_type = 'suspicious_name'
+    return new_name, renamed
 
 
 def rename_blast():
