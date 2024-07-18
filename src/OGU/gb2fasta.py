@@ -362,7 +362,7 @@ def clean_gb(gbfile):
         log.info('\tRemove {} abnormal records.'.format(wrong))
 
 
-def get_feature_name(feature, arg) -> str|None:
+def get_feature_name(feature, arg) -> str:
     """
     Get feature name and collect genes for extract spacer.
     Only handle gene, CDS, tRNA, rRNA, misc_feature, misc_RNA.
