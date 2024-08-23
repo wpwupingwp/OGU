@@ -533,7 +533,7 @@ class GB2Fasta:
                               , bordermode='ignore')
         self.date_label.configure(text='''Date''')
 
-        self.date_start_entry = my_entry(self.Labelframe1, 'eg. 2020/06/01')
+        self.date_start_entry = my_entry(self.Labelframe1)
         self.date_start_entry.place(relx=0.686, rely=0.541, relheight=0.095
                                     , relwidth=0.087, bordermode='ignore')
         self.date_start_entry.configure(textvariable=self.date_start)
@@ -546,7 +546,7 @@ class GB2Fasta:
                              , bordermode='ignore')
         self.to2_label.configure(text='''to''')
 
-        self.date_end_entry = my_entry(self.Labelframe1, 'eg. 2024/09/01')
+        self.date_end_entry = my_entry(self.Labelframe1)
         self.date_end_entry.place(relx=0.839, rely=0.541, relheight=0.095
                                   , relwidth=0.136, bordermode='ignore')
         self.date_end_entry.configure(textvariable=self.date_end)
@@ -611,7 +611,7 @@ class GB2Fasta:
                                 , width=60, bordermode='ignore')
         self.expand_label.configure(text='''Expand''')
 
-        self.expand_entry = my_entry(self.Labelframe1, 'eg. 15')
+        self.expand_entry = my_entry(self.Labelframe1, '0')
         self.expand_entry.place(relx=0.297, rely=0.142, relheight=0.248
                                 , relwidth=0.187, bordermode='ignore')
         self.expand_entry.configure(textvariable=self.expand)
@@ -1145,7 +1145,7 @@ class ToolTip(tk.Toplevel):
     """ Provides a ToolTip widget for Tkinter. """
 
     def __init__(self, wdgt, tooltip_font, msg=None, msgFunc=None,
-                 delay=0.5, follow=True):
+                 delay=0.1, follow=True):
         self.wdgt = wdgt
         self.parent = self.wdgt.master
         tk.Toplevel.__init__(self, self.parent, bg='black', padx=1, pady=1)
