@@ -455,7 +455,7 @@ def output_sliding(sliding: list, name: str, out: Path,
     handle.close()
     # draw
     out_pdf = out / (name + '.pdf')
-    plt.style.use('seaborn-v0_8-colorblind')
+    # plt.style.use('seaborn-v0_8-colorblind')
     # how to find optimized size?
     fig = plt.figure(figsize=(15 + len(sliding) // 5000, 10))
     ax1 = plt.subplot(211)
