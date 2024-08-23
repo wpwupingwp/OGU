@@ -761,7 +761,7 @@ class Evaluate:
         self.TLabel1_tooltip = ToolTip(self.unalign_label, self.tooltip_font,
                                        'unaligned')
 
-        self.fasta_entry = my_entry(self.Labelframe1)
+        self.fasta_entry = my_entry(self.Labelframe1, 'eg. c:/mydata/a.fasta')
         self.fasta_entry.place(relx=0.314, rely=0.133, relheight=0.233
                                , relwidth=0.489, bordermode='ignore')
         self.fasta_entry.configure(textvariable=self.fasta)
@@ -780,9 +780,9 @@ class Evaluate:
                                   , bordermode='ignore')
         self.unalign_label2.configure(text='''Unaligned FASTA folder''')
         self.TLabel1_tooltip = ToolTip(self.unalign_label2, self.tooltip_font,
-                                       '''unaligned''')
+                                       'unaligned')
 
-        self.fasta_folder_entry = my_entry(self.Labelframe1)
+        self.fasta_folder_entry = my_entry(self.Labelframe1, 'eg. d:/Result/Divide')
         self.fasta_folder_entry.place(relx=0.314, rely=0.4, relheight=0.233
                                       , relwidth=0.489, bordermode='ignore')
         self.fasta_folder_entry.configure(textvariable=self.fasta_folder)
@@ -801,9 +801,9 @@ class Evaluate:
                                , bordermode='ignore')
         self.align_label.configure(text='''Aligned FASTA files''')
         self.TLabel1_3_tooltip = ToolTip(self.align_label, self.tooltip_font,
-                                         '''aligned''')
+                                         'aligned')
 
-        self.aln_entry = my_entry(self.Labelframe1)
+        self.aln_entry = my_entry(self.Labelframe1, 'eg. e:/Result/Aligned')
         self.aln_entry.place(relx=0.314, rely=0.667, relheight=0.233
                              , relwidth=0.489, bordermode='ignore')
         self.aln_entry.configure(textvariable=self.aln)
@@ -948,7 +948,7 @@ class Primer:
         self.TLabel1_tooltip = ToolTip(self.aln_fasta_label, self.tooltip_font,
                                        'unaligned')
 
-        self.aln_entry = my_entry(self.Labelframe1)
+        self.aln_entry = my_entry(self.Labelframe1, 'eg. f:/aligned/atpB.aln')
         self.aln_entry.place(relx=0.314, rely=0.2, relheight=0.35,
                              relwidth=0.489
                              , bordermode='ignore')
@@ -969,13 +969,14 @@ class Primer:
         self.TLabel1_tooltip = ToolTip(self.aln_folder_label, self.tooltip_font,
                                        'Folder with aligned fasta files')
 
-        self.aln_folder_entry = my_entry(self.Labelframe1)
+        self.aln_folder_entry = my_entry(self.Labelframe1,
+                                         'eg. g:/mywork3/AlignedResult')
         self.aln_folder_entry.place(relx=0.314, rely=0.6, relheight=0.35
                                     , relwidth=0.489, bordermode='ignore')
         self.aln_folder_entry.configure(textvariable=self.aln_folder)
         self.aln_folder_entry_tooltip = ToolTip(
             self.aln_folder_entry, self.tooltip_font,
-            'one or more unaligned fasta files')
+            'a folder containing one or more unaligned fasta files')
 
         self.folder_b = my_button(self.Labelframe1)
         self.folder_b.place(relx=0.82, rely=0.6, height=35, width=90
