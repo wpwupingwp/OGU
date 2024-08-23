@@ -78,8 +78,44 @@ def my_checkbutton(frame: tk.LabelFrame, fontsize=11) -> tk.Checkbutton:
     return check_b
 
 
-def my_entry(frame: tk.LabelFrame, fontsize=11) -> tk.Entry:
-    entry = tk.Entry(frame)
+class EntryWithPlaceholder(tk.Entry):
+    def __init__(self, parent, placeholder='eg. ', color='grey'):
+        super().__init__(parent, bg='white')
+        self.placeholder = placeholder
+        self.placeholder_color = color
+        self.default_fg = self['fg']
+        self.bind('<FocusOut>', self.focus_out)
+        self.bind('<FocusIn>', self.focus_in)
+        # tkinter handle a <FocusOut> immediately after entry created and
+        # before the self.add_placeholder() line is executed
+        self.after_idle(self.add_placeholder)
+
+    def get(self):
+        value = super().get()
+        if value == self.placeholder:
+            return ''
+        else:
+            return value
+
+    def add_placeholder(self):
+        self.config(fg=self.placeholder_color)
+        self.insert(0, self.placeholder)
+
+    def focus_in(self, *args):
+        # remove placeholder when click
+        if not self.get():
+            self.delete('0', 'end')
+            self.config(fg=self.default_fg)
+
+    def focus_out(self, *args):
+        # re-add placeholder if empty
+        if not self.get():
+            self.add_placeholder()
+
+
+def my_entry(frame: tk.LabelFrame, placeholder='', color='grey',
+             fontsize=11) -> tk.Entry:
+    entry = EntryWithPlaceholder(frame, placeholder=placeholder, color=color)
     entry.configure(font=f'-family {font_family} -size {fontsize}')
     entry.configure(takefocus="")
     entry.configure(cursor="fleur")
@@ -384,7 +420,7 @@ class GB2Fasta:
                               bordermode='ignore')
         self.gene_label.configure(text='''Gene''')
 
-        self.gene_entry = my_entry(self.Labelframe1)
+        self.gene_entry = my_entry(self.Labelframe1, 'eg. rbcL')
         self.gene_entry.place(relx=0.201, rely=0.217, height=35,
                               relwidth=0.314, bordermode='ignore')
         self.gene_entry.configure(textvariable=self.gene)
