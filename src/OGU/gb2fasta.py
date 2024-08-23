@@ -139,6 +139,8 @@ def get_query_string(arg, silence=False):
              'RNA': 'biomol_mrna[PROP]'}
         condition.append(d[arg.molecular])
     if arg.taxon is not None:
+        if str(arg.taxon).isdigit():
+            arg.taxon = 'txid'+arg.taxon
         if ' ' in arg.taxon:
             condition.append(f'"{arg.taxon}"[organism]')
         else:
