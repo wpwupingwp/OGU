@@ -495,7 +495,7 @@ class GB2Fasta:
                                , bordermode='ignore')
         self.count_label.configure(text='''Count''')
 
-        self.count_entry = my_entry(self.Labelframe1)
+        self.count_entry = my_entry(self.Labelframe1, 'eg. 1000')
         self.count_entry.place(relx=0.201, rely=0.649, relheight=0.095
                                , relwidth=0.314, bordermode='ignore')
         self.count_entry.configure(textvariable=self.count)
@@ -533,55 +533,56 @@ class GB2Fasta:
                               , bordermode='ignore')
         self.date_label.configure(text='''Date''')
 
-        self.date_start_entry = my_entry(self.Labelframe1)
+        self.date_start_entry = my_entry(self.Labelframe1, 'eg. 2020/06/01')
         self.date_start_entry.place(relx=0.686, rely=0.541, relheight=0.095
                                     , relwidth=0.087, bordermode='ignore')
         self.date_start_entry.configure(textvariable=self.date_start)
         self.date_start_entry_tooltip = ToolTip(self.date_start_entry,
                                                 self.tooltip_font,
-                                                '''1970/1/1''')
+                                                '''YYYY/MM/DD''')
 
         self.to2_label = my_label(self.Labelframe1)
         self.to2_label.place(relx=0.789, rely=0.541, height=35, width=36
                              , bordermode='ignore')
         self.to2_label.configure(text='''to''')
 
-        self.date_end_entry = my_entry(self.Labelframe1)
+        self.date_end_entry = my_entry(self.Labelframe1, 'eg. 2024/09/01')
         self.date_end_entry.place(relx=0.839, rely=0.541, relheight=0.095
                                   , relwidth=0.136, bordermode='ignore')
         self.date_end_entry.configure(textvariable=self.date_end)
         self.date_end_entry_tooltip = ToolTip(self.date_end_entry,
                                               self.tooltip_font,
-                                              '''2022/12/31''')
+                                              '''YYYY/MM/DD''')
 
         self.exclude_label = my_label(self.Labelframe1)
         self.exclude_label.place(relx=0.558, rely=0.649, height=35, width=60
                                  , bordermode='ignore')
         self.exclude_label.configure(text='''Exclude''')
 
-        self.exclude_entry = my_entry(self.Labelframe1)
+        self.exclude_entry = my_entry(self.Labelframe1, 'eg. Fungi')
         self.exclude_entry.place(relx=0.686, rely=0.649, relheight=0.095
                                  , relwidth=0.279, bordermode='ignore')
         self.exclude_entry.configure(textvariable=self.exclude)
         self.exclude_entry_tooltip = ToolTip(self.exclude_entry,
                                              self.tooltip_font,
-                                             '''exclude expression''')
+                                             '''excluded taxon, can be empty''')
 
         self.query_label = my_label(self.Labelframe1)
         self.query_label.place(relx=0.035, rely=0.813, height=35, width=60
                                , bordermode='ignore')
         self.query_label.configure(text='''Query''')
 
-        self.query_entry = my_entry(self.Labelframe1)
+        self.query_entry = my_entry(self.Labelframe1,
+                                    'eg. rpoB[gene] AND txid9721[organism]')
         self.query_entry.place(relx=0.201, rely=0.813, relheight=0.095
                                , relwidth=0.785, bordermode='ignore')
         self.query_entry.configure(textvariable=self.query)
         self.query_entry_tooltip = ToolTip(self.query_entry, self.tooltip_font,
                                            '''Entrez query string''')
 
-        self.taxon_entry = my_entry(self.Labelframe1)
+        self.taxon_entry = my_entry(self.Labelframe1, 'eg. Fabaceae')
         self.taxon_entry.place(relx=0.201, rely=0.326, relheight=0.095
-                               , relwidth=0.314, bordermode='ignore')
+                               , relwidth=0.316, bordermode='ignore')
         self.taxon_entry.configure(textvariable=self.taxon)
 
         self.out_label = my_label(self.top)
@@ -610,13 +611,13 @@ class GB2Fasta:
                                 , width=60, bordermode='ignore')
         self.expand_label.configure(text='''Expand''')
 
-        self.expand_entry = my_entry(self.Labelframe1)
+        self.expand_entry = my_entry(self.Labelframe1, 'eg. 15')
         self.expand_entry.place(relx=0.297, rely=0.142, relheight=0.248
                                 , relwidth=0.187, bordermode='ignore')
         self.expand_entry.configure(textvariable=self.expand)
-        self.expand_entry_tooltip = ToolTip(self.expand_entry,
-                                            self.tooltip_font,
-                                            '''expand for primer design''')
+        self.expand_entry_tooltip = ToolTip(
+            self.expand_entry, self.tooltip_font,
+            '''expand how many bp to upstream/downstream for primer design''')
 
         self.max_name_len_label = my_label(self.Labelframe1)
         self.max_name_len_label.place(relx=0.08, rely=0.426, height=35
@@ -765,7 +766,7 @@ class Evaluate:
                                , relwidth=0.489, bordermode='ignore')
         self.fasta_entry.configure(textvariable=self.fasta)
         self.fasta_entry_tooltip = ToolTip(self.fasta_entry, self.tooltip_font,
-                                           '''unaligned fasta files''')
+                                           'one or more unaligned fasta files')
 
         self.open_btn = my_button(self.Labelframe1)
         self.open_btn.place(relx=0.82, rely=0.133, height=35, width=90
@@ -787,7 +788,7 @@ class Evaluate:
         self.fasta_folder_entry.configure(textvariable=self.fasta_folder)
         self.fasta_folder_entry_tooltip = ToolTip(
             self.fasta_folder_entry, self.tooltip_font,
-            'unaligned fasta files')
+            'a folder containing one or more unaligned fasta files')
         self.open1_btn = my_button(self.Labelframe1)
         self.open1_btn.place(relx=0.82, rely=0.4, height=35, width=90
                              , bordermode='ignore')
@@ -807,7 +808,7 @@ class Evaluate:
                              , relwidth=0.489, bordermode='ignore')
         self.aln_entry.configure(textvariable=self.aln)
         self.aln_entry_tooltip = ToolTip(self.aln_entry, self.tooltip_font,
-                                         '''aligned fasta files''')
+                                         'one or more aligned fasta files')
         self.open2_btn = my_button(self.Labelframe1)
         self.open2_btn.place(relx=0.82, rely=0.667, height=35, width=90
                              , bordermode='ignore')
@@ -841,13 +842,13 @@ class Evaluate:
 
         self.Checkbutton1 = my_checkbutton(self.Labelframe1)
         self.Checkbutton1.place(relx=0.005, rely=0.429, relheight=0.3,
-                                relwidth=0.272, bordermode='ignore')
+                                relwidth=0.262, bordermode='ignore')
         self.Checkbutton1.configure(text='''Skip sliding window''')
         self.Checkbutton1.configure(variable=self.quick)
 
         self.window_size_label = my_label(self.Labelframe1)
-        self.window_size_label.place(relx=0.314, rely=0.429, height=22, width=80
-                                     , bordermode='ignore')
+        self.window_size_label.place(relx=0.290, rely=0.429, height=22,
+                                     width=90, bordermode='ignore')
         self.window_size_label.configure(text='Window size')
 
         self.step_len_label = my_label(self.Labelframe1)
@@ -953,7 +954,7 @@ class Primer:
                              , bordermode='ignore')
         self.aln_entry.configure(textvariable=self.aln)
         self.aln_entry_tooltip = ToolTip(self.aln_entry, self.tooltip_font,
-                                         '''unaligned fasta files''')
+                                         'one or more unaligned fasta files')
 
         self.out_b = my_button(self.Labelframe1)
         self.out_b.place(relx=0.82, rely=0.2, height=35, width=90
@@ -972,9 +973,9 @@ class Primer:
         self.aln_folder_entry.place(relx=0.314, rely=0.6, relheight=0.35
                                     , relwidth=0.489, bordermode='ignore')
         self.aln_folder_entry.configure(textvariable=self.aln_folder)
-        self.aln_folder_entry_tooltip = ToolTip(self.aln_folder_entry,
-                                                self.tooltip_font,
-                                                '''unaligned fasta files''')
+        self.aln_folder_entry_tooltip = ToolTip(
+            self.aln_folder_entry, self.tooltip_font,
+            'one or more unaligned fasta files')
 
         self.folder_b = my_button(self.Labelframe1)
         self.folder_b.place(relx=0.82, rely=0.6, height=35, width=90
