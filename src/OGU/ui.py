@@ -430,7 +430,7 @@ class GB2Fasta:
         self.taxon_label = my_label(self.Labelframe1)
         self.taxon_label.place(relx=0.035, rely=0.326, height=35, width=70
                                , bordermode='ignore')
-        self.taxon_label.configure(text='''Taxonomy''')
+        self.taxon_label.configure(text='Taxonomy')
 
         self.molecular_label = my_label(self.Labelframe1)
         self.molecular_label.place(relx=0.558, rely=0.217, height=35, width=80
@@ -584,13 +584,16 @@ class GB2Fasta:
         self.taxon_entry.place(relx=0.201, rely=0.326, relheight=0.095
                                , relwidth=0.316, bordermode='ignore')
         self.taxon_entry.configure(textvariable=self.taxon)
+        self.taxon_entry_tooltip = ToolTip(
+            self.taxon_entry, self.tooltip_font,
+            'Taxonomy name (Zea mays, Fabaceae, etc.) or Txid (eg. txid9721)')
 
         self.out_label = my_label(self.top)
         self.out_label.place(relx=0.05, rely=0.563, height=36
                              , width=60)
         self.out_label.configure(text='''Output''')
 
-        self.out_entry = my_entry(self.top)
+        self.out_entry = my_entry(self.top, 'eg. F:/mywork2/result')
         self.out_entry.place(relx=0.167, rely=0.563, relheight=0.045
                              , relwidth=0.633)
         self.out_entry.configure(textvariable=self.out)
@@ -822,7 +825,7 @@ class Evaluate:
         self.TLabel1_3_1_tooltip = ToolTip(self.out_label, self.tooltip_font,
                                            '''output''')
 
-        self.out_entry = my_entry(self.top)
+        self.out_entry = my_entry(self.top, 'eg. H:/project9/Result')
         self.out_entry.place(relx=0.317, rely=0.356, relheight=0.078
                              , relwidth=0.467)
         self.out_entry.configure(textvariable=self.out)
@@ -1146,7 +1149,7 @@ class ToolTip(tk.Toplevel):
     """ Provides a ToolTip widget for Tkinter. """
 
     def __init__(self, wdgt, tooltip_font, msg=None, msgFunc=None,
-                 delay=0.1, follow=True):
+                 delay=0.01, follow=True):
         self.wdgt = wdgt
         self.parent = self.wdgt.master
         tk.Toplevel.__init__(self, self.parent, bg='black', padx=1, pady=1)
