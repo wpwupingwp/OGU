@@ -1265,11 +1265,15 @@ def ui_primer():
 def get_arg_str(value: tk.Variable, name: str, arg_str: str,
                 is_bool=False) -> str:
     value_str = ''
-    if value.get():
+    value = value.get()
+    # remove placeholder
+    if isinstance(value, str) and value.startswith('eg. '):
+        value = ''
+    if value:
         if is_bool:
             value_str = f'{name} '
         else:
-            value_str = f'{name} {value.get()} '
+            value_str = f'{name} {value} '
     arg_str += value_str
     log.debug(f'{name} {value_str}')
     return arg_str
