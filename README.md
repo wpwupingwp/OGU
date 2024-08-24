@@ -22,24 +22,22 @@
    python3 -m OGU
    ```
 
-[TOC]
-
 # Table of Contents
 
-* [Quick start](#quickstart)
+* [Quick start](#quick-start)
 * [Feature](#feature)
 * [Prerequisite](#prerequisite)
     * [Hardware](#hardware)
     * [Software](#software)
 * [Installation](#installation)
     * [Portable](#portable)
-    * [Install with pip](#Installwithpip)
-    * [Install with conda](#Installwithconda)
+    * [Install with pip](#Install-with-pip)
+    * [Install with conda](#Install-with-conda)
     * [Initialization](#Initialization)
 * [Usage](#usage)
     * [Quick examples](#quick-examples)
     * [Sequence ID](#sequence-id)
-    * [Command line](#commandline)
+    * [Command line](#command-line)
 * [Input](#input)
 * [Output](#output)
 * [Options](#options)
@@ -411,8 +409,8 @@ notice the difference.
 Here are to jupyter notebooks for visualize analyze result as detailed circle
 figure:
 
-- [`draw_circle_plastid.ipynb`](https://github.com/wpwupingwp/OGU/blob/master/data/draw_circle_plastid.ipynb): for plastid genomes
-- [`draw_circle_mitochondria.ipynb`](https://github.com/wpwupingwp/OGU/blob/master/data/draw_circle_mitochondria.ipynb): for mitochondria genomes
+- [`draw_circle_plastid.ipynb`](https://github.com/wpwupingwp/OGU/blob/master/src/data/draw_circle_plastid.ipynb): for plastid genomes
+- [`draw_circle_mitochondria.ipynb`](https://github.com/wpwupingwp/OGU/blob/master/src/data/draw_circle_mitochondria.ipynb): for mitochondria genomes
 - 
 Since users may want to customize the figure, we provide jupyter notebooks
 instead of packaged code. Users can get the result following these steps.
