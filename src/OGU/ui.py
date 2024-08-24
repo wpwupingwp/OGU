@@ -310,7 +310,7 @@ class Root:
         self.primer_b.configure(image=_img2)
 
         self.visualize = my_button(self.top)
-        self.visualize.place(relx=0.213, rely=0.865, height=30, width=250)
+        self.visualize.place(relx=0.125, rely=0.865, height=30, width=250)
         self.visualize.configure(text='Visualize')
         self.visualize.configure(command=run_visualize(self, self.top))
 
@@ -1411,7 +1411,7 @@ def run_primer(win, t: tk.Toplevel):
 
 
 def run_help():
-    url = 'https://github.com/wpwupingwp/barcodefinder'
+    url = 'https://github.com/wpwupingwp/OGU'
     webbrowser.open(url, new=2)
 
 
