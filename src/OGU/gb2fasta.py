@@ -256,7 +256,7 @@ def download(arg):
             log.info(f'\tDownload {arg.count} records due to "-count".')
     id_output = open(id_list_file_name, 'w', encoding='utf-8')
     ret_start = 0
-    ret_max = 1000
+    ret_max = min(1000, count)
     retry = 0
     log.info('\tFetch id list...')
     while ret_start < count:
