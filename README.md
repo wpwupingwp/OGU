@@ -411,8 +411,8 @@ notice the difference.
 Here are to jupyter notebooks for visualize analyze result as detailed circle
 figure:
 
-- [`Visualize/draw_circle_plastid.ipynb`](https://github.com/wpwupingwp/OGU/blob/master/visualize/draw_circle_plastid.ipynb): for plastid genomes
-- [`Visualize/draw_circle_mitochondria.ipynb`](https://github.com/wpwupingwp/OGU/blob/master/visualize/draw_circle_mitochondria.ipynb): for mitochondria genomes
+- [`draw_circle_plastid.ipynb`](https://github.com/wpwupingwp/OGU/blob/master/data/draw_circle_plastid.ipynb): for plastid genomes
+- [`draw_circle_mitochondria.ipynb`](https://github.com/wpwupingwp/OGU/blob/master/data/draw_circle_mitochondria.ipynb): for mitochondria genomes
 - 
 Since users may want to customize the figure, we provide jupyter notebooks
 instead of packaged code. Users can get the result following these steps.
