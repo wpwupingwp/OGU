@@ -22,6 +22,8 @@
    python3 -m OGU
    ```
 
+[TOC]
+
 # Table of Contents
 
 * [Quick start](#quickstart)
@@ -409,17 +411,18 @@ notice the difference.
 Here are to jupyter notebooks for visualize analyze result as detailed circle
 figure:
 
-- `Visualize/draw_circle_plastid.ipynb`: for plastid genomes
-- `Visualize/draw_circle_mitochondria.ipynb`: for mitochondria genomes
-
+- [`Visualize/draw_circle_plastid.ipynb`](https://github.com/wpwupingwp/OGU/blob/master/visualize/draw_circle_plastid.ipynb): for plastid genomes
+- [`Visualize/draw_circle_mitochondria.ipynb`](https://github.com/wpwupingwp/OGU/blob/master/visualize/draw_circle_mitochondria.ipynb): for mitochondria genomes
+- 
 Since users may want to customize the figure, we provide jupyter notebooks
 instead of packaged code. Users can get the result following these steps.
 
-0. Run `pip install jupyterlab` to install jupyter notebooks
-1. Double click to open in jupyter notebook, Visual Studio Code or other IDEs you prefer.
-2. Edit `filename` to the Evaluation.csv you got
-3. Edit `gb_file` to extended gb file you got. Remember to generate it with
-   `-out_debug` in OGU.gb2fasta
+0. Run `pip3 install jupyterlab` to install jupyter notebooks
+1. Double click to open in jupyter notebook, Visual Studio Code or other IDEs 
+  you prefer.
+2. Edit `filename` to the Evaluation.csv you got from OGU.Evaluate
+3. Edit `gb_file` to extended gb file you got from OGU.GB2fasta. Remember to 
+  generate it with `-out_debug` in OGU.gb2fasta
 4. If visualize plastid data, you need provide `LSC, SSC, IRa, IRb` lengths. Or
    you can use default value, which is for *Tobacum*.
 5. Edit color themes as your wish
@@ -957,7 +960,24 @@ Please submit your questions in the
 
 * Q: The first-time run is slow.
 
-  A: OGU will automaticlly install third-party software (MAFFT/BLAST/IQTREE)
+  A: OGU will automatically install third-party software (MAFFT/BLAST/IQTREE)
   from AWS at first-time running. Microsoft Windows users, especially in some
   regions may have slow connection. Please be patient, or you can manually
   install them. See [Initialization](#Initialization).
+
+* Q: During the installation process, I am prompted that some Python packages 
+  cannot be installed.
+ 
+  A: It is recommended that you try using a virtual environment to isolate OGU 
+  from the operating system.
+  ```bash
+  # create a virtual environment named "myvenv"
+  python3 -m venv myvenv
+  # activate the environment
+  # linux and macos
+  source myvenv/bin/activate
+  # windows
+  myvenv/Scripts/activate.ps1
+  # install
+  pip3 install OGU
+  ```

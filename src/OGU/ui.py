@@ -1,9 +1,6 @@
 #!/usr/bin/env python
-from importlib import resources
-from logging import handlers
-from time import time
-from tkinter import filedialog, messagebox, scrolledtext
 import logging
+import os
 import platform
 import queue
 import sys
@@ -11,10 +8,14 @@ import threading
 import tkinter as tk
 import tkinter.ttk as ttk
 import webbrowser
+from importlib import resources
+from logging import handlers
+from time import time
+from tkinter import filedialog, messagebox, scrolledtext
 
 from OGU.evaluate import evaluate_main
 from OGU.gb2fasta import gb2fasta_main
-from OGU.global_vars import log, name, FMT, DATEFMT
+from OGU.global_vars import DATEFMT, FMT, log, name
 from OGU.primer import primer_main
 from OGU.utils import font_family, get_all_third_party
 
@@ -222,7 +223,7 @@ def thread_wrap(function, arg_str, window, no_arg=False):
     if not no_arg:
         messagebox.showinfo(message=f'Done. See {result[0].out} for details.')
     else:
-        messagebox.showinfo(message='Install third-party software finished.')
+        messagebox.showinfo(message='Done')
     window.withdraw()
     root.deiconify()
     return
@@ -307,6 +308,11 @@ class Root:
         self.primer_b.place(relx=0.688, rely=0.288, height=100, width=100)
         self.primer_b.configure(command=ui_primer)
         self.primer_b.configure(image=_img2)
+
+        self.visualize = my_button(self.top)
+        self.visualize.place(relx=0.213, rely=0.865, height=30, width=250)
+        self.visualize.configure(text='Visualize')
+        self.visualize.configure(command=run_visualize(self, self.top))
 
         self.install_third_party = my_button(self.top)
         self.install_third_party.place(relx=0.613, rely=0.865, height=30,
@@ -1409,8 +1415,9 @@ def run_help():
     webbrowser.open(url, new=2)
 
 
-def run_install(win, t: tk.Toplevel):
-    def f():
+def func_wrap(t: tk.Toplevel, func):
+    def _f():
+        nonlocal t, func
         t.withdraw()
         w, h = root.winfo_screenwidth(), root.winfo_screenheight()
         s = min(w, h) // 2
@@ -1422,12 +1429,32 @@ def run_install(win, t: tk.Toplevel):
         frame = ttk.Frame(run)
         frame.pack(fill='both')
         scroll_text(frame)
-        r = threading.Thread(target=thread_wrap,
-                             args=(get_all_third_party, '', run, True),
+        r = threading.Thread(target=thread_wrap, args=(func, '', run, True),
                              daemon=True)
         r.start()
+    return _f
 
-    return f
+
+def run_visualize(win, t: tk.Toplevel):
+    def v():
+        # with (resources.files(name) / 'data') as v_folder:
+        v_folder = resources.files(name) / 'data'
+        system = platform.system()
+        if system == "Windows":
+            os.startfile(v_folder)
+        elif system == "Darwin":  # macOS
+            os.system(f"open '{v_folder}'")
+        elif system == "Linux":
+            os.system(f"xdg-open '{v_folder}'")
+        else:
+            log.error('Unsupported system')
+    v_func = func_wrap(t, v)
+    return v_func
+
+
+def run_install(win, t: tk.Toplevel):
+    i_func = func_wrap(t, get_all_third_party)
+    return i_func
 
 
 def ui_main():
