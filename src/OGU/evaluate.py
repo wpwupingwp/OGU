@@ -17,7 +17,7 @@ mpl_use('Agg')
 from matplotlib import pyplot as plt
 from matplotlib import rcParams
 from OGU import utils
-from OGU.global_vars import log
+from OGU.global_vars import log, global_dict
 
 # ignore warnings from numpy
 warnings.filterwarnings('ignore', category=RuntimeWarning)
@@ -72,21 +72,30 @@ def init_arg(arg):
     if arg.fasta_folder is not None:
         for i in Path(arg.fasta_folder).glob('*'):
             arg.fasta.append(i.absolute())
-    log.info('Add fasta from gb2fasta module if possible.')
-    for i in Path(arg._unique).glob('*'):
-        if i.name != 'Unknown.fasta':
-            arg.fasta.append(i.absolute())
+    if global_dict['from_gb2fasta']:
+        log.info('Add fasta from gb2fasta result.')
+        if global_dict['gb2fasta_unique'] == 'no':
+            source = Path(arg._divide).glob('*')
+        else:
+            source = Path(arg._unique).glob('*')
+        for i in source:
+            if i.name != 'Unknown.fasta':
+                arg.fasta.append(i.absolute())
+    else:
+        log.debug('Skip adding GB2fasta result')
     if arg.fasta:
         for i in arg.fasta:
             if not i.exists() or not i.is_file():
                 log.error(f'{i} does not exist or is not a valid file.')
-                return None
+                continue
+        arg.fasta = [i for i in arg.fasta if i.exists() and i.is_file()]
     if arg.aln is not None:
         arg.aln = [Path(i).absolute() for i in arg.aln]
         for i in arg.aln:
             if not i.exists() or not i.is_file():
                 log.error(f'{i} does not exist or is not a valid file.')
-                return None
+                continue
+        arg.aln = [i for i in arg.aln if i.exists() and i.is_file()]
     else:
         arg.aln = []
     if not any([arg.fasta, arg.aln, arg.fasta_folder]):

@@ -220,11 +220,14 @@ def thread_wrap(function, arg_str, window, no_arg=False):
         messagebox.showinfo(message='Abort.')
         root.deiconify()
         return
-    if not no_arg:
+    if not no_arg and result[0] is not None:
         messagebox.showinfo(message=f'Done. See {result[0].out} for details.')
     else:
         messagebox.showinfo(message='Done')
-    window.withdraw()
+    try:
+        window.withdraw()
+    except tk.TclError:
+        pass
     root.deiconify()
     return
 

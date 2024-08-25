@@ -12,7 +12,7 @@ from Bio import Entrez, SeqIO
 from Bio.SeqFeature import SeqFeature, FeatureLocation, CompoundLocation
 
 from OGU import utils
-from OGU.global_vars import log, name
+from OGU.global_vars import log, name, global_dict
 
 
 # load data
@@ -208,6 +208,8 @@ def init_arg(arg):
     if arg.rename:
         log.warning('{} will try to rename genes by regular '
                     'expression.'.format(name))
+    global_dict['gb2fasta_unique'] = arg.unique
+    global_dict['from_gb2fasta'] = True
     return arg
 
 

@@ -13,4 +13,4 @@ logging.basicConfig(format=FMT, datefmt=DATEFMT, level=logging.DEBUG)
 log = logging.getLogger(name)
 coloredlogs.install(level=logging.INFO, fmt=FMT, datefmt=DATEFMT)
 # store global values here
-global_dict = {}
+global_dict = {'from_gb2fasta': False, 'gb2fasta_unique': 'no'}
