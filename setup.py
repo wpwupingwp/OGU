@@ -31,7 +31,7 @@ setuptools.setup(
     python_requires='>=3.8',
     entry_points={'console_scripts': ['OGU = OGU:main', 'ogu = OGU:main']},
     url='https://github.com/wpwupingwp/BarcodeFinder',
-    version='1.992',
+    version='1.996',
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
