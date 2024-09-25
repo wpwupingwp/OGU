@@ -114,6 +114,7 @@ def get_name2(old):
 
 def get_ref_gb(taxa: str, og_type: str) -> Path:
     log.info(f'Try to get reference of {taxa} {og_type} genome from Genbank')
+    # todo
     pass
 
 
