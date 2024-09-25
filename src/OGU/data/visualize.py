@@ -154,6 +154,20 @@ def preprocess_data(csv_file: Path, count_threshold) -> (pd.DataFrame, set):
     return data_raw3, names_set
 
 
+def draw_bar(track, x_, y_, w_, text, arg):
+    max_y = max(y_)
+    color = track_colors.pop()
+    # ec='black', lw=0.5
+    for x, y, w in zip(x_, y_, w_):
+        # bar need x[list], y[list]
+        # x should adjust by width
+        track.bar([x - w / 2], [y], width=w * 0.95, color=color,
+                  vmin=0, vmax=max_y)
+    if arg.og_type == 'cp':
+        t_pos = arg.gbsize - arg.parts['IRb'] / 2
+        track.text(text, t_pos, size=8, color=color, adjust_rotation=True)
+
+
 def visualize_main(arg_str=None):
     log.info('Running visualize module...')
     if arg_str is None:
@@ -165,19 +179,6 @@ def visualize_main(arg_str=None):
         log.info('Quit visualize module.')
         return None, other_args2
 
-    def draw_bar(track, x_, y_, w_, text):
-        max_y = max(y_)
-        color = track_colors.pop()
-        # ec='black', lw=0.5
-        for x, y, w in zip(x_, y_, w_):
-            # bar need x[list], y[list]
-            # x should adjust by width
-            track.bar([x - w / 2], [y], width=w * 0.95, color=color,
-                      vmin=0, vmax=max_y)
-        if arg.og_type == 'cp':
-            t_pos = arg.gbsize - arg.parts['IRb'] / 2
-            track.text(text, t_pos, size=8, color=color, adjust_rotation=True)
-
     # evaluation result table, remove abnormal genes
     long_label = 20
     # reference organelle genome genbank file, generated from OGU.gb2fasta
@@ -186,7 +187,7 @@ def visualize_main(arg_str=None):
 
     r = MyRadius()
 
-    fig_ = plt.figure(figsize=(10, 10))
+    _ = plt.figure(figsize=(10, 10))
     # genome gb file as template, no extra treatment
     if arg.og_type == 'cp':
         circle_start = -260
@@ -296,7 +297,7 @@ def visualize_main(arg_str=None):
         track = sector.add_track(r.get(), r_pad_ratio=0.1)
         track.axis()
         data = clean_data[col].tolist()
-        draw_bar(track, clean_pos, data, widths, text)
+        draw_bar(track, clean_pos, data, widths, text, arg)
 
     if arg.og_type == 'cp':
         # draw quadripartite structure for plastid
