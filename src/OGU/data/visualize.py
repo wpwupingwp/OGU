@@ -1,7 +1,5 @@
 import argparse
-import csv
 import re
-from collections import defaultdict
 from pathlib import Path
 
 import pandas as pd
@@ -99,6 +97,8 @@ def init_arg(arg):
         log.warning(f'{arg.out} already exists. Overwriting.')
     # tobacco plastid genome
     arg.parts = {'LSC': arg.lsc, 'IRb': arg.ir, 'SSC': arg.ssc, 'IRa': arg.ir}
+    arg.gb_size = (arg.parts['LSC'] + arg.parts['IRa'] + arg.parts['SSC'] +
+                   arg.parts['IRb'])
     # total length - ir length
     arg.ir2_start = arg.lsc + arg.ir + arg.ssc
     return arg
@@ -174,14 +174,14 @@ def visualize_main(arg_str=None):
             # x should adjust by width
             track.bar([x - w / 2], [y], width=w * 0.95, color=color,
                       vmin=0, vmax=max_y)
-        track.text(text, t_pos, size=8, color=color, adjust_rotation=True)
+        if arg.og_type == 'cp':
+            t_pos = arg.gbsize - arg.parts['IRb'] / 2
+            track.text(text, t_pos, size=8, color=color, adjust_rotation=True)
 
     # evaluation result table, remove abnormal genes
     long_label = 20
     # reference organelle genome genbank file, generated from OGU.gb2fasta
     gb = Genbank(arg.ref_gb)
-    if arg.og_type == 'cp':
-        t_pos = gb.range_size - arg.parts['IRb'] / 2
     data_raw3, data_names_set = preprocess_data(arg.input, arg.count_threshold)
 
     r = MyRadius()
@@ -245,7 +245,8 @@ def visualize_main(arg_str=None):
             start, end = int(str(f.location.start)), int(str(f.location.end))
             pos = end
             if feature == 'intron':
-                label = f.qualifiers['gene'][0] + '.' + f.qualifiers['number'][0]
+                label = (f.qualifiers['gene'][0] + '.' +
+                         f.qualifiers['number'][0])
             elif feature != 'spacer':
                 label = f.qualifiers.get("gene", ["??"])[0]
                 if label == last_name:
@@ -299,8 +300,6 @@ def visualize_main(arg_str=None):
 
     if arg.og_type == 'cp':
         # draw quadripartite structure for plastid
-        gb_size = (arg.parts['LSC'] + arg.parts['IRa'] + arg.parts['SSC'] +
-                   arg.parts['IRb'])
         part_track = sector.add_track(r.get(True))
         start = 0
         for part in arg.parts.keys():
@@ -311,7 +310,7 @@ def visualize_main(arg_str=None):
             start = start + arg.parts[part] + 1
         circos.link(
             (gb.name, arg.parts['LSC'], arg.parts['LSC'] + arg.parts['IRa']),
-            (gb.name, gb_size - arg.parts['IRb'], gb_size),
+            (gb.name, arg.gb_size - arg.parts['IRb'], arg.gb_size),
             color='green', alpha=0.3)
 
     fig = circos.plotfig()
