@@ -100,7 +100,7 @@ def init_arg(arg):
     # tobacco plastid genome
     arg.parts = {'LSC': arg.lsc, 'IRb': arg.ir, 'SSC': arg.ssc, 'IRa': arg.ir}
     # total length - ir length
-    arg.irb_start = arg.lsc + arg.ir + arg.ssc
+    arg.ir2_start = arg.lsc + arg.ir + arg.ssc
     return arg
 
 
@@ -272,8 +272,8 @@ def visualize_main(arg_str=None):
         if key not in intersection:
             continue
         label_pos.append((key, value))
-        # ycf1, irb start
-        if value < irb_start:
+        # ycf1, second ir start
+        if arg.og_type == 'cp' and value < arg.ir2_start:
             label_pos_dict[key] = value
         else:
             ir_second_label_pos.append((key, value))
