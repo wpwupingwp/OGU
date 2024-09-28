@@ -7,6 +7,7 @@ from matplotlib import pyplot as plt
 from matplotlib.patches import Patch
 from pycirclize import Circos
 from pycirclize.parser import Genbank
+from Bio import Entrez
 
 from OGU.global_vars import log
 
@@ -114,8 +115,31 @@ def get_name2(old):
 
 def get_ref_gb(taxa: str, og_type: str) -> Path:
     log.info(f'Try to get reference of {taxa} {og_type} genome from Genbank')
-    # todo
-    pass
+    out_gb = Path(f'{taxa}_{og_type}.gb')
+    Entrez.email = 'example.org'
+    if og_type == 'mt':
+        query_str = 'mitochondrion[filter]'
+    else:
+        query_str = '(plastid[filter] OR chloroplast[filter])'
+    query_str += ' AND Refseq[filter] AND "{taxa}"[organism]'
+    query_result = Entrez.read(Entrez.esearch(db='nuccore', term=query_str,
+                                              usehistory='y'))
+    count = int(query_result['Count'])
+    if count == 0:
+        log.error(f'{taxa} {og_type} genome not found in Genbank')
+        return Path()
+    try:
+        data = Entrez.efetch(db='nuccore',
+                             webenv=query_result['WebEnv'],
+                             query_key=query_result['QueryKey'],
+                             rettype='acc',
+                             retstart=0,
+                             retmax=1)
+        out_gb.write_text(data.read())
+    except Exception:
+        log.critical(f'{taxa} {og_type} genome not found in Genbank')
+        return Path()
+    return out_gb
 
 
 def percent_to_float(old: str) -> float:
