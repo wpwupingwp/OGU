@@ -169,7 +169,7 @@ def get_query_string(arg, silence=False):
         condition.append(' '.join(arg.query))
     if len(condition) > 0:
         if arg.genome:
-            condition.append(f'("20000"[SLEN] : "{arg.max_len}"[SLEN])')
+            condition.append(f'("5000"[SLEN] : "{arg.max_len}"[SLEN])')
         else:
             condition.append(f'("{arg.min_len}"[SLEN] : "{arg.max_len}"[SLEN])')
     if arg.exclude is not None:

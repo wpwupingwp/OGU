@@ -2,14 +2,15 @@ import argparse
 import re
 from pathlib import Path
 
+
 import pandas as pd
 from matplotlib import pyplot as plt
 from matplotlib.patches import Patch
 from pycirclize import Circos
 from pycirclize.parser import Genbank
-from Bio import Entrez
 
 from OGU.global_vars import log
+from OGU.gb2fasta import gb2fasta_main
 
 # Evaluation.csv -> xlsx -> first column Type, second column name
 features = ('CDS', 'intron', 'tRNA', 'rRNA', 'spacer')
@@ -115,31 +116,40 @@ def get_name2(old):
 
 def get_ref_gb(taxa: str, og_type: str) -> Path:
     log.info(f'Try to get reference of {taxa} {og_type} genome from Genbank')
-    out_gb = Path(f'{taxa}_{og_type}.gb')
-    Entrez.email = 'example.org'
-    if og_type == 'mt':
-        query_str = 'mitochondrion[filter]'
+    tmp_out = Path().cwd() / 'visualize_tmp'
+    # Entrez.email = 'example.org'
+    # if og_type == 'mt':
+    #     query_str = 'mitochondrion[filter]'
+    # else:
+    #     query_str = '(plastid[filter] OR chloroplast[filter])'
+    # query_str += ' AND Refseq[filter] AND "{taxa}"[organism]'
+    # query_result = Entrez.read(Entrez.esearch(db='nuccore', term=query_str,
+    #                                           usehistory='y'))
+    # count = int(query_result['Count'])
+    # if count == 0:
+    #     log.error(f'{taxa} {og_type} genome not found in Genbank')
+    #     return Path()
+    # try:
+    #     data = Entrez.efetch(db='nuccore',
+    #                          webenv=query_result['WebEnv'],
+    #                          query_key=query_result['QueryKey'],
+    #                          rettype='acc',
+    #                          retstart=0,
+    #                          retmax=1)
+    #     out_gb.write_text(data.read())
+    # except Exception:
+    #     log.critical(f'{taxa} {og_type} genome not found in Genbank')
+    #     return Path()
+    arg_str = (f' -taxon {taxa} -og {og_type} -out {tmp_out} -refseq yes '
+               f'-count 1 -out_debug ')
+    arg_result, _ = gb2fasta_main(arg_str)
+    extend_gb = tmp_out / 'extend.gb'
+    if arg_result.gb is not None and extend_gb.exists():
+        log.info(f'Got reference genome for visualization')
     else:
-        query_str = '(plastid[filter] OR chloroplast[filter])'
-    query_str += ' AND Refseq[filter] AND "{taxa}"[organism]'
-    query_result = Entrez.read(Entrez.esearch(db='nuccore', term=query_str,
-                                              usehistory='y'))
-    count = int(query_result['Count'])
-    if count == 0:
-        log.error(f'{taxa} {og_type} genome not found in Genbank')
+        log.critical(f'Failed to get reference genome for visualization')
         return Path()
-    try:
-        data = Entrez.efetch(db='nuccore',
-                             webenv=query_result['WebEnv'],
-                             query_key=query_result['QueryKey'],
-                             rettype='acc',
-                             retstart=0,
-                             retmax=1)
-        out_gb.write_text(data.read())
-    except Exception:
-        log.critical(f'{taxa} {og_type} genome not found in Genbank')
-        return Path()
-    return out_gb
+    return extend_gb
 
 
 def percent_to_float(old: str) -> float:
