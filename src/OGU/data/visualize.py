@@ -46,7 +46,7 @@ def parse_args(arg_list=None):
         description=visualize_main.__doc__)
     arg.add_argument('-input_csv', help='Evaluation result tabel, csv file')
     arg.add_argument('-ref_gb', help='reference genome genbank file')
-    arg.add_argument('-taxa', help='Taxa name, recommend use family name')
+    arg.add_argument('-taxon', help='Taxa name, recommend use family name')
     arg.add_argument('-type', choices=('cp', 'mt'), dest='og_type',
                      help='Type of organelle (mt:mitochondria or '
                           'cp:plastid/chloroplast')
@@ -89,10 +89,10 @@ def init_arg(arg):
             return None
         else:
             log.info(f'Use {arg.ref} as reference')
-    elif arg.taxa is not None:
-        arg.ref = get_ref_gb(arg.taxa, arg.og_type)
+    elif arg.taxon is not None:
+        arg.ref = get_ref_gb(arg.taxon, arg.og_type)
     else:
-        # if both arg.ref and arg.taxa is provided, use arg.ref
+        # if both arg.ref and arg.taxon is provided, use arg.ref
         pass
     arg.out = Path(arg.out).absolute()
     if arg.out.exists():
