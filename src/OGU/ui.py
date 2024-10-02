@@ -9,6 +9,7 @@ import tkinter.ttk as ttk
 import webbrowser
 from importlib import resources
 from logging import handlers
+from pathlib import Path
 from time import time
 from tkinter import filedialog, messagebox, scrolledtext
 
@@ -313,13 +314,13 @@ class Root:
         self.primer_b.configure(command=ui_primer)
         self.primer_b.configure(image=_img2)
 
-        self.visualize = my_button(self.top)
-        self.visualize.place(relx=0.125, rely=0.865, height=30, width=250)
+        self.visualize = my_button(self.top, fontsize=14)
+        self.visualize.place(relx=0.125, rely=0.865, height=40, width=250)
         self.visualize.configure(text='Visualize')
-        self.visualize.configure(command=run_visualize(self, self.top))
+        self.visualize.configure(command=ui_visualize)
 
-        self.install_third_party = my_button(self.top)
-        self.install_third_party.place(relx=0.613, rely=0.865, height=30,
+        self.install_third_party = my_button(self.top, fontsize=14)
+        self.install_third_party.place(relx=0.613, rely=0.865, height=40,
                                        width=250)
         self.install_third_party.configure(text='Install third-party software')
         self.install_third_party.configure(command=run_install(self, self.top))
@@ -1134,8 +1135,37 @@ class Primer:
 
 class Visualize(tk.Toplevel):
     def __init__(self, top=None):
-        '''This class configures and populates the toplevel window.
-           top is the toplevel containing window.'''
+        def load_example():
+            mt_gb = d_dir / 'rodents_mt_extend.gb'
+            cp_gb = d_dir / 'tobacco_cp_extend.gb'
+            cp_csv = d_dir / 'angiosperm_cp_Evaluation.csv'
+            mt_csv = d_dir / 'rodents_mt_Evaluation.csv'
+            # tobacco plastid
+            lsc, ssc, ir = 86684, 18482, 25339
+            if self.og_type.get() == 'cp':
+                self.gb_entry.delete(0, 'end')
+                self.gb_entry.insert(0, str(cp_gb))
+                self.csv_entry.delete(0, 'end')
+                self.csv_entry.insert(0, str(cp_csv))
+                self.lsc_entry.delete(0, 'end')
+                self.lsc_entry.insert(0, str(lsc))
+                self.ssc_entry.delete(0, 'end')
+                self.ssc_entry.insert(0, str(ssc))
+                self.ir_entry.delete(0, 'end')
+                self.ir_entry.insert(0, str(ir))
+            else:
+                self.gb_entry.delete(0, 'end')
+                self.gb_entry.insert(0, str(mt_gb))
+                self.csv_entry.delete(0, 'end')
+                self.csv_entry.insert(0, str(mt_csv))
+                self.lsc_entry.delete(0, 'end')
+                self.ssc_entry.delete(0, 'end')
+                self.ir_entry.delete(0, 'end')
+            self.out_entry.delete(0, 'end')
+            self.out_entry.insert(0,
+                                  str(Path().cwd().absolute()/'Figure.pdf'))
+            return
+
         _bgcolor = '#edf0f3'
         _fgcolor = '#000000'
         _compcolor = '#d9d9d9'
@@ -1200,6 +1230,7 @@ class Visualize(tk.Toplevel):
         self.or_label.place(relx=0.248, rely=0.483, height=21, width=37,
                             bordermode='ignore')
         self.or_label.configure(text='''OR''')
+        self.or_label.configure(foreground='red')
         self.or_label_tooltip = ToolTip(
             self.or_label, 'Input Reference gb or taxon, one is enough')
 
@@ -1243,6 +1274,8 @@ class Visualize(tk.Toplevel):
         self.combobox_og_type.configure(values=self.og_value_list)
         self.combobox_og_type.configure(textvariable=self.og_type)
         self.combobox_og_type.current(0)
+        self.combobox_og_type_tooltip = ToolTip(self.combobox_og_type,
+                                                'cp: plastid/chloroplast genome\nmt: mitochondria genome')
 
         self.out_label = my_label(self.top)
         self.out_label.place(relx=0.218, rely=0.756, height=23, width=59)
@@ -1254,15 +1287,11 @@ class Visualize(tk.Toplevel):
         self.out_entry_tooltip = ToolTip(self.out_entry,
                                          'Output file, PDF format')
 
-        self.eg_btn = my_button(self.top)
-        self.eg_btn.place(relx=0.25, rely=0.867, height=35, width=100)
-        self.eg_btn.configure(text='Load example')
-        self.eg_btn.configure(command=load_example)
-
-        self.run_btn = my_button(self.top)
-        self.run_btn.place(relx=0.55, rely=0.867, height=35, width=100)
-        self.run_btn.configure(text='''Run''')
-        self.run_btn.configure(command=run_visualize)
+        self.out_btn = my_button(self.top)
+        self.out_btn.place(relx=0.89, rely=0.756, height=30, width=50)
+        self.out_btn.configure(text='Open')
+        self.out_btn.configure(command=open_file(self.out_entry, single=True,
+                                                 type_='folder'))
 
         self.Labelframe2 = my_labelframe(self.top)
         self.Labelframe2.place(relx=0.025, rely=0.5, relheight=0.167,
@@ -1307,34 +1336,15 @@ class Visualize(tk.Toplevel):
                             bordermode='ignore')
         self.bp_label.configure(text='''bp''')
 
-    def load_example(self):
-        # todo: load cp example
-        mt_gb = d_dir / 'rodents_mt_extend.gb'
-        cp_gb = d_dir / 'tobacco_cp_extend.gb'
-        cp_csv = d_dir / 'angiosperm_cp_Evaluation.csv'
-        mt_csv = d_dir / 'rodents_mt_Evaluation.csv'
-        # tobacco plastid
-        lsc, ssc, ir = 86684, 18482, 25339
-        if self.og_type == 'cp':
-            self.gb_entry.delete(0, 'end')
-            self.gb_entry.insert(0, str(cp_gb))
-            self.csv_entry.delete(0, 'end')
-            self.csv_entry.insert(0, str(cp_csv))
-            self.lsc_entry.delete(0, 'end')
-            self.lsc_entry.insert(0, str(lsc))
-            self.ssc_entry.delete(0, 'end')
-            self.ssc_entry.insert(0, str(ssc))
-            self.ir_entry.delete(0, 'end')
-            self.ir_entry.insert(0, str(ir))
-        else:
-            self.gb_entry.delete(0, 'end')
-            self.gb_entry.insert(0, str(mt_gb))
-            self.csv_entry.delete(0, 'end')
-            self.csv_entry.insert(0, str(mt_csv))
-            self.lsc_entry.delete(0, 'end')
-            self.ssc_entry.delete(0, 'end')
-            self.ir_entry.delete(0, 'end')
-        return
+        self.eg_btn = my_button(self.top)
+        self.eg_btn.place(relx=0.15, rely=0.867, height=35, width=150)
+        self.eg_btn.configure(text='Load example')
+        self.eg_btn.configure(command=load_example)
+
+        self.run_btn = my_button(self.top)
+        self.run_btn.place(relx=0.70, rely=0.867, height=35, width=150)
+        self.run_btn.configure(text='''Run''')
+        self.run_btn.configure(command=run_visualize)
     pass
 
 
