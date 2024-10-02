@@ -18,6 +18,8 @@ from OGU.global_vars import DATEFMT, FMT, log, name
 from OGU.primer import primer_main
 from OGU.utils import font_family, get_all_third_party
 
+d_dir = resources.files(name) / 'data'
+
 
 def my_labelframe(parent: tk.LabelFrame) -> tk.LabelFrame:
     frame = tk.LabelFrame(parent)
@@ -1198,6 +1200,8 @@ class Visualize(tk.Toplevel):
         self.or_label.place(relx=0.248, rely=0.483, height=21, width=37,
                             bordermode='ignore')
         self.or_label.configure(text='''OR''')
+        self.or_label_tooltip = ToolTip(
+            self.or_label, 'Input Reference gb or taxon, one is enough')
 
         self.csv_entry = my_entry(self.Labelframe1)
         self.csv_entry.place(relx=0.351, rely=0.097, height=30, relwidth=0.524,
@@ -1302,6 +1306,35 @@ class Visualize(tk.Toplevel):
         self.bp_label.place(relx=0.866, rely=0.453, height=23, width=40,
                             bordermode='ignore')
         self.bp_label.configure(text='''bp''')
+
+    def load_example(self):
+        # todo: load cp example
+        mt_gb = d_dir / 'rodents_mt_extend.gb'
+        cp_gb = d_dir / 'tobacco_cp_extend.gb'
+        cp_csv = d_dir / 'angiosperm_cp_Evaluation.csv'
+        mt_csv = d_dir / 'rodents_mt_Evaluation.csv'
+        # tobacco plastid
+        lsc, ssc, ir = 86684, 18482, 25339
+        if self.og_type == 'cp':
+            self.gb_entry.delete(0, 'end')
+            self.gb_entry.insert(0, str(cp_gb))
+            self.csv_entry.delete(0, 'end')
+            self.csv_entry.insert(0, str(cp_csv))
+            self.lsc_entry.delete(0, 'end')
+            self.lsc_entry.insert(0, str(lsc))
+            self.ssc_entry.delete(0, 'end')
+            self.ssc_entry.insert(0, str(ssc))
+            self.ir_entry.delete(0, 'end')
+            self.ir_entry.insert(0, str(ir))
+        else:
+            self.gb_entry.delete(0, 'end')
+            self.gb_entry.insert(0, str(mt_gb))
+            self.csv_entry.delete(0, 'end')
+            self.csv_entry.insert(0, str(mt_csv))
+            self.lsc_entry.delete(0, 'end')
+            self.ssc_entry.delete(0, 'end')
+            self.ir_entry.delete(0, 'end')
+        return
     pass
 
 
@@ -1628,14 +1661,13 @@ def run_visualize(win, t: tk.Toplevel):
     # todo: rewrite
     def v():
         # with (resources.files(name) / 'data') as v_folder:
-        v_folder = resources.files(name) / 'data'
         system = platform.system()
         if system == "Windows":
-            os.startfile(v_folder)
+            os.startfile(d_dir)
         elif system == "Darwin":  # macOS
-            os.system(f"open '{v_folder}'")
+            os.system(f"open '{d_dir}'")
         elif system == "Linux":
-            os.system(f"xdg-open '{v_folder}'")
+            os.system(f"xdg-open '{d_dir}'")
         else:
             log.error('Unsupported system')
 
