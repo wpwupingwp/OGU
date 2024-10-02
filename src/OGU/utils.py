@@ -797,6 +797,19 @@ def init_lineage():
     return
 
 
+def open_folder(d_dir):
+    # system = platform.system()
+    # if system == "Windows":
+    #     os.startfile(d_dir)
+    # elif system == "Darwin":  # macOS
+    #     os.system(f"open '{d_dir}'")
+    # elif system == "Linux":
+    #     os.system(f"xdg-open '{d_dir}'")
+    # else:
+    #     log.error('Unsupported system')
+    pass
+
+
 def codon_usage(alignment):
     pass
 

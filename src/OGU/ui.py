@@ -13,10 +13,11 @@ from pathlib import Path
 from time import time
 from tkinter import filedialog, messagebox, scrolledtext
 
-from OGU.evaluate import evaluate_main
-from OGU.gb2fasta import gb2fasta_main
 from OGU.global_vars import DATEFMT, FMT, log, name
+from OGU.gb2fasta import gb2fasta_main
+from OGU.evaluate import evaluate_main
 from OGU.primer import primer_main
+from OGU.visualize import visualize_main
 from OGU.utils import font_family, get_all_third_party
 
 d_dir = resources.files(name) / 'data'
@@ -1164,7 +1165,7 @@ class Visualize(tk.Toplevel):
             self.taxon_entry.delete(0, 'end')
             self.out_entry.delete(0, 'end')
             self.out_entry.insert(0,
-                                  str(Path().cwd().absolute()/'Figure.pdf'))
+                                  str(Path().cwd().absolute() / 'Figure.pdf'))
             return
 
         _bgcolor = '#edf0f3'
@@ -1197,6 +1198,7 @@ class Visualize(tk.Toplevel):
         self.gb_file = tk.StringVar()
         self.taxon = tk.StringVar()
         self.og_type = tk.StringVar()
+        self.nseqs = tk.StringVar()
         self.lsc_size = tk.IntVar()
         self.ssc_size = tk.IntVar()
         self.ir_size = tk.IntVar()
@@ -1247,7 +1249,7 @@ class Visualize(tk.Toplevel):
                                  placeholder='eg. D:/Result/extend.gb')
         self.gb_entry.place(relx=0.351, rely=0.338, height=30, relwidth=0.524,
                             bordermode='ignore')
-        self.gb_entry.configure(textvariable=self.csv_file)
+        self.gb_entry.configure(textvariable=self.gb_file)
         self.gb_entry_tooltip = ToolTip(self.gb_entry, 'Extended Genbank file')
 
         self.open_btn = my_button(self.Labelframe1)
@@ -1272,7 +1274,7 @@ class Visualize(tk.Toplevel):
 
         self.combobox_og_type = my_combobox(self.Labelframe1)
         self.combobox_og_type.place(relx=0.351, rely=0.802, relheight=0.145,
-                            relwidth=0.524, bordermode='ignore')
+                                    relwidth=0.524, bordermode='ignore')
         self.og_value_list = ['cp', 'mt']
         self.combobox_og_type.configure(values=self.og_value_list)
         self.combobox_og_type.configure(textvariable=self.og_type)
@@ -1280,8 +1282,19 @@ class Visualize(tk.Toplevel):
         self.combobox_og_type_tooltip = ToolTip(self.combobox_og_type,
                                                 'cp: plastid/chloroplast genome\nmt: mitochondria genome')
 
+        self.nseqs_label = my_label(self.top)
+        self.nseqs_label.place(relx=0.018, rely=0.756, height=30, width=60)
+        self.nseqs_label.configure(text='nseqs')
+
+        self.nseqs_entry = my_entry(self.top)
+        self.nseqs_entry.place(relx=0.10, rely=0.756, height=30, relwidth=0.1)
+        self.nseqs_entry.configure(textvariable=self.nseqs)
+        self.nseqs_entry_tooltip = ToolTip(
+            self.nseqs_entry, 'Minimum number of sequences per gene/fragment')
+        self.nseqs_entry.insert(0, '10')
+
         self.out_label = my_label(self.top)
-        self.out_label.place(relx=0.218, rely=0.756, height=23, width=59)
+        self.out_label.place(relx=0.258, rely=0.756, height=30, width=60)
         self.out_label.configure(text='''Output''')
 
         self.out_entry = my_entry(self.top)
@@ -1305,23 +1318,25 @@ class Visualize(tk.Toplevel):
         self.lsc_entry.place(relx=0.133, rely=0.4, height=30, relwidth=0.175,
                              bordermode='ignore')
         self.lsc_entry.configure(textvariable=self.lsc_size)
-        self.lsc_entry_tooltip = ToolTip(self.lsc_entry, 'LSC size')
+        self.lsc_entry_tooltip = ToolTip(self.lsc_entry,
+                                         'Plastid genome LSC size')
 
         self.ssc_entry = my_entry(self.Labelframe2)
         self.ssc_entry.place(relx=0.419, rely=0.4, height=30, relwidth=0.175,
                              bordermode='ignore')
         self.ssc_entry.configure(textvariable=self.ssc_size)
-        self.ssc_entry_tooltip = ToolTip(self.ssc_entry, 'SSC size')
+        self.ssc_entry_tooltip = ToolTip(self.ssc_entry,
+                                         'Plastid genome SSC size')
 
         self.ir_entry = my_entry(self.Labelframe2)
         self.ir_entry.place(relx=0.686, rely=0.4, height=30, relwidth=0.175,
                             bordermode='ignore')
         self.ir_entry.configure(textvariable=self.ir_size)
-        self.ir_entry_tooltip = ToolTip(self.ir_entry, 'IR size')
+        self.ir_entry_tooltip = ToolTip(self.ir_entry, 'Plastid genome IR size')
 
         self.lsc_label = my_label(self.Labelframe2)
         self.lsc_label.place(relx=0.061, rely=0.453, height=23, width=30,
-                          bordermode='ignore')
+                             bordermode='ignore')
         self.lsc_label.configure(text='''LSC''')
 
         self.ssc_label = my_label(self.Labelframe2)
@@ -1345,10 +1360,9 @@ class Visualize(tk.Toplevel):
         self.eg_btn.configure(command=load_example)
 
         self.run_btn = my_button(self.top)
-        self.run_btn.place(relx=0.70, rely=0.867, height=35, width=150)
+        self.run_btn.place(relx=0.60, rely=0.867, height=35, width=150)
         self.run_btn.configure(text='''Run''')
-        self.run_btn.configure(command=run_visualize)
-    pass
+        self.run_btn.configure(command=run_visualize(self, self.top))
 
 
 class ToolTip(tk.Toplevel):
@@ -1644,6 +1658,38 @@ def run_primer(win, t: tk.Toplevel):
     return f
 
 
+def run_visualize(win, t: tk.Toplevel):
+    def f():
+        nonlocal win
+        arg_str = ''
+        arg_str = get_arg_str(win.csv_file, '-input_csv', arg_str)
+        arg_str = get_arg_str(win.gb_file, '-ref_gb', arg_str)
+        arg_str = get_arg_str(win.taxon, '-taxon', arg_str)
+        arg_str = get_arg_str(win.og_type, '-type', arg_str)
+        arg_str = get_arg_str(win.nseqs, '-n_seqs', arg_str)
+        arg_str = get_arg_str(win.lsc_size, '-lsc', arg_str)
+        arg_str = get_arg_str(win.ssc_size, '-ssc', arg_str)
+        arg_str = get_arg_str(win.ir_size, '-ir', arg_str)
+        arg_str = get_arg_str(win.output, '-out', arg_str)
+        t.withdraw()
+        w, h = root.winfo_screenwidth(), root.winfo_screenheight()
+        s = min(w, h) // 2
+        size = f'{s}x{int(s * 0.618)}+{w // 3}+{h // 3}'
+        run = tk.Toplevel(root)
+        run.geometry(size)
+        run.title('Running...')
+        run.wm_transient()
+        frame = ttk.Frame(run)
+        frame.pack(fill='both')
+        scroll_text(frame)
+        r = threading.Thread(target=thread_wrap,
+                             args=(visualize_main, arg_str, run),
+                             daemon=True)
+        r.start()
+
+    return f
+
+
 def run_help():
     url = 'https://github.com/wpwupingwp/OGU'
     webbrowser.open(url, new=2)
@@ -1668,24 +1714,6 @@ def func_wrap(t: tk.Toplevel, func):
         r.start()
 
     return _f
-
-
-def run_visualize(win, t: tk.Toplevel):
-    # todo: rewrite
-    def v():
-        # with (resources.files(name) / 'data') as v_folder:
-        system = platform.system()
-        if system == "Windows":
-            os.startfile(d_dir)
-        elif system == "Darwin":  # macOS
-            os.system(f"open '{d_dir}'")
-        elif system == "Linux":
-            os.system(f"xdg-open '{d_dir}'")
-        else:
-            log.error('Unsupported system')
-
-    v_func = func_wrap(t, v)
-    return v_func
 
 
 def run_install(win, t: tk.Toplevel):

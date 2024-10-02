@@ -50,7 +50,7 @@ def parse_args(arg_list=None):
     arg.add_argument('-type', choices=('cp', 'mt'), dest='og_type',
                      help='Type of organelle (mt:mitochondria or '
                           'cp:plastid/chloroplast')
-    arg.add_argument('n_seqs', type=int, dest='count_threshold', default=10,
+    arg.add_argument('-n_seqs', type=int, dest='count_threshold', default=10,
                      help='Minimum number of sequences per gene/fragment')
     # use tobacco as default
     arg.add_argument('-lsc', type=int, default=86684,
@@ -69,28 +69,29 @@ def parse_args(arg_list=None):
 def init_arg(arg):
     # since visualize function is not strictly bound with other modules, only
     # check input here
-    if arg.input is None:
+    print(vars(arg))
+    if arg.input_csv is None:
         log.error('Input is empty.')
         return None
     else:
-        arg.input = Path(arg.input).absolute()
-        if not arg.input.exists():
+        arg.input_csv = Path(arg.input_csv).absolute()
+        if not arg.input_csv.exists():
             log.error('Input file does not exist.')
     if arg.og_type is None:
         log.error('Organelle type is empty.')
         return None
-    if arg.ref is None and arg.taxa is None:
+    if arg.ref_gb is None and arg.taxon is None:
         log.error('Reference is empty.')
         return None
-    elif arg.ref is not None:
-        arg.ref = Path(arg.ref).absolute()
-        if not arg.ref.exists():
-            log.error(f'{arg.ref} does not exist.')
+    elif arg.ref_gb is not None:
+        arg.ref_gb = Path(arg.ref_gb).absolute()
+        if not arg.ref_gb.exists():
+            log.error(f'{arg.ref_gb} does not exist.')
             return None
         else:
-            log.info(f'Use {arg.ref} as reference')
+            log.info(f'Use {arg.ref_gb} as reference')
     elif arg.taxon is not None:
-        arg.ref = get_ref_gb(arg.taxon, arg.og_type)
+        arg.ref_gb = get_ref_gb(arg.taxon, arg.og_type)
     else:
         # if both arg.ref and arg.taxon is provided, use arg.ref
         pass
