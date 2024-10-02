@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 import logging
 import os
 import platform
@@ -505,7 +504,8 @@ class GB2Fasta:
                                , relwidth=0.314, bordermode='ignore')
         self.count_entry.configure(textvariable=self.count)
         self.count_entry_tooltip = ToolTip(
-            self.count_entry, 'numbers of sequences to download, 0 for no limit')
+            self.count_entry,
+            'numbers of sequences to download, 0 for no limit')
 
         self.len_label = my_label(self.Labelframe1)
         self.len_label.place(relx=0.558, rely=0.435, height=35, width=60
@@ -576,7 +576,8 @@ class GB2Fasta:
         self.query_entry.place(relx=0.201, rely=0.813, relheight=0.095
                                , relwidth=0.785, bordermode='ignore')
         self.query_entry.configure(textvariable=self.query)
-        self.query_entry_tooltip = ToolTip(self.query_entry, 'Entrez query string')
+        self.query_entry_tooltip = ToolTip(self.query_entry,
+                                           'Entrez query string')
 
         self.taxon_entry = my_entry(self.Labelframe1, 'eg. Fabaceae')
         self.taxon_entry.place(relx=0.201, rely=0.326, relheight=0.095
@@ -819,7 +820,8 @@ class Evaluate:
         self.out_entry.place(relx=0.317, rely=0.356, relheight=0.078
                              , relwidth=0.467)
         self.out_entry.configure(textvariable=self.out)
-        self.out_entry_tooltip = ToolTip(self.out_entry, 'unaligned fasta files')
+        self.out_entry_tooltip = ToolTip(self.out_entry,
+                                         'unaligned fasta files')
 
         self.open3_btn = my_button(self.top)
         self.open3_btn.place(relx=0.8, rely=0.356, height=35, width=90)
@@ -1128,6 +1130,181 @@ class Primer:
         self.run_b.configure(text='''Run''')
 
 
+class Visualize(tk.Toplevel):
+    def __init__(self, top=None):
+        '''This class configures and populates the toplevel window.
+           top is the toplevel containing window.'''
+        _bgcolor = '#edf0f3'
+        _fgcolor = '#000000'
+        _compcolor = '#d9d9d9'
+        _ana1color = '#d9d9d9'
+        _ana2color = '#ececec'
+        _tabfg1 = 'black'
+        _tabfg2 = 'black'
+        _tabbg1 = 'grey75'
+        _tabbg2 = 'grey89'
+        _bgmode = 'light'
+        self.style = ttk.Style()
+        if sys.platform == "win32":
+            self.style.theme_use('winnative')
+        self.style.configure('.', background=_bgcolor)
+        self.style.configure('.', foreground=_fgcolor)
+        self.style.map('.', background=[('selected', _compcolor),
+                                        ('active', _ana2color)])
+
+        top.geometry("600x450+5+139")
+        move_to_center(top, 600, 450)
+        top.title('Visualize')
+        top.configure(background="#edf0f3")
+        top.configure(highlightbackground="#edf0f3")
+        top.configure(highlightcolor="black")
+
+        self.top = top
+        self.csv_file = tk.StringVar()
+        self.gb_file = tk.StringVar()
+        self.taxon = tk.StringVar()
+        self.og_type = tk.StringVar()
+        self.lsc_size = tk.IntVar()
+        self.ssc_size = tk.IntVar()
+        self.ir_size = tk.IntVar()
+        self.output = tk.StringVar()
+
+        self.Labelframe1 = my_labelframe(self.top)
+        self.Labelframe1.place(relx=0.025, rely=0.013, relheight=0.46
+                               , relwidth=0.955)
+        self.Labelframe1.configure(text='''Input''')
+
+        self.csv_label = my_label(self.Labelframe1)
+        self.csv_label.place(relx=0.021, rely=0.101, height=35, width=142,
+                             bordermode='ignore')
+        self.csv_label.configure(text='''Evaluation result''')
+
+        self.gb_label = my_label(self.Labelframe1)
+        self.gb_label.place(relx=0.019, rely=0.338, height=35, width=98,
+                            bordermode='ignore')
+        self.gb_label.configure(text='''Reference gb''')
+
+        self.taxon_label = my_label(self.Labelframe1)
+        self.taxon_label.place(relx=0.021, rely=0.58, height=35, width=99,
+                               bordermode='ignore')
+        self.taxon_label.configure(text='''Taxon''')
+
+        self.og_label = my_label(self.Labelframe1)
+        self.og_label.place(relx=0.021, rely=0.802, height=35, width=98,
+                            bordermode='ignore')
+        self.og_label.configure(text='''Organelle type''')
+
+        self.or_label = my_label(self.Labelframe1)
+        self.or_label.place(relx=0.248, rely=0.483, height=21, width=37,
+                            bordermode='ignore')
+        self.or_label.configure(text='''OR''')
+
+        self.csv_entry = my_entry(self.Labelframe1)
+        self.csv_entry.place(relx=0.351, rely=0.097, height=30, relwidth=0.524,
+                             bordermode='ignore')
+        self.csv_entry.configure(textvariable=self.csv_file)
+        self.csv_entry_tooltip = ToolTip(self.csv_entry,
+                                         'Evaluation result CSV file')
+
+        self.gb_entry = my_entry(self.Labelframe1)
+        self.gb_entry.place(relx=0.351, rely=0.338, height=30, relwidth=0.524,
+                            bordermode='ignore')
+        self.gb_entry.configure(textvariable=self.csv_file)
+        self.gb_entry_tooltip = ToolTip(self.gb_entry, 'Extended Genbank file')
+
+        self.open_btn = my_button(self.Labelframe1)
+        self.open_btn.place(relx=0.89, rely=0.097, height=30, width=50,
+                            bordermode='ignore')
+        self.open_btn.configure(text='Open')
+        self.open_btn.configure(command=open_file(self.csv_entry, single=True))
+
+        self.open_btn2 = my_button(self.Labelframe1)
+        self.open_btn2.place(relx=0.89, rely=0.338, height=30, width=50,
+                             bordermode='ignore')
+        self.open_btn2.configure(text='Open')
+        self.open_btn2.configure(command=open_file(self.gb_entry, single=True))
+
+        self.taxon_entry = my_entry(self.Labelframe1)
+        self.taxon_entry.place(relx=0.351, rely=0.58, height=30, relwidth=0.524,
+                               bordermode='ignore')
+        self.taxon_entry.configure(textvariable=self.taxon)
+        self.taxon_entry_tooltip = ToolTip(
+            self.taxon_entry,
+            'Taxonomy name, recommend to use family or genus')
+
+        self.combobox_og_type = my_combobox(self.Labelframe1)
+        self.combobox_og_type.place(relx=0.351, rely=0.802, relheight=0.145,
+                            relwidth=0.524, bordermode='ignore')
+        self.og_value_list = ['cp', 'mt']
+        self.combobox_og_type.configure(values=self.og_value_list)
+        self.combobox_og_type.configure(textvariable=self.og_type)
+        self.combobox_og_type.current(0)
+
+        self.out_label = my_label(self.top)
+        self.out_label.place(relx=0.218, rely=0.756, height=23, width=59)
+        self.out_label.configure(text='''Output''')
+
+        self.out_entry = my_entry(self.top)
+        self.out_entry.place(relx=0.363, rely=0.756, height=30, relwidth=0.5)
+        self.out_entry.configure(textvariable=self.output)
+        self.out_entry_tooltip = ToolTip(self.out_entry,
+                                         'Output file, PDF format')
+
+        self.eg_btn = my_button(self.top)
+        self.eg_btn.place(relx=0.25, rely=0.867, height=35, width=100)
+        self.eg_btn.configure(text='Load example')
+        self.eg_btn.configure(command=load_example)
+
+        self.run_btn = my_button(self.top)
+        self.run_btn.place(relx=0.55, rely=0.867, height=35, width=100)
+        self.run_btn.configure(text='''Run''')
+        self.run_btn.configure(command=run_visualize)
+
+        self.Labelframe2 = my_labelframe(self.top)
+        self.Labelframe2.place(relx=0.025, rely=0.5, relheight=0.167,
+                               relwidth=0.955)
+        self.Labelframe2.configure(text='''Genome structure''')
+
+        self.lsc_entry = my_entry(self.Labelframe2)
+        self.lsc_entry.place(relx=0.133, rely=0.4, height=30, relwidth=0.175,
+                             bordermode='ignore')
+        self.lsc_entry.configure(textvariable=self.lsc_size)
+        self.lsc_entry_tooltip = ToolTip(self.lsc_entry, 'LSC size')
+
+        self.ssc_entry = my_entry(self.Labelframe2)
+        self.ssc_entry.place(relx=0.419, rely=0.4, height=30, relwidth=0.175,
+                             bordermode='ignore')
+        self.ssc_entry.configure(textvariable=self.ssc_size)
+        self.ssc_entry_tooltip = ToolTip(self.ssc_entry, 'SSC size')
+
+        self.ir_entry = my_entry(self.Labelframe2)
+        self.ir_entry.place(relx=0.686, rely=0.4, height=30, relwidth=0.175,
+                            bordermode='ignore')
+        self.ir_entry.configure(textvariable=self.ir_size)
+        self.ir_entry_tooltip = ToolTip(self.ir_entry, 'IR size')
+
+        self.lsc_label = my_label(self.Labelframe2)
+        self.lsc_label.place(relx=0.061, rely=0.453, height=23, width=30,
+                          bordermode='ignore')
+        self.lsc_label.configure(text='''LSC''')
+
+        self.ssc_label = my_label(self.Labelframe2)
+        self.ssc_label.place(relx=0.351, rely=0.453, height=23, width=38,
+                             bordermode='ignore')
+        self.ssc_label.configure(text='''SSC''')
+
+        self.ir_label = my_label(self.Labelframe2)
+        self.ir_label.place(relx=0.628, rely=0.453, height=23, width=33,
+                            bordermode='ignore')
+        self.ir_label.configure(text='''IR''')
+
+        self.bp_label = my_label(self.Labelframe2)
+        self.bp_label.place(relx=0.866, rely=0.453, height=23, width=40,
+                            bordermode='ignore')
+        self.bp_label.configure(text='''bp''')
+    pass
+
+
 class ToolTip(tk.Toplevel):
     """ Provides a ToolTip widget for Tkinter. """
 
@@ -1269,6 +1446,14 @@ def ui_primer():
     root.iconify()
     _top4.protocol('WM_DELETE_WINDOW', after_close(_top4))
     _w4 = Primer(_top4)
+
+
+def ui_visualize():
+    global _top5, _w5
+    _top5 = tk.Toplevel(root)
+    root.iconify()
+    _top5.protocol('WM_DELETE_WINDOW', after_close(_top5))
+    _w5 = Visualize(_top5)
 
 
 def get_arg_str(value: tk.Variable, name: str, arg_str: str,
@@ -1435,10 +1620,12 @@ def func_wrap(t: tk.Toplevel, func):
         r = threading.Thread(target=thread_wrap, args=(func, '', run, True),
                              daemon=True)
         r.start()
+
     return _f
 
 
 def run_visualize(win, t: tk.Toplevel):
+    # todo: rewrite
     def v():
         # with (resources.files(name) / 'data') as v_folder:
         v_folder = resources.files(name) / 'data'
@@ -1451,6 +1638,7 @@ def run_visualize(win, t: tk.Toplevel):
             os.system(f"xdg-open '{v_folder}'")
         else:
             log.error('Unsupported system')
+
     v_func = func_wrap(t, v)
     return v_func
 
