@@ -1161,6 +1161,7 @@ class Visualize(tk.Toplevel):
                 self.lsc_entry.delete(0, 'end')
                 self.ssc_entry.delete(0, 'end')
                 self.ir_entry.delete(0, 'end')
+            self.taxon_entry.delete(0, 'end')
             self.out_entry.delete(0, 'end')
             self.out_entry.insert(0,
                                   str(Path().cwd().absolute()/'Figure.pdf'))
@@ -1234,14 +1235,16 @@ class Visualize(tk.Toplevel):
         self.or_label_tooltip = ToolTip(
             self.or_label, 'Input Reference gb or taxon, one is enough')
 
-        self.csv_entry = my_entry(self.Labelframe1)
+        self.csv_entry = my_entry(self.Labelframe1,
+                                  placeholder='eg. X:/Result/Evaluation.csv')
         self.csv_entry.place(relx=0.351, rely=0.097, height=30, relwidth=0.524,
                              bordermode='ignore')
         self.csv_entry.configure(textvariable=self.csv_file)
         self.csv_entry_tooltip = ToolTip(self.csv_entry,
                                          'Evaluation result CSV file')
 
-        self.gb_entry = my_entry(self.Labelframe1)
+        self.gb_entry = my_entry(self.Labelframe1,
+                                 placeholder='eg. D:/Result/extend.gb')
         self.gb_entry.place(relx=0.351, rely=0.338, height=30, relwidth=0.524,
                             bordermode='ignore')
         self.gb_entry.configure(textvariable=self.csv_file)
@@ -1259,7 +1262,7 @@ class Visualize(tk.Toplevel):
         self.open_btn2.configure(text='Open')
         self.open_btn2.configure(command=open_file(self.gb_entry, single=True))
 
-        self.taxon_entry = my_entry(self.Labelframe1)
+        self.taxon_entry = my_entry(self.Labelframe1, placeholder='eg. Poaceae')
         self.taxon_entry.place(relx=0.351, rely=0.58, height=30, relwidth=0.524,
                                bordermode='ignore')
         self.taxon_entry.configure(textvariable=self.taxon)
