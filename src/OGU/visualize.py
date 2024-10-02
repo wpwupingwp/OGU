@@ -218,7 +218,8 @@ def visualize_main(arg_str=None):
     long_label = 20
     # reference organelle genome genbank file, generated from OGU.gb2fasta
     gb = Genbank(arg.ref_gb)
-    data_raw3, data_names_set = preprocess_data(arg.input, arg.count_threshold)
+    data_raw3, data_names_set = preprocess_data(arg.input_csv,
+                                                arg.count_threshold)
 
     r = MyRadius()
 
