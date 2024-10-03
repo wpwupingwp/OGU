@@ -143,7 +143,7 @@ def get_ref_gb(taxa: str, og_type: str) -> Path:
     arg_result, _ = gb2fasta_main(arg_str)
     extend_gb = tmp_out / 'extend.gb'
     if arg_result.gb is not None and extend_gb.exists():
-        log.info(f'Got reference genome for visualization')
+        log.info(f'Got {extend_gb} as reference genome for visualization')
     else:
         log.critical(f'Failed to get reference genome for visualization')
         return Path()
@@ -244,6 +244,8 @@ def visualize_main(arg_str=None):
     last_gene = ''
     gene_set = set()
     ir_pos_list = set()
+    # across_ir_ssc = {'ycf1', 'ndhF'}
+    across_ir_ssc = set()
     for feat in gb.extract_features('gene'):
         start, end = int(str(feat.location.start)), int(str(feat.location.end))
         pos = (start + end) / 2
@@ -259,7 +261,11 @@ def visualize_main(arg_str=None):
         if label in gene_set:
             ir_pos_list.add(pos)
         gene_set.add(label)
+        # ycf1 or others span across ir
+        if start < arg.ir2_start < end:
+            across_ir_ssc.add(label)
 
+    # print(across_ir_ssc)
     # Plot gene labels on outer position
     feature_track.xticks(
         gene_list,
@@ -284,7 +290,7 @@ def visualize_main(arg_str=None):
                 pos = end
                 if feature == 'intron':
                     label = (f.qualifiers['gene'][0] + '.' +
-                             f.qualifiers.get('number', [1])[0])
+                             f.qualifiers.get('number', '1')[0])
                 elif feature != 'spacer':
                     label = f.qualifiers.get("gene", ["??"])[0]
                     if label == last_name:
@@ -304,12 +310,10 @@ def visualize_main(arg_str=None):
     label_pos = list()
     label_pos_dict = dict()
     ir_second_label_pos = list()
-    across_ir_ssc = {'ycf1', 'ndhF'}
     for key, value in zip(labels, pos_list):
         if key not in intersection:
             continue
         label_pos.append((key, value))
-        # ycf1 span across ir
         # value_ = max(value, gene_end.get(key, 0))
         value_ = value
         if ((arg.og_type == 'cp' and value_ < arg.ir2_start
@@ -318,7 +322,15 @@ def visualize_main(arg_str=None):
         else:
             ir_second_label_pos.append((key, value))
 
-    clean_data['Position'] = [label_pos_dict[x] for x in clean_data.Name.tolist()]
+    # clean_data['Position'] = [label_pos_dict[x] for x in clean_data.Name]
+    position_list = []
+    for x in clean_data.Name:
+        if x in label_pos_dict:
+            position_list.append(label_pos_dict[x])
+        else:
+            position_list.append(0)
+            log.info(f'Skip {x}')
+    clean_data = clean_data.assign( Position=position_list)
     clean_data = clean_data.sort_values(by=['Position'])
     clean_pos = clean_data.Position.tolist()
     widths = list()
