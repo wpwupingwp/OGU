@@ -1294,7 +1294,7 @@ class Visualize(tk.Toplevel):
         self.nseqs_entry.configure(textvariable=self.nseqs)
         self.nseqs_entry_tooltip = ToolTip(
             self.nseqs_entry, 'Minimum number of sequences per gene/fragment')
-        self.nseqs_entry.insert(0, '10')
+        self.nseqs_entry.insert(0, '2')
 
         self.out_label = my_label(self.top)
         self.out_label.place(relx=0.258, rely=0.756, height=30, width=60)
