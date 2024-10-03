@@ -13,8 +13,6 @@ from OGU.global_vars import log
 from OGU.gb2fasta import gb2fasta_main
 
 # Evaluation.csv -> xlsx -> first column Type, second column name
-features = ('CDS', 'intron', 'tRNA', 'rRNA', 'spacer')
-feature_colors = '#FFD93D,#DDDDDD,#4D96FF,#9D96FF,#6BCB77'.split(',')
 part_color = '#6BCB77,#4D96FF,#6BCB77,#FF6B6B'.split(',')
 # yellow,yellow/gray,blue,blue,green?
 track_colors = list(reversed('#F7931B,#66B3FF,#338CFF,#3F51B5,#FB9883,#CC5500,'
@@ -53,11 +51,11 @@ def parse_args(arg_list=None):
     arg.add_argument('-n_seqs', type=int, dest='count_threshold', default=10,
                      help='Minimum number of sequences per gene/fragment')
     # use tobacco as default
-    arg.add_argument('-lsc', type=int, default=86684,
+    arg.add_argument('-lsc', type=int, default=86686,
                      help='LSC size of plastid genome')
-    arg.add_argument('-ssc', type=int, default=18482,
+    arg.add_argument('-ssc', type=int, default=18571,
                      help='SSC size of plastid genome')
-    arg.add_argument('-ir', type=int, default=25339,
+    arg.add_argument('-ir', type=int, default=25341,
                      help='IR size of plastid genome')
     arg.add_argument('-out', help='Output file', default='figure.pdf')
     if arg_list is None:
@@ -69,7 +67,6 @@ def parse_args(arg_list=None):
 def init_arg(arg):
     # since visualize function is not strictly bound with other modules, only
     # check input here
-    print(vars(arg))
     if arg.input_csv is None:
         log.error('Input is empty.')
         return None
@@ -99,7 +96,7 @@ def init_arg(arg):
     if arg.out.exists():
         log.warning(f'{arg.out} already exists. Overwriting.')
     # tobacco plastid genome
-    arg.parts = {'LSC': arg.lsc, 'IRb': arg.ir, 'SSC': arg.ssc, 'IRa': arg.ir}
+    arg.parts = {'LSC': arg.lsc, 'IRa': arg.ir, 'SSC': arg.ssc, 'IRb': arg.ir}
     arg.gb_size = (arg.parts['LSC'] + arg.parts['IRa'] + arg.parts['SSC'] +
                    arg.parts['IRb'])
     # total length - ir length
@@ -199,7 +196,7 @@ def draw_bar(track, x_, y_, w_, text, arg):
         track.bar([x - w / 2], [y], width=w * 0.95, color=color,
                   vmin=0, vmax=max_y)
     if arg.og_type == 'cp':
-        t_pos = arg.gbsize - arg.parts['IRb'] / 2
+        t_pos = arg.gb_size - arg.parts['IRb'] / 2
         track.text(text, t_pos, size=8, color=color, adjust_rotation=True)
 
 
@@ -223,12 +220,15 @@ def visualize_main(arg_str=None):
 
     r = MyRadius()
 
-    _ = plt.figure(figsize=(10, 10))
     # genome gb file as template, no extra treatment
     if arg.og_type == 'cp':
+        features = ('CDS', 'intron', 'tRNA', 'rRNA', 'spacer')
+        feature_colors = '#FFD93D,#DDDDDD,#4D96FF,#9D96FF,#6BCB77'.split(',')
         circle_start = -260
         circle_end = circle_start + 360
     else:
+        features = ('CDS', 'D-loop', 'tRNA', 'rRNA', 'spacer')
+        feature_colors = '#FFD93D,#999999,#4D96FF,#9D96FF,#6BCB77'.split(',')
         circle_start = 0
         circle_end = 360
     circos = Circos(sectors={gb.name: gb.range_size},
@@ -255,12 +255,12 @@ def visualize_main(arg_str=None):
             label = label[:long_label] + "..."
         last_gene = label
         gene_list.append(pos)
-        gene_labels.append(label)
+        gene_labels.append(label.rstrip("'"))
         if label in gene_set:
             ir_pos_list.add(pos)
         gene_set.add(label)
 
-    # Plot CDS product labels on outer position
+    # Plot gene labels on outer position
     feature_track.xticks(
         gene_list,
         gene_labels,
@@ -272,8 +272,8 @@ def visualize_main(arg_str=None):
     # extract names
     pos_list, labels = [], []
     last_name = ''
-    try:
-        for feature, color in zip(features, feature_colors):
+    for feature, color in zip(features, feature_colors):
+        try:
             feature_track.genomic_features(
                 gb.extract_features(feature),
                 plotstyle='box',
@@ -295,32 +295,30 @@ def visualize_main(arg_str=None):
                 last_name = label
                 pos_list.append(pos)
                 labels.append(label)
-    except IndexError:
-        log.info(f'Skip {feature}')
+        except IndexError:
+            log.info(f'Skip {feature}')
 
     labels_set = set(labels)
-    # a_b = sorted(list(data_names_set-labels_set))
-    # print('data_names_set-labels_set', a_b, len(a_b))
-    # print('\n'*3)
-    # b_a = sorted(list(labels_set-data_names_set))
-    # print('labels_set-data_names_set', b_a, len(b_a))
     intersection = data_names_set & labels_set
     clean_data = data_raw3.query('Name in @intersection')
     label_pos = list()
     label_pos_dict = dict()
     ir_second_label_pos = list()
+    across_ir_ssc = {'ycf1', 'ndhF'}
     for key, value in zip(labels, pos_list):
         if key not in intersection:
-            print(key, value)
             continue
         label_pos.append((key, value))
-        # ycf1, second ir start
-        if arg.og_type == 'cp' and value < arg.ir2_start:
+        # ycf1 span across ir
+        # value_ = max(value, gene_end.get(key, 0))
+        value_ = value
+        if ((arg.og_type == 'cp' and value_ < arg.ir2_start
+             or key in across_ir_ssc) or arg.og_type == 'mt'):
             label_pos_dict[key] = value
         else:
             ir_second_label_pos.append((key, value))
 
-    clean_data['Position'] = [label_pos_dict[x] for x in clean_data.Name]
+    clean_data['Position'] = [label_pos_dict[x] for x in clean_data.Name.tolist()]
     clean_data = clean_data.sort_values(by=['Position'])
     clean_pos = clean_data.Position.tolist()
     widths = list()
@@ -329,10 +327,6 @@ def visualize_main(arg_str=None):
         w = clean_pos[i] - clean_pos[i - 1]
         widths.append(w)
 
-    # print(clean_data[['Name','Position','Loci']].head, clean_data.shape,
-    # len(clean_pos))
-    # print(clean_data.Name.tolist(), clean_pos)
-    # print(ir_second_label_pos)
     for col, text in colname_text:
         track = sector.add_track(r.get(), r_pad_ratio=0.1)
         track.axis()
@@ -354,25 +348,29 @@ def visualize_main(arg_str=None):
             (gb.name, arg.gb_size - arg.parts['IRb'], arg.gb_size),
             color='green', alpha=0.3)
 
-    fig = circos.plotfig()
+    if arg.og_type == 'mt':
+        fig = circos.plotfig(figsize=(14, 10))
+    else:
+        fig = circos.plotfig(figsize=(12, 12))
 
     # add legends
     rect_handles = []
     for name, color in zip(features, feature_colors):
         rect_handles.append(Patch(color=color, label=name))
     if arg.og_type == 'mt':
-        rect_handles.append(Patch(color='#999999', label='D-loop'))
+        # rect_handles.append(Patch(color='#999999', label='D-loop'))
         for name, color in zip(colname_text, track_colors2):
             rect_handles.append(Patch(color=color, label=name[1]))
         _ = circos.ax.legend(handles=rect_handles, bbox_to_anchor=(1, 0),
-                             loc='best', fontsize=8, title='Types', ncol=3)
+                             loc='lower center', fontsize=9, title='Types',
+                             ncol=3)
     else:
         _ = circos.ax.legend(handles=rect_handles,
                              # bbox_to_anchor=(0.5, 0.5),
-                             loc='lower right', fontsize=8, title='Types',
+                             loc='lower right', fontsize=10, title='Types',
                              ncol=2)
     fig.savefig(arg.out)
-    return arg.out
+    return arg, other_args2
 
 
 if __name__ == '__main__':

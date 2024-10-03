@@ -1142,7 +1142,7 @@ class Visualize(tk.Toplevel):
             cp_csv = d_dir / 'angiosperm_cp_Evaluation.csv'
             mt_csv = d_dir / 'rodents_mt_Evaluation.csv'
             # tobacco plastid
-            lsc, ssc, ir = 86684, 18482, 25339
+            lsc, ssc, ir = 86686, 18571, 25341
             if self.og_type.get() == 'cp':
                 self.gb_entry.delete(0, 'end')
                 self.gb_entry.insert(0, str(cp_gb))
