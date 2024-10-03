@@ -12,19 +12,7 @@ from pycirclize.parser import Genbank
 from OGU.global_vars import log
 from OGU.gb2fasta import gb2fasta_main
 
-# Evaluation.csv -> xlsx -> first column Type, second column name
-part_color = '#6BCB77,#4D96FF,#6BCB77,#FF6B6B'.split(',')
-# yellow,yellow/gray,blue,blue,green?
-track_colors = list(reversed('#F7931B,#66B3FF,#338CFF,#3F51B5,#FB9883,#CC5500,'
-                             '#FF6347,#36454F,#778877'.split(',')))
-track_colors2 = ('#F7931B,#66B3FF,#338CFF,#3F51B5,#FB9883,#CC5500,#FF6347,'
-                 '#36454F,#778877'.split(','))
-colname_text = (('Tree_Res', 'Tree resolution'), ('PD', 'PD'),
-                ('PD_stem', 'PD-stem'), ('PD_terminal', 'PD-terminal'),
-                ('Observed_Res', 'Observed resolution'), ('Pi', 'Pi'),
-                ('Entropy', 'Shannon index'),
-                ('Total_GC', 'GC ratio'),
-                ('Gap_Ratio', 'Gap ratio'))
+# Evaluation.csv -> first column Type, second column name
 
 
 class MyRadius:
@@ -186,9 +174,8 @@ def preprocess_data(csv_file: Path, count_threshold) -> (pd.DataFrame, set):
     return data_raw3, names_set
 
 
-def draw_bar(track, x_, y_, w_, text, arg):
+def draw_bar(track, x_, y_, w_, text, color, arg):
     max_y = max(y_)
-    color = track_colors.pop()
     # ec='black', lw=0.5
     for x, y, w in zip(x_, y_, w_):
         # bar need x[list], y[list]
@@ -201,6 +188,20 @@ def draw_bar(track, x_, y_, w_, text, arg):
 
 
 def visualize_main(arg_str=None):
+    part_color = '#6BCB77,#4D96FF,#6BCB77,#FF6B6B'.split(',')
+    # yellow,yellow/gray,blue,blue,green?
+    track_colors = list(
+        reversed('#F7931B,#66B3FF,#338CFF,#3F51B5,#FB9883,#CC5500,'
+                 '#FF6347,#36454F,#778877'.split(',')))
+    track_colors2 = ('#F7931B,#66B3FF,#338CFF,#3F51B5,#FB9883,#CC5500,#FF6347,'
+                     '#36454F,#778877'.split(','))
+    colname_text = (('Tree_Res', 'Tree resolution'), ('PD', 'PD'),
+                    ('PD_stem', 'PD-stem'), ('PD_terminal', 'PD-terminal'),
+                    ('Observed_Res', 'Observed resolution'), ('Pi', 'Pi'),
+                    ('Entropy', 'Shannon index'),
+                    ('Total_GC', 'GC ratio'),
+                    ('Gap_Ratio', 'Gap ratio'))
+
     log.info('Running visualize module...')
     if arg_str is None:
         arg, other_args2 = parse_args()
@@ -262,10 +263,9 @@ def visualize_main(arg_str=None):
             ir_pos_list.add(pos)
         gene_set.add(label)
         # ycf1 or others span across ir
-        if start < arg.ir2_start < end:
+        if start < arg.ir2_start < end and label != 'rps12':
             across_ir_ssc.add(label)
 
-    across_ir_ssc.remove('rps12')
     # Plot gene labels on outer position
     feature_track.xticks(
         gene_list,
@@ -343,7 +343,8 @@ def visualize_main(arg_str=None):
         track = sector.add_track(r.get(), r_pad_ratio=0.1)
         track.axis()
         data = clean_data[col].tolist()
-        draw_bar(track, clean_pos, data, widths, text, arg)
+        color_ = track_colors.pop()
+        draw_bar(track, clean_pos, data, widths, text, color_, arg)
 
     if arg.og_type == 'cp':
         # draw quadripartite structure for plastid
