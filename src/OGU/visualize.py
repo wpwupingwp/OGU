@@ -265,6 +265,7 @@ def visualize_main(arg_str=None):
         if start < arg.ir2_start < end:
             across_ir_ssc.add(label)
 
+    across_ir_ssc.remove('rps12')
     # Plot gene labels on outer position
     feature_track.xticks(
         gene_list,
