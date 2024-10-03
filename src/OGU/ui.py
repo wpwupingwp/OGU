@@ -1160,8 +1160,11 @@ class Visualize(tk.Toplevel):
                 self.csv_entry.delete(0, 'end')
                 self.csv_entry.insert(0, str(mt_csv))
                 self.lsc_entry.delete(0, 'end')
+                self.lsc_entry.insert(0, '0')
                 self.ssc_entry.delete(0, 'end')
+                self.ssc_entry.insert(0, '0')
                 self.ir_entry.delete(0, 'end')
+                self.ir_entry.insert(0, '0')
             self.taxon_entry.delete(0, 'end')
             self.out_entry.delete(0, 'end')
             self.out_entry.insert(0,

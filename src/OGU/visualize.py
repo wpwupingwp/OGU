@@ -272,28 +272,31 @@ def visualize_main(arg_str=None):
     # extract names
     pos_list, labels = [], []
     last_name = ''
-    for feature, color in zip(features, feature_colors):
-        feature_track.genomic_features(
-            gb.extract_features(feature),
-            plotstyle='box',
-            r_lim=r1,
-            fc=color, alpha=1, lw=0.1, ec='black')
-        for f in gb.extract_features(feature):
-            start, end = int(str(f.location.start)), int(str(f.location.end))
-            pos = end
-            if feature == 'intron':
-                label = (f.qualifiers['gene'][0] + '.' +
-                         f.qualifiers['number'][0])
-            elif feature != 'spacer':
-                label = f.qualifiers.get("gene", ["??"])[0]
-                if label == last_name:
-                    continue
-            else:
-                label = (f.qualifiers['upstream'][0] + '-'
-                         + f.qualifiers['downstream'][0])
-            last_name = label
-            pos_list.append(pos)
-            labels.append(label)
+    try:
+        for feature, color in zip(features, feature_colors):
+            feature_track.genomic_features(
+                gb.extract_features(feature),
+                plotstyle='box',
+                r_lim=r1,
+                fc=color, alpha=1, lw=0.1, ec='black')
+            for f in gb.extract_features(feature):
+                start, end = int(str(f.location.start)), int(str(f.location.end))
+                pos = end
+                if feature == 'intron':
+                    label = (f.qualifiers['gene'][0] + '.' +
+                             f.qualifiers['number'][0])
+                elif feature != 'spacer':
+                    label = f.qualifiers.get("gene", ["??"])[0]
+                    if label == last_name:
+                        continue
+                else:
+                    label = (f.qualifiers['upstream'][0] + '-'
+                             + f.qualifiers['downstream'][0])
+                last_name = label
+                pos_list.append(pos)
+                labels.append(label)
+    except IndexError:
+        log.info(f'Skip {feature}')
 
     labels_set = set(labels)
     # a_b = sorted(list(data_names_set-labels_set))
@@ -308,6 +311,7 @@ def visualize_main(arg_str=None):
     ir_second_label_pos = list()
     for key, value in zip(labels, pos_list):
         if key not in intersection:
+            print(key, value)
             continue
         label_pos.append((key, value))
         # ycf1, second ir start
