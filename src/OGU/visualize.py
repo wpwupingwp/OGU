@@ -361,7 +361,7 @@ def visualize_main(arg_str=None):
             color='green', alpha=0.3)
 
     if arg.og_type == 'mt':
-        fig = circos.plotfig(figsize=(14, 10))
+        fig = circos.plotfig(figsize=(14, 14))
     else:
         fig = circos.plotfig(figsize=(12, 12))
 
@@ -374,7 +374,7 @@ def visualize_main(arg_str=None):
         for name, color in zip(colname_text, track_colors2):
             rect_handles.append(Patch(color=color, label=name[1]))
         _ = circos.ax.legend(handles=rect_handles, bbox_to_anchor=(1, 0),
-                             loc='lower center', fontsize=9, title='Types',
+                             loc='lower center', fontsize=10, title='Types',
                              ncol=3)
     else:
         _ = circos.ax.legend(handles=rect_handles,
