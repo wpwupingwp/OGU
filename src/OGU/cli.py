@@ -76,6 +76,8 @@ def parse_args():
     gb2fasta_.add_argument('-count', default=0, type=int,
                            help='maximum number of records to download')
     gb2fasta_.add_argument('-taxon', help='Taxonomy name')
+    gb2fasta_.add_argument('-out_debug', action='store_true',
+                           help='output debug genbank file')
     evaluate = arg.add_argument_group('Evaluate')
     evaluate.add_argument('-ig', '-ignore_gap', dest='ignore_gap',
                           action='store_true',
