@@ -266,7 +266,7 @@ def visualize_main(arg_str=None):
         gene_labels,
         label_orientation='vertical',
         show_bottom_line=True,
-        label_size=6,
+        label_size=8,
         # line_kws=dict(ec="white"),
     )
     # extract names
