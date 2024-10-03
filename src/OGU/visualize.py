@@ -81,7 +81,9 @@ def init_arg(arg):
         # if both arg.ref and arg.taxon is provided, use arg.ref
         pass
     arg.out = Path(arg.out).absolute()
-    if arg.out.exists():
+    if arg.out.is_dir():
+        arg.out = arg.out / 'Figure.pdf'
+    if arg.out.is_file() and arg.out.exists():
         log.warning(f'{arg.out} already exists. Overwriting.')
     # tobacco plastid genome
     arg.parts = {'LSC': arg.lsc, 'IRa': arg.ir, 'SSC': arg.ssc, 'IRb': arg.ir}
@@ -127,7 +129,7 @@ def get_ref_gb(taxa: str, og_type: str) -> Path:
     #     log.critical(f'{taxa} {og_type} genome not found in Genbank')
     #     return Path()
     arg_str = (f' -taxon {taxa} -og {og_type} -out {tmp_out} -refseq yes '
-               f'-count 1 -out_debug ')
+               f'-count 1 -rename -out_debug ')
     arg_result, _ = gb2fasta_main(arg_str)
     extend_gb = tmp_out / 'extend.gb'
     if arg_result.gb is not None and extend_gb.exists():

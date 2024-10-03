@@ -226,7 +226,7 @@ def download(arg):
     retry_max = 10
     if arg.email is None:
         Entrez.email = 'guest@example.com'
-        log.info(f'\tEmail address for using Entrez missing, '
+        log.info(f'    Email address for using Entrez missing, '
                  f'use {Entrez.email} instead.')
     else:
         Entrez.email = arg.email
@@ -252,18 +252,18 @@ def download(arg):
     elif count > too_much and arg.count > too_much:
         log.warning(f'Found {count} records. May cost long time to download.')
     else:
-        log.info(f'\tFound {count} records.')
+        log.info(f'    Found {count} records.')
     if arg.count != 0:
         if count > arg.count:
             count = arg.count
-            log.info(f'\tDownload {arg.count} records due to "-count".')
+            log.info(f'    Download {arg.count} records due to "-count".')
     id_output = open(id_list_file_name, 'w', encoding='utf-8')
     ret_start = 0
     ret_max = min(1000, count)
     retry = 0
-    log.info('\tFetch id list...')
+    log.info('    Fetch id list...')
     while ret_start < count:
-        log.info('\t{:d}--{:d}'.format(ret_start, ret_start + ret_max))
+        log.info('    {:d}--{:d}'.format(ret_start, ret_start + ret_max))
         # Entrez accept at most 3 times per second
         # However, due to slow network, it's fine :)
         try:
@@ -294,11 +294,11 @@ def download(arg):
     retry2 = 0
     ret_max2 = 100
     start = 0
-    log.info('\tFetch GenBank records...')
-    log.warning('\tMay be slow if connection is unstable. Ctrl+C to quit.')
+    log.info('    Fetch GenBank records...')
+    log.warning('    May be slow if connection is unstable. Ctrl+C to quit.')
     gb_output = open(gb_file_name, 'w', encoding='utf-8')
     while start < count:
-        log.info('\t{:d}--{:d}'.format(start, start + ret_max2))
+        log.info('    {:d}--{:d}'.format(start, start + ret_max2))
         # Entrez accept at most 3 times per second
         # However, due to slow network, it's fine :)
         try:
@@ -333,7 +333,7 @@ def clean_gb(gbfile):
     Records in Genbank may be problematic. Check it before parse and skip
     abnormal records.
     """
-    log.info('\tCheck Genbank file to remove abnormal records.')
+    log.info('    Check Genbank file to remove abnormal records.')
 
     def parse_gb(handle):
         record = []
@@ -358,13 +358,13 @@ def clean_gb(gbfile):
             gb_record = SeqIO.read(tmp_gb, 'gb')
             yield gb_record
         except Exception as e:
-            log.critical('\tFound problematic record {}: {}'.format(
+            log.critical('    Found problematic record {}: {}'.format(
                 record[0][:25], e.args[0]))
             wrong += 1
     tmp_gb.close()
     old_gb.close()
     if wrong != 0:
-        log.info('\tRemove {} abnormal records.'.format(wrong))
+        log.info('    Remove {} abnormal records.'.format(wrong))
 
 
 def get_feature_name(feature, arg) -> str:
@@ -830,7 +830,7 @@ def gb2fasta_main(arg_str=None):
         log.info('Quit gb2fasta module.')
         return None, other_args
     utils.add_file_log(arg)
-    log.info(f'Input genbank files:\t{arg.gb}')
+    log.info(f'Input genbank files:    {arg.gb}')
     if arg.query is not None:
         log.info(f'Query: {arg.query}')
         gb_file = download(arg)
