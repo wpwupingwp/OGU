@@ -284,7 +284,7 @@ def visualize_main(arg_str=None):
                 pos = end
                 if feature == 'intron':
                     label = (f.qualifiers['gene'][0] + '.' +
-                             f.qualifiers['number'][0])
+                             f.qualifiers.get('number', [1])[0])
                 elif feature != 'spacer':
                     label = f.qualifiers.get("gene", ["??"])[0]
                     if label == last_name:
