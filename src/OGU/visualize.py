@@ -48,7 +48,7 @@ def parse_args(arg_list=None):
     arg.add_argument('-type', choices=('cp', 'mt'), dest='og_type',
                      help='Type of organelle (mt:mitochondria or '
                           'cp:plastid/chloroplast')
-    arg.add_argument('-n_seqs', type=int, dest='count_threshold', default=10,
+    arg.add_argument('-n_seqs', type=int, dest='count_threshold', default=2,
                      help='Minimum number of sequences per gene/fragment')
     # use tobacco as default
     arg.add_argument('-lsc', type=int, default=86686,
@@ -249,7 +249,7 @@ def visualize_main(arg_str=None):
     for feat in gb.extract_features('gene'):
         start, end = int(str(feat.location.start)), int(str(feat.location.end))
         pos = (start + end) / 2
-        label = feat.qualifiers.get('gene', ['??'])[0]
+        label = feat.qualifiers.get('gene', ['unnamed'])[0]
         if (label == '' or label.startswith('hypothetical')
                 or label == last_gene):
             continue
@@ -265,7 +265,6 @@ def visualize_main(arg_str=None):
         if start < arg.ir2_start < end:
             across_ir_ssc.add(label)
 
-    # print(across_ir_ssc)
     # Plot gene labels on outer position
     feature_track.xticks(
         gene_list,
@@ -289,10 +288,10 @@ def visualize_main(arg_str=None):
                 start, end = int(str(f.location.start)), int(str(f.location.end))
                 pos = end
                 if feature == 'intron':
-                    label = (f.qualifiers['gene'][0] + '.' +
+                    label = (f.qualifiers.get('gene', ['unnamed'])[0] + '.' +
                              f.qualifiers.get('number', '1')[0])
                 elif feature != 'spacer':
-                    label = f.qualifiers.get("gene", ["??"])[0]
+                    label = f.qualifiers.get('gene', ['unnamed'])[0]
                     if label == last_name:
                         continue
                 else:
@@ -330,7 +329,7 @@ def visualize_main(arg_str=None):
         else:
             position_list.append(0)
             log.info(f'Skip {x}')
-    clean_data = clean_data.assign( Position=position_list)
+    clean_data = clean_data.assign(Position=position_list)
     clean_data = clean_data.sort_values(by=['Position'])
     clean_pos = clean_data.Position.tolist()
     widths = list()
@@ -382,6 +381,7 @@ def visualize_main(arg_str=None):
                              loc='lower right', fontsize=10, title='Types',
                              ncol=2)
     fig.savefig(arg.out)
+    log.info(f'Output figure saved to {arg.out}')
     return arg, other_args2
 
 
