@@ -3,7 +3,7 @@
 import argparse
 from OGU import utils
 from OGU import gb2fasta, evaluate, primer
-from OGU.global_vars import log, name
+from OGU.global_vars import log, name, version
 
 
 def parse_args():
@@ -137,7 +137,7 @@ def cli_main():
     Call gb2fasta, evaluate and primer functions.
     """
     utils.check_system()
-    log.info('Welcome to {}.'.format(name))
+    log.info(f'Welcome to {name} {version}')
     arg = parse_args()
     arg = init_arg(arg)
     if arg is None:

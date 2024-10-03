@@ -13,7 +13,7 @@ from pathlib import Path
 from time import time
 from tkinter import filedialog, messagebox, scrolledtext
 
-from OGU.global_vars import DATEFMT, FMT, log, name
+from OGU.global_vars import DATEFMT, FMT, log, name, version
 from OGU.gb2fasta import gb2fasta_main
 from OGU.evaluate import evaluate_main
 from OGU.primer import primer_main
@@ -287,9 +287,7 @@ class Root:
 
         top.geometry("800x450+400+0")
         move_to_center(top, 800, 450)
-        top.minsize(120, 15)
         top.resizable(1, 1)
-        top.title(name)
         top.configure(background="#edf0f3")
         top.configure(highlightbackground="#edf0f3")
         top.configure(highlightcolor="black")
@@ -1728,7 +1726,7 @@ def ui_main():
     global root
     root = tk.Tk()
     root.protocol('WM_DELETE_WINDOW', root.destroy)
-    root.title('Organelle Genome Utilities')
+    root.title(f'Organelle Genome Utilities (OGU) {version}')
     # Creates a toplevel widget.
     global _top1, _w1
     _top1 = root
