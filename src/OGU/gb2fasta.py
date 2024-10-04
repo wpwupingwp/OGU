@@ -388,7 +388,8 @@ def get_feature_name(feature, arg) -> str:
 
     new_name = None
     # ignore exist exon/intron
-    accept_type = {'gene', 'CDS', 'tRNA', 'rRNA', 'misc_feature', 'misc_RNA'}
+    accept_type = {'gene', 'CDS', 'tRNA', 'rRNA', 'misc_feature', 'misc_RNA',
+                   'D-loop'}
     if feature.type not in accept_type:
         return new_name
     name = _extract_name(feature)
