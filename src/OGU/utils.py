@@ -160,7 +160,7 @@ def init_out(arg):
     """
     if not hasattr(arg, 'out') or arg.out is None:
         log.warning('Output folder was not set.')
-        log.info('\tUse "Result" instead.')
+        log.info('  Use "Result" instead.')
         arg.out = Path().cwd().absolute() / 'Result'
     else:
         arg.out = Path(arg.out).absolute()

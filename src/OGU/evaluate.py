@@ -565,15 +565,15 @@ def evaluate_main(arg_str=None):
         summary, gc_array, sliding = evaluate(aln, arg)
         if summary is None:
             continue
-        log.info(f'\t{aln.stem}')
-        log.info(f'\tSamples:                   {summary.Samples}')
-        log.info(f'\tLength                     {summary.Length} bp')
-        log.info(f'\tGap ratio:                 {summary.Gap_Ratio:.8f}')
-        log.info(f'\tObserved resolution:       {summary.Observed_Res:.8f}')
-        log.info(f'\tNormalized Shannon Index:  {summary.Entropy:.8f}')
-        log.info(f'\tPi:                        {summary.Pi:.8f}')
-        log.info(f'\tPhylogenetic diversity:    {summary.PD:.8f}')
-        log.info(f'\tTree resolution:           {summary.Tree_Res:.8f}')
+        log.info(f'    {aln.stem}')
+        log.info(f'    Samples:                   {summary.Samples}')
+        log.info(f'    Length                     {summary.Length} bp')
+        log.info(f'    Gap ratio:                 {summary.Gap_Ratio:.8f}')
+        log.info(f'    Observed resolution:       {summary.Observed_Res:.8f}')
+        log.info(f'    Normalized Shannon Index:  {summary.Entropy:.8f}')
+        log.info(f'    Pi:                        {summary.Pi:.8f}')
+        log.info(f'    Phylogenetic diversity:    {summary.PD:.8f}')
+        log.info(f'    Tree resolution:           {summary.Tree_Res:.8f}')
         with open(evaluation_result, 'a', encoding='utf-8') as out:
             out.write(aln.stem + ',' + str(summary) + '\n')
         if not arg.quick:
