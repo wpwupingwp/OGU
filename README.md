@@ -65,6 +65,9 @@ sliding-window scanning.
 :heavy_check_mark: Design universal primer for the alignment. Support
 ambiguous bases in primers.
 
+:heavy_check_mark: Visualize the evolution pattern of different gene or non-coding
+sequences in the organelle of one **taxa** instead of a single species.
+
 # Prerequisite
 
 ## Hardware
@@ -78,7 +81,7 @@ the Internet connection is stable and fast enough.
 For the portable version, nothing need to be installed manually.
 
 For installing from pip, [Python](https://www.python.org/downloads/) is
-required. Notice that the python version should be higher than **3.6**.
+required. Notice that the python version should be higher than **3.8**.
 
 :white_check_mark: All third-party dependencies will be automatically
 installed with Internet, including `biopython`, `matplotlib`, `coloredlogs`,
@@ -406,25 +409,51 @@ notice the difference.
 
 ## Visualize
 
-Here are to jupyter notebooks for visualize analyze result as detailed circle
-figure:
+This function is designed to visualize the evolution pattern of organelle genomes within a taxon (
+order, family, or genus) rather than focusing on a single species.
 
-- [`draw_circle_plastid.ipynb`](https://github.com/wpwupingwp/OGU/blob/master/src/OGU/data/draw_circle_plastid.ipynb): for plastid genomes
-- [`draw_circle_mitochondria.ipynb`](https://github.com/wpwupingwp/OGU/blob/master/src/OGU/data/draw_circle_mitochondria.ipynb): for mitochondria genomes
- 
-Since users may want to customize the figure, we provide jupyter notebooks
-instead of packaged code. Users can get the result following these steps.
+### Input
 
-0. Run `pip3 install jupyterlab` to install jupyter notebooks
-1. Double click to open in jupyter notebook, Visual Studio Code or other IDEs 
-  you prefer.
-2. Edit `filename` to the Evaluation.csv you got from OGU.Evaluate
-3. Edit `gb_file` to extended gb file you got from OGU.GB2fasta. Remember to 
-  generate it with `-out_debug` in OGU.gb2fasta
-4. If visualize plastid data, you need provide `LSC, SSC, IRa, IRb` lengths. Or
-   you can use default value, which is for *Tobacum*.
-5. Edit color themes as your wish
-6. Run all cells to output pdf figure
+1. `input_csv`: The sequence variance evaluation result from the OGU.Evaluate module.
+2. `ref_gb`: A reference genome file containing only one organelle genome. Generated from
+   OGU.GB2fasta with the "-out_debug" option. Since plastid and animal mitochondrial genome
+   structures are generally stable, users only need to select one as a representative.
+3. `taxon`: If `ref_gb` is empty, OGU will automatically generate a reference genome file for
+   visualization purposes. It is recommended to use this option instead of `ref_gb`, but users must
+   ensure a stable internet connection.
+4. `og_type`: Organelle type. Use `cp` for plastid and `mt` for mitochondria.
+5. `lsc`, `ssc`, and `ir`: Plastid structure sizes. If the input is a mitochondria genome, leave
+   these fields empty.
+6. `output`: Output folder. The result will be a "Figure.pdf" file within the folder.
+
+### Command-Line Interface
+
+To use the command-line interface, run `OGU.visualize`.
+
+### Graphical User Interface
+
+1. Click `Visualize` on the main window of the GUI.
+2. Click `Load example` and select the organelle type to load example data. Or to input your own 
+data.
+3. Click `Run` to execute the program.
+
+### Jupyter Notebooks
+
+Jupyter notebooks are available for analyzing the visualization results in detail using circular
+figures:
+
+- [`draw_circle_plastid.ipynb`](https://github.com/wpwupingwp/OGU/blob/master/src/OGU/data/draw_circle_plastid.ipynb): For plastid genomes
+- [`draw_circle_mitochondria.ipynb`](https://github.com/wpwupingwp/OGU/blob/master/src/OGU/data/draw_circle_mitochondria.ipynb): For mitochondrial genomes
+
+To use these notebooks:
+
+1. Install JupyterLab by running `pip3 install jupyterlab`.
+2. Double-click the notebook to open it in Jupyter Notebook, Visual Studio Code, or another preferred IDE.
+3. Edit the `filename` variable to point to the Evaluation.csv file obtained from OGU.Evaluate.
+4. Edit the `gb_file` variable to point to the extended gb file obtained from OGU.GB2fasta. Remember to generate it with the "-out_debug" option in OGU.gb2fasta.
+5. If visualizing plastid data, provide the lengths of LSC, SSC, IRa, and IRb. Or use the default values, which are based on *Tobacum*.
+6. Customize color themes as desired.
+7. Run all cells to generate the PDF figure output.
 
 # Input
 
