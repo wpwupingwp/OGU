@@ -95,10 +95,14 @@ def init_arg(arg):
 
 
 def get_name(old):
+    if old.lower().startswith('d-loop'):
+        return '-'.join(old.split('-')[2:])
     return '-'.join(old.split('-')[1:])
 
 
 def get_name2(old):
+    if old.lower().startswith('d-loop'):
+        return 'D-loop'
     return old.split('-')[0]
 
 
@@ -231,7 +235,7 @@ def visualize_main(arg_str=None):
         circle_end = circle_start + 360
     else:
         # - and _ conflicts
-        features = ('CDS', 'D_loop', 'tRNA', 'rRNA', 'spacer')
+        features = ('CDS', 'D-loop', 'tRNA', 'rRNA', 'spacer')
         feature_colors = '#FFD93D,#999999,#4D96FF,#9D96FF,#6BCB77'.split(',')
         circle_start = 0
         circle_end = 360

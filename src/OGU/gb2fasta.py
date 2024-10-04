@@ -723,8 +723,7 @@ def write_seq(record, seq_info, whole_seq, arg):
             log.debug('The fragment of {} (Accession {}) '
                       'is too long. Skip.'.format(name, seq_info[1]))
             continue
-        filename = arg._divide / (feature.type.replace('D-loop', 'D_loop')+
-                                  '-'+name+'.fasta')
+        filename = arg._divide / (feature.type + '-'+name+'.fasta')
         with open(filename, 'a', encoding='utf-8') as handle:
             sequence_id = '>' + '|'.join([name, *seq_info, feature.type])
             sequence = careful_extract(name, feature, whole_seq)
