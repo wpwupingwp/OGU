@@ -230,7 +230,8 @@ def visualize_main(arg_str=None):
         circle_start = -260
         circle_end = circle_start + 360
     else:
-        features = ('CDS', 'D-loop', 'tRNA', 'rRNA', 'spacer')
+        # - and _ conflicts
+        features = ('CDS', 'D_loop', 'tRNA', 'rRNA', 'spacer')
         feature_colors = '#FFD93D,#999999,#4D96FF,#9D96FF,#6BCB77'.split(',')
         circle_start = 0
         circle_end = 360
