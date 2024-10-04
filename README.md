@@ -412,6 +412,22 @@ notice the difference.
 This function is designed to visualize the evolution pattern of organelle genomes within a taxon (
 order, family, or genus) rather than focusing on a single species.
 
+### Note
+
+1. It is recommended to select a reference genome with high-quality annotation. Bad annotation
+   may lead to gene missing in the figure.
+2. For plastid genomes, a portion of the _rps12_ gene may be omitted from the figure due to the
+   large size of its "intron".
+3. Plastid genome structure information is required for visualization. Users can obtain size data
+   from papers or use tools such as OGDRAW, NOVOWrap, or Chloroplot to determine the
+   size.
+4. For mitochondrial genomes, the D-loop region may be omitted due to potential naming conflicts.
+   Users are advised to review the Evaluation.csv file and reference genome file before running the
+   visualization.
+5. The output figure is in PDF format. Users can edit the figure to improve its appearance,
+   particularly for overlapping label text. `Inkscape`, an open-source, cross-platform and free
+software is recommended.
+
 ### Input
 
 1. `input_csv`: The sequence variance evaluation result from the OGU.Evaluate module.
