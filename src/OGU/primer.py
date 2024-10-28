@@ -21,7 +21,7 @@ from primer3 import (calc_tm, calc_hairpin_tm, calc_homodimer_tm,
 
 from OGU import utils
 from OGU import evaluate
-from OGU.global_vars import log
+from OGU.global_vars import log, global_dict
 
 
 class Pair:
@@ -244,15 +244,17 @@ def init_arg(arg):
     if arg.aln_folder is not None:
         for i in Path(arg.aln_folder).glob('*'):
             arg.aln.append(i.absolute())
-    log.info('Add aligned files from evaluate module if possible.')
-    for i in Path(arg._align).glob('*'):
-        arg.aln.append(i.absolute())
+    if global_dict['from_evaluate']:
+        log.info('Add aligned files from evaluate module if possible.')
+        for i in Path(arg._align).glob('*'):
+            arg.aln.append(i.absolute())
     for i in arg.aln:
         if not i.exists() or not i.is_file():
             log.error(f'{i} does not exist or is not a valid file.')
             return None
-    if not any([arg.aln, arg.aln_folder]):
-        log.warning('Empty input.')
+    arg.aln = [i for i in arg.aln if i.exists() and i.is_file()]
+    if len(arg.aln) == 0:
+        log.critical('Empty input.')
         return None
     return arg
 

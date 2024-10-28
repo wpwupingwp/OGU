@@ -3,7 +3,7 @@
 import argparse
 from OGU import utils
 from OGU import gb2fasta, evaluate, primer
-from OGU.global_vars import log, name, version
+from OGU.global_vars import log, name, version, global_dict
 
 
 def parse_args():
@@ -144,16 +144,17 @@ def cli_main():
         log.error('Quit.')
         return
     else:
-        from OGU import global_vars
-        global_vars.global_dict['out_inited'] = True
+        global_dict['out_inited'] = True
     utils.add_file_log(arg)
     option = utils.arg_to_str(arg)
     log.debug(f'Options: {option}')
     arg, other_args, = gb2fasta.gb2fasta_main()
+    global_dict['from_gb2fasta'] = True
+
     log.debug(f'Options 2: {other_args}')
     arg, other_args2 = evaluate.evaluate_main()
-    # if arg is None:
-    #    global_vars.global_dict['out_inited'] = False
+    global_dict['from_evaluate'] = True
+
     log.debug(f'Options 2: {other_args2}')
     arg, other_args3 = primer.primer_main()
     if other_args3 is not None and len(other_args3) != 0:

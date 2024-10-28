@@ -104,6 +104,8 @@ def init_arg(arg):
     if arg.quick:
         log.info('The "-quick" mode was opened. '
                  'Skip sliding-window analysis')
+    if arg.primer:
+        global_dict['from_evaluate'] = True
     return arg
 
 
