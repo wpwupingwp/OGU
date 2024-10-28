@@ -1,6 +1,6 @@
 [project]
 name = "OGU"
-version = "1.998"
+version = "1.999"
 description = "Organelle Genome Utilities"
 keywords = ['plastid', 'mitochondria', 'organelle genome', 'analysis',
     'Bioinformatics']
