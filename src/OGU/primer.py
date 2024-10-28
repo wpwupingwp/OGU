@@ -647,8 +647,8 @@ def pick_pair(primers, alignment, arg):
             cluster = []
     cluster.sort(key=lambda x: x.score, reverse=True)
     less_pairs.extend(cluster[:arg.top_n])
-    log.info('{} pairs of redundant primers were removed.'.format(
-        len(pairs) - len(less_pairs)))
+    log.info(f'{len(pairs)-len(less_pairs)} pairs of redundant primers '
+             f'were removed.')
     good_pairs = []
     for i in less_pairs:
         i.add_info(alignment)

@@ -131,7 +131,7 @@ def align(files: list, folder: Path) -> (list, list):
     # get available CPU cores
     cores = max(1, cpu_count() - 1)
     for fasta in files:
-        log.info('Aligning {}.'.format(fasta))
+        log.info(f'Aligning {fasta}.')
         out = folder / fasta.with_suffix('.aln').name
         with open(devnull, 'w', encoding='utf-8') as f:
             # if computer is good enough, "--genafpair" is recommended
@@ -214,7 +214,7 @@ def fasta_to_array(aln_fasta: Path) -> (np.array, np.array):
         [np.fromiter(i[1], dtype=np.dtype('S1')) for i in data],
         order='F')
     if name_array is None:
-        log.error('Bad fasta file {}.'.format(aln_fasta))
+        log.error(f'Bad fasta file {aln_fasta}.')
     return name_array, sequence_array
 
 

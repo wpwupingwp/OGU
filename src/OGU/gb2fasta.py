@@ -174,7 +174,7 @@ def get_query_string(arg, silence=False):
         else:
             condition.append(f'("{arg.min_len}"[SLEN] : "{arg.max_len}"[SLEN])')
     if arg.exclude is not None:
-        condition.append('NOT ({})'.format(arg.exclude))
+        condition.append(f'NOT ({arg.exclude})')
     if arg.date_start is not None and arg.date_end is not None:
         condition.append(f'"{arg.date_start}"[PDAT] : "{arg.date_end}"[PDAT]')
     if not condition:
@@ -207,10 +207,9 @@ def init_arg(arg):
     if arg.no_divide:
         log.warning('Only download data because of "-no_divide"')
     if arg.rename:
-        log.warning('{} will try to rename genes by regular '
-                    'expression.'.format(name))
+        log.warning(f'{name} will try to rename genes by regular expression.')
     global_dict['gb2fasta_unique'] = arg.unique
-    # global_dict['from_gb2fasta'] = True
+    global_dict['from_gb2fasta'] = True
     return arg
 
 
@@ -263,7 +262,7 @@ def download(arg):
     retry = 0
     log.info('    Fetch id list...')
     while ret_start < count:
-        log.info('    {:d}--{:d}'.format(ret_start, ret_start + ret_max))
+        log.info(f'    {ret_start:d}--{ret_start+ret_max:d}')
         # Entrez accept at most 3 times per second
         # However, due to slow network, it's fine :)
         try:
@@ -298,7 +297,7 @@ def download(arg):
     log.warning('    May be slow if connection is unstable. Ctrl+C to quit.')
     gb_output = open(gb_file_name, 'w', encoding='utf-8')
     while start < count:
-        log.info('    {:d}--{:d}'.format(start, start + ret_max2))
+        log.info(f'    {start:d}--{start+ret_max2:d}')
         # Entrez accept at most 3 times per second
         # However, due to slow network, it's fine :)
         try:
@@ -358,13 +357,12 @@ def clean_gb(gbfile):
             gb_record = SeqIO.read(tmp_gb, 'gb')
             yield gb_record
         except Exception as e:
-            log.critical('    Found problematic record {}: {}'.format(
-                record[0][:25], e.args[0]))
+            log.critical(f'Found invalid record {record[0][:25]}: {e.args[0]}')
             wrong += 1
     tmp_gb.close()
     old_gb.close()
     if wrong != 0:
-        log.info('    Remove {} abnormal records.'.format(wrong))
+        log.info(f'    Remove {wrong} abnormal records.')
 
 
 def get_feature_name(feature, arg) -> str:
@@ -382,7 +380,7 @@ def get_feature_name(feature, arg) -> str:
         elif 'note' in feature.qualifiers:
             name = feature.qualifiers['note'][0]
         else:
-            log.debug('Cannot recognize annotation:\n{}'.format(feature))
+            log.debug(f'Cannot recognize annotation:\n{feature}')
             name = None
         return name
 
@@ -410,7 +408,7 @@ def get_feature_name(feature, arg) -> str:
     if arg.rename:
         new_name, _ = utils.gene_rename(name, og=arg.organelle)
     if new_name != name:
-        log.debug('Renaming {} to {}'.format(name, new_name))
+        log.debug(f'Renaming {name} to {new_name}')
     return new_name
 
 
@@ -535,7 +533,7 @@ def divide(gbfile, arg):
     """
     Given genbank file, return divided fasta files.
     """
-    log.info('Divide {} by annotation.'.format(gbfile))
+    log.info(f'Divide {gbfile} by annotation.')
 
     def get_taxon(taxon_str):
         """
@@ -695,8 +693,8 @@ def write_seq(record, seq_info, whole_seq, arg):
             sequence_str = str(sequence)
         except Exception as e:
             sequence_str = ''
-            log.warning('Cannot extract sequence of {} from {} '
-                        'due to "{}".'.format(name, seq_info[1], str(e)))
+            log.warning(f'Cannot extract sequence of {name} from {seq_info[1]} '
+                        f'due to "{str(e)}".')
         return sequence_str
 
     seq_len = len(whole_seq)
@@ -720,8 +718,8 @@ def write_seq(record, seq_info, whole_seq, arg):
         name, feature = i
         # skip abnormal annotation
         if len(feature) > arg.max_gene_len:
-            log.debug('The fragment of {} (Accession {}) '
-                      'is too long. Skip.'.format(name, seq_info[1]))
+            log.debug(f'The fragment of {name} (Accession {seq_info[1]}) '
+                      'is too long. Skip.')
             continue
         filename = arg._divide / (feature.type + '-'+name+'.fasta')
         with open(filename, 'a', encoding='utf-8') as handle:

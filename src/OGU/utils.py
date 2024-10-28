@@ -19,7 +19,7 @@ from urllib.request import urlopen, Request
 from zipfile import ZipFile
 
 from Bio.Seq import Seq
-from OGU.global_vars import log, name, FMT, DATEFMT
+from OGU.global_vars import log, name, FMT, DATEFMT, global_dict
 
 
 # chinese search engine, test if network is ok
@@ -165,8 +165,7 @@ def init_out(arg):
     else:
         arg.out = Path(arg.out).absolute()
     if arg.out.exists() and len(list(arg.out.iterdir())) == 0:
-        from OGU import global_vars
-        if not global_vars.global_dict.get('out_inited', False):
+        if not global_dict.get('out_inited', False):
             log.warning(f'Output folder {arg.out} exists.')
             arg.out = arg.out / (arg.out.name+'_')
             log.info(f'Use {arg.out} instead.')
