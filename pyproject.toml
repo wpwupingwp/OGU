@@ -1,6 +1,6 @@
 [project]
 name = "OGU"
-version = "1.999"
+version = "2.0.0"
 description = "Organelle Genome Utilities"
 keywords = ['plastid', 'mitochondria', 'organelle genome', 'analysis',
     'Bioinformatics']
@@ -12,14 +12,14 @@ maintainers = [
 ]
 dependencies = [
     "biopython==1.82",
-    "certifi>=2024.6.2",
     "colorama>=0.4.6",
     "coloredlogs>=10.0",
     "matplotlib>=3.0.0",
-    "numpy<2.0",
     "primer3-py==2.0.2",
     "pandas>=2.1.4",
     "pycirclize>=1.7.1",
+    "certifi>=2024.12.14",
+    "numpy>=2.0",
 ]
 requires-python = ">=3.9"
 readme = "README.md"

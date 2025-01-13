@@ -28,10 +28,10 @@ setuptools.setup(
     long_description_content_type='text/markdown',
     name=name,
     packages=setuptools.find_packages(),
-    python_requires='>=3.8',
+    python_requires='>=3.9',
     entry_points={'console_scripts': ['OGU = OGU:main', 'ogu = OGU:main']},
     url='https://github.com/wpwupingwp/BarcodeFinder',
-    version='1.996',
+    version='2.0.0',
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
