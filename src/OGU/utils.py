@@ -434,7 +434,10 @@ def test_cmd(program, option='-version') -> bool:
     """
     program = Path(program)
     if program.exists():
-        program.chmod(0o755)
+        try:
+            program.chmod(0o755)
+        except Exception:
+            log.warning(f'Failed to set {program} executable, may cause error')
     cmd = f'{program} {option}'
     test = subprocess.run(cmd, shell=True, stdout=subprocess.DEVNULL,
                           stderr=subprocess.DEVNULL)
@@ -510,7 +513,10 @@ def get_software(software: str, url: str, filename: Path,
             # windows use different path
             if subfolder.exists():
                 for file in subfolder.iterdir():
-                    file.chmod(0o755)
+                    try:
+                        file.chmod(0o755)
+                    except Exception:
+                        log.warning(f'Failed to set {file} executable, may cause error')
     assert test_cmd(home_bin, test_option)
     log.info(f'{software} installed successfully.')
     return True
