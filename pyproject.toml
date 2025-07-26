@@ -11,11 +11,11 @@ maintainers = [
     { name = "Ping Wu", email = "wpwupingwp@outlook.com" },
 ]
 dependencies = [
-    "biopython==1.82",
+    "biopython>=1.85",
     "colorama>=0.4.6",
     "coloredlogs>=10.0",
     "matplotlib>=3.0.0",
-    "primer3-py==2.0.2",
+    "primer3-py>=2.0.2",
     "pandas>=2.1.4",
     "pycirclize>=1.7.1",
     "certifi>=2024.12.14",

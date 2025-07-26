@@ -526,7 +526,10 @@ def validate(primer_candidate: list, aln: Path, n_seqs: int, arg):
         makeblastdb = Path(blast).parent / 'makeblastdb.exe'
     else:
         makeblastdb = Path(blast).parent / 'makeblastdb'
-        makeblastdb.chmod(0o755)
+        try:
+            makeblastdb.chmod(0o755)
+        except Exception:
+            log.warning('Failed to set makeblastdb executable, may cause error')
     query_file = arg._primer / (locus_name+'.candidate.fasta')
     query_file_fastq = arg._primer / (locus_name+'.candidate.fastq')
     # SeqIO.write fasta file directly is prohibited. have to write fastq at
