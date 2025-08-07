@@ -287,6 +287,7 @@ def normalized_entropy(count: np.array, rows: int) -> float:
     Returns:
         entropy(float): normalized entropy
     """
+    # different from information theory? log2(len(count))
     max_h = np.log2(rows)
     entropy = 0
     for j in count:
