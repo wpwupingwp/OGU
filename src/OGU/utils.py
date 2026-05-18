@@ -74,7 +74,7 @@ def check_system():
     if version_info.minor < 9:
         raise RuntimeError('Python 3.9 or newer is required.')
     if platform.system() == 'Windows':
-        if version_info.minor > 13:
+        if version_info.minor > 14:
             raise RuntimeError('Do not support python 3.14 or higher.')
     return
 

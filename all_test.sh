@@ -1,7 +1,7 @@
 # mac
 rm -rf rbcL_Poaceae Rosa_ITS zea_mays Oryza_cp Lamiaceae_cp
 count=4
-python=uv run python3
+python="uv run python3"
 out=./
 $python -m OGU.gb2fasta -gene rbcL -taxon Poaceae -out ${out}rbcL_Poaceae -count $count
 $python -m OGU.gb2fasta -query "internal transcribed spacer" -taxon Rosa -out ${out}Rosa_ITS -uniq no -count $count

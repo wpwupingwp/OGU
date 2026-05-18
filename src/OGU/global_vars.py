@@ -6,7 +6,7 @@ import coloredlogs
 logging.getLogger('matplotlib').setLevel(logging.WARNING)
 # project name
 name = 'OGU'
-version = 'v2.0.1'
+version = 'v2.1.0'
 # define logger
 FMT = '%(asctime)s %(levelname)-8s %(message)s'
 DATEFMT = '%H:%M:%S'
