@@ -66,7 +66,7 @@ sliding-window scanning.
 ambiguous bases in primers.
 
 :heavy_check_mark: Visualize the evolution pattern of different gene or non-coding
-sequences in the organelle of one **taxa** instead of a single species.
+sequences in the organelle of one **taxon** instead of a single species.
 
 # Prerequisite
 
